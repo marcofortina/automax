@@ -94,7 +94,9 @@ class LoggerManager:
         self.log_file = self.log_directory / f"{LOGGER_NAME}_{timestamp}.log"
         self.error_file = self.log_directory / f"{LOGGER_NAME}_{timestamp}.err"
         self.json_file = (
-            self.log_directory / f"{LOGGER_NAME}_{timestamp}.json" if self.json_log else None
+            self.log_directory / f"{LOGGER_NAME}_{timestamp}.json"
+            if self.json_log
+            else None
         )
 
         # Initialize logger
