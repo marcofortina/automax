@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=80.9.0", "wheel", "build", "twine>=6.2.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "automax"
+version = "0.1.1"
+description = "YAML-driven modular automation framework"
+license-files = ["LICENSE.md"]
+authors = [{ name = "Marco Fortina", email = "marco_fortina@hotmail.it" }]
+requires-python = ">=3.9"
+dependencies = [
+    "pyyaml",
+    "jsonschema",
+    "psutil",
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+readme = "README.md"
+
+[project.scripts]
+automax = "automax.cli:cli_main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "flake8",
+    "isort",
+    "coverage",
+]
+
+[project.urls]
+Homepage = "https://github.com/marcofortina/automax"
+Repository = "https://github.com/marcofortina/automax"
+Changelog = "https://github.com/marcofortina/automax/blob/main/CHANGELOG.md"
+Issues = "https://github.com/marcofortina/automax/issues"
+Download = "https://github.com/marcofortina/automax/releases"
+
+[tool.setuptools.packages.find]
+where = ["src"]
