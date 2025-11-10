@@ -16,7 +16,7 @@ class PluginManager:
     Manager class responsible for handling all plugin-related operations.
     """
 
-    def __init__(self, logger=None, plugins_dir: str | Path = "automax/plugins"):
+    def __init__(self, logger=None, plugins_dir: str | Path = "src/automax/plugins"):
         """
         Initialize the PluginManager.
 
@@ -24,7 +24,7 @@ class PluginManager:
             logger (optional): Logger instance for debug/info/error messages.
             plugins_dir (str or Path): Path to the directory containing plugin files.
         """
-        self.plugins_dir = Path(plugins_dir)
+        self.plugins_dir = Path(plugins_dir).expanduser().resolve()
         self.logger = logger
         self.registry = {}
         self.schemas = {}  # New: Store schemas for validation

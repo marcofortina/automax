@@ -7,7 +7,7 @@ plugin invocation, retries, and output context management.
 
 import os
 
-from automax.core.exceptions import AutomaError
+from automax.core.exceptions import AutomaxError
 from automax.core.utils.log_utils import print_substep_end, print_substep_start
 
 
@@ -51,7 +51,7 @@ class SubStepManager:
             bool: True if all sub-steps succeeded.
 
         Raises:
-            AutomaError: On sub-step errors.
+            AutomaxError: On sub-step errors.
         """
         if not substep_ids:
             substep_ids = [sub["id"] for sub in self.substeps_cfg]
@@ -60,7 +60,7 @@ class SubStepManager:
         for sub_id in substep_ids:
             sub_cfg = next((s for s in self.substeps_cfg if s["id"] == sub_id), None)
             if not sub_cfg:
-                raise AutomaError(
+                raise AutomaxError(
                     f"Sub-step {self.step_id}.{sub_id} not found", level="ERROR"
                 )
 
@@ -102,7 +102,7 @@ class SubStepManager:
                 self.logger.error(f"Sub-step {self.step_id}.{sub_id} failed: {e}")
                 result = "ERROR"
                 success = False
-                raise AutomaError(
+                raise AutomaxError(
                     f"Error in sub-step {self.step_id}.{sub_id}: {e}", level="ERROR"
                 )
             finally:
@@ -129,7 +129,7 @@ class SubStepManager:
                 try:
                     v = v.format(**self.cfg, **self.context)
                 except KeyError as e:
-                    raise AutomaError(f"Missing placeholder key: {e}", level="ERROR")
+                    raise AutomaxError(f"Missing placeholder key: {e}", level="ERROR")
                 # Resolve env vars (e.g., $HOME)
                 v = os.path.expandvars(v)
             resolved[k] = v
