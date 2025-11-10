@@ -1,0 +1,15 @@
+# Logging configuration
+log_dir: "logs"
+log_level: "DEBUG"
+json_log: true
+
+# Temporary directories or paths used by steps
+temp_dir: "/tmp"
+
+# SSH configuration
+ssh:
+  private_key: "examples/.ssh/id_ed25519"
+  timeout: 300
+
+# Steps directory
+steps_dir: "examples/steps"

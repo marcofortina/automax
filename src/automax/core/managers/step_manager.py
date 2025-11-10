@@ -11,7 +11,7 @@ from pathlib import Path
 
 import yaml
 
-from automax.core.exceptions import AutomaError
+from automax.core.exceptions import AutomaxError
 from automax.core.managers.logger_manager import LoggerManager
 from automax.core.managers.plugin_manager import PluginManager
 from automax.core.managers.substep_manager import SubStepManager
@@ -63,7 +63,7 @@ class StepManager:
             bool: True if all steps completed successfully.
 
         Raises:
-            AutomaError: On execution errors.
+            AutomaxError: On execution errors.
         """
         if not step_ids:
             # If no steps specified, discover all available step YAMLs
@@ -105,7 +105,7 @@ class StepManager:
                 self.logger.error(f"Step {step_id} failed: {e}")
                 step_result = "ERROR"
                 overall_success = False
-                raise AutomaError(f"Failure in step {step_id}: {e}", level="ERROR")
+                raise AutomaxError(f"Failure in step {step_id}: {e}", level="ERROR")
             finally:
                 # Optional post_run hook
                 if "post_run" in step_cfg:
@@ -126,18 +126,22 @@ class StepManager:
             dict: Step configuration.
 
         Raises:
-            AutomaError: If YAML file not found or invalid.
+            AutomaxError: If YAML file not found or invalid.
         """
-        yaml_path = self.steps_dir / f"step{step_id}" / f"step{step_id}.yaml"
+        yaml_path = (
+            Path(self.steps_dir / f"step{step_id}" / f"step{step_id}.yaml")
+            .expanduser()
+            .resolve()
+        )
         if not yaml_path.exists():
-            raise AutomaError(f"Step YAML not found: {yaml_path}", level="FATAL")
+            raise AutomaxError(f"Step YAML not found: {yaml_path}", level="FATAL")
         try:
             with open(yaml_path, "r") as f:
                 config = yaml.safe_load(f)
             self.logger.info(f"Loaded step configuration from {yaml_path}")
             return config
         except yaml.YAMLError as e:
-            raise AutomaError(f"Invalid YAML in {yaml_path}: {e}", level="FATAL")
+            raise AutomaxError(f"Invalid YAML in {yaml_path}: {e}", level="FATAL")
 
     def _import_function(self, path: str):
         """
