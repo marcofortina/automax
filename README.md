@@ -27,6 +27,10 @@
 
 ```
 automax/
+├── .github/
+│   └── workflows/
+│       ├── ci.yml           # Continuous Integration workflow (tests, lint, etc.)
+│       └── publish.yml      # Automated publishing to PyPI
 ├── automax/                 # Core package (installabile come modulo Python)
 │   ├── __init__.py          # Package initializer
 │   ├── __main__.py          # Entry point for `python -m automax`
