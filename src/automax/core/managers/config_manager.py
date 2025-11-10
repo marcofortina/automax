@@ -105,7 +105,9 @@ class ConfigManager:
 
         log_dir = Path(cfg["log_dir"]).expanduser().resolve()
         if not log_dir.exists():
-            raise AutomaxError(f"Log directory does not exist: {log_dir}", level="FATAL")
+            raise AutomaxError(
+                f"Log directory does not exist: {log_dir}", level="FATAL"
+            )
         if not log_dir.is_dir():
             raise AutomaxError(
                 f"Log directory is not a directory: {log_dir}", level="FATAL"
