@@ -2,6 +2,9 @@
 Global pytest fixtures for Automax.
 """
 
+import os
+from pathlib import Path
+
 import pytest
 
 from automax.core.managers.config_manager import ConfigManager
@@ -11,8 +14,9 @@ from automax.core.managers.plugin_manager import PluginManager
 
 @pytest.fixture
 def cfg():
-    """Load the real config/config.yaml for tests."""
-    config_mgr = ConfigManager("examples/config/config.yaml")
+    """Load the config/config.yaml for tests."""
+    config_file = Path(os.path.join(os.path.dirname(__file__), "config/config.yaml"))
+    config_mgr = ConfigManager(config_file)
     return config_mgr.cfg
 
 
@@ -31,6 +35,9 @@ def logger_with_json(tmp_path):
 @pytest.fixture
 def plugin_manager(logger):
     """Provide a PluginManager instance with plugins loaded."""
-    pm = PluginManager(logger=logger)
+    plugins_path = Path(
+        os.path.join(os.path.dirname(__file__), "../src/automax/plugins")
+    )
+    pm = PluginManager(logger=logger, plugins_dir=plugins_path)
     pm.load_plugins()
     return pm

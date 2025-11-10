@@ -13,8 +13,9 @@ from automax.cli import cli_main
 
 def test_main_help(logger):
     """Verify that running main with --help returns 0."""
+    cwd = os.path.join(os.path.dirname(__file__), "../src")
     result = subprocess.run(
-        ["python3", "-m", "automax", "--help"], capture_output=True, text=True
+        ["python3", "-m", "automax", "--help"], cwd=cwd, capture_output=True, text=True
     )
     assert result.returncode == 0
     assert "Automax - YAML-driven automation framework" in result.stdout
@@ -29,7 +30,7 @@ def test_main_list(tmp_path, cfg):
             "automax",
             "--list",
             "--config",
-            "examples/config/config.yaml",
+            "tests/config/config.yaml",
         ],
         capture_output=True,
         text=True,
@@ -99,12 +100,14 @@ log_dir: "{log_dir}"
 log_level: "INFO"
 json_log: false
 temp_dir: "/tmp"
-steps_dir: "steps"
+steps_dir: "examples/steps"
 """
         )
 
+    cwd = os.path.join(os.path.dirname(__file__), "../src")
     result = subprocess.run(
         ["python3", "-m", "automax", "999", "--config", str(config_path)],
+        cwd=cwd,
         capture_output=True,
         text=True,
     )
@@ -125,8 +128,10 @@ def test_main_invalid_config(tmp_path):
     """Integration test: Run with invalid config and verify failure."""
     invalid_config = tmp_path / "invalid.yaml"
     invalid_config.write_text(":::")  # Invalid YAML to trigger YAMLError
+    cwd = os.path.join(os.path.dirname(__file__), "../src")
     result = subprocess.run(
         ["python3", "-m", "automax", "1", "--config", str(invalid_config)],
+        cwd=cwd,
         capture_output=True,
         text=True,
     )
@@ -140,7 +145,7 @@ def test_main_validate_only(tmp_path):
     log_dir = tmp_path / "logs"
     log_dir.mkdir()
 
-    # Use the example SSH key
+    # Use the test SSH key
     ssh_key_path = os.path.abspath("examples/.ssh/id_ed25519")
 
     config_path = tmp_path / "config.yaml"
@@ -154,12 +159,14 @@ log_dir: "{log_dir}"
 log_level: "INFO"
 json_log: false
 temp_dir: "/tmp"
-steps_dir: "steps"
+steps_dir: "examples/steps"
 """
         )
 
+    cwd = os.path.join(os.path.dirname(__file__), "../src")
     result = subprocess.run(
         ["python3", "-m", "automax", "--validate-only", "--config", str(config_path)],
+        cwd=cwd,
         capture_output=True,
         text=True,
     )
