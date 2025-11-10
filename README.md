@@ -18,7 +18,7 @@
 - Validazione YAML/parametri
 - Plugin estensibili (local cmd, SSH, HTTP, etc.)
 - Retry, context output, hook pre/post
-- Programmatic API
+- Installable package + programmatic API
 - Offline step validation utility
 
 ---
@@ -46,40 +46,51 @@ automax/
 │   ├── test_plugins/        # Tests for plugins
 │   └── test_steps/          # Tests for step logic
 ├── utils/                   # Developer utilities and scripts (e.g., offline validation)
+├── pyproject.toml           # Modern build system configuration (PEP 621)
 ├── LICENSE.md               # License information
-└── README.md                # Project overview and usage
+├── README.md                # Project overview and usage
+├── requirements.txt         # Development dependencies
+├── setup.cfg                # Legacy setup configuration
+└── setup.py                 # Setup script (entry for setuptools)
+```
+
+---
+
+## ⚙️ Installation
+
+```bash
+pip install .
+# Or
+python setup.py install
 ```
 
 ---
 
 ## ⚙️ CLI Usage
 
-⚠️ The CLI is not yet installable via pip.
-To test commands locally, run Automax through the module interface (python -m automax).
-
 ### List steps
 ```bash
-python -m automax --list --config examples/config/config.yaml
+automax --list --config examples/config/config.yaml
 ```
 
 ### Validate only
 ```bash
-python -m automax 1 2 --validate-only --config examples/config/config.yaml
+automax 1 2 --validate-only --config examples/config/config.yaml
 ```
 
 ### Dry-run
 ```bash
-python -m automax 1 2 --dry-run --config examples/config/config.yaml
+automax 1 2 --dry-run --config examples/config/config.yaml
 ```
 
 ### Execute steps
 ```bash
-python -m automax 1 2 --config examples/config/config.yaml
+automax 1 2 --config examples/config/config.yaml
 ```
 
 ### Help
 ```bash
-python -m automax --help
+automax --help
 ```
 
 ---
@@ -95,6 +106,19 @@ rc = run_automax(
     dry_run=True,
 )
 print("Exit code:", rc)
+```
+
+---
+
+## 💻 Development: Running without installation
+
+During development (without 'pip install .'):
+```bash
+# Option 1: Python module
+python -m automax --list --config examples/config/config.yaml
+
+# Option 2: Direct script
+python automax/cli.py --list --config examples/config/config.yaml
 ```
 
 ---
