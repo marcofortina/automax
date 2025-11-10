@@ -39,6 +39,7 @@ automax/
 │   │   └── config.yaml      # Example configuration file
 │   ├── .ssh/                # Demo SSH keys (for illustrative use only)
 │   └── steps/               # Example step definitions
+├── logs/                    # Runtime logs (ignored by Git)
 ├── tests/                   # Unit and integration test suite
 │   ├── __init__.py          # Marks test suite as a package
 │   ├── test_core/           # Tests for core components
