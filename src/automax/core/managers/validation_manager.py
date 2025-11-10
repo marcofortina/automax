@@ -10,7 +10,7 @@ from pathlib import Path
 import jsonschema
 import yaml
 
-from automax.core.exceptions import AutomaError
+from automax.core.exceptions import AutomaxError
 
 
 class ValidationManager:
@@ -70,11 +70,15 @@ class ValidationManager:
             step_id (str): Step ID.
 
         Raises:
-            AutomaError: On validation failures.
+            AutomaxError: On validation failures.
         """
-        yaml_path = self.steps_dir / f"step{step_id}" / f"step{step_id}.yaml"
+        yaml_path = (
+            Path(self.steps_dir / f"step{step_id}" / f"step{step_id}.yaml")
+            .expanduser()
+            .resolve()
+        )
         if not yaml_path.exists():
-            raise AutomaError(f"Step YAML not found: {yaml_path}", level="FATAL")
+            raise AutomaxError(f"Step YAML not found: {yaml_path}", level="FATAL")
 
         with open(yaml_path, "r") as f:
             data = yaml.safe_load(f)
@@ -83,7 +87,7 @@ class ValidationManager:
         try:
             jsonschema.validate(instance=data, schema=self.STEP_SCHEMA)
         except jsonschema.exceptions.ValidationError as e:
-            raise AutomaError(
+            raise AutomaxError(
                 f"YAML schema validation failed for {yaml_path}: {e}", level="FATAL"
             )
 
@@ -91,7 +95,7 @@ class ValidationManager:
         for sub in data["substeps"]:
             plugin_name = sub["plugin"]
             if plugin_name not in self.plugin_manager.registry:
-                raise AutomaError(
+                raise AutomaxError(
                     f"Unknown plugin '{plugin_name}' in sub-step {step_id}.{sub['id']}",
                     level="FATAL",
                 )
@@ -119,7 +123,7 @@ class ValidationManager:
                     try:
                         v.format(**self.cfg)
                     except KeyError as e:
-                        raise AutomaError(
+                        raise AutomaxError(
                             f"Missing config key for placeholder in {k}: {e}",
                             level="ERROR",
                         )
@@ -132,12 +136,16 @@ class ValidationManager:
             execution_plan (dict): Parsed step/sub-step plan from CLI.
 
         Raises:
-            AutomaError: If invalid steps/sub-steps.
+            AutomaxError: If invalid steps/sub-steps.
         """
         for step_id in execution_plan:
-            yaml_path = self.steps_dir / f"step{step_id}" / f"step{step_id}.yaml"
+            yaml_path = (
+                Path(self.steps_dir / f"step{step_id}" / f"step{step_id}.yaml")
+                .expanduser()
+                .resolve()
+            )
             if not yaml_path.exists():
-                raise AutomaError(
+                raise AutomaxError(
                     f"Invalid step ID {step_id}: YAML not found", level="FATAL"
                 )
 
@@ -150,15 +158,15 @@ class ValidationManager:
             schema (dict): Plugin schema.
 
         Raises:
-            AutomaError: On param validation failures.
+            AutomaxError: On param validation failures.
         """
         for key, spec in schema.items():
             if spec.get("required") and key not in params:
-                raise AutomaError(f"Missing required param '{key}'", level="ERROR")
+                raise AutomaxError(f"Missing required param '{key}'", level="ERROR")
             if key in params:
                 expected_type = spec["type"]
                 if not isinstance(params[key], expected_type):
-                    raise AutomaError(
+                    raise AutomaxError(
                         f"Invalid type for '{key}': expected {expected_type}, got {type(params[key])}",
                         level="ERROR",
                     )

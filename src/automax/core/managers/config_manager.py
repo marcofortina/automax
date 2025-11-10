@@ -54,7 +54,7 @@ class ConfigManager:
         if isinstance(config_file, dict):
             cfg = config_file
         else:
-            path = Path(config_file)
+            path = Path(config_file).expanduser().resolve()
             if not path.exists():
                 raise FileNotFoundError(f"Configuration file not found: {config_file}")
             with open(config_file, "r") as f:
@@ -86,7 +86,7 @@ class ConfigManager:
         if "log_dir" not in cfg:
             raise AutomaxError("Missing required configuration: log_dir", level="FATAL")
 
-        private_key_path = Path(cfg["ssh"]["private_key"])
+        private_key_path = Path(cfg["ssh"]["private_key"]).expanduser().resolve()
         if not private_key_path.exists():
             raise AutomaxError(
                 f"SSH private key does not exist: {private_key_path}", level="FATAL"
@@ -103,7 +103,7 @@ class ConfigManager:
         if not isinstance(cfg["ssh"]["timeout"], int) or cfg["ssh"]["timeout"] <= 0:
             raise AutomaxError("SSH timeout must be a positive integer", level="FATAL")
 
-        log_dir = Path(cfg["log_dir"])
+        log_dir = Path(cfg["log_dir"]).expanduser().resolve()
         if not log_dir.exists():
             raise AutomaxError(f"Log directory does not exist: {log_dir}", level="FATAL")
         if not log_dir.is_dir():

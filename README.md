@@ -118,7 +118,7 @@ During development (without 'pip install .'):
 python -m automax --list --config examples/config/config.yaml
 
 # Option 2: Direct script
-python automax/cli.py --list --config examples/config/config.yaml
+python src/automax/cli.py --list --config examples/config/config.yaml
 ```
 
 ---
@@ -163,7 +163,7 @@ substeps:
 ## 🧪 Running Tests
 
 ```bash
-export PYTHONPATH=$(pwd)
+export PYTHONPATH=$(pwd)/src
 pytest -v
 ```
 
