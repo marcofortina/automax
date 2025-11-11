@@ -13,6 +13,10 @@ dependencies = [
     "pyyaml",
     "jsonschema",
     "psutil",
+    "boto3",
+    "azure-identity",
+    "azure-keyvault-secrets",
+    "hvac",
 ]
 
 classifiers = [
