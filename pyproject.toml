@@ -17,6 +17,7 @@ dependencies = [
     "azure-identity",
     "azure-keyvault-secrets",
     "hvac",
+    "google-cloud-secret-manager",
 ]
 
 classifiers = [
