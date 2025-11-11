@@ -11,3 +11,6 @@ boto3
 # Azure Key Vault
 azure-identity
 azure-keyvault-secrets
+
+# Google Secret Manager
+google-cloud-secret-manager
