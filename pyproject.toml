@@ -18,6 +18,7 @@ dependencies = [
     "azure-keyvault-secrets",
     "hvac",
     "google-cloud-secret-manager",
+    "pyodbc",
 ]
 
 classifiers = [
