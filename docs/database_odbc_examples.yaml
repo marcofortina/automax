@@ -1,0 +1,57 @@
+# ODBC Connection String Examples for Different Databases
+
+# SQL Server
+sql_server_example: |
+  plugin: execute_db_query
+  config:
+    connection_string: "DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=mydb;UID=user;PWD=password"
+    query: "SELECT * FROM users"
+    fetch: "all"
+
+# PostgreSQL
+postgresql_example: |
+  plugin: execute_db_query
+  config:
+    connection_string: "DRIVER={PostgreSQL Unicode};SERVER=localhost;PORT=5432;DATABASE=mydb;UID=user;PWD=password"
+    query: "SELECT * FROM users"
+    fetch: "all"
+
+# MySQL
+mysql_example: |
+  plugin: execute_db_query
+  config:
+    connection_string: "DRIVER={MySQL ODBC 8.0 Unicode Driver};SERVER=localhost;PORT=3306;DATABASE=mydb;USER=user;PASSWORD=password"
+    query: "SELECT * FROM users"
+    fetch: "all"
+
+# Oracle
+oracle_example: |
+  plugin: execute_db_query
+  config:
+    connection_string: "DRIVER={Oracle ODBC Driver};DBQ=localhost:1521/XE;UID=system;PWD=password"
+    query: "SELECT * FROM users"
+    fetch: "all"
+
+# SQLite
+sqlite_example: |
+  plugin: execute_db_query
+  config:
+    connection_string: "DRIVER={SQLite3 ODBC Driver};Database=/path/to/database.db"
+    query: "SELECT * FROM users"
+    fetch: "all"
+
+# Connection Test
+connection_test: |
+  plugin: check_db_connection
+  config:
+    connection_string: "DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=mydb;UID=user;PWD=password"
+
+# List Available Drivers
+list_drivers: |
+  plugin: get_odbc_drivers
+  config: {}
+
+# List Data Sources
+list_data_sources: |
+  plugin: get_odbc_data_sources
+  config: {}
