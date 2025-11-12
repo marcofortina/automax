@@ -6,11 +6,11 @@ Handles centralized logging to console, file, optional JSON, and error file.
 """
 
 import atexit
+from datetime import datetime
 import json
 import logging
-import sys
-from datetime import datetime
 from pathlib import Path
+import sys
 
 # Logger name constant
 LOGGER_NAME = "automax"

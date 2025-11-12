@@ -7,8 +7,8 @@ Contains the main execution logic and can be used programmatically:
 
 """
 
-import time
 from pathlib import Path
+import time
 from typing import List
 
 from automax.core.managers.config_manager import ConfigManager

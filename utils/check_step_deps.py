@@ -9,8 +9,8 @@ Scans all step directories and validates that:
 """
 
 import argparse
-import sys
 from pathlib import Path
+import sys
 
 from automax.core.exceptions import AutomaxError
 from automax.core.managers.plugin_manager import PluginManager

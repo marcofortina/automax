@@ -2,8 +2,8 @@
 Plugin for SSH command execution utility.
 """
 
-import subprocess
 from pathlib import Path
+import subprocess
 
 from automax.core.exceptions import AutomaxError
 

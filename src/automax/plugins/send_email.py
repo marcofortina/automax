@@ -2,8 +2,8 @@
 Plugin for sending email utility.
 """
 
-import smtplib
 from email.mime.text import MIMEText
+import smtplib
 
 from automax.core.exceptions import AutomaxError
 

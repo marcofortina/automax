@@ -10,8 +10,8 @@ import argparse
 import atexit
 import fcntl
 import os
-import sys
 from pathlib import Path
+import sys
 
 import psutil
 

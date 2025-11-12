@@ -7,8 +7,8 @@ Validates a specific step YAML against schema, plugins, and config placeholders.
 """
 
 import argparse
-import sys
 from pathlib import Path
+import sys
 
 from automax.core.exceptions import AutomaxError
 from automax.core.managers.config_manager import ConfigManager
