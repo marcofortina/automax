@@ -38,6 +38,7 @@ def azure_get_secret(
 
     Raises:
         AutomaxError: If fail_fast is True and operation fails.
+
     """
     try:
         # Initialize credential based on authentication method
@@ -115,6 +116,7 @@ def azure_set_secret(
 
     Raises:
         AutomaxError: If fail_fast is True and operation fails.
+
     """
     try:
         # Initialize credential based on authentication method

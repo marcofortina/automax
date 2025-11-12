@@ -4,10 +4,11 @@ Core orchestrator for Automax.
 Contains the main execution logic and can be used programmatically:
     from automax import run_automax
     run_automax(steps=["1", "2"], dry_run=True)
+
 """
 
-import time
 from pathlib import Path
+import time
 from typing import List
 
 from automax.core.managers.config_manager import ConfigManager
@@ -19,7 +20,9 @@ from automax.core.utils.log_utils import print_main_result
 
 
 def _parse_execution_plan(steps: List[str]) -> dict:
-    """Convert CLI step strings into execution plan dictionary."""
+    """
+    Convert CLI step strings into execution plan dictionary.
+    """
     plan = {}
     for arg in steps:
         if ":" in arg:
@@ -43,6 +46,7 @@ def run_automax(
 
     Returns:
         int: Exit code (0 = success).
+
     """
     steps = steps or []
 

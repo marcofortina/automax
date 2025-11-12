@@ -1,8 +1,9 @@
 """
 Sub-Step Manager for Automa.
 
-Handles the execution of sub-steps within a step, including parameter resolution,
-plugin invocation, retries, and output context management.
+Handles the execution of sub-steps within a step, including parameter resolution, plugin
+invocation, retries, and output context management.
+
 """
 
 import os
@@ -15,8 +16,9 @@ class SubStepManager:
     """
     Manager class for executing sub-steps.
 
-    Resolves placeholders and environment variables in parameters,
-    invokes plugins with retries, and manages output context.
+    Resolves placeholders and environment variables in parameters, invokes plugins with
+    retries, and manages output context.
+
     """
 
     def __init__(
@@ -31,6 +33,7 @@ class SubStepManager:
             plugin_manager: Plugin manager instance.
             step_id (str): Current step ID.
             substeps_cfg (list[dict]): List of sub-step configurations from YAML.
+
         """
         self.cfg = cfg
         self.logger = logger
@@ -52,6 +55,7 @@ class SubStepManager:
 
         Raises:
             AutomaxError: On sub-step errors.
+
         """
         if not substep_ids:
             substep_ids = [sub["id"] for sub in self.substeps_cfg]
@@ -121,6 +125,7 @@ class SubStepManager:
 
         Returns:
             dict: Resolved parameters.
+
         """
         resolved = {}
         for k, v in params.items():

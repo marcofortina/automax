@@ -1,14 +1,15 @@
 """
 Plugin manager for the Automax project.
 
-Responsible for dynamically discovering, loading, and managing plugin utilities
-from the plugins/ directory. Each plugin must define REGISTER_UTILITIES
-as a list of (name, func) tuples, and optionally SCHEMA for validation.
+Responsible for dynamically discovering, loading, and managing plugin utilities from the
+plugins/ directory. Each plugin must define REGISTER_UTILITIES as a list of (name, func)
+tuples, and optionally SCHEMA for validation.
+
 """
 
 import importlib.util
-import sys
 from pathlib import Path
+import sys
 
 
 class PluginManager:
@@ -23,6 +24,7 @@ class PluginManager:
         Args:
             logger (optional): Logger instance for debug/info/error messages.
             plugins_dir (str or Path): Path to the directory containing plugin files.
+
         """
         self.plugins_dir = Path(plugins_dir).expanduser().resolve()
         self.logger = logger
@@ -31,11 +33,13 @@ class PluginManager:
 
     def load_plugins(self):
         """
-        Dynamically load plugins from the plugins/ directory and register their utilities and schemas.
+        Dynamically load plugins from the plugins/ directory and register their
+        utilities and schemas.
 
-        Each plugin module must define REGISTER_UTILITIES as a list of (name, func) tuples.
-        Optionally defines SCHEMA as a dict for param validation.
-        Logs errors if loading fails but continues.
+        Each plugin module must define REGISTER_UTILITIES as a list of (name, func)
+        tuples. Optionally defines SCHEMA as a dict for param validation. Logs errors if
+        loading fails but continues.
+
         """
         if not self.plugins_dir.exists():
             if self.logger:
@@ -92,6 +96,7 @@ class PluginManager:
 
         Raises:
             KeyError: If the utility is not registered
+
         """
         if name not in self.registry:
             raise KeyError(
@@ -111,16 +116,21 @@ class PluginManager:
 
         Raises:
             KeyError: If no schema defined.
+
         """
         if name not in self.schemas:
             raise KeyError(f"No SCHEMA defined for utility '{name}'")
         return self.schemas[name]
 
     def clear_registry(self):
-        """Clear the current plugin registry and schemas (useful for testing or reloads)."""
+        """
+        Clear the current plugin registry and schemas (useful for testing or reloads).
+        """
         self.registry.clear()
         self.schemas.clear()
 
     def list_plugins(self):
-        """Return a list of all registered plugin names."""
+        """
+        Return a list of all registered plugin names.
+        """
         return list(self.registry.keys())

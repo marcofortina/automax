@@ -32,6 +32,7 @@ def get_secret_google_secret_manager(config: Dict[str, Any], logger=None):
 
     Raises:
         AutomaxError: If secret retrieval fails and fail_fast is True
+
     """
     fail_fast = config.get("fail_fast", True)
     secret_id = config.get("secret_id")
@@ -100,7 +101,9 @@ def get_secret_google_secret_manager(config: Dict[str, Any], logger=None):
 
 
 def _get_credentials(config: Dict[str, Any]):
-    """Get GCP credentials from config or environment."""
+    """
+    Get GCP credentials from config or environment.
+    """
     credentials_json = config.get("credentials_json")
 
     if credentials_json:

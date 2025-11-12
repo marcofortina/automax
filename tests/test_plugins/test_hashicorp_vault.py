@@ -11,15 +11,21 @@ from automax.plugins.hashicorp_vault import vault_read_secret, vault_write_secre
 
 
 class TestHashicorpVaultPlugin:
-    """Test suite for Hashicorp Vault plugin."""
+    """
+    Test suite for Hashicorp Vault plugin.
+    """
 
     def setup_method(self):
-        """Set up test fixtures."""
+        """
+        Set up test fixtures.
+        """
         self.mock_logger = Mock()
 
     @patch("automax.plugins.hashicorp_vault.hvac.Client")
     def test_vault_read_secret_success_token_auth(self, mock_client):
-        """Test successful secret reading with token authentication."""
+        """
+        Test successful secret reading with token authentication.
+        """
         # Mock setup
         mock_instance = Mock()
         mock_instance.is_authenticated.return_value = True
@@ -47,7 +53,9 @@ class TestHashicorpVaultPlugin:
 
     @patch("automax.plugins.hashicorp_vault.hvac.Client")
     def test_vault_read_secret_success_approle_auth(self, mock_client):
-        """Test successful secret reading with AppRole authentication."""
+        """
+        Test successful secret reading with AppRole authentication.
+        """
         # Mock setup
         mock_instance = Mock()
         mock_instance.is_authenticated.return_value = True
@@ -77,7 +85,9 @@ class TestHashicorpVaultPlugin:
 
     @patch("automax.plugins.hashicorp_vault.hvac.Client")
     def test_vault_read_secret_kv_v1(self, mock_client):
-        """Test reading secret from KV v1 engine."""
+        """
+        Test reading secret from KV v1 engine.
+        """
         # Mock setup
         mock_instance = Mock()
         mock_instance.is_authenticated.return_value = True
@@ -103,7 +113,9 @@ class TestHashicorpVaultPlugin:
         assert result == {"password": "v1-secret"}
 
     def test_vault_read_secret_missing_token(self):
-        """Test missing token in auth_config."""
+        """
+        Test missing token in auth_config.
+        """
         with pytest.raises(AutomaxError) as exc_info:
             vault_read_secret(
                 vault_url="https://vault.example.com",
@@ -117,7 +129,9 @@ class TestHashicorpVaultPlugin:
         )
 
     def test_vault_read_secret_missing_approle_credentials(self):
-        """Test missing AppRole credentials."""
+        """
+        Test missing AppRole credentials.
+        """
         with pytest.raises(AutomaxError) as exc_info:
             vault_read_secret(
                 vault_url="https://vault.example.com",
@@ -132,7 +146,9 @@ class TestHashicorpVaultPlugin:
 
     @patch("automax.plugins.hashicorp_vault.hvac.Client")
     def test_vault_read_secret_authentication_failed(self, mock_client):
-        """Test failed Vault authentication."""
+        """
+        Test failed Vault authentication.
+        """
         # Mock setup
         mock_instance = Mock()
         mock_instance.is_authenticated.return_value = False
@@ -150,7 +166,9 @@ class TestHashicorpVaultPlugin:
 
     @patch("automax.plugins.hashicorp_vault.hvac.Client")
     def test_vault_read_secret_fail_fast_false(self, mock_client):
-        """Test read secret with fail_fast=False."""
+        """
+        Test read secret with fail_fast=False.
+        """
         # Mock setup
         mock_instance = Mock()
         mock_instance.is_authenticated.return_value = False
@@ -170,7 +188,9 @@ class TestHashicorpVaultPlugin:
 
     @patch("automax.plugins.hashicorp_vault.hvac.Client")
     def test_vault_write_secret_success(self, mock_client):
-        """Test successful secret writing."""
+        """
+        Test successful secret writing.
+        """
         # Mock setup
         mock_instance = Mock()
         mock_instance.is_authenticated.return_value = True
@@ -196,7 +216,9 @@ class TestHashicorpVaultPlugin:
 
     @patch("automax.plugins.hashicorp_vault.hvac.Client")
     def test_vault_write_secret_kv_v1(self, mock_client):
-        """Test writing secret to KV v1 engine."""
+        """
+        Test writing secret to KV v1 engine.
+        """
         # Mock setup
         mock_instance = Mock()
         mock_instance.is_authenticated.return_value = True
@@ -221,7 +243,9 @@ class TestHashicorpVaultPlugin:
 
     @patch("automax.plugins.hashicorp_vault.hvac.Client")
     def test_vault_write_secret_exception_handling(self, mock_client):
-        """Test exception handling in write secret."""
+        """
+        Test exception handling in write secret.
+        """
         # Mock setup
         mock_instance = Mock()
         mock_instance.is_authenticated.return_value = True
@@ -244,7 +268,9 @@ class TestHashicorpVaultPlugin:
         assert result is False
 
     def test_vault_unsupported_auth_method(self):
-        """Test unsupported authentication method."""
+        """
+        Test unsupported authentication method.
+        """
         with pytest.raises(AutomaxError) as exc_info:
             vault_read_secret(
                 vault_url="https://vault.example.com",

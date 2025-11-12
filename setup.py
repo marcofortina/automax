@@ -2,6 +2,7 @@
 setup.py for Automax package.
 
 Allows installation as a Python package with CLI entry point.
+
 """
 
 from setuptools import setup

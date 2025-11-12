@@ -2,8 +2,8 @@
 Plugin for sending email utility.
 """
 
-import smtplib
 from email.mime.text import MIMEText
+import smtplib
 
 from automax.core.exceptions import AutomaxError
 
@@ -39,6 +39,7 @@ def send_email(
 
     Raises:
         AutomaxError: If fail_fast is True and sending fails, with level 'FATAL'.
+
     """
     from automax.core.utils.common_utils import echo
 

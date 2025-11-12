@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 Offline config checker for Automax.
+
 Validates config YAML structure and required keys.
+
 """
 
 import argparse

@@ -2,8 +2,8 @@
 Plugin for SSH command execution utility.
 """
 
-import subprocess
 from pathlib import Path
+import subprocess
 
 from automax.core.exceptions import AutomaxError
 
@@ -39,6 +39,7 @@ def run_ssh_command(
     Raises:
         FileNotFoundError: If private key file not found
         AutomaxError: if fail_fast is True and command fails, with level 'FATAL'
+
     """
     from automax.core.utils.common_utils import echo
 

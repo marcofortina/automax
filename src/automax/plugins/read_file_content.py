@@ -21,6 +21,7 @@ def read_file_content(file_path: str, logger=None, fail_fast=True):
 
     Raises:
         AutomaxError: If fail_fast is True and reading fails, with level 'FATAL'.
+
     """
     from automax.core.utils.common_utils import echo
 

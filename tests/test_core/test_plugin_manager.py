@@ -13,7 +13,9 @@ from automax.core.managers.plugin_manager import PluginManager
 def clean_plugins(logger):
     """
     Ensure a clean plugin registry and sys.modules cache before each test.
+
     Provides a fresh PluginManager instance.
+
     """
     # Clear Python module cache for plugins
     for mod in list(sys.modules.keys()):
@@ -28,7 +30,9 @@ def clean_plugins(logger):
 
 
 def test_load_plugins_success(tmp_path, logger, clean_plugins):
-    """Verify that valid plugins are loaded and registered correctly."""
+    """
+    Verify that valid plugins are loaded and registered correctly.
+    """
     plugins_dir = tmp_path / "plugins"
     plugins_dir.mkdir()
 
@@ -68,7 +72,9 @@ SCHEMA = {'host': {'type': str, 'required': True}}
 
 
 def test_load_plugins_duplicate(tmp_path, logger, clean_plugins):
-    """Verify that duplicate utility names raise ValueError."""
+    """
+    Verify that duplicate utility names raise ValueError.
+    """
     plugins_dir = tmp_path / "plugins"
     plugins_dir.mkdir()
     (plugins_dir / "plugin1.py").write_text(
@@ -84,7 +90,9 @@ def test_load_plugins_duplicate(tmp_path, logger, clean_plugins):
 
 
 def test_load_plugins_failure(tmp_path, logger, clean_plugins, caplog):
-    """Verify that a broken plugin logs an error and continues loading others."""
+    """
+    Verify that a broken plugin logs an error and continues loading others.
+    """
     plugins_dir = tmp_path / "plugins"
     plugins_dir.mkdir()
     (plugins_dir / "bad_plugin.py").write_text("invalid syntax")
@@ -101,7 +109,9 @@ def test_load_plugins_failure(tmp_path, logger, clean_plugins, caplog):
 
 
 def test_get_plugin_success(tmp_path, logger, clean_plugins):
-    """Verify that get_plugin() retrieves a valid utility function."""
+    """
+    Verify that get_plugin() retrieves a valid utility function.
+    """
     plugins_dir = tmp_path / "plugins"
     plugins_dir.mkdir()
 
@@ -124,7 +134,9 @@ REGISTER_UTILITIES = [("dummy_func", dummy_func)]
 
 
 def test_get_plugin_failure(tmp_path, logger, clean_plugins):
-    """Verify that get_plugin() raises KeyError when utility not found."""
+    """
+    Verify that get_plugin() raises KeyError when utility not found.
+    """
     plugins_dir = tmp_path / "plugins"
     plugins_dir.mkdir()
 
@@ -141,7 +153,9 @@ def test_get_plugin_failure(tmp_path, logger, clean_plugins):
 
 
 def test_get_schema_success(tmp_path, logger, clean_plugins):
-    """Verify that get_schema() retrieves a valid schema."""
+    """
+    Verify that get_schema() retrieves a valid schema.
+    """
     plugins_dir = tmp_path / "plugins"
     plugins_dir.mkdir()
 
@@ -165,7 +179,9 @@ SCHEMA = {'param': {'type': str, 'required': True}}
 
 
 def test_get_schema_failure(tmp_path, logger, clean_plugins):
-    """Verify that get_schema() raises KeyError when no schema defined."""
+    """
+    Verify that get_schema() raises KeyError when no schema defined.
+    """
     plugins_dir = tmp_path / "plugins"
     plugins_dir.mkdir()
 
