@@ -31,30 +31,34 @@ automax/
 │   └── workflows/
 │       ├── ci.yml           # Continuous Integration workflow (tests, lint, etc.)
 │       └── publish.yml      # Automated publishing to PyPI
-├── automax/                 # Core package (installabile come modulo Python)
-│   ├── __init__.py          # Package initializer
-│   ├── __main__.py          # Entry point for `python -m automax`
-│   ├── cli.py               # Command Line Interface
-│   ├── main.py              # Programmatic API entry point
-│   ├── core/                # Core logic: managers, validation, runtime components
-│   └── plugins/             # Extensible plugin system
+├── docs/                    # Documentation
+│   ├── CONTRIBUTING.md
+│   ├── database_odbc_examples.yaml
+│   └── DEVELOPER-NOTES.md
 ├── examples/                # Example configurations and demo data
 │   ├── config/
 │   │   └── config.yaml      # Example configuration file
 │   ├── .ssh/                # Demo SSH keys (for illustrative use only)
 │   └── steps/               # Example step definitions
 ├── logs/                    # Runtime logs (ignored by Git)
+├── src/                     # Source code directory
+│   └── automax/             # Core package (installable as Python module)
+│       ├── cli/             # Command Line Interface package
+│       ├── core/            # Core logic: managers, validation, runtime components
+│       │   ├── managers/    # Core managers (config, plugins, steps, validation)
+│       │   └── utils/       # Common utilities and logging
+│       ├── plugins/         # Extensible plugin system
+│       ├── __main__.py      # Entry point for `python -m automax`
+│       └── main.py          # Programmatic API entry point
 ├── tests/                   # Unit and integration test suite
-│   ├── __init__.py          # Marks test suite as a package
 │   ├── test_core/           # Tests for core components
 │   ├── test_plugins/        # Tests for plugins
 │   └── test_steps/          # Tests for step logic
-├── utils/                   # Developer utilities and scripts (e.g., offline validation)
+├── utils/                   # Developer utilities and scripts
 ├── pyproject.toml           # Modern build system configuration (PEP 621)
 ├── LICENSE.md               # License information
 ├── README.md                # Project overview and usage
 ├── requirements.txt         # Development dependencies
-├── setup.cfg                # Legacy setup configuration
 └── setup.py                 # Setup script (entry for setuptools)
 ```
 
@@ -72,29 +76,46 @@ python setup.py install
 
 ## ⚙️ CLI Usage
 
-### List steps
+Automax provides a modern command-line interface:
+
+### List available plugins
 ```bash
-automax --list --config examples/config/config.yaml
+automax plugins list
 ```
 
-### Validate only
+### List available steps
 ```bash
-automax 1 2 --validate-only --config examples/config/config.yaml
+automax list-steps --config examples/config/config.yaml
 ```
 
-### Dry-run
+### Validate configuration file
 ```bash
-automax 1 2 --dry-run --config examples/config/config.yaml
+automax validate --config examples/config/config.yaml
 ```
 
 ### Execute steps
 ```bash
-automax 1 2 --config examples/config/config.yaml
+automax run --config examples/config/config.yaml --steps 1,2
+```
+
+### Execute steps with variables
+```bash
+automax run --config examples/config/config.yaml --steps 1 --var timeout=10
+```
+
+### Dry-run execution
+```bash
+automax run --config examples/config/config.yaml --steps 1,2 --dry-run
 ```
 
 ### Help
 ```bash
 automax --help
+```
+
+### Version
+```bash
+automax --version
 ```
 
 ---
@@ -119,10 +140,10 @@ print("Exit code:", rc)
 During development (without 'pip install .'):
 ```bash
 # Option 1: Python module
-python -m automax --list --config examples/config/config.yaml
+python -m automax list-steps --config examples/config/config.yaml
 
 # Option 2: Direct script
-python src/automax/cli.py --list --config examples/config/config.yaml
+python src/automax/cli/cli.py list-steps --config examples/config/config.yaml
 ```
 
 ---
