@@ -38,6 +38,7 @@ dev = [
     "flake8",
     "isort",
     "coverage",
+    "docformatter",
 ]
 
 [project.urls]
@@ -49,3 +50,93 @@ Download = "https://github.com/marcofortina/automax/releases"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.docformatter]
+wrap-summaries = 88
+wrap-descriptions = 88
+blank = true
+make-summary-multi-line = true
+pre-summary-newline = true
+in-place = true
+recursive = true
+style = "nonumpy"
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".eggs",
+    ".tox",
+    ".venv",
+    "venv",
+    "logs",
+    "src/automax.egg-info",
+    "*.egg-info"
+]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_single_line = false
+force_sort_within_sections = true
+known_first_party = ["automax"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+skip = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".eggs",
+    ".tox",
+    ".venv",
+    "venv",
+    "logs",
+    "src/automax.egg-info",
+    "*.egg-info"
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  | \.git
+  | \.venv
+  | build
+  | dist
+  | \.eggs
+  | \.tox
+  | venv
+  | logs
+  | src/automax\.egg-info
+  |.*\.egg-info
+)/
+'''
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",
+    "E501",
+    "W503",
+    "C901",
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".eggs",
+    ".tox",
+    ".venv",
+    "venv",
+    "logs",
+    "src/automax.egg-info",
+    "*.egg-info"
+]
+per-file-ignores = [
+    "__init__.py:F401"
+]
