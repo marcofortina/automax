@@ -1,6 +1,8 @@
 """
 Plugin for database operations utility using ODBC.
+
 Provides universal database operations across all ODBC-compatible databases.
+
 """
 
 from typing import Any, Dict
@@ -33,6 +35,7 @@ def execute_db_query(config: Dict[str, Any], logger=None):
 
     Raises:
         AutomaxError: If query execution fails and fail_fast is True
+
     """
     fail_fast = config.get("fail_fast", True)
 
@@ -107,7 +110,9 @@ def execute_db_query(config: Dict[str, Any], logger=None):
 
 
 def _handle_query_results(cursor, fetch_type: str, query: str):
-    """Handle query results based on fetch type."""
+    """
+    Handle query results based on fetch type.
+    """
     query_lower = query.strip().lower()
 
     if fetch_type == "one":
@@ -147,6 +152,7 @@ def check_db_connection(config: Dict[str, Any], logger=None):
 
     Returns:
         bool: True if connection successful, False otherwise
+
     """
     fail_fast = config.get("fail_fast", True)
 
@@ -178,6 +184,7 @@ def get_odbc_drivers(config: Dict[str, Any], logger=None):
 
     Returns:
         List of available ODBC driver names
+
     """
     try:
         drivers = pyodbc.drivers()
@@ -202,6 +209,7 @@ def get_odbc_data_sources(config: Dict[str, Any], logger=None):
 
     Returns:
         Dictionary of available data sources
+
     """
     try:
         data_sources = pyodbc.dataSources()

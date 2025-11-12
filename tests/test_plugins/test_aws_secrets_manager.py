@@ -11,15 +11,21 @@ from automax.plugins.aws_secrets_manager import aws_create_secret, aws_get_secre
 
 
 class TestAWSSecretsManagerPlugin:
-    """Test suite for AWS Secrets Manager plugin."""
+    """
+    Test suite for AWS Secrets Manager plugin.
+    """
 
     def setup_method(self):
-        """Set up test fixtures."""
+        """
+        Set up test fixtures.
+        """
         self.mock_logger = Mock()
 
     @patch("automax.plugins.aws_secrets_manager.boto3.client")
     def test_aws_get_secret_success_json(self, mock_boto_client):
-        """Test successful secret retrieval with JSON data."""
+        """
+        Test successful secret retrieval with JSON data.
+        """
         # Mock setup
         mock_client = Mock()
         mock_client.get_secret_value.return_value = {
@@ -46,7 +52,9 @@ class TestAWSSecretsManagerPlugin:
 
     @patch("automax.plugins.aws_secrets_manager.boto3.client")
     def test_aws_get_secret_success_string(self, mock_boto_client):
-        """Test successful secret retrieval with string data."""
+        """
+        Test successful secret retrieval with string data.
+        """
         # Mock setup
         mock_client = Mock()
         mock_client.get_secret_value.return_value = {
@@ -65,7 +73,9 @@ class TestAWSSecretsManagerPlugin:
 
     @patch("automax.plugins.aws_secrets_manager.boto3.client")
     def test_aws_get_secret_with_credentials(self, mock_boto_client):
-        """Test secret retrieval with explicit credentials."""
+        """
+        Test secret retrieval with explicit credentials.
+        """
         # Mock setup
         mock_client = Mock()
         mock_client.get_secret_value.return_value = {
@@ -95,7 +105,9 @@ class TestAWSSecretsManagerPlugin:
 
     @patch("automax.plugins.aws_secrets_manager.boto3.client")
     def test_aws_get_secret_no_credentials_error(self, mock_boto_client):
-        """Test NoCredentialsError handling."""
+        """
+        Test NoCredentialsError handling.
+        """
         # Mock setup
         mock_boto_client.side_effect = NoCredentialsError()
 
@@ -109,7 +121,9 @@ class TestAWSSecretsManagerPlugin:
 
     @patch("automax.plugins.aws_secrets_manager.boto3.client")
     def test_aws_get_secret_client_error(self, mock_boto_client):
-        """Test ClientError handling."""
+        """
+        Test ClientError handling.
+        """
         # Mock setup
         mock_client = Mock()
         mock_client.get_secret_value.side_effect = ClientError(
@@ -133,7 +147,9 @@ class TestAWSSecretsManagerPlugin:
 
     @patch("automax.plugins.aws_secrets_manager.boto3.client")
     def test_aws_create_secret_success(self, mock_boto_client):
-        """Test successful secret creation."""
+        """
+        Test successful secret creation.
+        """
         # Mock setup
         mock_client = Mock()
         mock_boto_client.return_value = mock_client
@@ -159,7 +175,9 @@ class TestAWSSecretsManagerPlugin:
 
     @patch("automax.plugins.aws_secrets_manager.boto3.client")
     def test_aws_create_secret_string_data(self, mock_boto_client):
-        """Test secret creation with string data."""
+        """
+        Test secret creation with string data.
+        """
         # Mock setup
         mock_client = Mock()
         mock_boto_client.return_value = mock_client
@@ -179,7 +197,9 @@ class TestAWSSecretsManagerPlugin:
 
     @patch("automax.plugins.aws_secrets_manager.boto3.client")
     def test_aws_create_secret_no_credentials_error(self, mock_boto_client):
-        """Test NoCredentialsError handling in create secret."""
+        """
+        Test NoCredentialsError handling in create secret.
+        """
         # Mock setup
         mock_boto_client.side_effect = NoCredentialsError()
 
@@ -196,7 +216,9 @@ class TestAWSSecretsManagerPlugin:
 
     @patch("automax.plugins.aws_secrets_manager.boto3.client")
     def test_aws_create_secret_client_error(self, mock_boto_client):
-        """Test ClientError handling in create secret."""
+        """
+        Test ClientError handling in create secret.
+        """
         # Mock setup
         mock_client = Mock()
         mock_client.create_secret.side_effect = ClientError(

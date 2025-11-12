@@ -2,6 +2,7 @@
 Logger manager for Automax.
 
 Handles centralized logging to console, file, optional JSON, and error file.
+
 """
 
 import atexit
@@ -28,7 +29,8 @@ LEVEL_MAP = {
 
 class AlignedFormatter(logging.Formatter):
     """
-    Formatter that aligns level names and formats timestamps in ISO 8601 with local timezone.
+    Formatter that aligns level names and formats timestamps in ISO 8601 with local
+    timezone.
     """
 
     def formatTime(self, record, datefmt=None):
@@ -72,6 +74,7 @@ class LoggerManager:
             log_directory (str or Path, optional): Directory for log files.
             log_level (str): Logging level.
             json_log (bool): Enable JSON logging.
+
         """
         self.log_directory = Path(log_directory) if log_directory else Path("logs")
         self.log_directory.mkdir(parents=True, exist_ok=True)
@@ -185,7 +188,9 @@ class LoggerManager:
     # ----------------------
 
     def debug(self, msg):
-        """Log a message at DEBUG level."""
+        """
+        Log a message at DEBUG level.
+        """
         self._logger.debug(msg)
         self._write_json_record(
             self._logger.makeRecord(
@@ -195,7 +200,9 @@ class LoggerManager:
         self._ensure_log_file_exists()
 
     def info(self, msg):
-        """Log a message at INFO level."""
+        """
+        Log a message at INFO level.
+        """
         self._logger.info(msg)
         self._write_json_record(
             self._logger.makeRecord(
@@ -205,7 +212,9 @@ class LoggerManager:
         self._ensure_log_file_exists()
 
     def warning(self, msg):
-        """Log a message at WARNING level."""
+        """
+        Log a message at WARNING level.
+        """
         self._logger.warning(msg)
         self._write_json_record(
             self._logger.makeRecord(
@@ -215,7 +224,9 @@ class LoggerManager:
         self._ensure_log_file_exists()
 
     def error(self, msg):
-        """Log a message at ERROR level and write to .err file."""
+        """
+        Log a message at ERROR level and write to .err file.
+        """
         self._ensure_error_file_handler()
         self._logger.error(msg)
         self._write_json_record(
@@ -226,7 +237,9 @@ class LoggerManager:
         self._ensure_log_file_exists()
 
     def fatal(self, msg):
-        """Log a message at FATAL level and write to .err file."""
+        """
+        Log a message at FATAL level and write to .err file.
+        """
         self._ensure_error_file_handler()
         self._logger.critical(msg)
         self._write_json_record(
@@ -243,6 +256,7 @@ class LoggerManager:
         Args:
             level (str): Logging level ('DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL').
             msg (str): Message to log.
+
         """
         level = level.upper()
         if level == "FATAL":

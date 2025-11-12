@@ -3,6 +3,7 @@ Validation Manager for Automa.
 
 Validates YAML configurations, CLI arguments, and plugin parameters against schemas.
 Uses jsonschema for YAML structure validation.
+
 """
 
 from pathlib import Path
@@ -17,8 +18,9 @@ class ValidationManager:
     """
     Manager class for validating configurations and arguments.
 
-    Ensures YAML files conform to schema, plugin parameters are valid,
-    and CLI arguments reference existing steps.
+    Ensures YAML files conform to schema, plugin parameters are valid, and CLI arguments
+    reference existing steps.
+
     """
 
     STEP_SCHEMA = {
@@ -54,6 +56,7 @@ class ValidationManager:
             cfg (dict): Configuration dictionary.
             plugin_manager: Plugin manager instance.
             steps_dir (Path): Directory for step YAML files.
+
         """
         self.cfg = cfg
         self.plugin_manager = plugin_manager
@@ -71,6 +74,7 @@ class ValidationManager:
 
         Raises:
             AutomaxError: On validation failures.
+
         """
         yaml_path = (
             Path(self.steps_dir / f"step{step_id}" / f"step{step_id}.yaml")
@@ -137,6 +141,7 @@ class ValidationManager:
 
         Raises:
             AutomaxError: If invalid steps/sub-steps.
+
         """
         for step_id in execution_plan:
             yaml_path = (
@@ -159,6 +164,7 @@ class ValidationManager:
 
         Raises:
             AutomaxError: On param validation failures.
+
         """
         for key, spec in schema.items():
             if spec.get("required") and key not in params:

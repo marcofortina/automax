@@ -8,7 +8,9 @@ import zipfile
 
 
 def test_compress_file_success(tmp_path, logger, plugin_manager):
-    """Verify that file compression works for zip and tar.gz formats."""
+    """
+    Verify that file compression works for zip and tar.gz formats.
+    """
     source = tmp_path / "source.txt"
     source.write_text("data")
     dest_zip = tmp_path / "archive.zip"
@@ -21,7 +23,9 @@ def test_compress_file_success(tmp_path, logger, plugin_manager):
 
 
 def test_compress_file_dry_run(tmp_path, logger, plugin_manager):
-    """Verify that dry-run mode skips actual compression."""
+    """
+    Verify that dry-run mode skips actual compression.
+    """
     source = tmp_path / "source.txt"
     dest = tmp_path / "archive.zip"
     compress_file = plugin_manager.get_plugin("compress_file")
@@ -30,7 +34,9 @@ def test_compress_file_dry_run(tmp_path, logger, plugin_manager):
 
 
 def test_uncompress_file_success(tmp_path, logger, plugin_manager):
-    """Verify that compressed files are properly extracted."""
+    """
+    Verify that compressed files are properly extracted.
+    """
     # Create zip
     source_zip = tmp_path / "archive.zip"
     with zipfile.ZipFile(source_zip, "w") as zf:
@@ -49,7 +55,9 @@ def test_uncompress_file_success(tmp_path, logger, plugin_manager):
 
 
 def test_uncompress_file_dry_run(tmp_path, logger, plugin_manager):
-    """Verify that dry-run mode skips extraction."""
+    """
+    Verify that dry-run mode skips extraction.
+    """
     source = tmp_path / "archive.zip"
     dest = tmp_path / "extract"
     uncompress_file = plugin_manager.get_plugin("uncompress_file")
@@ -58,6 +66,8 @@ def test_uncompress_file_dry_run(tmp_path, logger, plugin_manager):
 
 
 def test_schema_loaded(plugin_manager):
-    """Verify SCHEMA is loaded for plugins."""
+    """
+    Verify SCHEMA is loaded for plugins.
+    """
     assert "compress_file" in plugin_manager.schemas
     assert "uncompress_file" in plugin_manager.schemas

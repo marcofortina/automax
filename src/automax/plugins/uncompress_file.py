@@ -24,6 +24,7 @@ def uncompress_file(
 
     Raises:
         AutomaxError: If fail_fast is True and uncompression fails, with level 'FATAL'.
+
     """
     from automax.core.utils.common_utils import echo
 

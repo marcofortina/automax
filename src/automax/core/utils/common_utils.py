@@ -5,6 +5,7 @@ Includes:
 - echo: unified message logging
 - Custom exceptions for error handling
 - Plugin loading for utilities
+
 """
 
 from automax.core.managers.logger_manager import LoggerManager
@@ -21,6 +22,7 @@ def echo(msg, logger: LoggerManager, level="INFO"):
 
     Returns:
         None
+
     """
     level = level.upper()
     if level == "DEBUG":

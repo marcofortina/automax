@@ -39,6 +39,7 @@ def run_ssh_command(
     Raises:
         FileNotFoundError: If private key file not found
         AutomaxError: if fail_fast is True and command fails, with level 'FATAL'
+
     """
     from automax.core.utils.common_utils import echo
 

@@ -38,6 +38,7 @@ def vault_read_secret(
 
     Raises:
         AutomaxError: If fail_fast is True and operation fails.
+
     """
     try:
         # Initialize Vault client
@@ -130,6 +131,7 @@ def vault_write_secret(
 
     Raises:
         AutomaxError: If fail_fast is True and operation fails.
+
     """
     try:
         # Initialize Vault client (same as read)

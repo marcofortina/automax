@@ -1,8 +1,9 @@
 """
 Command-line interface for Automax.
 
-Handles argparse, file locking, and delegates execution to the core main module.
-Keeps the CLI lightweight and focused on user interaction.
+Handles argparse, file locking, and delegates execution to the core main module. Keeps
+the CLI lightweight and focused on user interaction.
+
 """
 
 import argparse
@@ -28,6 +29,7 @@ def _acquire_lock() -> int:
 
     Raises:
         SystemExit: If another instance is already running.
+
     """
     if LOCK_FILE_PATH.exists():
         try:
@@ -52,7 +54,9 @@ def _acquire_lock() -> int:
 
 
 def _release_lock(lock_fd: int) -> None:
-    """Release the lock file and remove it."""
+    """
+    Release the lock file and remove it.
+    """
     fcntl.flock(lock_fd, fcntl.LOCK_UN)
     os.close(lock_fd)
     LOCK_FILE_PATH.unlink(missing_ok=True)
@@ -63,6 +67,7 @@ def cli_main() -> None:
     Entry point for the CLI.
 
     Parses arguments and delegates execution to the core orchestrator.
+
     """
     parser = argparse.ArgumentParser(
         description="Automax - YAML-driven automation framework", prog="automax"

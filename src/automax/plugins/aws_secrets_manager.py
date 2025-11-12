@@ -37,6 +37,7 @@ def aws_get_secret(
 
     Raises:
         AutomaxError: If fail_fast is True and operation fails.
+
     """
     try:
         # Initialize AWS client
@@ -122,6 +123,7 @@ def aws_create_secret(
 
     Raises:
         AutomaxError: If fail_fast is True and operation fails.
+
     """
     try:
         # Initialize AWS client

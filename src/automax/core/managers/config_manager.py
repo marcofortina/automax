@@ -2,6 +2,7 @@
 Configuration manager for Automax.
 
 Responsible for loading, validating, and providing access to configuration.
+
 """
 
 import os
@@ -17,6 +18,7 @@ class ConfigManager:
     Manager class for Automax configuration.
 
     Provides methods to load, validate, and access configuration data.
+
     """
 
     REQUIRED_SSH_FIELDS = ["private_key", "timeout"]
@@ -28,6 +30,7 @@ class ConfigManager:
 
         Args:
             config_file (str or dict, optional): Path to YAML config or preloaded dict.
+
         """
         self._cfg = None
         if config_file:
@@ -35,7 +38,9 @@ class ConfigManager:
 
     @property
     def cfg(self):
-        """Return the loaded configuration dictionary."""
+        """
+        Return the loaded configuration dictionary.
+        """
         if self._cfg is None:
             raise AutomaxError("Configuration has not been loaded yet", level="FATAL")
         return self._cfg
@@ -50,6 +55,7 @@ class ConfigManager:
         Raises:
             FileNotFoundError: If config file does not exist
             AutomaxError: If invalid YAML syntax or required fields are missing, with level 'FATAL'
+
         """
         if isinstance(config_file, dict):
             cfg = config_file
@@ -72,7 +78,9 @@ class ConfigManager:
         self._validate()
 
     def _validate(self):
-        """Run all validation checks on the loaded configuration."""
+        """
+        Run all validation checks on the loaded configuration.
+        """
         cfg = self._cfg
 
         # Validate SSH section

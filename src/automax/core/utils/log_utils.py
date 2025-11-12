@@ -13,6 +13,7 @@ def print_step_start(logger, step_id, description):
         logger: LoggerManager instance.
         step_id (str): Step ID.
         description (str): Step description.
+
     """
     banner = f"""
 **************************************************************************
@@ -31,6 +32,7 @@ def print_step_end(logger, step_id, result):
         logger: LoggerManager instance.
         step_id (str): Step ID.
         result (str): Result status (e.g., "OK" or "ERROR").
+
     """
     banner = f"""
 ==========================================================================
@@ -49,6 +51,7 @@ def print_substep_start(logger, step_id, substep_id, description):
         step_id (str): Step ID.
         substep_id (str): Sub-step ID.
         description (str): Sub-step description.
+
     """
     banner = f"""
 --------------------------------------------------------------------------
@@ -67,6 +70,7 @@ def print_substep_end(logger, step_id, substep_id, result):
         step_id (str): Step ID.
         substep_id (str): Sub-step ID.
         result (str): Result status (e.g., "OK" or "ERROR").
+
     """
     banner = f"""
 --------------------------------------------------------------------------
@@ -84,6 +88,7 @@ def print_main_result(logger, rc, elapsed=None):
         logger: LoggerManager instance.
         rc (int): Return code (0 for success, 1 for failure).
         elapsed (float, optional): Total execution time in seconds.
+
     """
     status = "SUCCESS" if rc == 0 else "FAILURE"
     banner = f"""

@@ -1,6 +1,8 @@
 """
 Tests for step execution in Automax using YAML configurations.
+
 Includes tests for StepManager, SubStepManager, and ValidationManager.
+
 """
 
 from pathlib import Path
@@ -16,7 +18,9 @@ from automax.core.managers.validation_manager import ValidationManager
 
 @pytest.fixture
 def mock_yaml(tmp_path):
-    """Create mock YAML files for step1 and step2 in a temporary directory."""
+    """
+    Create mock YAML files for step1 and step2 in a temporary directory.
+    """
     step1_dir = tmp_path / "step1"
     step1_dir.mkdir()
     (step1_dir / "step1.yaml").write_text(
@@ -56,14 +60,18 @@ substeps:
 
 
 def test_step1_success(cfg, logger, plugin_manager, mock_yaml):
-    """Verify step1 executes successfully with dry-run using mock YAML."""
+    """
+    Verify step1 executes successfully with dry-run using mock YAML.
+    """
     cfg["steps_dir"] = str(mock_yaml)
     step_mgr = StepManager(cfg, logger, plugin_manager)
     assert step_mgr.run(step_ids=["1"], dry_run=True) is True
 
 
 def test_step1_failure(cfg, logger, plugin_manager, mock_yaml, monkeypatch):
-    """Simulate failure in plugin for step1."""
+    """
+    Simulate failure in plugin for step1.
+    """
 
     def mock_utility(**kwargs):
         raise Exception("Simulated failure")
@@ -77,14 +85,18 @@ def test_step1_failure(cfg, logger, plugin_manager, mock_yaml, monkeypatch):
 
 
 def test_step2_success(cfg, logger, plugin_manager, mock_yaml):
-    """Verify step2 executes successfully with dry-run using mock YAML."""
+    """
+    Verify step2 executes successfully with dry-run using mock YAML.
+    """
     cfg["steps_dir"] = str(mock_yaml)
     step_mgr = StepManager(cfg, logger, plugin_manager)
     assert step_mgr.run(step_ids=["2"], dry_run=True) is True
 
 
 def test_substep_retry_success(cfg, logger, plugin_manager, mock_yaml):
-    """Test retry logic in SubStepManager on success after failure."""
+    """
+    Test retry logic in SubStepManager on success after failure.
+    """
     substeps_cfg = [
         {
             "id": "1",
@@ -110,7 +122,9 @@ def test_substep_retry_success(cfg, logger, plugin_manager, mock_yaml):
 
 
 def test_substep_context_output(cfg, logger, plugin_manager, mock_yaml):
-    """Test output context propagation between sub-steps."""
+    """
+    Test output context propagation between sub-steps.
+    """
     cfg["steps_dir"] = str(mock_yaml)
     step_mgr = StepManager(cfg, logger, plugin_manager)
 
@@ -129,14 +143,18 @@ def test_substep_context_output(cfg, logger, plugin_manager, mock_yaml):
 
 
 def test_validation_success(cfg, logger, plugin_manager, mock_yaml):
-    """Test successful validation of step YAML."""
+    """
+    Test successful validation of step YAML.
+    """
     cfg["steps_dir"] = str(mock_yaml)
     validator = ValidationManager(cfg, plugin_manager, Path(cfg["steps_dir"]))
     validator.validate_step_yaml("1")  # No exception means success
 
 
 def test_validation_failure_missing_param(cfg, logger, plugin_manager, tmp_path):
-    """Test validation failure due to missing required param."""
+    """
+    Test validation failure due to missing required param.
+    """
     invalid_yaml = tmp_path / "step1" / "step1.yaml"
     invalid_yaml.parent.mkdir()
     invalid_yaml.write_text(
@@ -156,7 +174,9 @@ substeps:
 
 
 def test_validation_failure_invalid_type(cfg, logger, plugin_manager, tmp_path):
-    """Test validation failure due to invalid param type."""
+    """
+    Test validation failure due to invalid param type.
+    """
     invalid_yaml = tmp_path / "step1" / "step1.yaml"
     invalid_yaml.parent.mkdir()
     invalid_yaml.write_text(
@@ -177,7 +197,9 @@ substeps:
 
 
 def test_validation_failure_missing_placeholder(cfg, logger, plugin_manager, tmp_path):
-    """Test validation failure due to missing placeholder key."""
+    """
+    Test validation failure due to missing placeholder key.
+    """
     invalid_yaml = tmp_path / "step1" / "step1.yaml"
     invalid_yaml.parent.mkdir()
     invalid_yaml.write_text(
@@ -198,14 +220,18 @@ substeps:
 
 
 def test_cli_args_validation_success(cfg, logger, plugin_manager, mock_yaml):
-    """Test successful CLI args validation."""
+    """
+    Test successful CLI args validation.
+    """
     cfg["steps_dir"] = str(mock_yaml)
     validator = ValidationManager(cfg, plugin_manager, Path(cfg["steps_dir"]))
     validator.validate_cli_args({"1": None, "2": None})  # No exception
 
 
 def test_cli_args_validation_failure(cfg, logger, plugin_manager, mock_yaml):
-    """Test CLI args validation failure for non-existent step."""
+    """
+    Test CLI args validation failure for non-existent step.
+    """
     cfg["steps_dir"] = str(mock_yaml)
     validator = ValidationManager(cfg, plugin_manager, Path(cfg["steps_dir"]))
     with pytest.raises(AutomaxError, match="Invalid step ID 3"):

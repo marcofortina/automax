@@ -31,6 +31,7 @@ def compress_file(
 
     Raises:
         AutomaxError: If fail_fast is True and compression fails, with level 'FATAL'.
+
     """
     from automax.core.utils.common_utils import echo
 
