@@ -7,7 +7,7 @@ Exposes the public API for programmatic usage.
 __version__ = "0.1.1"
 __author__ = "Marco Fortina"
 
-from .cli import cli_main
+from .cli.cli import cli_main
 from .main import run_automax
 
 __all__ = [

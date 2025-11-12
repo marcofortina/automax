@@ -1,8 +1,8 @@
 """
-Allows running Automax via: python -m automax
+Entry point for python -m automax.
 """
 
-from .cli import cli_main
+from automax.cli import cli_main
 
 if __name__ == "__main__":
     cli_main()
