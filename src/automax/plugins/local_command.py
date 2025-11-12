@@ -22,6 +22,7 @@ def run_local_command(command: str, logger=None, fail_fast=True, dry_run=False):
 
     Raises:
         AutomaxError: if fail_fast is True and command fails, with level 'FATAL'
+
     """
     from automax.core.utils.common_utils import echo
 

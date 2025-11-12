@@ -3,6 +3,7 @@
 Offline YAML validator for Automax step files.
 
 Validates a specific step YAML against schema, plugins, and config placeholders.
+
 """
 
 import argparse
@@ -16,7 +17,9 @@ from automax.core.managers.validation_manager import ValidationManager
 
 
 def parse_args():
-    """Parse command line arguments."""
+    """
+    Parse command line arguments.
+    """
     parser = argparse.ArgumentParser(
         description="Validate an Automax step YAML file against schema and configuration."
     )

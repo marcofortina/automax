@@ -22,6 +22,7 @@ def write_file_content(
 
     Raises:
         AutomaxError: If fail_fast is True and writing fails, with level 'FATAL'.
+
     """
     from automax.core.utils.common_utils import echo
 

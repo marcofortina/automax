@@ -37,6 +37,7 @@ def run_http_request(
 
     Raises:
         AutomaxError: If fail_fast is True and request fails, with level 'FATAL'.
+
     """
     from automax.core.utils.common_utils import echo
 

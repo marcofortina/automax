@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 YAML linter for Automax steps and config files.
+
 Checks for syntax errors and basic formatting issues.
+
 """
 
 import argparse

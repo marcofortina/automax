@@ -25,6 +25,7 @@ def check_network_connection(
 
     Raises:
         AutomaxError: If fail_fast is True and check fails, with level 'FATAL'.
+
     """
     from automax.core.utils.common_utils import echo
 

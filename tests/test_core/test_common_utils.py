@@ -7,14 +7,18 @@ from automax.core.utils.common_utils import echo
 
 
 def test_automax_error():
-    """Verify AutomaxError stores message and level correctly."""
+    """
+    Verify AutomaxError stores message and level correctly.
+    """
     err = AutomaxError("test", level="FATAL")
     assert err.message == "test"
     assert err.level == "FATAL"
 
 
 def test_echo_logs(caplog):
-    """Verify echo logs messages at correct level using a dummy logger."""
+    """
+    Verify echo logs messages at correct level using a dummy logger.
+    """
 
     class DummyLogger:
         def __init__(self):

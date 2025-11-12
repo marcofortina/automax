@@ -1,4 +1,6 @@
-"""Tests for Google Cloud Secret Manager plugin."""
+"""
+Tests for Google Cloud Secret Manager plugin.
+"""
 
 from unittest.mock import Mock, patch
 
@@ -10,13 +12,17 @@ from automax.plugins.google_secret_manager import get_secret_google_secret_manag
 
 
 class TestGoogleSecretManagerPlugin:
-    """Test cases for Google Secret Manager plugin."""
+    """
+    Test cases for Google Secret Manager plugin.
+    """
 
     @patch(
         "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
     )
     def test_get_secret_success(self, mock_client_class):
-        """Test successful secret retrieval."""
+        """
+        Test successful secret retrieval.
+        """
         # Mock client and response
         mock_client = Mock()
         mock_response = Mock()
@@ -37,7 +43,9 @@ class TestGoogleSecretManagerPlugin:
         "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
     )
     def test_get_secret_with_custom_version(self, mock_client_class):
-        """Test secret retrieval with custom version."""
+        """
+        Test secret retrieval with custom version.
+        """
         mock_client = Mock()
         mock_response = Mock()
         mock_response.payload.data = b"my-secret-value"
@@ -61,7 +69,9 @@ class TestGoogleSecretManagerPlugin:
         "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
     )
     def test_get_secret_permission_denied_fail_fast(self, mock_client_class):
-        """Test secret retrieval with permission denied and fail_fast=True."""
+        """
+        Test secret retrieval with permission denied and fail_fast=True.
+        """
         mock_client = Mock()
         mock_client.access_secret_version.side_effect = exceptions.PermissionDenied(
             "Permission denied"
@@ -81,7 +91,9 @@ class TestGoogleSecretManagerPlugin:
         "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
     )
     def test_get_secret_permission_denied_no_fail_fast(self, mock_client_class):
-        """Test secret retrieval with permission denied and fail_fast=False."""
+        """
+        Test secret retrieval with permission denied and fail_fast=False.
+        """
         mock_client = Mock()
         mock_client.access_secret_version.side_effect = exceptions.PermissionDenied(
             "Permission denied"
@@ -101,7 +113,9 @@ class TestGoogleSecretManagerPlugin:
         "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
     )
     def test_get_secret_not_found(self, mock_client_class):
-        """Test secret retrieval with not found error."""
+        """
+        Test secret retrieval with not found error.
+        """
         mock_client = Mock()
         mock_client.access_secret_version.side_effect = exceptions.NotFound(
             "Secret not found"
@@ -118,7 +132,9 @@ class TestGoogleSecretManagerPlugin:
             get_secret_google_secret_manager(config)
 
     def test_get_secret_missing_secret_id(self):
-        """Test secret retrieval without secret_id."""
+        """
+        Test secret retrieval without secret_id.
+        """
         config = {"project_id": "test-project"}
 
         with pytest.raises(AutomaxError, match="secret_id is required"):
@@ -128,7 +144,9 @@ class TestGoogleSecretManagerPlugin:
         "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
     )
     def test_get_secret_missing_project_id(self, mock_client_class):
-        """Test secret retrieval without project ID."""
+        """
+        Test secret retrieval without project ID.
+        """
         mock_client = Mock()
         mock_client_class.return_value = mock_client
 
@@ -142,7 +160,9 @@ class TestGoogleSecretManagerPlugin:
         "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
     )
     def test_credentials_from_json(self, mock_client_class, mock_credentials):
-        """Test authentication with service account JSON."""
+        """
+        Test authentication with service account JSON.
+        """
         credentials_json = '{"type": "service_account", "project_id": "test-project"}'
         config = {
             "credentials_json": credentials_json,
@@ -158,7 +178,9 @@ class TestGoogleSecretManagerPlugin:
         "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
     )
     def test_default_credentials(self, mock_client_class):
-        """Test authentication with default credentials."""
+        """
+        Test authentication with default credentials.
+        """
         config = {"project_id": "test-project", "secret_id": "my-secret"}
 
         get_secret_google_secret_manager(config)
@@ -169,7 +191,9 @@ class TestGoogleSecretManagerPlugin:
         "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
     )
     def test_get_secret_with_logger(self, mock_client_class):
-        """Test secret retrieval with logger parameter."""
+        """
+        Test secret retrieval with logger parameter.
+        """
         mock_client = Mock()
         mock_response = Mock()
         mock_response.payload.data = b"my-secret-value"

@@ -5,6 +5,7 @@ Scans all step directories and validates that:
 - YAML file exists for each step
 - All sub-step plugins exist in the plugins registry
 - Config placeholders in params are resolvable (optional)
+
 """
 
 import argparse
@@ -17,7 +18,9 @@ from automax.core.managers.validation_manager import ValidationManager
 
 
 def parse_args():
-    """Parse command line arguments."""
+    """
+    Parse command line arguments.
+    """
     parser = argparse.ArgumentParser(
         description="Check step dependencies in Automax offline."
     )

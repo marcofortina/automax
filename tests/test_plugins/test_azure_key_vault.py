@@ -12,10 +12,14 @@ from automax.plugins.azure_key_vault import azure_get_secret, azure_set_secret
 
 
 class TestAzureKeyVaultPlugin:
-    """Test suite for Azure Key Vault plugin."""
+    """
+    Test suite for Azure Key Vault plugin.
+    """
 
     def setup_method(self):
-        """Set up test fixtures."""
+        """
+        Set up test fixtures.
+        """
         self.mock_logger = Mock()
 
     @patch("automax.plugins.azure_key_vault.SecretClient")
@@ -23,7 +27,9 @@ class TestAzureKeyVaultPlugin:
     def test_azure_get_secret_success_default_auth(
         self, mock_credential, mock_secret_client
     ):
-        """Test successful secret retrieval with default authentication."""
+        """
+        Test successful secret retrieval with default authentication.
+        """
         # Mock setup
         mock_credential_instance = Mock()
         mock_credential.return_value = mock_credential_instance
@@ -57,7 +63,9 @@ class TestAzureKeyVaultPlugin:
     def test_azure_get_secret_success_client_secret_auth(
         self, mock_credential, mock_secret_client
     ):
-        """Test successful secret retrieval with client secret authentication."""
+        """
+        Test successful secret retrieval with client secret authentication.
+        """
         # Mock setup
         mock_credential_instance = Mock()
         mock_credential.return_value = mock_credential_instance
@@ -92,7 +100,9 @@ class TestAzureKeyVaultPlugin:
     def test_azure_get_secret_resource_not_found(
         self, mock_credential, mock_secret_client
     ):
-        """Test ResourceNotFoundError handling."""
+        """
+        Test ResourceNotFoundError handling.
+        """
         # Mock setup
         mock_credential_instance = Mock()
         mock_credential.return_value = mock_credential_instance
@@ -115,7 +125,9 @@ class TestAzureKeyVaultPlugin:
         assert result == ""
 
     def test_azure_get_secret_missing_client_secret_credentials(self):
-        """Test missing client secret credentials."""
+        """
+        Test missing client secret credentials.
+        """
         with pytest.raises(AutomaxError) as exc_info:
             azure_get_secret(
                 vault_url="https://test-vault.vault.azure.net/",
@@ -134,7 +146,9 @@ class TestAzureKeyVaultPlugin:
     @patch("automax.plugins.azure_key_vault.SecretClient")
     @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
     def test_azure_set_secret_success(self, mock_credential, mock_secret_client):
-        """Test successful secret setting."""
+        """
+        Test successful secret setting.
+        """
         # Mock setup
         mock_credential_instance = Mock()
         mock_credential.return_value = mock_credential_instance
@@ -162,7 +176,9 @@ class TestAzureKeyVaultPlugin:
     def test_azure_set_secret_client_secret_auth(
         self, mock_credential, mock_secret_client
     ):
-        """Test secret setting with client secret authentication."""
+        """
+        Test secret setting with client secret authentication.
+        """
         # Mock setup
         mock_credential_instance = Mock()
         mock_credential.return_value = mock_credential_instance
@@ -194,7 +210,9 @@ class TestAzureKeyVaultPlugin:
     def test_azure_set_secret_exception_handling(
         self, mock_credential, mock_secret_client
     ):
-        """Test exception handling in set secret."""
+        """
+        Test exception handling in set secret.
+        """
         # Mock setup
         mock_credential_instance = Mock()
         mock_credential.return_value = mock_credential_instance
@@ -216,7 +234,9 @@ class TestAzureKeyVaultPlugin:
         assert result is False
 
     def test_azure_unsupported_auth_method(self):
-        """Test unsupported authentication method."""
+        """
+        Test unsupported authentication method.
+        """
         with pytest.raises(AutomaxError) as exc_info:
             azure_get_secret(
                 vault_url="https://test-vault.vault.azure.net/",
