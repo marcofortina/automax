@@ -17,3 +17,6 @@ google-cloud-secret-manager
 
 # ODBC Database Operations
 pyodbc
+
+# CLI Improvements
+click
