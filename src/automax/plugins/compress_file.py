@@ -3,9 +3,9 @@ Plugin for file compression utility (zip and tar.gz).
 """
 
 import os
+from pathlib import Path
 import tarfile
 import zipfile
-from pathlib import Path
 
 from automax.core.exceptions import AutomaxError
 

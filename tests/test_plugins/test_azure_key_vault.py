@@ -4,8 +4,8 @@ Unit tests for Azure Key Vault plugin.
 
 from unittest.mock import Mock, patch
 
-import pytest
 from azure.core.exceptions import ResourceNotFoundError
+import pytest
 
 from automax.core.exceptions import AutomaxError
 from automax.plugins.azure_key_vault import azure_get_secret, azure_set_secret

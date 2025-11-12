@@ -4,8 +4,8 @@ Tests for Google Cloud Secret Manager plugin.
 
 from unittest.mock import Mock, patch
 
-import pytest
 from google.api_core import exceptions
+import pytest
 
 from automax.core.exceptions import AutomaxError
 from automax.plugins.google_secret_manager import get_secret_google_secret_manager
