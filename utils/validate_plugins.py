@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
 Offline plugin validation for Automax.
-Checks that all plugins in the plugins directory can be loaded
-and have proper SCHEMA defined.
+
+Checks that all plugins in the plugins directory can be loaded and have proper SCHEMA
+defined.
+
 """
 
 import argparse

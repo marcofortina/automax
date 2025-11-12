@@ -1,13 +1,14 @@
 """
 Step Manager for Automa.
 
-Orchestrates the execution of steps based on YAML configurations.
-Loads step configurations dynamically and delegates sub-step execution to SubStepManager.
+Orchestrates the execution of steps based on YAML configurations. Loads step
+configurations dynamically and delegates sub-step execution to SubStepManager.
+
 """
 
 import importlib
-import sys
 from pathlib import Path
+import sys
 
 import yaml
 
@@ -24,6 +25,7 @@ class StepManager:
 
     Loads YAML configurations for each step on-demand and executes them sequentially.
     Supports dry-run mode, pre/post hooks, and error handling.
+
     """
 
     def __init__(self, cfg: dict, logger: LoggerManager, plugin_manager: PluginManager):
@@ -34,6 +36,7 @@ class StepManager:
             cfg (dict): Loaded configuration dictionary.
             logger (LoggerManager): Logger instance.
             plugin_manager (PluginManager): Plugin manager instance.
+
         """
         self.cfg = cfg
         self.logger = logger
@@ -64,6 +67,7 @@ class StepManager:
 
         Raises:
             AutomaxError: On execution errors.
+
         """
         if not step_ids:
             # If no steps specified, discover all available step YAMLs
@@ -127,6 +131,7 @@ class StepManager:
 
         Raises:
             AutomaxError: If YAML file not found or invalid.
+
         """
         yaml_path = (
             Path(self.steps_dir / f"step{step_id}" / f"step{step_id}.yaml")
@@ -152,6 +157,7 @@ class StepManager:
 
         Returns:
             callable: The imported function.
+
         """
         module_name, func_name = path.rsplit(".", 1)
         module = importlib.import_module(module_name)

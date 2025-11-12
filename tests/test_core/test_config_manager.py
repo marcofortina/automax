@@ -1,5 +1,5 @@
 """
-Tests for common.managers.config_manager.ConfigManager
+Tests for common.managers.config_manager.ConfigManager.
 """
 
 import pytest
@@ -9,7 +9,9 @@ from automax.core.managers.config_manager import ConfigManager
 
 
 def test_load_config_valid(tmp_path):
-    """Verify loading of a valid config using ConfigManager."""
+    """
+    Verify loading of a valid config using ConfigManager.
+    """
     key_path = tmp_path / "dummy_key"
     key_path.write_text("DUMMY_KEY")
     key_path.chmod(0o600)
@@ -32,7 +34,9 @@ def test_load_config_valid(tmp_path):
 
 
 def test_load_config_invalid_yaml(tmp_path):
-    """Verify invalid YAML raises AutomaxError."""
+    """
+    Verify invalid YAML raises AutomaxError.
+    """
     bad_cfg = tmp_path / "bad_config.yaml"
     bad_cfg.write_text(":::")
 
@@ -42,7 +46,9 @@ def test_load_config_invalid_yaml(tmp_path):
 
 
 def test_load_config_missing_fields(tmp_path):
-    """Verify missing required fields raise AutomaxError."""
+    """
+    Verify missing required fields raise AutomaxError.
+    """
     incomplete_cfg = tmp_path / "incomplete.yaml"
     incomplete_cfg.write_text("ssh: {}")
 
@@ -52,7 +58,9 @@ def test_load_config_missing_fields(tmp_path):
 
 
 def test_load_config_invalid_paths(tmp_path):
-    """Verify invalid paths in config raise AutomaxError."""
+    """
+    Verify invalid paths in config raise AutomaxError.
+    """
     invalid_cfg = tmp_path / "invalid.yaml"
     invalid_cfg.write_text(
         """

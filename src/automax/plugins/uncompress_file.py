@@ -2,9 +2,9 @@
 Plugin for file uncompression utility (zip and tar.gz).
 """
 
+from pathlib import Path
 import tarfile
 import zipfile
-from pathlib import Path
 
 from automax.core.exceptions import AutomaxError
 
@@ -24,6 +24,7 @@ def uncompress_file(
 
     Raises:
         AutomaxError: If fail_fast is True and uncompression fails, with level 'FATAL'.
+
     """
     from automax.core.utils.common_utils import echo
 

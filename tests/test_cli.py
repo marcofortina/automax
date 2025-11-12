@@ -12,7 +12,9 @@ from automax.cli import cli_main
 
 
 def test_main_help(logger):
-    """Verify that running main with --help returns 0."""
+    """
+    Verify that running main with --help returns 0.
+    """
     cwd = os.path.join(os.path.dirname(__file__), "../src")
     result = subprocess.run(
         ["python3", "-m", "automax", "--help"], cwd=cwd, capture_output=True, text=True
@@ -22,7 +24,9 @@ def test_main_help(logger):
 
 
 def test_main_list(tmp_path, cfg):
-    """Verify --list shows available steps."""
+    """
+    Verify --list shows available steps.
+    """
     result = subprocess.run(
         [
             "python3",
@@ -178,7 +182,9 @@ steps_dir: "examples/steps"
 
 
 def test_main_keyboard_interrupt(monkeypatch):
-    """Simulate KeyboardInterrupt during execution by testing main function directly."""
+    """
+    Simulate KeyboardInterrupt during execution by testing main function directly.
+    """
     with patch(
         "sys.argv", ["-m", "automax", "1", "--config", "examples/config/config.yaml"]
     ):
