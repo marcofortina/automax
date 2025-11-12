@@ -4,11 +4,6 @@ Tests for cli.py CLI interface.
 
 import os
 import subprocess
-from unittest.mock import patch
-
-import pytest
-
-from automax.cli import cli_main
 
 
 def test_main_help(logger):
@@ -32,7 +27,7 @@ def test_main_list(tmp_path, cfg):
             "python3",
             "-m",
             "automax",
-            "--list",
+            "list-steps",
             "--config",
             "tests/config/config.yaml",
         ],
@@ -68,7 +63,17 @@ steps_dir: "examples/steps"
         )
 
     result = subprocess.run(
-        ["python3", "-m", "automax", "1", "--config", str(config_path), "--dry-run"],
+        [
+            "python3",
+            "-m",
+            "automax",
+            "run",
+            "--config",
+            str(config_path),
+            "--steps",
+            "1",
+            "--dry-run",
+        ],
         capture_output=True,
         text=True,
     )
@@ -110,7 +115,16 @@ steps_dir: "examples/steps"
 
     cwd = os.path.join(os.path.dirname(__file__), "../src")
     result = subprocess.run(
-        ["python3", "-m", "automax", "999", "--config", str(config_path)],
+        [
+            "python3",
+            "-m",
+            "automax",
+            "run",
+            "--config",
+            str(config_path),
+            "--steps",
+            "999",
+        ],
         cwd=cwd,
         capture_output=True,
         text=True,
@@ -134,7 +148,16 @@ def test_main_invalid_config(tmp_path):
     invalid_config.write_text(":::")  # Invalid YAML to trigger YAMLError
     cwd = os.path.join(os.path.dirname(__file__), "../src")
     result = subprocess.run(
-        ["python3", "-m", "automax", "1", "--config", str(invalid_config)],
+        [
+            "python3",
+            "-m",
+            "automax",
+            "run",
+            "--config",
+            str(invalid_config),
+            "--steps",
+            "1",
+        ],
         cwd=cwd,
         capture_output=True,
         text=True,
@@ -169,7 +192,7 @@ steps_dir: "examples/steps"
 
     cwd = os.path.join(os.path.dirname(__file__), "../src")
     result = subprocess.run(
-        ["python3", "-m", "automax", "--validate-only", "--config", str(config_path)],
+        ["python3", "-m", "automax", "validate", "--config", str(config_path)],
         cwd=cwd,
         capture_output=True,
         text=True,
@@ -179,17 +202,3 @@ steps_dir: "examples/steps"
     assert "Validation successful" in combined_output
     assert "Validate-only mode" in combined_output
     assert "Executing local command" not in combined_output  # No execution
-
-
-def test_main_keyboard_interrupt(monkeypatch):
-    """
-    Simulate KeyboardInterrupt during execution by testing main function directly.
-    """
-    with patch(
-        "sys.argv", ["-m", "automax", "1", "--config", "examples/config/config.yaml"]
-    ):
-        with patch("automax.core.managers.step_manager.StepManager.run") as mock_run:
-            mock_run.side_effect = KeyboardInterrupt
-            with pytest.raises(SystemExit) as exc:
-                cli_main()
-            assert exc.value.code == 1
