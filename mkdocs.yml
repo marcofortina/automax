@@ -1,0 +1,63 @@
+site_name: Automax Documentation
+site_description: Enterprise Automation Platform
+repo_url: https://github.com/marcofortina/automax
+repo_name: marcofortina/automax
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+  palette:
+    primary: teal
+    accent: blue
+
+plugins:
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+
+nav:
+  - Home: index.md
+  - Contributing: CONTRIBUTING.md
+  - Developer Notes: DEVELOPER-NOTES.md
+  - Plugins:
+    - Overview: plugins/index.md
+    - Cloud:
+      - AWS Secrets Manager: plugins/aws-secrets-manager.md
+      - Azure Key Vault: plugins/azure-key-vault.md
+      - Google Secret Manager: plugins/google-secret-manager.md
+      - HashiCorp Vault: plugins/hashicorp-vault.md
+    - System:
+      - Local Command: plugins/local-command.md
+      - SSH Command: plugins/ssh-command.md
+      - Network Check: plugins/check-network-connection.md
+    - File Operations:
+      - Read File: plugins/read-file-content.md
+      - Write File: plugins/write-file-content.md
+      - Compress File: plugins/compress-file.md
+      - Uncompress File: plugins/uncompress-file.md
+    - Communication:
+      - HTTP Request: plugins/run-http-request.md
+      - Email: plugins/send-email.md
+    - Database:
+      - Database Operations: plugins/database-operations.md
+  - Guides:
+    - Creating Plugins: guides/creating-plugins.md
+  - API Reference: reference/api.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.details
