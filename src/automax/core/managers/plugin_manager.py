@@ -1,136 +1,142 @@
 """
-Plugin manager for the Automax project.
+Plugin Manager for Automax.
 
-Responsible for dynamically discovering, loading, and managing plugin utilities from the
-plugins/ directory. Each plugin must define REGISTER_UTILITIES as a list of (name, func)
-tuples, and optionally SCHEMA for validation.
+This module handles plugin loading, registration, and execution.
 
 """
 
-import importlib.util
-from pathlib import Path
-import sys
+from typing import Any, Dict, List
+
+from automax.plugins.exceptions import PluginError, PluginExecutionError
+from automax.plugins.registry import global_registry
 
 
 class PluginManager:
     """
-    Manager class responsible for handling all plugin-related operations.
+    Manages plugin loading and execution.
+
+    This class provides backward compatibility with the existing system while
+    integrating with the new plugin registry.
+
     """
 
-    def __init__(self, logger=None, plugins_dir: str | Path = "src/automax/plugins"):
+    def __init__(self, logger=None):
         """
         Initialize the PluginManager.
 
         Args:
             logger (optional): Logger instance for debug/info/error messages.
-            plugins_dir (str or Path): Path to the directory containing plugin files.
 
         """
-        self.plugins_dir = Path(plugins_dir).expanduser().resolve()
         self.logger = logger
-        self.registry = {}
-        self.schemas = {}  # New: Store schemas for validation
+        self._legacy_plugins: Dict[str, Any] = {}
+        self._load_legacy_plugins()
 
-    def load_plugins(self):
+    def _load_legacy_plugins(self):
         """
-        Dynamically load plugins from the plugins/ directory and register their
-        utilities and schemas.
-
-        Each plugin module must define REGISTER_UTILITIES as a list of (name, func)
-        tuples. Optionally defines SCHEMA as a dict for param validation. Logs errors if
-        loading fails but continues.
-
+        Load plugins using legacy method for backward compatibility.
         """
-        if not self.plugins_dir.exists():
-            if self.logger:
-                self.logger.warning(
-                    f"Plugins directory not found: {self.plugins_dir}. Skipping plugin loading."
-                )
-            return
+        import importlib
+        from pathlib import Path
 
-        for plugin_path in self.plugins_dir.glob("*.py"):
-            if plugin_path.name.startswith("__"):
+        if self.logger:
+            self.logger.debug("Loading legacy plugins...")
+
+        plugins_dir = Path(__file__).parent.parent.parent / "plugins"
+
+        for module_file in plugins_dir.glob("*.py"):
+            if module_file.name in [
+                "__init__.py",
+                "base.py",
+                "exceptions.py",
+                "registry.py",
+            ]:
                 continue
 
-            module_name = f"plugins.{plugin_path.stem}"
+            module_name = module_file.stem
             try:
-                spec = importlib.util.spec_from_file_location(module_name, plugin_path)
-                module = importlib.util.module_from_spec(spec)
-                sys.modules[module_name] = module
-                spec.loader.exec_module(module)
+                module = importlib.import_module(f"automax.plugins.{module_name}")
+
+                # Look for legacy plugin functions
+                for attr_name in dir(module):
+                    attr = getattr(module, attr_name)
+                    if callable(attr) and not attr_name.startswith("_"):
+                        self._legacy_plugins[module_name] = attr
+                        break
+
             except Exception as e:
-                if self.logger:
-                    self.logger.error(f"Failed to load plugin {plugin_path}: {e}")
-                continue
+                self.logger.warning(f"Failed to load legacy plugin {module_name}: {e}")
 
-            if hasattr(module, "REGISTER_UTILITIES"):
-                for name, func in module.REGISTER_UTILITIES:
-                    if name in self.registry:
-                        raise ValueError(
-                            f"Duplicate utility name: {name} from {plugin_path}"
-                        )
-                    self.registry[name] = func
-                    if self.logger:
-                        self.logger.debug(
-                            f"Registered utility '{name}' from {plugin_path}"
-                        )
-
-            if hasattr(module, "SCHEMA"):
-                self.schemas[module.REGISTER_UTILITIES[0][0]] = (
-                    module.SCHEMA
-                )  # Assume first utility name
-                if self.logger:
-                    self.logger.debug(
-                        f"Registered schema for '{module.REGISTER_UTILITIES[0][0]}' from {plugin_path}"
-                    )
-
-    def get_plugin(self, name: str):
+    def execute_plugin(self, name: str, config: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Retrieve a registered utility function by name.
+        Execute a plugin with given configuration.
 
-        Args:
-            name (str): Name of the utility to retrieve
-
-        Returns:
-            callable: The utility function
-
-        Raises:
-            KeyError: If the utility is not registered
+        This method first tries the new registry system, then falls back to legacy
+        plugins for backward compatibility.
 
         """
-        if name not in self.registry:
-            raise KeyError(
-                f"Utility '{name}' is not registered in PluginManager registry"
+        if self.logger:
+            self.logger.debug(f"Executing plugin {name} with configuration {config}")
+
+        # Try new registry system first
+        global_registry.load_all_plugins()
+
+        if name in global_registry.list_plugins():
+            try:
+                plugin_class = global_registry.get_plugin_class(name)
+                plugin_instance = plugin_class(config)
+                return plugin_instance.execute()
+            except Exception as e:
+                raise PluginExecutionError(
+                    f"Plugin {name} execution failed: {e}"
+                ) from e
+
+        # Fall back to legacy system
+        elif name in self._legacy_plugins:
+            self.logger.warning(f"Using legacy plugin: {name}")
+            try:
+                return self._legacy_plugins[name](config)
+            except Exception as e:
+                raise PluginExecutionError(
+                    f"Legacy plugin {name} execution failed: {e}"
+                ) from e
+
+        else:
+            available_plugins = global_registry.list_plugins() + list(
+                self._legacy_plugins.keys()
             )
-        return self.registry[name]
+            raise PluginError(
+                f"Plugin '{name}' not found. Available plugins: {available_plugins}"
+            )
 
-    def get_schema(self, name: str) -> dict:
+    def get_plugin(self, plugin_name: str):
         """
-        Retrieve the SCHEMA for a plugin utility.
-
-        Args:
-            name (str): Utility name.
-
-        Returns:
-            dict: Schema dictionary.
-
-        Raises:
-            KeyError: If no schema defined.
-
+        Get plugin class by name.
         """
-        if name not in self.schemas:
-            raise KeyError(f"No SCHEMA defined for utility '{name}'")
-        return self.schemas[name]
+        return global_registry.get_plugin_class(plugin_name)
 
-    def clear_registry(self):
+    def list_plugins(self) -> List[str]:
         """
-        Clear the current plugin registry and schemas (useful for testing or reloads).
+        List all available plugins.
         """
-        self.registry.clear()
-        self.schemas.clear()
+        global_registry.load_all_plugins()
+        new_plugins = global_registry.list_plugins()
+        legacy_plugins = list(self._legacy_plugins.keys())
 
-    def list_plugins(self):
-        """
-        Return a list of all registered plugin names.
-        """
-        return list(self.registry.keys())
+        # Remove duplicates, preferring new system
+        all_plugins = list(dict.fromkeys(new_plugins + legacy_plugins))
+        return all_plugins
+
+
+# Global plugin manager instance for backward compatibility
+_plugin_manager_instance = None
+
+
+def get_plugin_manager() -> PluginManager:
+    """
+    Get the global plugin manager instance.
+    """
+    global _plugin_manager_instance
+    if _plugin_manager_instance is None:
+        _plugin_manager_instance = PluginManager()
+    return _plugin_manager_instance

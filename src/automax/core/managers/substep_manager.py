@@ -72,23 +72,25 @@ class SubStepManager:
                 self.logger, self.step_id, sub_id, sub_cfg["description"]
             )
             try:
+                # Resolve parameters
+                params = self._resolve_params(sub_cfg["params"])
+
                 if dry_run:
                     self.logger.info(
                         f"[DRY-RUN] Sub-step {self.step_id}.{sub_id} skipped"
                     )
                     result = "OK"
                 else:
-                    # Resolve parameters
-                    params = self._resolve_params(sub_cfg["params"])
-
                     # Invoke plugin with retries
                     retry_count = sub_cfg.get("retry", 0)
                     for attempt in range(retry_count + 1):
                         try:
-                            utility = self.plugin_manager.get_plugin(sub_cfg["plugin"])
-                            output = utility(
-                                **params, logger=self.logger, dry_run=dry_run
+                            plugin_class = self.plugin_manager.get_plugin(
+                                sub_cfg["plugin"]
                             )
+                            plugin_instance = plugin_class(params)
+                            plugin_instance.logger = self.logger
+                            output = plugin_instance.execute()
                             break
                         except Exception as e:
                             if attempt == retry_count:
