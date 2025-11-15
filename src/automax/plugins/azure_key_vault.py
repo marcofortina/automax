@@ -1,183 +1,112 @@
 """
-Plugin for Azure Key Vault integration.
+Plugin for retrieving secrets from Azure Key Vault.
 """
 
-from azure.core.exceptions import ResourceNotFoundError
-from azure.identity import ClientSecretCredential, DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
+from typing import Any, Dict
 
-from automax.core.exceptions import AutomaxError
-from automax.core.utils.common_utils import echo
+from automax.plugins import BasePlugin, PluginMetadata, register_plugin
+from automax.plugins.exceptions import PluginExecutionError
+
+try:
+    from azure.identity import DefaultAzureCredential
+    from azure.keyvault.secrets import SecretClient
+
+    AZURE_AVAILABLE = True
+except ImportError:
+    AZURE_AVAILABLE = False
 
 
-def azure_get_secret(
-    vault_url: str,
-    secret_name: str,
-    auth_method: str = "default",
-    tenant_id: str = None,
-    client_id: str = None,
-    client_secret: str = None,
-    logger=None,
-    fail_fast: bool = True,
-) -> str:
+@register_plugin
+class AzureKeyVaultPlugin(BasePlugin):
     """
-    Get secret from Azure Key Vault.
-
-    Args:
-        vault_url (str): Azure Key Vault URL.
-        secret_name (str): Name of the secret.
-        auth_method (str): Authentication method (default, client_secret).
-        tenant_id (str): Azure tenant ID (for client_secret auth).
-        client_id (str): Azure client ID (for client_secret auth).
-        client_secret (str): Azure client secret (for client_secret auth).
-        logger (LoggerManager, optional): Logger instance.
-        fail_fast (bool): If True, raise AutomaxError on failure.
-
-    Returns:
-        str: Secret value.
-
-    Raises:
-        AutomaxError: If fail_fast is True and operation fails.
-
+    Retrieve secrets from Azure Key Vault.
     """
-    try:
-        # Initialize credential based on authentication method
-        if auth_method == "default":
-            credential = DefaultAzureCredential()
-        elif auth_method == "client_secret":
-            if not all([tenant_id, client_id, client_secret]):
-                raise AutomaxError(
-                    "client_secret authentication requires tenant_id, client_id, and client_secret"
-                )
-            credential = ClientSecretCredential(
-                tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
-            )
-        else:
-            raise AutomaxError(f"Unsupported authentication method: {auth_method}")
 
-        # Initialize secret client
-        secret_client = SecretClient(vault_url=vault_url, credential=credential)
+    METADATA = PluginMetadata(
+        name="azure_key_vault",
+        version="2.0.0",
+        description="Retrieve secrets from Azure Key Vault",
+        author="Automax Team",
+        category="cloud",
+        tags=["azure", "secrets", "cloud"],
+        required_config=["vault_url", "secret_name"],
+        optional_config=["tenant_id", "client_id", "client_secret"],
+    )
 
-        # Get secret
-        secret = secret_client.get_secret(secret_name)
-
-        if logger:
-            echo(
-                f"Successfully retrieved secret from Azure: {secret_name}",
-                logger,
-                level="INFO",
-            )
-
-        return secret.value
-
-    except ResourceNotFoundError:
-        msg = f"Secret not found in Azure Key Vault: {secret_name}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return ""
-    except Exception as e:
-        msg = f"Azure get secret failed: {str(e)}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return ""
-
-
-def azure_set_secret(
-    vault_url: str,
-    secret_name: str,
-    secret_value: str,
-    auth_method: str = "default",
-    tenant_id: str = None,
-    client_id: str = None,
-    client_secret: str = None,
-    logger=None,
-    fail_fast: bool = True,
-) -> bool:
-    """
-    Set secret in Azure Key Vault.
-
-    Args:
-        vault_url (str): Azure Key Vault URL.
-        secret_name (str): Name of the secret.
-        secret_value (str): Secret value to store.
-        auth_method (str): Authentication method (default, client_secret).
-        tenant_id (str): Azure tenant ID (for client_secret auth).
-        client_id (str): Azure client ID (for client_secret auth).
-        client_secret (str): Azure client secret (for client_secret auth).
-        logger (LoggerManager, optional): Logger instance.
-        fail_fast (bool): If True, raise AutomaxError on failure.
-
-    Returns:
-        bool: True if successful.
-
-    Raises:
-        AutomaxError: If fail_fast is True and operation fails.
-
-    """
-    try:
-        # Initialize credential based on authentication method
-        if auth_method == "default":
-            credential = DefaultAzureCredential()
-        elif auth_method == "client_secret":
-            if not all([tenant_id, client_id, client_secret]):
-                raise AutomaxError(
-                    "client_secret authentication requires tenant_id, client_id, and client_secret"
-                )
-            credential = ClientSecretCredential(
-                tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
-            )
-        else:
-            raise AutomaxError(f"Unsupported authentication method: {auth_method}")
-
-        # Initialize secret client
-        secret_client = SecretClient(vault_url=vault_url, credential=credential)
-
-        # Set secret
-        secret_client.set_secret(secret_name, secret_value)
-
-        if logger:
-            echo(
-                f"Successfully set secret in Azure: {secret_name}", logger, level="INFO"
-            )
-
-        return True
-
-    except Exception as e:
-        msg = f"Azure set secret failed: {str(e)}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return False
-
-
-REGISTER_UTILITIES = [
-    ("azure_get_secret", azure_get_secret),
-    ("azure_set_secret", azure_set_secret),
-]
-
-SCHEMA = {
-    "azure_get_secret": {
+    SCHEMA = {
         "vault_url": {"type": str, "required": True},
         "secret_name": {"type": str, "required": True},
-        "auth_method": {"type": str, "default": "default"},
-        "tenant_id": {"type": str, "default": None},
-        "client_id": {"type": str, "default": None},
-        "client_secret": {"type": str, "default": None},
-        "fail_fast": {"type": bool, "default": True},
-    },
-    "azure_set_secret": {
-        "vault_url": {"type": str, "required": True},
-        "secret_name": {"type": str, "required": True},
-        "secret_value": {"type": str, "required": True},
-        "auth_method": {"type": str, "default": "default"},
-        "tenant_id": {"type": str, "default": None},
-        "client_id": {"type": str, "default": None},
-        "client_secret": {"type": str, "default": None},
-        "fail_fast": {"type": bool, "default": True},
-    },
-}
+        "tenant_id": {"type": str, "required": False},
+        "client_id": {"type": str, "required": False},
+        "client_secret": {"type": str, "required": False},
+    }
+
+    def execute(self) -> Dict[str, Any]:
+        """
+        Retrieve a secret from Azure Key Vault.
+
+        Returns:
+            Dictionary containing the secret value and metadata.
+
+        Raises:
+            PluginExecutionError: If the secret cannot be retrieved.
+
+        """
+        if not AZURE_AVAILABLE:
+            raise PluginExecutionError(
+                "Azure SDK not installed. Install with: pip install azure-identity azure-keyvault-secrets"
+            )
+
+        vault_url = self.config["vault_url"]
+        secret_name = self.config["secret_name"]
+        tenant_id = self.config.get("tenant_id")
+        client_id = self.config.get("client_id")
+        client_secret = self.config.get("client_secret")
+
+        self.logger.info(f"Retrieving secret: {secret_name} from vault: {vault_url}")
+
+        try:
+            credential = self._get_credential(tenant_id, client_id, client_secret)
+            client = SecretClient(vault_url=vault_url, credential=credential)
+            secret = client.get_secret(secret_name)
+
+            result = {
+                "vault_url": vault_url,
+                "secret_name": secret_name,
+                "secret_value": secret.value,
+                "version": secret.properties.version,
+                "enabled": secret.properties.enabled,
+                "expires_on": (
+                    secret.properties.expires_on.isoformat()
+                    if secret.properties.expires_on
+                    else None
+                ),
+                "status": "success",
+            }
+
+            self.logger.info(f"Successfully retrieved secret: {secret_name}")
+            return result
+
+        except Exception as e:
+            error_msg = (
+                f"Failed to retrieve secret {secret_name} from Azure Key Vault: {e}"
+            )
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e
+
+    def _get_credential(
+        self, tenant_id: str = None, client_id: str = None, client_secret: str = None
+    ):
+        """
+        Get Azure credential using various authentication methods.
+        """
+        try:
+            if tenant_id and client_id and client_secret:
+                from azure.identity import ClientSecretCredential
+
+                return ClientSecretCredential(tenant_id, client_id, client_secret)
+            else:
+                return DefaultAzureCredential()
+        except Exception as e:
+            self.logger.error(f"Failed to get Azure credential: {e}")
+            raise PluginExecutionError(f"Failed to get Azure credential: {e}") from e

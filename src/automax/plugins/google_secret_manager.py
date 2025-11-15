@@ -1,128 +1,87 @@
 """
-Plugin for Google Cloud Secret Manager integration.
+Plugin for retrieving secrets from Google Cloud Secret Manager.
 """
 
-import json
-import os
 from typing import Any, Dict
 
-from google.api_core import exceptions
-from google.cloud import secretmanager
-from google.oauth2 import service_account
+from automax.plugins import BasePlugin, PluginMetadata, register_plugin
+from automax.plugins.exceptions import PluginExecutionError
 
-from automax.core.exceptions import AutomaxError
-from automax.core.utils.common_utils import echo
+try:
+    from google.cloud import secretmanager
+
+    GOOGLE_AVAILABLE = True
+except ImportError:
+    GOOGLE_AVAILABLE = False
 
 
-def get_secret_google_secret_manager(config: Dict[str, Any], logger=None):
+@register_plugin
+class GoogleSecretManagerPlugin(BasePlugin):
     """
-    Retrieve a secret from Google Cloud Secret Manager.
-
-    Args:
-        config: Configuration dictionary containing:
-            - credentials_json: Service account JSON (optional)
-            - project_id: GCP project ID (optional)
-            - secret_id: The secret ID to retrieve
-            - version: Secret version (default: "latest")
-            - fail_fast: Whether to raise errors immediately (default: True)
-        logger: Logger instance for logging
-
-    Returns:
-        str: The secret value
-
-    Raises:
-        AutomaxError: If secret retrieval fails and fail_fast is True
-
+    Retrieve secrets from Google Cloud Secret Manager.
     """
-    fail_fast = config.get("fail_fast", True)
-    secret_id = config.get("secret_id")
-    version = config.get("version", "latest")
 
-    if not secret_id:
-        msg = "secret_id is required for Google Secret Manager"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return None
+    METADATA = PluginMetadata(
+        name="google_secret_manager",
+        version="2.0.0",
+        description="Retrieve secrets from Google Cloud Secret Manager",
+        author="Automax Team",
+        category="cloud",
+        tags=["google", "gcp", "secrets", "cloud"],
+        required_config=["project_id", "secret_id"],
+        optional_config=["version_id"],
+    )
 
-    try:
-        # Initialize client with credentials
-        credentials = _get_credentials(config)
-        client = secretmanager.SecretManagerServiceClient(credentials=credentials)
+    SCHEMA = {
+        "project_id": {"type": str, "required": True},
+        "secret_id": {"type": str, "required": True},
+        "version": {"type": str, "required": False},
+    }
 
-        # Get project ID
-        project_id = config.get("project_id")
-        if not project_id:
-            project_id = os.getenv("GOOGLE_CLOUD_PROJECT")
-            if not project_id:
-                msg = "Project ID must be provided in config or GOOGLE_CLOUD_PROJECT environment variable"
-                if logger:
-                    echo(msg, logger, level="ERROR")
-                if fail_fast:
-                    raise AutomaxError(msg, level="FATAL")
-                return None
+    def execute(self) -> Dict[str, Any]:
+        """
+        Retrieve a secret from Google Cloud Secret Manager.
 
-        # Build the resource name and access secret
-        name = f"projects/{project_id}/secrets/{secret_id}/versions/{version}"
-        response = client.access_secret_version(request={"name": name})
-        secret_value = response.payload.data.decode("UTF-8")
+        Returns:
+            Dictionary containing the secret value and metadata.
 
-        if logger:
-            echo(
-                f"Retrieved secret '{secret_id}' from Google Cloud Secret Manager",
-                logger,
-                level="INFO",
+        Raises:
+            PluginExecutionError: If the secret cannot be retrieved.
+
+        """
+        if not GOOGLE_AVAILABLE:
+            raise PluginExecutionError(
+                "Google Cloud SDK not installed. Install with: pip install google-cloud-secret-manager"
             )
 
-        return secret_value
+        project_id = self.config["project_id"]
+        secret_id = self.config["secret_id"]
+        version_id = self.config.get("version_id", "latest")
 
-    except exceptions.PermissionDenied as e:
-        msg = f"Permission denied accessing secret '{secret_id}': {e}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return None
-    except exceptions.NotFound as e:
-        msg = f"Secret '{secret_id}' not found: {e}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return None
-    except Exception as e:
-        msg = f"Failed to retrieve secret '{secret_id}' from Google Cloud Secret Manager: {e}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return None
+        self.logger.info(f"Retrieving secret: {secret_id} from project: {project_id}")
 
+        try:
+            client = secretmanager.SecretManagerServiceClient()
+            secret_name = (
+                f"projects/{project_id}/secrets/{secret_id}/versions/{version_id}"
+            )
+            response = client.access_secret_version(request={"name": secret_name})
+            secret_value = response.payload.data.decode("UTF-8")
 
-def _get_credentials(config: Dict[str, Any]):
-    """
-    Get GCP credentials from config or environment.
-    """
-    credentials_json = config.get("credentials_json")
+            result = {
+                "project_id": project_id,
+                "secret_id": secret_id,
+                "version_id": version_id,
+                "secret_value": secret_value,
+                "status": "success",
+            }
 
-    if credentials_json:
-        # Use provided service account JSON
-        credentials_info = json.loads(credentials_json)
-        return service_account.Credentials.from_service_account_info(credentials_info)
+            self.logger.info(f"Successfully retrieved secret: {secret_id}")
+            return result
 
-    # Use default credentials (GOOGLE_APPLICATION_CREDENTIALS env var, metadata server, etc.)
-    return None
-
-
-REGISTER_UTILITIES = [
-    ("get_secret_google_secret_manager", get_secret_google_secret_manager)
-]
-
-SCHEMA = {
-    "credentials_json": {"type": str, "required": False},
-    "project_id": {"type": str, "required": False},
-    "secret_id": {"type": str, "required": True},
-    "version": {"type": str, "default": "latest"},
-    "fail_fast": {"type": bool, "default": True},
-}
+        except Exception as e:
+            error_msg = (
+                f"Failed to retrieve secret {secret_id} from Google Secret Manager: {e}"
+            )
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e

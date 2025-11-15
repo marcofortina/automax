@@ -1,204 +1,156 @@
 """
-Plugin for AWS Secrets Manager integration.
+Plugin for retrieving secrets from AWS Secrets Manager.
 """
 
-import json
+from typing import Any, Dict
 
 import boto3
-from botocore.exceptions import ClientError, NoCredentialsError
+from botocore.exceptions import ClientError, NoCredentialsError, PartialCredentialsError
 
-from automax.core.exceptions import AutomaxError
-from automax.core.utils.common_utils import echo
+from automax.plugins import BasePlugin, PluginMetadata, register_plugin
+from automax.plugins.exceptions import PluginExecutionError
 
 
-def aws_get_secret(
-    secret_id: str,
-    region_name: str = "us-east-1",
-    aws_access_key_id: str = None,
-    aws_secret_access_key: str = None,
-    version_stage: str = "AWSCURRENT",
-    logger=None,
-    fail_fast: bool = True,
-):
+@register_plugin
+class AwsSecretsManagerPlugin(BasePlugin):
     """
-    Get secret value from AWS Secrets Manager.
-
-    Args:
-        secret_id (str): Secret identifier.
-        region_name (str): AWS region name.
-        aws_access_key_id (str): AWS access key ID.
-        aws_secret_access_key (str): AWS secret access key.
-        version_stage (str): Secret version stage.
-        logger (LoggerManager, optional): Logger instance.
-        fail_fast (bool): If True, raise AutomaxError on failure.
-
-    Returns:
-        dict: Secret data.
-
-    Raises:
-        AutomaxError: If fail_fast is True and operation fails.
-
+    Retrieve secrets from AWS Secrets Manager.
     """
-    try:
-        # Initialize AWS client
-        client_config = {"region_name": region_name}
 
-        if aws_access_key_id and aws_secret_access_key:
-            client_config["aws_access_key_id"] = aws_access_key_id
-            client_config["aws_secret_access_key"] = aws_secret_access_key
+    METADATA = PluginMetadata(
+        name="aws_secrets_manager",
+        version="2.0.0",
+        description="Retrieve secrets from AWS Secrets Manager",
+        author="Automax Team",
+        category="cloud",
+        tags=["aws", "secrets", "cloud"],
+        required_config=["secret_name"],
+        optional_config=["region_name", "profile_name", "role_arn"],
+    )
 
-        client = boto3.client("secretsmanager", **client_config)
+    SCHEMA = {
+        "secret_name": {"type": str, "required": True},
+        "region_name": {"type": str, "required": False},
+        "profile_name": {"type": str, "required": False},
+        "role_arn": {"type": str, "required": False},
+    }
 
-        # Get secret value
-        response = client.get_secret_value(
-            SecretId=secret_id, VersionStage=version_stage
-        )
+    def execute(self) -> Dict[str, Any]:
+        """
+        Retrieve a secret from AWS Secrets Manager.
 
-        # Parse secret string
-        secret_string = response["SecretString"]
+        Returns:
+            Dictionary containing the secret value and metadata.
+
+        Raises:
+            PluginExecutionError: If the secret cannot be retrieved.
+
+        """
+        secret_name = self.config["secret_name"]
+        region_name = self.config.get("region_name", "us-east-1")
+        profile_name = self.config.get("profile_name")
+        role_arn = self.config.get("role_arn")
+
+        self.logger.info(f"Retrieving secret: {secret_name} from region: {region_name}")
+
         try:
-            secret_data = json.loads(secret_string)
-        except json.JSONDecodeError:
-            secret_data = secret_string
+            client = self._create_client(region_name, profile_name, role_arn)
+            response = client.get_secret_value(SecretId=secret_name)
 
-        if logger:
-            echo(
-                f"Successfully retrieved secret from AWS: {secret_id}",
-                logger,
-                level="INFO",
+            # AWS Secrets Manager può restituire segreti come stringa o binari
+            if "SecretString" in response:
+                secret_value = response["SecretString"]
+                secret_type = "string"
+            else:
+                # Per segreti binari, decodifichiamo in base64 o restituiamo come stringa
+                import base64
+
+                secret_value = base64.b64encode(response["SecretBinary"]).decode(
+                    "utf-8"
+                )
+                secret_type = "binary"
+
+            result = {
+                "secret_name": secret_name,
+                "secret_value": secret_value,
+                "secret_type": secret_type,
+                "secret_arn": response.get("ARN", ""),
+                "version_id": response.get("VersionId", ""),
+                "region": region_name,
+                "status": "success",
+            }
+
+            self.logger.info(f"Successfully retrieved secret: {secret_name}")
+            return result
+
+        except ClientError as e:
+            error_code = e.response["Error"]["Code"]
+            error_message = e.response["Error"]["Message"]
+            self.logger.error(
+                f"AWS Secrets Manager error [{error_code}]: {error_message}"
             )
 
-        return secret_data
+            if error_code == "ResourceNotFoundException":
+                raise PluginExecutionError(
+                    f"Secret {secret_name} not found in AWS Secrets Manager"
+                ) from e
+            elif error_code == "AccessDeniedException":
+                raise PluginExecutionError(
+                    f"Access denied to secret {secret_name}. Check IAM permissions."
+                ) from e
+            elif error_code == "DecryptionFailure":
+                raise PluginExecutionError(
+                    f"Failed to decrypt secret {secret_name}. Check KMS permissions."
+                ) from e
+            elif error_code == "InternalServiceError":
+                raise PluginExecutionError(
+                    f"AWS Secrets Manager internal error for secret {secret_name}"
+                ) from e
+            else:
+                raise PluginExecutionError(
+                    f"AWS Secrets Manager error: {error_message}"
+                ) from e
 
-    except NoCredentialsError:
-        msg = "AWS credentials not found"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return {}
-    except ClientError as e:
-        error_code = e.response["Error"]["Code"]
-        error_message = e.response["Error"]["Message"]
-        msg = f"AWS Secrets Manager error ({error_code}): {error_message}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return {}
-    except Exception as e:
-        msg = f"AWS get secret failed: {str(e)}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return {}
+        except (NoCredentialsError, PartialCredentialsError) as e:
+            error_msg = "AWS credentials not found or incomplete. Configure AWS CLI or environment variables."
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e
 
+        except Exception as e:
+            error_msg = f"Unexpected error retrieving secret {secret_name}: {e}"
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e
 
-def aws_create_secret(
-    secret_id: str,
-    secret_data: dict,
-    region_name: str = "us-east-1",
-    aws_access_key_id: str = None,
-    aws_secret_access_key: str = None,
-    description: str = "",
-    logger=None,
-    fail_fast: bool = True,
-) -> bool:
-    """
-    Create secret in AWS Secrets Manager.
+    def _create_client(
+        self, region_name: str, profile_name: str = None, role_arn: str = None
+    ) -> boto3.client:
+        """
+        Create a boto3 client for AWS Secrets Manager.
+        """
+        try:
+            session_args = {}
+            if profile_name:
+                session_args["profile_name"] = profile_name
 
-    Args:
-        secret_id (str): Secret identifier.
-        secret_data (dict): Secret data to store.
-        region_name (str): AWS region name.
-        aws_access_key_id (str): AWS access key ID.
-        aws_secret_access_key (str): AWS secret access key.
-        description (str): Secret description.
-        logger (LoggerManager, optional): Logger instance.
-        fail_fast (bool): If True, raise AutomaxError on failure.
+            session = boto3.Session(**session_args)
 
-    Returns:
-        bool: True if successful.
+            # Se è specificato un role_arn, assumiamo il ruolo
+            if role_arn:
+                sts_client = session.client("sts", region_name=region_name)
+                response = sts_client.assume_role(
+                    RoleArn=role_arn, RoleSessionName="AutomaxSecretsManagerSession"
+                )
+                credentials = response["Credentials"]
 
-    Raises:
-        AutomaxError: If fail_fast is True and operation fails.
+                # Creiamo una nuova sessione con le credenziali assunte
+                session = boto3.Session(
+                    aws_access_key_id=credentials["AccessKeyId"],
+                    aws_secret_access_key=credentials["SecretAccessKey"],
+                    aws_session_token=credentials["SessionToken"],
+                )
 
-    """
-    try:
-        # Initialize AWS client
-        client_config = {"region_name": region_name}
+            return session.client("secretsmanager", region_name=region_name)
 
-        if aws_access_key_id and aws_secret_access_key:
-            client_config["aws_access_key_id"] = aws_access_key_id
-            client_config["aws_secret_access_key"] = aws_secret_access_key
-
-        client = boto3.client("secretsmanager", **client_config)
-
-        # Convert secret data to JSON string
-        if isinstance(secret_data, dict):
-            secret_string = json.dumps(secret_data)
-        else:
-            secret_string = str(secret_data)
-
-        # Create secret
-        client.create_secret(
-            Name=secret_id, SecretString=secret_string, Description=description
-        )
-
-        if logger:
-            echo(
-                f"Successfully created secret in AWS: {secret_id}", logger, level="INFO"
-            )
-
-        return True
-
-    except NoCredentialsError:
-        msg = "AWS credentials not found"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return False
-    except ClientError as e:
-        error_code = e.response["Error"]["Code"]
-        error_message = e.response["Error"]["Message"]
-        msg = f"AWS Secrets Manager error ({error_code}): {error_message}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return False
-    except Exception as e:
-        msg = f"AWS create secret failed: {str(e)}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return False
-
-
-REGISTER_UTILITIES = [
-    ("aws_get_secret", aws_get_secret),
-    ("aws_create_secret", aws_create_secret),
-]
-
-SCHEMA = {
-    "aws_get_secret": {
-        "secret_id": {"type": str, "required": True},
-        "region_name": {"type": str, "default": "us-east-1"},
-        "aws_access_key_id": {"type": str, "default": None},
-        "aws_secret_access_key": {"type": str, "default": None},
-        "version_stage": {"type": str, "default": "AWSCURRENT"},
-        "fail_fast": {"type": bool, "default": True},
-    },
-    "aws_create_secret": {
-        "secret_id": {"type": str, "required": True},
-        "secret_data": {"type": dict, "required": True},
-        "region_name": {"type": str, "default": "us-east-1"},
-        "aws_access_key_id": {"type": str, "default": None},
-        "aws_secret_access_key": {"type": str, "default": None},
-        "description": {"type": str, "default": ""},
-        "fail_fast": {"type": bool, "default": True},
-    },
-}
+        except Exception as e:
+            self.logger.error(f"Failed to create AWS client: {e}")
+            raise PluginExecutionError(f"Failed to create AWS client: {e}") from e
