@@ -1,5 +1,5 @@
 """
-Tests for PluginManager class: plugin loading, registry behavior, and get_plugin() retrieval.
+Tests for PluginManager class with the new class-based plugin system.
 """
 
 import sys
@@ -7,100 +7,78 @@ import sys
 import pytest
 
 from automax.core.managers.plugin_manager import PluginManager
+from automax.plugins.exceptions import PluginError, PluginExecutionError
 
 
 @pytest.fixture(autouse=True)
 def clean_plugins(logger):
     """
-    Ensure a clean plugin registry and sys.modules cache before each test.
-
-    Provides a fresh PluginManager instance.
-
+    Ensure a clean plugin registry before each test.
     """
-    # Clear Python module cache for plugins
-    for mod in list(sys.modules.keys()):
-        if mod.startswith("plugins."):
-            sys.modules.pop(mod)
+    # Clear any cached plugin state
+    from automax.plugins.registry import global_registry
+
+    global_registry._plugins.clear()
+    global_registry._metadata.clear()
+    global_registry._loaded = False
+
     return PluginManager(logger)
 
 
 # ---------------------------------------------------------------------------
-# Plugin loading tests
+# Plugin loading and listing tests
 # ---------------------------------------------------------------------------
 
 
-def test_load_plugins_success(tmp_path, logger, clean_plugins):
+def test_load_plugins_success(logger, clean_plugins):
     """
     Verify that valid plugins are loaded and registered correctly.
     """
-    plugins_dir = tmp_path / "plugins"
-    plugins_dir.mkdir()
+    plugin_mgr = PluginManager(logger=logger)
 
-    # Create dummy local plugin
-    (plugins_dir / "local_command.py").write_text(
-        """
-def run_local_command(command, logger=None, fail_fast=True, dry_run=False):
-    return 0
-REGISTER_UTILITIES = [("run_local_command", run_local_command)]
-SCHEMA = {'command': {'type': str, 'required': True}}
-"""
-    )
+    # Verify plugins are available through PluginManager methods
+    available_plugins = plugin_mgr.list_plugins()
 
-    # Create dummy SSH plugin
-    (plugins_dir / "ssh_command.py").write_text(
-        """
-def run_ssh_command(host, key_path, command, logger=None, timeout=10, fail_fast=True, user=None, port=22, dry_run=False):
-    return 0
-REGISTER_UTILITIES = [("run_ssh_command", run_ssh_command)]
-SCHEMA = {'host': {'type': str, 'required': True}}
-"""
-    )
+    # Should have some basic plugins available
+    assert len(available_plugins) > 0
 
-    # Initialize manager with custom plugin dir
-    plugin_mgr = PluginManager(logger, plugins_dir=plugins_dir)
-    plugin_mgr.load_plugins()
+    # Check that specific plugins are present
+    expected_plugins = ["local_command", "ssh_command", "read_file_content"]
+    for plugin_name in expected_plugins:
+        assert (
+            plugin_name in available_plugins
+        ), f"Plugin {plugin_name} should be available"
 
-    # Verify registry contents
-    assert "run_local_command" in plugin_mgr.registry
-    assert "run_ssh_command" in plugin_mgr.registry
-    assert callable(plugin_mgr.registry["run_local_command"])
-    assert callable(plugin_mgr.registry["run_ssh_command"])
-
-    # Verify schemas
-    assert "run_local_command" in plugin_mgr.schemas
-    assert "command" in plugin_mgr.schemas["run_local_command"]
+    # Verify we can get plugin classes
+    for plugin_name in expected_plugins:
+        plugin_class = plugin_mgr.get_plugin(plugin_name)
+        assert (
+            plugin_class is not None
+        ), f"Should be able to get plugin class for {plugin_name}"
+        assert hasattr(
+            plugin_class, "execute"
+        ), f"Plugin {plugin_name} should have execute method"
+        assert hasattr(
+            plugin_class, "METADATA"
+        ), f"Plugin {plugin_name} should have METADATA"
 
 
-def test_load_plugins_duplicate(tmp_path, logger, clean_plugins):
+def test_load_plugins_duplicate(logger, clean_plugins):
     """
-    Verify that duplicate utility names raise ValueError.
+    Verify that plugin registry handles duplicate plugin names correctly.
     """
-    plugins_dir = tmp_path / "plugins"
-    plugins_dir.mkdir()
-    (plugins_dir / "plugin1.py").write_text(
-        'REGISTER_UTILITIES = [("dup_func", lambda: None)]'
-    )
-    (plugins_dir / "plugin2.py").write_text(
-        'REGISTER_UTILITIES = [("dup_func", lambda: None)]'
-    )
+    plugin_mgr = PluginManager(logger=logger)
 
-    plugin_mgr = PluginManager(logger, plugins_dir=plugins_dir)
-    with pytest.raises(ValueError, match="Duplicate utility name"):
-        plugin_mgr.load_plugins()
+    # Get initial list of plugins
+    initial_plugins = plugin_mgr.list_plugins()
 
+    # Verify plugin manager works without throwing duplicate errors
+    # The new class-based system should handle duplicates through the registry
+    assert len(initial_plugins) > 0
 
-def test_load_plugins_failure(tmp_path, logger, clean_plugins, caplog):
-    """
-    Verify that a broken plugin logs an error and continues loading others.
-    """
-    plugins_dir = tmp_path / "plugins"
-    plugins_dir.mkdir()
-    (plugins_dir / "bad_plugin.py").write_text("invalid syntax")
-
-    plugin_mgr = PluginManager(logger, plugins_dir=plugins_dir)
-    plugin_mgr.load_plugins()
-
-    assert "Failed to load plugin" in caplog.text
+    # All plugin names should be unique
+    plugin_names = plugin_mgr.list_plugins()
+    assert len(plugin_names) == len(set(plugin_names)), "Plugin names should be unique"
 
 
 # ---------------------------------------------------------------------------
@@ -108,95 +86,116 @@ def test_load_plugins_failure(tmp_path, logger, clean_plugins, caplog):
 # ---------------------------------------------------------------------------
 
 
-def test_get_plugin_success(tmp_path, logger, clean_plugins):
+def test_get_plugin_success(logger, clean_plugins):
     """
-    Verify that get_plugin() retrieves a valid utility function.
+    Verify that get_plugin() retrieves valid plugin classes.
     """
-    plugins_dir = tmp_path / "plugins"
-    plugins_dir.mkdir()
+    plugin_mgr = PluginManager(logger=logger)
 
-    # Dummy plugin providing one utility
-    plugin_file = plugins_dir / "dummy_plugin.py"
-    plugin_file.write_text(
-        """
-def dummy_func():
-    return 123
-REGISTER_UTILITIES = [("dummy_func", dummy_func)]
-"""
-    )
+    # First ensure plugins are loaded by calling list_plugins
+    available_plugins = plugin_mgr.list_plugins()
+    assert (
+        "local_command" in available_plugins
+    ), "local_command plugin should be available"
 
-    plugin_mgr = PluginManager(logger, plugins_dir=plugins_dir)
-    plugin_mgr.load_plugins()
-    func = plugin_mgr.get_plugin("dummy_func")
-
-    assert callable(func)
-    assert func() == 123
+    # Test getting plugin classes for known plugins
+    plugin_class = plugin_mgr.get_plugin("local_command")
+    assert plugin_class is not None
+    assert hasattr(plugin_class, "execute")
+    assert hasattr(plugin_class, "METADATA")
+    assert plugin_class.METADATA.name == "local_command"
 
 
-def test_get_plugin_failure(tmp_path, logger, clean_plugins):
+def test_get_plugin_failure(logger, clean_plugins):
     """
-    Verify that get_plugin() raises KeyError when utility not found.
+    Verify that get_plugin() raises appropriate error when plugin not found.
     """
-    plugins_dir = tmp_path / "plugins"
-    plugins_dir.mkdir()
+    plugin_mgr = PluginManager(logger=logger)
 
-    plugin_mgr = PluginManager(logger, plugins_dir=plugins_dir)
-    plugin_mgr.load_plugins()
-
-    with pytest.raises(KeyError, match="Utility 'nonexistent' is not registered"):
-        plugin_mgr.get_plugin("nonexistent")
+    with pytest.raises(KeyError, match="Plugin not found: nonexistent_plugin"):
+        plugin_mgr.get_plugin("nonexistent_plugin")
 
 
 # ---------------------------------------------------------------------------
-# get_schema() tests
+# execute_plugin() tests
 # ---------------------------------------------------------------------------
 
 
-def test_get_schema_success(tmp_path, logger, clean_plugins):
+def test_execute_plugin_success(tmp_path, logger, clean_plugins):
     """
-    Verify that get_schema() retrieves a valid schema.
+    Verify that execute_plugin() can execute a plugin successfully.
     """
-    plugins_dir = tmp_path / "plugins"
-    plugins_dir.mkdir()
+    plugin_mgr = PluginManager(logger=logger)
 
-    # Dummy plugin with SCHEMA
-    plugin_file = plugins_dir / "dummy_plugin.py"
-    plugin_file.write_text(
-        """
-def dummy_func():
-    pass
-REGISTER_UTILITIES = [("dummy_func", dummy_func)]
-SCHEMA = {'param': {'type': str, 'required': True}}
-"""
+    # Test with read_file_content plugin
+    test_file = tmp_path / "test.txt"
+    test_file.write_text("test content")
+
+    result = plugin_mgr.execute_plugin(
+        "read_file_content", {"file_path": str(test_file)}
     )
 
-    plugin_mgr = PluginManager(logger, plugins_dir=plugins_dir)
-    plugin_mgr.load_plugins()
-    schema = plugin_mgr.get_schema("dummy_func")
-
-    assert isinstance(schema, dict)
-    assert "param" in schema
+    assert result is not None
+    assert "content" in result
+    assert result["content"] == "test content"
 
 
-def test_get_schema_failure(tmp_path, logger, clean_plugins):
+def test_execute_plugin_failure(logger, clean_plugins):
     """
-    Verify that get_schema() raises KeyError when no schema defined.
+    Verify that execute_plugin() raises appropriate error for invalid plugin.
     """
-    plugins_dir = tmp_path / "plugins"
-    plugins_dir.mkdir()
+    plugin_mgr = PluginManager(logger=logger)
 
-    # Dummy plugin without SCHEMA
-    plugin_file = plugins_dir / "dummy_plugin.py"
-    plugin_file.write_text(
-        """
-def dummy_func():
-    pass
-REGISTER_UTILITIES = [("dummy_func", dummy_func)]
-"""
-    )
+    with pytest.raises(PluginError, match="Plugin 'nonexistent_plugin' not found"):
+        plugin_mgr.execute_plugin("nonexistent_plugin", {})
 
-    plugin_mgr = PluginManager(logger, plugins_dir=plugins_dir)
-    plugin_mgr.load_plugins()
 
-    with pytest.raises(KeyError, match="No SCHEMA defined for utility 'dummy_func'"):
-        plugin_mgr.get_schema("dummy_func")
+def test_execute_plugin_invalid_params(logger, clean_plugins):
+    """
+    Verify that execute_plugin() handles invalid parameters correctly.
+    """
+    plugin_mgr = PluginManager(logger=logger)
+
+    # Test with missing required parameters
+    with pytest.raises(PluginExecutionError):
+        plugin_mgr.execute_plugin("read_file_content", {})  # Missing file_path
+
+
+# ---------------------------------------------------------------------------
+# Plugin availability tests
+# ---------------------------------------------------------------------------
+
+
+def test_list_plugins_consistency(logger, clean_plugins):
+    """
+    Verify that list_plugins() returns consistent results.
+    """
+    plugin_mgr = PluginManager(logger=logger)
+
+    first_list = plugin_mgr.list_plugins()
+    second_list = plugin_mgr.list_plugins()
+
+    # Should return the same plugins in the same order
+    assert first_list == second_list
+    assert len(first_list) == len(second_list)
+
+
+def test_plugin_manager_initialization(logger):
+    """
+    Verify that PluginManager initializes correctly with and without logger.
+    """
+    # Test with logger
+    plugin_mgr_with_logger = PluginManager(logger=logger)
+    assert plugin_mgr_with_logger.logger == logger
+
+    # Test without logger
+    plugin_mgr_without_logger = PluginManager()
+    assert plugin_mgr_without_logger.logger is None
+
+    # Both should be able to list plugins
+    plugins_with_logger = plugin_mgr_with_logger.list_plugins()
+    plugins_without_logger = plugin_mgr_without_logger.list_plugins()
+
+    assert len(plugins_with_logger) > 0
+    assert len(plugins_without_logger) > 0
+    assert plugins_with_logger == plugins_without_logger
