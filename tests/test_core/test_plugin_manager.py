@@ -2,8 +2,6 @@
 Tests for PluginManager class with the new class-based plugin system.
 """
 
-import sys
-
 import pytest
 
 from automax.core.managers.plugin_manager import PluginManager
