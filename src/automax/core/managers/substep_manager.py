@@ -1,11 +1,12 @@
 """
-Sub-Step Manager for Automa.
+Sub-Step Manager for Automax.
 
 Handles the execution of sub-steps within a step, including parameter resolution, plugin
 invocation, retries, and output context management.
 
 """
 
+import importlib
 import os
 
 from automax.core.exceptions import AutomaxError
@@ -22,7 +23,14 @@ class SubStepManager:
     """
 
     def __init__(
-        self, cfg: dict, logger, plugin_manager, step_id: str, substeps_cfg: list[dict]
+        self,
+        cfg: dict,
+        logger,
+        plugin_manager,
+        step_id: str,
+        substeps_cfg: list[dict],
+        pre_run: str = None,
+        post_run: str = None,
     ):
         """
         Initialize SubStepManager.
@@ -33,6 +41,8 @@ class SubStepManager:
             plugin_manager: Plugin manager instance.
             step_id (str): Current step ID.
             substeps_cfg (list[dict]): List of sub-step configurations from YAML.
+            pre_run (str, optional): Pre-run hook function path.
+            post_run (str, optional): Post-run hook function path.
 
         """
         self.cfg = cfg
@@ -41,6 +51,8 @@ class SubStepManager:
         self.step_id = step_id
         self.substeps_cfg = substeps_cfg
         self.context = {}  # Shared context for output between sub-steps
+        self.pre_run = pre_run
+        self.post_run = post_run
 
     def run(self, substep_ids: list[str] = None, dry_run: bool = False) -> bool:
         """
@@ -57,6 +69,10 @@ class SubStepManager:
             AutomaxError: On sub-step errors.
 
         """
+        # Execute pre-run hook if defined
+        if self.pre_run and not dry_run:
+            self._execute_hook(self.pre_run, "pre_run")
+
         if not substep_ids:
             substep_ids = [sub["id"] for sub in self.substeps_cfg]
 
@@ -71,6 +87,7 @@ class SubStepManager:
             print_substep_start(
                 self.logger, self.step_id, sub_id, sub_cfg["description"]
             )
+
             try:
                 # Resolve parameters
                 params = self._resolve_params(sub_cfg["params"])
@@ -104,6 +121,7 @@ class SubStepManager:
                         self.context[sub_cfg["output_key"]] = output
 
                     result = "OK"
+
             except Exception as e:
                 self.logger.error(f"Sub-step {self.step_id}.{sub_id} failed: {e}")
                 result = "ERROR"
@@ -114,13 +132,17 @@ class SubStepManager:
             finally:
                 print_substep_end(self.logger, self.step_id, sub_id, result)
 
+        # Execute post-run hook if defined
+        if self.post_run and not dry_run:
+            self._execute_hook(self.post_run, "post_run")
+
         return success
 
     def _resolve_params(self, params: dict) -> dict:
         """
         Resolve placeholders and environment variables in parameters.
 
-        Supports {config_key} from cfg and $ENV_VAR from os.environ.
+        Supports {config_key} from cfg, {output_key} from context, and $ENV_VAR from os.environ.
 
         Args:
             params (dict): Original parameters.
@@ -132,7 +154,7 @@ class SubStepManager:
         resolved = {}
         for k, v in params.items():
             if isinstance(v, str):
-                # Resolve config placeholders
+                # Resolve config and context placeholders
                 try:
                     v = v.format(**self.cfg, **self.context)
                 except KeyError as e:
@@ -141,3 +163,30 @@ class SubStepManager:
                 v = os.path.expandvars(v)
             resolved[k] = v
         return resolved
+
+    def _execute_hook(self, hook_path: str, hook_type: str):
+        """
+        Execute a hook function.
+
+        Args:
+            hook_path: Dot-separated path to hook function
+            hook_type: Type of hook for logging
+
+        Raises:
+            AutomaxError: If hook execution fails
+
+        """
+        try:
+            module_name, function_name = hook_path.rsplit(".", 1)
+            module = importlib.import_module(module_name)
+            hook_function = getattr(module, function_name)
+
+            # Call hook function with context
+            hook_function(logger=self.logger, step_id=self.step_id)
+
+            self.logger.info("Executed %s hook: %s", hook_type, hook_path)
+
+        except Exception as e:
+            error_msg = f"Failed to execute {hook_type} hook {hook_path}: {e}"
+            self.logger.error(error_msg)
+            raise AutomaxError(error_msg, level="ERROR")

@@ -1,5 +1,5 @@
 """
-Step Manager for Automa.
+Step Manager for Automax.
 
 Orchestrates the execution of steps based on YAML configurations. Loads step
 configurations dynamically and delegates sub-step execution to SubStepManager.
@@ -80,6 +80,7 @@ class StepManager:
             )
 
         overall_success = True
+
         for step_id in step_ids:
             try:
                 step_cfg = self._load_step_config(step_id)
@@ -105,6 +106,7 @@ class StepManager:
                     overall_success = False
 
                 step_result = "OK" if substep_success else "ERROR"
+
             except Exception as e:
                 self.logger.error(f"Step {step_id} failed: {e}")
                 step_result = "ERROR"

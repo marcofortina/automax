@@ -95,6 +95,20 @@ class ValidationManager:
                 f"YAML schema validation failed for {yaml_path}: {e}", level="FATAL"
             )
 
+        # Validate pre_run and post_run hooks if present
+        for hook_field in ["pre_run", "post_run"]:
+            if hook_field in data and data[hook_field]:
+                if not isinstance(data[hook_field], str):
+                    raise AutomaxError(
+                        f"Step {step_id} {hook_field} must be a string", level="ERROR"
+                    )
+                # Basic validation for function path format
+                if "." not in data[hook_field]:
+                    raise AutomaxError(
+                        f"Step {step_id} {hook_field} must be in format 'module.function'",
+                        level="ERROR",
+                    )
+
         # Validate each sub-step
         for sub in data["substeps"]:
             plugin_name = sub["plugin"]
@@ -141,7 +155,7 @@ class ValidationManager:
                         f"Potential hard-coded sensitive param '{key}' in sub-step {step_id}.{sub['id']}. Consider using env vars."
                     )
 
-            # Validate placeholder resolution
+            # Validate placeholder resolution for config keys
             for k, v in params.items():
                 if isinstance(v, str) and "{" in v:
                     try:
