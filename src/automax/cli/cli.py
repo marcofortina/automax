@@ -165,23 +165,12 @@ def list():
     """
     try:
         plugin_manager = PluginManager()
+        available_plugins = plugin_manager.list_plugins()
 
-        # Force plugin loading if load_plugins method exists
-        if hasattr(plugin_manager, "load_plugins"):
-            plugin_manager.load_plugins()
-
-        # Try different attributes where plugins might be stored
-        plugin_sources = []
-        if hasattr(plugin_manager, "registry") and plugin_manager.registry:
-            plugin_sources.append(("registry", plugin_manager.registry))
-        if hasattr(plugin_manager, "plugins") and plugin_manager.plugins:
-            plugin_sources.append(("plugins", plugin_manager.plugins))
-
-        if plugin_sources:
+        if available_plugins:
             click.echo("Available plugins:")
-            for source_name, plugins_dict in plugin_sources:
-                for plugin_name in sorted(plugins_dict.keys()):
-                    click.echo(f"  {plugin_name}")
+            for plugin_name in sorted(available_plugins):
+                click.echo(f"  {plugin_name}")
         else:
             click.echo("No plugins found")
 
