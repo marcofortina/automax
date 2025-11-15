@@ -1,199 +1,222 @@
 """
-Tests for ODBC Database Operations plugin.
+Tests for database_operations plugin.
 """
 
+import sqlite3
 from unittest.mock import MagicMock, patch
 
-import pyodbc
 import pytest
 
-from automax.core.exceptions import AutomaxError
-from automax.plugins.database_operations import (
-    check_db_connection,
-    execute_db_query,
-    get_odbc_data_sources,
-    get_odbc_drivers,
-)
+from automax.plugins.exceptions import PluginExecutionError
+from automax.plugins.registry import global_registry
 
 
 class TestDatabaseOperationsPlugin:
     """
-    Test cases for ODBC Database Operations plugin.
+    Test suite for database_operations plugin.
     """
 
-    def test_execute_db_query_missing_connection_string(self):
+    def test_database_operations_plugin_registered(self):
         """
-        Test query execution without connection_string.
+        Verify that database_operations plugin is properly registered.
         """
-        config = {"query": "SELECT 1"}
+        global_registry.load_all_plugins()
+        assert "database_operations" in global_registry.list_plugins()
 
-        with pytest.raises(AutomaxError, match="connection_string is required"):
-            execute_db_query(config)
+        # Verify metadata
+        metadata = global_registry.get_metadata("database_operations")
+        assert metadata.name == "database_operations"
+        assert "database" in metadata.tags
+        assert "database_type" in metadata.required_config
+        assert "query" in metadata.required_config
 
-    def test_execute_db_query_missing_query(self):
+    def test_database_operations_plugin_instantiation(self):
         """
-        Test query execution without query.
+        Verify database_operations plugin can be instantiated with config.
         """
-        config = {"connection_string": "DRIVER={Test};SERVER=localhost"}
+        global_registry.load_all_plugins()
 
-        with pytest.raises(AutomaxError, match="query is required"):
-            execute_db_query(config)
-
-    @patch("automax.plugins.database_operations.pyodbc.connect")
-    def test_execute_db_query_select(self, mock_connect):
-        """
-        Test ODBC SELECT query execution.
-        """
-        # Mock connection and cursor
-        mock_conn = MagicMock()
-        mock_cursor = MagicMock()
-        mock_cursor.description = [("id",), ("name",)]
-        mock_cursor.fetchall.return_value = [(1, "test_user"), (2, "another_user")]
-        mock_conn.cursor.return_value = mock_cursor
-        mock_connect.return_value = mock_conn
-
+        plugin_class = global_registry.get_plugin_class("database_operations")
         config = {
-            "connection_string": "DRIVER={Test};SERVER=localhost;DATABASE=testdb",
+            "database_type": "sqlite",
             "query": "SELECT * FROM users",
-            "fetch": "all",
+            "database": ":memory:",
+            "parameters": [1, 2],
         }
 
-        result = execute_db_query(config)
+        plugin_instance = plugin_class(config)
+        assert plugin_instance is not None
+        assert plugin_instance.config == config
 
-        expected = [{"id": 1, "name": "test_user"}, {"id": 2, "name": "another_user"}]
-        assert result == expected
-        mock_cursor.execute.assert_called_once_with("SELECT * FROM users", {})
+    def test_database_operations_plugin_configuration_validation(self):
+        """
+        Verify database_operations plugin configuration validation.
+        """
+        global_registry.load_all_plugins()
 
-    @patch("automax.plugins.database_operations.pyodbc.connect")
-    def test_execute_db_query_insert(self, mock_connect):
+        plugin_class = global_registry.get_plugin_class("database_operations")
+
+        # Test with missing required configuration
+        with pytest.raises(Exception) as exc_info:
+            plugin_class({"database_type": "sqlite"})
+
+        assert "required configuration" in str(exc_info.value).lower()
+
+    @patch("sqlite3.connect")
+    def test_database_operations_plugin_select_query(self, mock_connect):
         """
-        Test ODBC INSERT query execution.
+        Test database_operations plugin execution with SELECT query.
         """
+        # Setup mocks
         mock_conn = MagicMock()
+        mock_connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_connect.return_value.__exit__ = MagicMock(return_value=None)
+
         mock_cursor = MagicMock()
-        mock_cursor.rowcount = 1
         mock_conn.cursor.return_value = mock_cursor
-        mock_connect.return_value = mock_conn
+        mock_conn.row_factory = sqlite3.Row
 
-        config = {
-            "connection_string": "DRIVER={Test};SERVER=localhost;DATABASE=testdb",
-            "query": "INSERT INTO users (name) VALUES (?)",
-            "parameters": ["test_user"],
-            "fetch": "none",
-        }
+        # Mock a row with column names
+        mock_row = MagicMock()
+        mock_row.keys.return_value = ["id", "name"]
+        mock_cursor.fetchall.return_value = [mock_row]
 
-        result = execute_db_query(config)
+        global_registry.load_all_plugins()
 
-        assert result == 1
-        mock_cursor.execute.assert_called_once_with(
-            "INSERT INTO users (name) VALUES (?)", ["test_user"]
+        plugin_class = global_registry.get_plugin_class("database_operations")
+        plugin = plugin_class(
+            {
+                "database_type": "sqlite",
+                "database": ":memory:",
+                "query": "SELECT * FROM users",
+            }
         )
-        mock_conn.commit.assert_called_once()
 
-    @patch("automax.plugins.database_operations.pyodbc.connect")
-    def test_execute_db_query_connection_error(self, mock_connect):
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "success"
+        assert result["database_type"] == "sqlite"
+        assert result["query"] == "SELECT * FROM users"
+        assert result["row_count"] == 1
+
+        # Verify mock call
+        mock_cursor.execute.assert_called_once_with("SELECT * FROM users", [])
+
+    @patch("sqlite3.connect")
+    def test_database_operations_plugin_insert_query(self, mock_connect):
         """
-        Test query execution with connection error.
+        Test database_operations plugin execution with INSERT query.
         """
-        mock_connect.side_effect = Exception("Connection failed")
-
-        config = {
-            "connection_string": "DRIVER={Test};SERVER=localhost",
-            "query": "SELECT 1",
-            "fail_fast": True,
-        }
-
-        with pytest.raises(AutomaxError, match="Database operation failed"):
-            execute_db_query(config)
-
-    @patch("automax.plugins.database_operations.pyodbc.connect")
-    def test_execute_db_query_connection_error_no_fail_fast(self, mock_connect):
-        """
-        Test query execution with connection error and fail_fast=False.
-        """
-        mock_connect.side_effect = Exception("Connection failed")
-
-        config = {
-            "connection_string": "DRIVER={Test};SERVER=localhost",
-            "query": "SELECT 1",
-            "fail_fast": False,
-        }
-
-        result = execute_db_query(config)
-        assert result is None
-
-    @patch("automax.plugins.database_operations.pyodbc.connect")
-    def test_check_db_connection_success(self, mock_connect):
-        """
-        Test successful ODBC database connection test.
-        """
+        # Setup mocks
         mock_conn = MagicMock()
-        mock_connect.return_value = mock_conn
+        mock_connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_connect.return_value.__exit__ = MagicMock(return_value=None)
 
-        config = {"connection_string": "DRIVER={Test};SERVER=localhost;DATABASE=testdb"}
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.rowcount = 1
+        mock_cursor.lastrowid = 5
 
-        result = check_db_connection(config)
-        assert result is True
-        mock_conn.close.assert_called_once()
+        global_registry.load_all_plugins()
+        plugin_class = global_registry.get_plugin_class("database_operations")
+        plugin = plugin_class(
+            {
+                "database_type": "sqlite",
+                "database": ":memory:",
+                "query": "INSERT INTO users (name) VALUES (?)",
+                "parameters": ["John"],
+            }
+        )
 
-    @patch("automax.plugins.database_operations.pyodbc.connect")
-    def test_check_db_connection_failure(self, mock_connect):
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "success"
+        assert result["row_count"] == 1
+        assert result["lastrowid"] == 5
+
+        # Verify mock call
+        mock_cursor.execute.assert_called_once_with(
+            "INSERT INTO users (name) VALUES (?)", ["John"]
+        )
+
+    @patch("sqlite3.connect")
+    def test_database_operations_plugin_update_query(self, mock_connect):
         """
-        Test failed ODBC database connection test.
+        Test database_operations plugin execution with UPDATE query.
         """
-        mock_connect.side_effect = Exception("Connection failed")
+        # Setup mocks
+        mock_conn = MagicMock()
+        mock_connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_connect.return_value.__exit__ = MagicMock(return_value=None)
 
-        config = {
-            "connection_string": "DRIVER={Test};SERVER=localhost",
-            "fail_fast": False,
-        }
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.rowcount = 3
 
-        result = check_db_connection(config)
-        assert result is False
+        global_registry.load_all_plugins()
 
-    @patch("automax.plugins.database_operations.pyodbc.drivers")
-    def test_get_odbc_drivers(self, mock_drivers):
+        plugin_class = global_registry.get_plugin_class("database_operations")
+        plugin = plugin_class(
+            {
+                "database_type": "sqlite",
+                "database": ":memory:",
+                "query": "UPDATE users SET active = ? WHERE age > ?",
+                "parameters": [1, 18],
+            }
+        )
+
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "success"
+        assert result["row_count"] == 3
+
+        # Verify mock call
+        mock_cursor.execute.assert_called_once_with(
+            "UPDATE users SET active = ? WHERE age > ?", [1, 18]
+        )
+
+    @patch("sqlite3.connect")
+    def test_database_operations_plugin_sqlite_error(self, mock_connect):
         """
-        Test getting ODBC drivers list.
+        Test database_operations plugin execution with SQLite error.
         """
-        mock_drivers.return_value = [
-            "ODBC Driver 17 for SQL Server",
-            "PostgreSQL Unicode",
-            "MySQL ODBC 8.0 Unicode Driver",
-        ]
+        # Setup mocks
+        mock_conn = MagicMock()
+        mock_connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_connect.return_value.__exit__ = MagicMock(return_value=None)
 
-        result = get_odbc_drivers({})
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
 
-        assert len(result) == 3
-        assert "ODBC Driver 17 for SQL Server" in result
+        # Setup mock to raise exception
+        mock_cursor.execute.side_effect = sqlite3.Error("SQL syntax error")
 
-    @patch("automax.plugins.database_operations.pyodbc.dataSources")
-    def test_get_odbc_data_sources(self, mock_data_sources):
+        global_registry.load_all_plugins()
+        plugin_class = global_registry.get_plugin_class("database_operations")
+        plugin = plugin_class(
+            {"database_type": "sqlite", "database": ":memory:", "query": "INVALID SQL"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "SQLite error" in str(exc_info.value)
+
+    def test_database_operations_plugin_unsupported_database_type(self):
         """
-        Test getting ODBC data sources.
+        Test database_operations plugin with unsupported database type.
         """
-        mock_data_sources.return_value = {
-            "MySQL_DSN": "MySQL ODBC 8.0 Unicode Driver",
-            "PostgreSQL_DSN": "PostgreSQL Unicode",
-        }
+        global_registry.load_all_plugins()
 
-        result = get_odbc_data_sources({})
+        plugin_class = global_registry.get_plugin_class("database_operations")
+        plugin = plugin_class(
+            {"database_type": "postgresql", "query": "SELECT * FROM users"}
+        )
 
-        assert len(result) == 2
-        assert "MySQL_DSN" in result
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
 
-    @patch("automax.plugins.database_operations.pyodbc.connect")
-    def test_execute_db_query_pyodbc_error(self, mock_connect):
-        """
-        Test query execution with specific pyodbc error.
-        """
-        mock_connect.side_effect = pyodbc.Error("ODBC Connection failed")
-
-        config = {
-            "connection_string": "DRIVER={Test};SERVER=localhost",
-            "query": "SELECT 1",
-            "fail_fast": True,
-        }
-
-        with pytest.raises(AutomaxError, match="ODBC database operation failed"):
-            execute_db_query(config)
+        assert "Unsupported database type" in str(exc_info.value)

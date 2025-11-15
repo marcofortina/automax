@@ -43,9 +43,5 @@ def plugin_manager(logger):
     """
     Provide a PluginManager instance with plugins loaded.
     """
-    plugins_path = Path(
-        os.path.join(os.path.dirname(__file__), "../src/automax/plugins")
-    )
-    pm = PluginManager(logger=logger, plugins_dir=plugins_path)
-    pm.load_plugins()
+    pm = PluginManager(logger=logger)
     return pm
