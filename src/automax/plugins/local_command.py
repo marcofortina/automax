@@ -1,63 +1,101 @@
 """
-Plugin for local command execution utility.
+Plugin for executing local system commands.
 """
 
 import subprocess
+from typing import Any, Dict
 
-from automax.core.exceptions import AutomaxError
+from automax.plugins import BasePlugin, PluginMetadata, register_plugin
+from automax.plugins.exceptions import PluginExecutionError
 
 
-def run_local_command(command: str, logger=None, fail_fast=True, dry_run=False):
+@register_plugin
+class LocalCommandPlugin(BasePlugin):
     """
-    Execute a local OS command, log output and optionally fail fast.
-
-    Args:
-        command (str): Command to execute
-        logger (LoggerManager, optional): Logger instance
-        fail_fast (bool): If True, raise AutomaxError on non-zero return code
-        dry_run (bool): If True, do not execute command (simulate)
-
-    Returns:
-        subprocess.CompletedProcess: result object with stdout, stderr, returncode
-
-    Raises:
-        AutomaxError: if fail_fast is True and command fails, with level 'FATAL'
-
+    Execute local system commands and return output.
     """
-    from automax.core.utils.common_utils import echo
 
-    if logger:
-        echo(f"COMMAND = {command}", logger, level="DEBUG")
-        echo(f"Executing local command: {command}", logger, level="INFO")
+    METADATA = PluginMetadata(
+        name="local_command",
+        version="2.0.0",
+        description="Execute local system commands with output capture",
+        author="Automax Team",
+        category="system",
+        tags=["command", "local", "system", "execute"],
+        required_config=["command"],
+        optional_config=["timeout", "shell", "cwd", "env", "input_data"],
+    )
 
-    if dry_run:
-        if logger:
-            echo(f"[DRY-RUN] {command}", logger, level="INFO")
-        return subprocess.CompletedProcess(
-            args=command, returncode=0, stdout="", stderr=""
-        )
+    SCHEMA = {
+        "command": {"type": str, "required": True},
+        "timeout": {"type": (int, float), "required": False},
+        "shell": {"type": bool, "required": False},
+        "cwd": {"type": str, "required": False},
+        "env": {"type": dict, "required": False},
+        "input_data": {"type": str, "required": False},
+    }
 
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    def execute(self) -> Dict[str, Any]:
+        """
+        Execute a local system command.
 
-    if logger:
-        if result.stdout:
-            echo(result.stdout.strip(), logger, level="DEBUG")
-        if result.stderr:
-            echo(result.stderr.strip(), logger, level="ERROR")
+        Returns:
+            Dictionary containing command execution results.
 
-    if fail_fast and result.returncode != 0:
-        msg = f"Command failed with return code {result.returncode}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        raise AutomaxError(msg, level="FATAL")
+        Raises:
+            PluginExecutionError: If command execution fails or times out.
 
-    return result
+        """
+        command = self.config["command"]
+        timeout = self.config.get("timeout", 30)
+        shell = self.config.get("shell", True)
+        cwd = self.config.get("cwd")
+        env = self.config.get("env")
+        input_data = self.config.get("input_data")
 
+        self.logger.info(f"Executing local command: {command}")
 
-REGISTER_UTILITIES = [("run_local_command", run_local_command)]
+        try:
+            result = subprocess.run(
+                command,
+                shell=shell,
+                timeout=timeout,
+                cwd=cwd,
+                env=env,
+                input=input_data,
+                capture_output=True,
+                text=True,
+                encoding="utf-8" if input_data else None,
+            )
 
-SCHEMA = {
-    "command": {"type": str, "required": True},
-    "fail_fast": {"type": bool, "default": True},
-    "dry_run": {"type": bool, "default": False},
-}
+            output = {
+                "command": command,
+                "returncode": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "timeout": timeout,
+                "shell": shell,
+                "status": "success" if result.returncode == 0 else "failure",
+            }
+
+            if result.returncode != 0:
+                self.logger.warning(
+                    f"Command exited with non-zero code {result.returncode}: {command}"
+                )
+            else:
+                self.logger.info(f"Command executed successfully: {command}")
+
+            return output
+
+        except subprocess.TimeoutExpired as e:
+            error_msg = f"Command timed out after {timeout} seconds: {command}"
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e
+        except FileNotFoundError as e:
+            error_msg = f"Command not found: {command}"
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e
+        except Exception as e:
+            error_msg = f"Failed to execute command: {command} - {e}"
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e
