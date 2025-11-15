@@ -4,11 +4,11 @@ post_run: "steps.step2.step2.post_run"  # Optional
 substeps:
   - id: "1"
     description: "Display the current logged-in user"
-    plugin: "run_local_command"
+    plugin: "local_command"
     params:
       command: "whoami"
   - id: "2"
     description: "Display the current working directory"
-    plugin: "run_local_command"
+    plugin: "local_command"
     params:
       command: "pwd"
