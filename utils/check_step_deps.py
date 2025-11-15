@@ -53,9 +53,8 @@ def main():
         print(f"[ERROR] Failed to load config YAML: {e}")
         sys.exit(1)
 
-    # Initialize PluginManager and load plugins
+    # Load PluginManager
     pm = PluginManager()
-    pm.load_plugins()
 
     # Initialize ValidationManager
     vm = ValidationManager(cfg, plugin_manager=pm, steps_dir=steps_dir)
