@@ -54,6 +54,7 @@ class LocalCommandPlugin(BasePlugin):
         input_data = self.config.get("input_data")
 
         self.logger.info(f"Executing local command: {command}")
+        self.logger.debug(f"COMMAND = {command}")
 
         try:
             result = subprocess.run(
@@ -67,6 +68,11 @@ class LocalCommandPlugin(BasePlugin):
                 text=True,
                 encoding="utf-8" if input_data else None,
             )
+
+            if result.stdout and result.stdout.strip():
+                self.logger.debug(f"Command output:\n{result.stdout}")
+            if result.stderr and result.stderr.strip():
+                self.logger.debug(f"Command error output:\n{result.stderr}")
 
             output = {
                 "command": command,

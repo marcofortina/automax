@@ -57,6 +57,7 @@ class SSHCommandPlugin(BasePlugin):
         timeout = self.config.get("timeout", 30)
 
         self.logger.info(f"Executing SSH command on {host}:{port}: {command}")
+        self.logger.debug(f"SSH COMMAND on {host}:{port}: {command}")
 
         ssh_client = None
         try:
@@ -84,6 +85,13 @@ class SSHCommandPlugin(BasePlugin):
             exit_code = stdout.channel.recv_exit_status()
             stdout_output = stdout.read().decode("utf-8").strip()
             stderr_output = stderr.read().decode("utf-8").strip()
+
+            if stdout_output:
+                self.logger.debug(f"SSH command output on {host}:\n{stdout_output}")
+            if stderr_output:
+                self.logger.debug(
+                    f"SSH command error output on {host}:\n{stderr_output}"
+                )
 
             result = {
                 "host": host,
