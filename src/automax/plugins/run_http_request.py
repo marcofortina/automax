@@ -5,6 +5,7 @@ Plugin for making HTTP requests.
 from typing import Any, Dict
 
 import requests
+from requests.auth import HTTPBasicAuth
 
 from automax.plugins import BasePlugin, PluginMetadata, register_plugin
 from automax.plugins.exceptions import PluginExecutionError
@@ -13,13 +14,13 @@ from automax.plugins.exceptions import PluginExecutionError
 @register_plugin
 class RunHttpRequestPlugin(BasePlugin):
     """
-    Make HTTP requests to APIs.
+    Make HTTP requests to APIs with optional Basic Auth.
     """
 
     METADATA = PluginMetadata(
         name="run_http_request",
         version="2.0.0",
-        description="Make HTTP requests to APIs",
+        description="Make HTTP requests to APIs with optional Basic Auth",
         author="Automax Team",
         category="communication",
         tags=["http", "api", "request"],
@@ -31,6 +32,8 @@ class RunHttpRequestPlugin(BasePlugin):
             "params",
             "timeout",
             "verify_ssl",
+            "auth_username",
+            "auth_password",
         ],
     )
 
@@ -42,6 +45,8 @@ class RunHttpRequestPlugin(BasePlugin):
         "params": {"type": dict, "required": False},
         "timeout": {"type": (int, float), "required": False},
         "verify_ssl": {"type": bool, "required": False},
+        "auth_username": {"type": str, "required": False},
+        "auth_password": {"type": str, "required": False},
     }
 
     def execute(self) -> Dict[str, Any]:
@@ -62,10 +67,18 @@ class RunHttpRequestPlugin(BasePlugin):
         params = self.config.get("params", {})
         timeout = self.config.get("timeout", 30)
         verify_ssl = self.config.get("verify_ssl", True)
+        auth_username = self.config.get("auth_username")
+        auth_password = self.config.get("auth_password")
 
         self.logger.info(f"Making {method} request to: {url}")
 
         try:
+            auth = (
+                HTTPBasicAuth(auth_username, auth_password)
+                if auth_username and auth_password
+                else None
+            )
+
             response = requests.request(
                 method=method,
                 url=url,
@@ -74,6 +87,7 @@ class RunHttpRequestPlugin(BasePlugin):
                 params=params,
                 timeout=timeout,
                 verify=verify_ssl,
+                auth=auth,
             )
 
             result = {
@@ -95,6 +109,7 @@ class RunHttpRequestPlugin(BasePlugin):
             error_msg = f"HTTP request failed: {e}"
             self.logger.error(error_msg)
             raise PluginExecutionError(error_msg) from e
+
         except Exception as e:
             error_msg = f"Unexpected error during HTTP request: {e}"
             self.logger.error(error_msg)

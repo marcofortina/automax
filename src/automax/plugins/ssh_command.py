@@ -64,14 +64,13 @@ class SSHCommandPlugin(BasePlugin):
             ssh_client = paramiko.SSHClient()
             ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-            # Connect to SSH server
+            # Connect to the remote server
             connect_kwargs = {
                 "hostname": host,
                 "port": port,
                 "username": username,
                 "timeout": timeout,
             }
-
             if password:
                 connect_kwargs["password"] = password
             elif key_file:
@@ -80,7 +79,7 @@ class SSHCommandPlugin(BasePlugin):
             ssh_client.connect(**connect_kwargs)
             self.logger.debug(f"SSH connection established to {host}:{port}")
 
-            # Execute command
+            # Execute the command
             stdin, stdout, stderr = ssh_client.exec_command(command, timeout=timeout)
             exit_code = stdout.channel.recv_exit_status()
             stdout_output = stdout.read().decode("utf-8").strip()
@@ -118,14 +117,17 @@ class SSHCommandPlugin(BasePlugin):
             error_msg = f"SSH authentication failed for {username}@{host}:{port}"
             self.logger.error(error_msg)
             raise PluginExecutionError(error_msg) from e
+
         except paramiko.SSHException as e:
             error_msg = f"SSH error connecting to {host}:{port}: {e}"
             self.logger.error(error_msg)
             raise PluginExecutionError(error_msg) from e
+
         except Exception as e:
             error_msg = f"Failed to execute SSH command on {host}:{port}: {e}"
             self.logger.error(error_msg)
             raise PluginExecutionError(error_msg) from e
+
         finally:
             if ssh_client:
                 ssh_client.close()

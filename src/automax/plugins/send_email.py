@@ -45,8 +45,8 @@ class SendEmailPlugin(BasePlugin):
         "subject": {"type": str, "required": True},
         "body": {"type": str, "required": True},
         "from_addr": {"type": str, "required": False},
-        "cc": {"type": str, "required": False},
-        "bcc": {"type": str, "required": False},
+        "cc": {"type": (list, str), "required": False},
+        "bcc": {"type": (list, str), "required": False},
         "is_html": {"type": bool, "required": False},
     }
 
@@ -86,10 +86,7 @@ class SendEmailPlugin(BasePlugin):
                 msg["Cc"] = ", ".join(cc) if isinstance(cc, list) else cc
 
             # Add body
-            if is_html:
-                msg.attach(MIMEText(body, "html"))
-            else:
-                msg.attach(MIMEText(body, "plain"))
+            msg.attach(MIMEText(body, "html" if is_html else "plain"))
 
             # Combine all recipients
             all_recipients = to_addrs if isinstance(to_addrs, list) else [to_addrs]
@@ -104,7 +101,8 @@ class SendEmailPlugin(BasePlugin):
                 server.login(username, password)
                 server.send_message(msg)
 
-            result = {
+            self.logger.info(f"Successfully sent email to: {to_addrs}")
+            return {
                 "smtp_server": smtp_server,
                 "port": port,
                 "from": from_addr,
@@ -113,13 +111,11 @@ class SendEmailPlugin(BasePlugin):
                 "status": "success",
             }
 
-            self.logger.info(f"Successfully sent email to: {to_addrs}")
-            return result
-
         except smtplib.SMTPException as e:
             error_msg = f"SMTP error while sending email: {e}"
             self.logger.error(error_msg)
             raise PluginExecutionError(error_msg) from e
+
         except Exception as e:
             error_msg = f"Failed to send email: {e}"
             self.logger.error(error_msg)

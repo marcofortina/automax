@@ -103,6 +103,7 @@ class TestRunHttpRequestPlugin:
             params={},
             timeout=30,
             verify=True,
+            auth=None,
         )
 
     @patch("requests.request")
@@ -144,6 +145,7 @@ class TestRunHttpRequestPlugin:
             params={},
             timeout=10,
             verify=True,
+            auth=None,
         )
 
     @patch("requests.request")
@@ -182,6 +184,7 @@ class TestRunHttpRequestPlugin:
             params={"q": "python", "page": "1"},
             timeout=30,
             verify=False,
+            auth=None,
         )
 
     @patch("requests.request")

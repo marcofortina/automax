@@ -62,6 +62,7 @@ class ReadFileContentPlugin(BasePlugin):
                 raise PluginExecutionError(f"Path is not a file: {file_path}")
 
             content = file_path.read_text(encoding=encoding)
+            self.logger.info(f"Read {len(content)} bytes from {file_path}")
 
             return {
                 "file_path": str(file_path),
@@ -75,5 +76,6 @@ class ReadFileContentPlugin(BasePlugin):
             raise PluginExecutionError(
                 f"Encoding error reading {file_path}: {e}"
             ) from e
+
         except IOError as e:
             raise PluginExecutionError(f"IO error reading {file_path}: {e}") from e

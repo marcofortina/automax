@@ -27,7 +27,8 @@ class TestGoogleSecretManagerPlugin:
         assert metadata.name == "google_secret_manager"
         assert "google" in metadata.tags
         assert "project_id" in metadata.required_config
-        assert "secret_id" in metadata.required_config
+        assert "secret_name" in metadata.required_config
+        assert "action" in metadata.required_config
 
     def test_google_secret_manager_plugin_instantiation(self):
         """
@@ -36,7 +37,11 @@ class TestGoogleSecretManagerPlugin:
         global_registry.load_all_plugins()
 
         plugin_class = global_registry.get_plugin_class("google_secret_manager")
-        config = {"project_id": "my-project", "secret_id": "my-secret"}
+        config = {
+            "project_id": "my-project",
+            "secret_name": "my-secret",
+            "action": "read",
+        }
 
         plugin_instance = plugin_class(config)
         assert plugin_instance is not None
@@ -58,9 +63,9 @@ class TestGoogleSecretManagerPlugin:
     @patch(
         "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
     )
-    def test_google_secret_manager_plugin_execution_success(self, mock_client):
+    def test_google_secret_manager_plugin_read_success(self, mock_client):
         """
-        Test google_secret_manager plugin execution with successful secret retrieval.
+        Test google_secret_manager plugin read action with successful secret retrieval.
         """
         # Setup mocks
         mock_secret_client = MagicMock()
@@ -73,11 +78,7 @@ class TestGoogleSecretManagerPlugin:
         global_registry.load_all_plugins()
         plugin_class = global_registry.get_plugin_class("google_secret_manager")
         plugin = plugin_class(
-            {
-                "project_id": "my-project",
-                "secret_id": "my-secret",
-                "version_id": "latest",
-            }
+            {"project_id": "my-project", "secret_name": "my-secret", "action": "read"}
         )
 
         result = plugin.execute()
@@ -85,61 +86,157 @@ class TestGoogleSecretManagerPlugin:
         # Verify result structure
         assert result["status"] == "success"
         assert result["project_id"] == "my-project"
-        assert result["secret_id"] == "my-secret"
-        assert result["secret_value"] == "my_google_secret"
+        assert result["secret_name"] == "my-secret"
+        assert result["value"] == "my_google_secret"
+        assert result["version_id"] == "latest"
 
         # Verify mock call
         mock_secret_client.access_secret_version.assert_called_once_with(
             request={"name": "projects/my-project/secrets/my-secret/versions/latest"}
         )
-        mock_secret_client.access_secret_version.assert_called_once()
 
     @patch(
         "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
     )
-    def test_google_secret_manager_plugin_specific_version(self, mock_client):
+    def test_google_secret_manager_plugin_create_success(self, mock_client):
         """
-        Test google_secret_manager plugin execution with specific version.
+        Test google_secret_manager plugin create action.
         """
         # Setup mocks
         mock_secret_client = MagicMock()
         mock_client.return_value = mock_secret_client
 
         mock_response = MagicMock()
-        mock_response.payload.data = b"my_google_secret_v2"
-        mock_secret_client.access_secret_version.return_value = mock_response
+        mock_secret_client.create_secret.return_value = mock_response
 
         global_registry.load_all_plugins()
-
         plugin_class = global_registry.get_plugin_class("google_secret_manager")
         plugin = plugin_class(
-            {"project_id": "my-project", "secret_id": "my-secret", "version_id": "2"}
+            {
+                "project_id": "my-project",
+                "secret_name": "new-secret",
+                "action": "create",
+            }
         )
 
         result = plugin.execute()
 
         # Verify result structure
-        assert result["status"] == "success"
-        assert result["version_id"] == "2"
+        assert result["status"] == "created"
+        assert result["project_id"] == "my-project"
+        assert result["secret_name"] == "new-secret"
 
         # Verify mock call
-        mock_secret_client.access_secret_version.assert_called_once_with(
-            request={"name": "projects/my-project/secrets/my-secret/versions/2"}
+        mock_secret_client.create_secret.assert_called_once_with(
+            request={
+                "parent": "projects/my-project",
+                "secret_id": "new-secret",
+                "secret": {"replication": {"automatic": {}}},
+            }
         )
 
     @patch(
         "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
     )
-    def test_google_secret_manager_plugin_secret_not_found(self, mock_client):
+    def test_google_secret_manager_plugin_write_success(self, mock_client):
         """
-        Test google_secret_manager plugin execution with secret not found.
+        Test google_secret_manager plugin write action.
         """
         # Setup mocks
         mock_secret_client = MagicMock()
         mock_client.return_value = mock_secret_client
 
+        mock_response = MagicMock()
+        mock_response.name = "projects/my-project/secrets/my-secret/versions/1"
+        mock_secret_client.add_secret_version.return_value = mock_response
+
+        global_registry.load_all_plugins()
+        plugin_class = global_registry.get_plugin_class("google_secret_manager")
+        plugin = plugin_class(
+            {
+                "project_id": "my-project",
+                "secret_name": "my-secret",
+                "action": "write",
+                "value": "new_secret_value",
+            }
+        )
+
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "version_added"
+        assert result["project_id"] == "my-project"
+        assert result["secret_name"] == "my-secret"
+        assert result["value"] == "new_secret_value"
+        assert (
+            result["version_name"] == "projects/my-project/secrets/my-secret/versions/1"
+        )
+
+        # Verify mock call
+        mock_secret_client.add_secret_version.assert_called_once_with(
+            request={
+                "parent": "projects/my-project/secrets/my-secret",
+                "payload": {"data": b"new_secret_value"},
+            }
+        )
+
+    @patch(
+        "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
+    )
+    def test_google_secret_manager_plugin_add_version_success(self, mock_client):
+        """
+        Test google_secret_manager plugin add_version action.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+
+        mock_response = MagicMock()
+        mock_response.name = "projects/my-project/secrets/my-secret/versions/2"
+        mock_secret_client.add_secret_version.return_value = mock_response
+
+        global_registry.load_all_plugins()
+        plugin_class = global_registry.get_plugin_class("google_secret_manager")
+        plugin = plugin_class(
+            {
+                "project_id": "my-project",
+                "secret_name": "my-secret",
+                "action": "add_version",
+                "value": "another_secret_value",
+            }
+        )
+
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "version_added"
+        assert result["project_id"] == "my-project"
+        assert result["secret_name"] == "my-secret"
+        assert result["value"] == "another_secret_value"
+
+        # Verify mock call
+        mock_secret_client.add_secret_version.assert_called_once_with(
+            request={
+                "parent": "projects/my-project/secrets/my-secret",
+                "payload": {"data": b"another_secret_value"},
+            }
+        )
+
+    @patch(
+        "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
+    )
+    def test_google_secret_manager_plugin_read_secret_not_found(self, mock_client):
+        """
+        Test google_secret_manager plugin read action with secret not found.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+
+        from google.api_core.exceptions import GoogleAPIError
+
         # Setup mock to raise exception
-        mock_secret_client.access_secret_version.side_effect = Exception(
+        mock_secret_client.access_secret_version.side_effect = GoogleAPIError(
             "Secret not found"
         )
 
@@ -149,46 +246,142 @@ class TestGoogleSecretManagerPlugin:
         plugin = plugin_class(
             {
                 "project_id": "my-project",
-                "secret_id": "nonexistent-secret",
-                "version_id": "latest",
+                "secret_name": "nonexistent-secret",
+                "action": "read",
             }
         )
 
         with pytest.raises(PluginExecutionError) as exc_info:
             plugin.execute()
 
-        assert "Failed to retrieve secret nonexistent-secret" in str(exc_info.value)
+        assert "Secret not found" in str(exc_info.value)
 
+    @patch(
+        "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
+    )
+    def test_google_secret_manager_plugin_write_missing_value(self, mock_client):
+        """
+        Test google_secret_manager plugin write action with missing value.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("google_secret_manager")
+        plugin = plugin_class(
+            {
+                "project_id": "my-project",
+                "secret_name": "my-secret",
+                "action": "write",
+                # Missing 'value' parameter
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Missing 'value' for write/add_version action" in str(exc_info.value)
+
+    @patch(
+        "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
+    )
+    def test_google_secret_manager_plugin_add_version_missing_value(self, mock_client):
+        """
+        Test google_secret_manager plugin add_version action with missing value.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("google_secret_manager")
+        plugin = plugin_class(
+            {
+                "project_id": "my-project",
+                "secret_name": "my-secret",
+                "action": "add_version",
+                # Missing 'value' parameter
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Missing 'value' for write/add_version action" in str(exc_info.value)
+
+    def test_google_secret_manager_plugin_invalid_action(self):
+        """
+        Test google_secret_manager plugin with invalid action.
+        """
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("google_secret_manager")
+        plugin = plugin_class(
+            {
+                "project_id": "my-project",
+                "secret_name": "my-secret",
+                "action": "invalid_action",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Invalid action" in str(exc_info.value)
+
+    @patch(
+        "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
+    )
+    def test_google_secret_manager_plugin_with_key_file(self, mock_client):
+        """
+        Test google_secret_manager plugin with service account key file.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.from_service_account_file.return_value = mock_secret_client
+
+        mock_response = MagicMock()
+        mock_response.payload.data = b"my_google_secret"
+        mock_secret_client.access_secret_version.return_value = mock_response
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("google_secret_manager")
+        plugin = plugin_class(
+            {
+                "project_id": "my-project",
+                "secret_name": "my-secret",
+                "action": "read",
+                "key_file_path": "/path/to/key.json",
+            }
+        )
+
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "success"
+
+        # Verify mock call with key file
+        mock_client.from_service_account_file.assert_called_once_with(
+            "/path/to/key.json"
+        )
+
+    @patch("automax.plugins.google_secret_manager.GOOGLE_AVAILABLE", False)
     def test_google_secret_manager_plugin_missing_sdk(self):
         """
         Test google_secret_manager plugin when SDK is not installed.
         """
-        # Simulate missing Google Cloud SDK by blocking google.cloud imports
-        with patch.dict(
-            "sys.modules",
-            {
-                "google": None,
-                "google.cloud": None,
-                "google.cloud.secretmanager": None,
-            },
-        ):
-            import importlib
+        global_registry.load_all_plugins()
 
-            import automax.plugins.google_secret_manager
+        plugin_class = global_registry.get_plugin_class("google_secret_manager")
+        plugin = plugin_class(
+            {"project_id": "my-project", "secret_name": "my-secret", "action": "read"}
+        )
 
-            # reset registry
-            global_registry._plugins.pop("google_secret_manager", None)
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
 
-            importlib.reload(automax.plugins.google_secret_manager)
-
-            global_registry.load_all_plugins()
-
-            plugin_class = global_registry.get_plugin_class("google_secret_manager")
-            plugin = plugin_class(
-                {"project_id": "my-project", "secret_id": "my-secret"}
-            )
-
-            with pytest.raises(PluginExecutionError) as exc_info:
-                plugin.execute()
-
-            assert "Google Cloud SDK not installed" in str(exc_info.value)
+        assert "Google Secret Manager SDK not installed" in str(exc_info.value)
