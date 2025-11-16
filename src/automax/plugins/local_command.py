@@ -40,7 +40,7 @@ class LocalCommandPlugin(BasePlugin):
         Execute a local system command.
 
         Returns:
-            Dictionary containing command execution results.
+            dict: command, returncode, stdout, stderr, timeout, shell, status
 
         Raises:
             PluginExecutionError: If command execution fails or times out.
@@ -54,7 +54,6 @@ class LocalCommandPlugin(BasePlugin):
         input_data = self.config.get("input_data")
 
         self.logger.info(f"Executing local command: {command}")
-        self.logger.debug(f"COMMAND = {command}")
 
         try:
             result = subprocess.run(
@@ -74,33 +73,35 @@ class LocalCommandPlugin(BasePlugin):
             if result.stderr and result.stderr.strip():
                 self.logger.debug(f"Command error output:\n{result.stderr}")
 
-            output = {
-                "command": command,
-                "returncode": result.returncode,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "timeout": timeout,
-                "shell": shell,
-                "status": "success" if result.returncode == 0 else "failure",
-            }
+            status = "success" if result.returncode == 0 else "failure"
 
-            if result.returncode != 0:
+            if status == "failure":
                 self.logger.warning(
                     f"Command exited with non-zero code {result.returncode}: {command}"
                 )
             else:
                 self.logger.info(f"Command executed successfully: {command}")
 
-            return output
+            return {
+                "command": command,
+                "returncode": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "timeout": timeout,
+                "shell": shell,
+                "status": status,
+            }
 
         except subprocess.TimeoutExpired as e:
             error_msg = f"Command timed out after {timeout} seconds: {command}"
             self.logger.error(error_msg)
             raise PluginExecutionError(error_msg) from e
+
         except FileNotFoundError as e:
             error_msg = f"Command not found: {command}"
             self.logger.error(error_msg)
             raise PluginExecutionError(error_msg) from e
+
         except Exception as e:
             error_msg = f"Failed to execute command: {command} - {e}"
             self.logger.error(error_msg)

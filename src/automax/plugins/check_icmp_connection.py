@@ -8,7 +8,7 @@ from automax.plugins import BasePlugin, PluginMetadata, register_plugin
 from automax.plugins.exceptions import PluginExecutionError
 
 try:
-    from icmplib import exceptions
+    from icmplib import exceptions as icmp_exceptions
     from icmplib import ping as icmp_ping
 
     ICMPLIB_AVAILABLE = True
@@ -24,7 +24,7 @@ class CheckIcmpConnectionPlugin(BasePlugin):
 
     METADATA = PluginMetadata(
         name="check_icmp_connection",
-        version="1.0.0",
+        version="2.0.0",
         description="Check ICMP connectivity to a host using pure Python",
         author="Automax Team",
         category="network",
@@ -118,7 +118,7 @@ class CheckIcmpConnectionPlugin(BasePlugin):
                     "success_rate": 100 - packet_loss,
                 }
 
-        except exceptions.NameLookupError as e:
+        except icmp_exceptions.NameLookupError as e:
             error_msg = f"Hostname resolution failed for {host}: {e}"
             self.logger.error(error_msg)
             if fail_fast:

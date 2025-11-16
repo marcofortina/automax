@@ -16,13 +16,13 @@ from automax.plugins.exceptions import PluginExecutionError
 @register_plugin
 class CompressFilePlugin(BasePlugin):
     """
-    Compress files and directories using various formats.
+    Compress files and directories using gzip, tar, or zip.
     """
 
     METADATA = PluginMetadata(
         name="compress_file",
         version="2.0.0",
-        description="Compress files and directories using gzip, tar, or zip",
+        description="Compress files or directories using gzip, tar, or zip",
         author="Automax Team",
         category="file_operations",
         tags=["compress", "archive", "file", "gzip", "tar", "zip"],
@@ -34,17 +34,19 @@ class CompressFilePlugin(BasePlugin):
         "source_path": {"type": str, "required": True},
         "output_path": {"type": str, "required": True},
         "format": {"type": str, "required": False},
+        "compression_level": {"type": int, "required": False},
     }
 
     def execute(self) -> Dict[str, Any]:
         """
-        Compress files or directories.
+        Compress a file or directory.
 
         Returns:
-            Dictionary containing compression results.
+            dict: source_path, output_path, format, compression_level,
+                  original_size, compressed_size, compression_ratio, status
 
         Raises:
-            PluginExecutionError: If compression fails.
+            PluginExecutionError: on compression errors
 
         """
         source_path = Path(self.config["source_path"])
@@ -57,11 +59,11 @@ class CompressFilePlugin(BasePlugin):
         )
 
         try:
-            # Validate source exists
+            # Validate source path
             if not source_path.exists():
                 raise PluginExecutionError(f"Source path does not exist: {source_path}")
 
-            # Create output directory if needed
+            # Create output directory if it doesn't exist
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Perform compression based on format
@@ -84,7 +86,7 @@ class CompressFilePlugin(BasePlugin):
         except PluginExecutionError:
             raise
         except Exception as e:
-            error_msg = f"Failed to compress {source_path} to {output_path}: {e}"
+            error_msg = f"Compression failed for {source_path}: {e}"
             self.logger.error(error_msg)
             raise PluginExecutionError(error_msg) from e
 
@@ -126,20 +128,19 @@ class CompressFilePlugin(BasePlugin):
         with tarfile.open(
             output_path, f"w:{compression}" if compression else "w"
         ) as tar:
-            if source_path.is_file():
-                tar.add(source_path, arcname=source_path.name)
-            else:
-                tar.add(source_path, arcname=source_path.name)
+            tar.add(source_path, arcname=source_path.name)
+
+        original_size = self._get_total_size(source_path)
+        compressed_size = output_path.stat().st_size
 
         return {
             "source_path": str(source_path),
             "output_path": str(output_path),
             "format": "tar" + (".gz" if compression else ""),
             "compression_level": compression_level,
-            "original_size": self._get_total_size(source_path),
-            "compressed_size": output_path.stat().st_size,
-            "compression_ratio": output_path.stat().st_size
-            / self._get_total_size(source_path),
+            "original_size": original_size,
+            "compressed_size": compressed_size,
+            "compression_ratio": compressed_size / original_size,
             "status": "success",
         }
 
@@ -160,18 +161,19 @@ class CompressFilePlugin(BasePlugin):
             else:
                 for file_path in source_path.rglob("*"):
                     if file_path.is_file():
-                        arcname = file_path.relative_to(source_path)
-                        zipf.write(file_path, arcname)
+                        zipf.write(file_path, file_path.relative_to(source_path))
+
+        original_size = self._get_total_size(source_path)
+        compressed_size = output_path.stat().st_size
 
         return {
             "source_path": str(source_path),
             "output_path": str(output_path),
             "format": "zip",
             "compression_level": compression_level,
-            "original_size": self._get_total_size(source_path),
-            "compressed_size": output_path.stat().st_size,
-            "compression_ratio": output_path.stat().st_size
-            / self._get_total_size(source_path),
+            "original_size": original_size,
+            "compressed_size": compressed_size,
+            "compression_ratio": compressed_size / original_size,
             "status": "success",
         }
 

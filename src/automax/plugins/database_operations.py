@@ -1,116 +1,140 @@
 """
-Plugin for performing database operations.
+Plugin for performing SQL operations using ODBC via pyodbc.
 """
 
-import sqlite3
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from automax.plugins import BasePlugin, PluginMetadata, register_plugin
 from automax.plugins.exceptions import PluginExecutionError
+
+try:
+    import pyodbc
+
+    PYODBC_AVAILABLE = True
+except ImportError:
+    PYODBC_AVAILABLE = False
 
 
 @register_plugin
 class DatabaseOperationsPlugin(BasePlugin):
     """
-    Perform operations on databases.
+    Execute SQL queries using any ODBC connection via pyodbc.
     """
 
     METADATA = PluginMetadata(
         name="database_operations",
         version="2.0.0",
-        description="Perform operations on databases",
+        description="Execute SQL queries via ODBC using pyodbc",
         author="Automax Team",
         category="database",
-        tags=["database", "sql", "query"],
-        required_config=["database_type", "query"],
-        optional_config=[
-            "host",
-            "port",
-            "username",
-            "password",
-            "database",
-            "parameters",
-        ],
+        tags=["database", "sql", "odbc"],
+        required_config=["connection_string", "query", "action"],
+        optional_config=["parameters"],
     )
 
     SCHEMA = {
-        "database_type": {"type": str, "required": True},
+        "connection_string": {"type": str, "required": True},
         "query": {"type": str, "required": True},
-        "host": {"type": str, "required": False},
-        "port": {"type": int, "required": False},
-        "username": {"type": str, "required": False},
-        "password": {"type": str, "required": False},
-        "database": {"type": str, "required": False},
-        "parameters": {"type": dict, "required": False},
+        "parameters": {"type": list, "required": False},
+        "action": {
+            "type": str,
+            "required": True,
+        },  # select | insert | update | delete | execute
     }
 
     def execute(self) -> Dict[str, Any]:
         """
-        Execute a database query.
+        Execute an SQL operation using pyodbc.
+
+        Supported actions:
+            - select  : fetch rows
+            - insert  : commit insert operation
+            - update  : commit update operation
+            - delete  : commit delete operation
+            - execute : run any SQL without expecting result rows
 
         Returns:
-            Dictionary containing query results.
+            dict: query, result rows (if select), row_count, lastrowid (if available), status
 
         Raises:
-            PluginExecutionError: If the query fails.
+            PluginExecutionError: if pyodbc is missing or any DB error occurs.
 
         """
-        database_type = self.config["database_type"]
-        query = self.config["query"]
-        parameters = self.config.get("parameters", [])
+        if not PYODBC_AVAILABLE:
+            raise PluginExecutionError(
+                "pyodbc not installed. Install with: pip install pyodbc"
+            )
 
-        self.logger.info(f"Executing {database_type} query: {query}")
+        conn_str = self.config["connection_string"]
+        query = self.config["query"]
+        params = self.config.get("parameters", [])
+        action = self.config["action"].lower()
+
+        self.logger.info(f"Database action={action} query={query}")
+
+        valid_actions = {"select", "insert", "update", "delete", "execute"}
+        if action not in valid_actions:
+            raise PluginExecutionError(
+                f"Invalid action '{action}'. Must be one of: {', '.join(valid_actions)}"
+            )
 
         try:
-            if database_type == "sqlite":
-                result = self._execute_sqlite(query, parameters)
-            else:
-                raise PluginExecutionError(
-                    f"Unsupported database type: {database_type}"
-                )
+            with pyodbc.connect(conn_str) as conn:
+                cursor = conn.cursor()
 
-            self.logger.info(
-                f"Successfully executed query, affected rows: {result.get('row_count', 0)}"
-            )
-            return result
+                self.logger.info("Executing SQL via pyodbc")
+
+                cursor.execute(query, params)
+
+                if action == "select":
+                    try:
+                        rows = cursor.fetchall()
+                        cols = (
+                            [column[0] for column in cursor.description]
+                            if cursor.description
+                            else []
+                        )
+
+                        result = {
+                            "query": query,
+                            "columns": cols,
+                            "rows": [tuple(row) for row in rows],
+                            "row_count": len(rows),
+                            "status": "success",
+                        }
+
+                        self.logger.info(
+                            f"Successfully executed SELECT returning {len(rows)} rows"
+                        )
+                        return result
+
+                    except Exception as e:
+                        self.logger.error(f"ODBC SELECT error: {e}")
+                        raise PluginExecutionError(str(e)) from e
+
+                else:
+                    try:
+                        row_count = cursor.rowcount
+                        lastrowid = getattr(cursor, "lastrowid", None)
+
+                        conn.commit()
+
+                        result = {
+                            "query": query,
+                            "row_count": row_count,
+                            "lastrowid": lastrowid,
+                            "status": "success",
+                        }
+
+                        self.logger.info(
+                            f"Successfully executed {action.upper()} with row_count={row_count}"
+                        )
+                        return result
+
+                    except Exception as e:
+                        self.logger.error(f"ODBC {action} error: {e}")
+                        raise PluginExecutionError(str(e)) from e
 
         except Exception as e:
-            error_msg = f"Database operation failed: {e}"
-            self.logger.error(error_msg)
-            raise PluginExecutionError(error_msg) from e
-
-    def _execute_sqlite(self, query: str, parameters: List[Any]) -> Dict[str, Any]:
-        """
-        Execute a SQLite query.
-        """
-        database_path = self.config.get("database", ":memory:")
-
-        try:
-            with sqlite3.connect(database_path) as conn:
-                conn.row_factory = sqlite3.Row
-                cursor = conn.cursor()
-                cursor.execute(query, parameters)
-
-                if query.strip().lower().startswith("select"):
-                    rows = cursor.fetchall()
-                    result = {
-                        "database_type": "sqlite",
-                        "query": query,
-                        "rows": [dict(row) for row in rows],
-                        "row_count": len(rows),
-                        "status": "success",
-                    }
-                else:
-                    result = {
-                        "database_type": "sqlite",
-                        "query": query,
-                        "row_count": cursor.rowcount,
-                        "lastrowid": cursor.lastrowid,
-                        "status": "success",
-                    }
-
-                conn.commit()
-                return result
-
-        except sqlite3.Error as e:
-            raise PluginExecutionError(f"SQLite error: {e}") from e
+            self.logger.error(f"ODBC database operation failed: {e}")
+            raise PluginExecutionError(f"Database execution error: {e}") from e

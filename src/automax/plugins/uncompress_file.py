@@ -56,11 +56,11 @@ class UncompressFilePlugin(BasePlugin):
         )
 
         try:
-            # Validate source exists
+            # Validate source file existence
             if not source_path.exists():
                 raise PluginExecutionError(f"Source path does not exist: {source_path}")
 
-            # Create output directory if needed
+            # Create output directory if it doesn't exist
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Perform extraction based on format
@@ -82,6 +82,7 @@ class UncompressFilePlugin(BasePlugin):
 
         except PluginExecutionError:
             raise
+
         except Exception as e:
             error_msg = f"Failed to uncompress {source_path} to {output_path}: {e}"
             self.logger.error(error_msg)
@@ -91,9 +92,8 @@ class UncompressFilePlugin(BasePlugin):
         """
         Extract a gzip file.
         """
-        with gzip.open(source_path, "rb") as f_in:
-            with open(output_path, "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
+        with gzip.open(source_path, "rb") as f_in, open(output_path, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
 
         return {
             "source_path": str(source_path),

@@ -25,7 +25,7 @@ class TestCheckIcmpConnectionPlugin:
         # Verify metadata
         metadata = global_registry.get_metadata("check_icmp_connection")
         assert metadata.name == "check_icmp_connection"
-        assert metadata.version == "1.0.0"
+        assert metadata.version == "2.0.0"
         assert "network" in metadata.tags
         assert "host" in metadata.required_config
         assert "count" in metadata.optional_config

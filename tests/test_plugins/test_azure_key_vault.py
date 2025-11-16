@@ -28,6 +28,7 @@ class TestAzureKeyVaultPlugin:
         assert "azure" in metadata.tags
         assert "vault_url" in metadata.required_config
         assert "secret_name" in metadata.required_config
+        assert "action" in metadata.required_config
 
     def test_azure_key_vault_plugin_instantiation(self):
         """
@@ -39,6 +40,7 @@ class TestAzureKeyVaultPlugin:
         config = {
             "vault_url": "https://my-vault.vault.azure.net/",
             "secret_name": "my-secret",
+            "action": "read",
             "tenant_id": "tenant-123",
             "client_id": "client-456",
         }
@@ -63,11 +65,9 @@ class TestAzureKeyVaultPlugin:
 
     @patch("automax.plugins.azure_key_vault.SecretClient")
     @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
-    def test_azure_key_vault_plugin_execution_success(
-        self, mock_credential, mock_client
-    ):
+    def test_azure_key_vault_plugin_read_success(self, mock_credential, mock_client):
         """
-        Test azure_key_vault plugin execution with successful secret retrieval.
+        Test azure_key_vault plugin read action with successful secret retrieval.
         """
         # Setup mocks
         mock_secret_client = MagicMock()
@@ -88,6 +88,7 @@ class TestAzureKeyVaultPlugin:
             {
                 "vault_url": "https://my-vault.vault.azure.net/",
                 "secret_name": "my-secret",
+                "action": "read",
             }
         )
 
@@ -109,7 +110,93 @@ class TestAzureKeyVaultPlugin:
         )
         mock_secret_client.get_secret.assert_called_once_with("my-secret")
 
-    @patch("azure.identity.ClientSecretCredential")
+    @patch("automax.plugins.azure_key_vault.SecretClient")
+    @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
+    def test_azure_key_vault_plugin_write_success(self, mock_credential, mock_client):
+        """
+        Test azure_key_vault plugin write action with successful secret creation.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+        mock_credential.return_value = MagicMock()
+
+        mock_secret = MagicMock()
+        mock_secret.value = "new_secret_value"
+        mock_secret_client.set_secret.return_value = mock_secret
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "new-secret",
+                "action": "write",
+                "value": "new_secret_value",
+            }
+        )
+
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "written"
+        assert result["vault_url"] == "https://my-vault.vault.azure.net/"
+        assert result["secret_name"] == "new-secret"
+        assert result["secret_value"] == "new_secret_value"
+        assert result["action"] == "write"
+
+        # Verify mock calls
+        mock_client.assert_called_once_with(
+            vault_url="https://my-vault.vault.azure.net/",
+            credential=mock_credential.return_value,
+        )
+        mock_secret_client.set_secret.assert_called_once_with(
+            "new-secret", "new_secret_value"
+        )
+
+    @patch("automax.plugins.azure_key_vault.SecretClient")
+    @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
+    def test_azure_key_vault_plugin_create_success(self, mock_credential, mock_client):
+        """
+        Test azure_key_vault plugin create action with successful secret creation.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+        mock_credential.return_value = MagicMock()
+
+        mock_secret = MagicMock()
+        mock_secret.value = "new_secret_value"
+        mock_secret_client.set_secret.return_value = mock_secret
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "new-secret",
+                "action": "create",
+                "value": "new_secret_value",
+            }
+        )
+
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "written"
+        assert result["vault_url"] == "https://my-vault.vault.azure.net/"
+        assert result["secret_name"] == "new-secret"
+        assert result["secret_value"] == "new_secret_value"
+        assert result["action"] == "create"
+
+        # Verify mock calls
+        mock_secret_client.set_secret.assert_called_once_with(
+            "new-secret", "new_secret_value"
+        )
+
+    @patch("automax.plugins.azure_key_vault.ClientSecretCredential")
     @patch("automax.plugins.azure_key_vault.SecretClient")
     def test_azure_key_vault_plugin_with_service_principal(
         self, mock_client, mock_credential_class
@@ -137,6 +224,7 @@ class TestAzureKeyVaultPlugin:
             {
                 "vault_url": "https://my-vault.vault.azure.net/",
                 "secret_name": "my-secret",
+                "action": "read",
                 "tenant_id": "tenant-123",
                 "client_id": "client-456",
                 "client_secret": "secret-789",
@@ -179,10 +267,76 @@ class TestAzureKeyVaultPlugin:
             {
                 "vault_url": "https://my-vault.vault.azure.net/",
                 "secret_name": "nonexistent-secret",
+                "action": "read",
             }
         )
 
         with pytest.raises(PluginExecutionError) as exc_info:
             plugin.execute()
 
-        assert "Failed to retrieve secret nonexistent-secret" in str(exc_info.value)
+        assert "Secret not found" in str(exc_info.value)
+
+    def test_azure_key_vault_plugin_write_missing_value(self):
+        """
+        Test azure_key_vault plugin write action with missing value.
+        """
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "new-secret",
+                "action": "write",
+                # Missing 'value' parameter
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Missing 'value' for write/create action" in str(exc_info.value)
+
+    def test_azure_key_vault_plugin_invalid_action(self):
+        """
+        Test azure_key_vault plugin with invalid action.
+        """
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "my-secret",
+                "action": "invalid_action",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Invalid action" in str(exc_info.value)
+
+    @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
+    def test_azure_key_vault_plugin_credential_error(self, mock_credential):
+        """
+        Test azure_key_vault plugin with credential error.
+        """
+        # Setup mock to raise exception
+        mock_credential.side_effect = Exception("Credential error")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "my-secret",
+                "action": "read",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Failed to get Azure credential" in str(exc_info.value)

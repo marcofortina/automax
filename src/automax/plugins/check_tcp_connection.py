@@ -1,5 +1,5 @@
 """
-Plugin for checking TCP connection utility.
+Plugin for checking TCP connectivity.
 """
 
 import socket
@@ -10,18 +10,18 @@ from automax.plugins.exceptions import PluginExecutionError
 
 
 @register_plugin
-class CheckTcpConnectionPlugin(BasePlugin):
+class CheckTCPConnectionPlugin(BasePlugin):
     """
-    Check if a TCP connection to host:port is possible.
+    Check if a TCP connection to host:port is reachable.
     """
 
     METADATA = PluginMetadata(
         name="check_tcp_connection",
         version="2.0.0",
-        description="Check TCP connection to a host and port",
+        description="Check TCP connectivity to a host and port",
         author="Automax Team",
         category="network",
-        tags=["network", "tcp", "connection", "check"],
+        tags=["network", "tcp", "connection"],
         required_config=["host", "port"],
         optional_config=["timeout", "fail_fast"],
     )
@@ -35,13 +35,13 @@ class CheckTcpConnectionPlugin(BasePlugin):
 
     def execute(self) -> Dict[str, Any]:
         """
-        Check TCP connection to host:port.
+        Attempt a TCP connection to the specified host and port.
 
         Returns:
-            Dictionary containing connection status and details.
+            dict: host, port, timeout, connected (bool), status, error (if any)
 
         Raises:
-            PluginExecutionError: If connection fails and fail_fast is True.
+            PluginExecutionError: if fail_fast is True and connection fails
 
         """
         host = self.config["host"]
@@ -50,7 +50,7 @@ class CheckTcpConnectionPlugin(BasePlugin):
         fail_fast = self.config.get("fail_fast", True)
 
         self.logger.info(
-            f"Checking TCP connection to {host}:{port} with timeout {timeout}"
+            f"Checking TCP connection to {host}:{port} (timeout={timeout})"
         )
 
         try:

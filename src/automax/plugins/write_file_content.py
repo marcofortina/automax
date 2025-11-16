@@ -97,8 +97,10 @@ class WriteFileContentPlugin(BasePlugin):
             raise PluginExecutionError(
                 f"Permission denied writing to {file_path}: {e}"
             ) from e
+
         except IOError as e:
             raise PluginExecutionError(f"IO error writing to {file_path}: {e}") from e
+
         except Exception as e:
             raise PluginExecutionError(
                 f"Unexpected error writing to {file_path}: {e}"
