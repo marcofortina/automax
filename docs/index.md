@@ -16,7 +16,7 @@ workflow:
   name: "deploy_application"
   steps:
     - name: "check_environment"
-      plugin: "check_network_connection"
+      plugin: "check_tcp_connection"
       config:
         host: "api.example.com"
         port: 443

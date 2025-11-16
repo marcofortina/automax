@@ -162,7 +162,7 @@ def test_all_migrated_plugins_registered():
     expected_plugins = [
         "read_file_content",
         "write_file_content",
-        "check_network_connection",
+        "check_tcp_connection",
         "local_command",
         "ssh_command",
         "compress_file",

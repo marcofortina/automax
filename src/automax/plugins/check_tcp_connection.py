@@ -1,5 +1,5 @@
 """
-Plugin for checking network connection utility.
+Plugin for checking TCP connection utility.
 """
 
 import socket
@@ -10,31 +10,32 @@ from automax.plugins.exceptions import PluginExecutionError
 
 
 @register_plugin
-class CheckNetworkConnectionPlugin(BasePlugin):
+class CheckTcpConnectionPlugin(BasePlugin):
     """
-    Check if a network connection to host:port is possible.
+    Check if a TCP connection to host:port is possible.
     """
 
     METADATA = PluginMetadata(
-        name="check_network_connection",
+        name="check_tcp_connection",
         version="2.0.0",
-        description="Check network connection to a host and port",
+        description="Check TCP connection to a host and port",
         author="Automax Team",
         category="network",
-        tags=["network", "connection", "check"],
-        required_config=["host"],
-        optional_config=["port", "timeout", "fail_fast"],
+        tags=["network", "tcp", "connection", "check"],
+        required_config=["host", "port"],
+        optional_config=["timeout", "fail_fast"],
     )
 
     SCHEMA = {
         "host": {"type": str, "required": True},
         "port": {"type": int, "required": True},
         "timeout": {"type": (int, float), "required": False},
+        "fail_fast": {"type": bool, "required": False},
     }
 
     def execute(self) -> Dict[str, Any]:
         """
-        Check network connection to host:port.
+        Check TCP connection to host:port.
 
         Returns:
             Dictionary containing connection status and details.
@@ -44,15 +45,17 @@ class CheckNetworkConnectionPlugin(BasePlugin):
 
         """
         host = self.config["host"]
-        port = self.config.get("port", 80)
+        port = self.config["port"]
         timeout = self.config.get("timeout", 5)
         fail_fast = self.config.get("fail_fast", True)
 
-        self.logger.info(f"Checking connection to {host}:{port} with timeout {timeout}")
+        self.logger.info(
+            f"Checking TCP connection to {host}:{port} with timeout {timeout}"
+        )
 
         try:
             with socket.create_connection((host, port), timeout=timeout):
-                self.logger.info(f"Connection to {host}:{port} successful")
+                self.logger.info(f"TCP connection to {host}:{port} successful")
                 return {
                     "status": "success",
                     "host": host,
@@ -61,7 +64,7 @@ class CheckNetworkConnectionPlugin(BasePlugin):
                     "connected": True,
                 }
         except Exception as e:
-            error_msg = f"Connection to {host}:{port} failed: {e}"
+            error_msg = f"TCP connection to {host}:{port} failed: {e}"
             self.logger.error(error_msg)
             if fail_fast:
                 raise PluginExecutionError(error_msg)

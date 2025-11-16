@@ -40,7 +40,8 @@ nav:
     - System:
       - Local Command: plugins/local-command.md
       - SSH Command: plugins/ssh-command.md
-      - Network Check: plugins/check-network-connection.md
+      - TCP Check: plugins/check-tcp-connection.md
+      - ICMP Check: plugins/check-icmp-connection.md
     - File Operations:
       - Read File: plugins/read-file-content.md
       - Write File: plugins/write-file-content.md
