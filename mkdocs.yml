@@ -33,6 +33,7 @@ nav:
   - Guides:
     - Creating Plugins: guides/creating-plugins.md
     - Development Utilities: guides/development-utils.md
+    - Output Mapping: guides/output-mapping.md
   - Plugins:
     - Overview: plugins/index.md
     - Cloud:

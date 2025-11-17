@@ -98,6 +98,15 @@ automax validate --config examples/config/config.yaml
 automax run --config examples/config/config.yaml --steps 1,2
 ```
 
+### Execute specific sub-steps
+```bash
+# Execute step 1 with all sub-steps, step 2 with all sub-steps, and only sub-step 8 of step 4
+automax run --config examples/config/config.yaml --steps 1,2,4:8
+
+# Execute only sub-step 3 of step 1 and sub-step 5 of step 2
+automax run --config examples/config/config.yaml --steps 1:3,2:5
+```
+
 ### Execute steps with variables
 ```bash
 automax run --config examples/config/config.yaml --steps 1 --var timeout=10
