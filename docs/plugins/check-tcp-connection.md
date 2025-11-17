@@ -20,4 +20,15 @@ config:
   host: "google.com"
   port: 443
   timeout: 10
+  fail_fast: true
 ```
+
+## Return Values
+
+The plugin returns a dictionary with:
+- `status`: "success" or "failure"
+- `host`: The target host
+- `port`: The target port
+- `timeout`: The connection timeout
+- `connected`: Boolean indicating if the connection was successful
+- `error`: Error message if applicable

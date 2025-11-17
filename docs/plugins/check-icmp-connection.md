@@ -24,3 +24,19 @@ config:
   interval: 0.5
   fail_fast: false
 ```
+
+## Return Values
+
+The plugin returns a dictionary with:
+- `status`: "success" or "failure"
+- `host`: The target host
+- `count`: The number of ping packets sent
+- `timeout`: The timeout per packet
+- `interval`: The interval between packets
+- `connected`: Boolean indicating if the host is reachable
+- `packet_loss`: Percentage of packet loss
+- `rtt_avg_ms`: Average round-trip time in milliseconds
+- `rtt_min_ms`: Minimum round-trip time in milliseconds
+- `rtt_max_ms`: Maximum round-trip time in milliseconds
+- `success_rate`: Percentage of successful packets
+- `error`: Error message if applicable

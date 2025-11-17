@@ -30,6 +30,9 @@ nav:
   - Home: index.md
   - Contributing: CONTRIBUTING.md
   - Developer Notes: DEVELOPER-NOTES.md
+  - Guides:
+    - Creating Plugins: guides/creating-plugins.md
+    - Development Utilities: guides/development-utils.md
   - Plugins:
     - Overview: plugins/index.md
     - Cloud:
@@ -52,9 +55,8 @@ nav:
       - Email: plugins/send-email.md
     - Database:
       - Database Operations: plugins/database-operations.md
-  - Guides:
-    - Creating Plugins: guides/creating-plugins.md
   - API Reference: reference/api.md
+  - Database Examples: database_odbc_examples.yaml
 
 markdown_extensions:
   - admonition

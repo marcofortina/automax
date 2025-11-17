@@ -31,4 +31,15 @@ config:
   to: "recipient@example.com"
   subject: "Test Email"
   body: "This is a test email"
+  is_html: false
 ```
+
+## Return Values
+
+The plugin returns a dictionary with:
+- `status`: "success" or "failure"
+- `smtp_server`: The SMTP server
+- `port`: The SMTP port
+- `from`: The sender address
+- `to`: The recipient address(es)
+- `subject`: The email subject

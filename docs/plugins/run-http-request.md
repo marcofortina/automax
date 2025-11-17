@@ -14,6 +14,8 @@ Make HTTP requests to APIs.
 - `params`: Query parameters
 - `timeout`: Request timeout in seconds (default: 30)
 - `verify_ssl`: Verify SSL certificates (default: true)
+- `auth_username`: Username for Basic Authentication
+- `auth_password`: Password for Basic Authentication
 
 ## Example
 
@@ -25,4 +27,16 @@ config:
   headers:
     Authorization: "Bearer token123"
   data: '{"key": "value"}'
+  timeout: 30
 ```
+
+## Return Values
+
+The plugin returns a dictionary with:
+- `status`: "success" or "failure"
+- `url`: The target URL
+- `method`: The HTTP method used
+- `status_code`: The HTTP status code
+- `headers`: The response headers
+- `content`: The response content
+- `elapsed`: The request elapsed time in seconds

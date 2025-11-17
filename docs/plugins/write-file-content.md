@@ -10,7 +10,7 @@ Write content to files.
 
 **Optional:**
 - `encoding`: File encoding (default: utf-8)
-- `mode`: Write mode - w, a, x (default: w)
+- `mode`: Write mode - "w", "a", "x" (default: w)
 - `create_dirs`: Create directories if missing (default: false)
 
 ## Example
@@ -23,3 +23,14 @@ config:
   mode: "a"
   create_dirs: true
 ```
+
+## Return Values
+
+The plugin returns a dictionary with:
+- `file_path`: The path to the file
+- `content_length`: The length of the written content
+- `file_size`: The size of the file after writing
+- `encoding`: The encoding used
+- `mode`: The write mode used
+- `create_dirs`: Whether directories were created
+- `status`: "success" or "failure"
