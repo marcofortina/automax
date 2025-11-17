@@ -533,10 +533,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pr-description-template" class="md-nav__link">
+  <a href="#pr-description" class="md-nav__link">
     <span class="md-ellipsis">
       
-        PR Description Template
+        PR Description
       
     </span>
   </a>
@@ -560,17 +560,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#examples-from-real-history-nov-10-2025" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Examples from real history (Nov 10, 2025)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#quick-start-for-contributors" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -583,17 +572,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#todo-roadmap" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TODO &amp; Roadmap
-      
-    </span>
-  </a>
   
 </li>
       
@@ -1662,7 +1640,8 @@
   Es: <code>style: reformat config_manager.py and logger_manager.py with Black</code></li>
 <li><code>test:</code> Test files only
   Es: <code>test: add unit tests for plugins</code></li>
-<li><code>fix:</code> Bug fixes (used in branch names: fixes/docs)</li>
+<li><code>fix:</code> Bug fixes (used in branch names: fixes/docs)
+  Es: <code>fix: restore step execution features from legacy system</code></li>
 <li><code>refactor:</code> Code refactoring without changing behavior
   Es: <code>refactor: replace argparse with Click</code></li>
 </ul>
@@ -1690,68 +1669,23 @@
 <p><div class="highlight"><pre><span></span><code>type: description
 </code></pre></div>
 Example: <code>feat: add advanced output mapping with transformations between substeps</code></p>
-<h4 id="pr-description-template">PR Description Template</h4>
-<div class="highlight"><pre><span></span><code>## Description
-[Brief description of changes]
-
-## Type of Change
-- [ ] feat: New feature
-- [ ] fix: Bug fix
-- [ ] docs: Documentation
-- [ ] test: Tests
-- [ ] infra: CI/CD
-- [ ] build: Packaging
-- [ ] refactor: Code refactoring
-
-## Checklist
-- [ ] Code follows style guidelines (`black .`)
-- [ ] Tests added/updated (`pytest`)
-- [ ] Documentation updated
-- [ ] Branch naming follows convention
-- [ ] Commit messages follow conventional commits
-
-## Testing Performed
-- [ ] Unit tests added
-- [ ] Integration tests updated
-- [ ] Manual testing completed
-
-## Screenshots/Logs (if applicable)
-[Add relevant screenshots or log excerpts]
-
-## Related Issues
-[Fixes #issue_number or related issues]
-
-## Notes
-[Any additional information]
-</code></pre></div>
+<h4 id="pr-description">PR Description</h4>
+<p>Use the template from <code>.github/pull_request_template.md</code> when creating pull requests.</p>
 <h4 id="merge-commit-format">Merge Commit Format</h4>
 <div class="highlight"><pre><span></span><code>Merge PR #PR_NUMBER: Description
 
 [Detailed description of what the merge accomplishes, benefits, and testing confirmation]
 </code></pre></div>
-<h3 id="examples-from-real-history-nov-10-2025">Examples from real history (Nov 10, 2025)</h3>
-<ul>
-<li>feat: add LocalCommand plugin</li>
-<li>docs: update CHANGELOG and README with GitHub Actions publish workflow</li>
-<li>infra: add CI workflow</li>
-<li>build: add setup.py for package installation</li>
-<li>setup: add example SSH keys for testing</li>
-<li>structure: add tests structure skeleton</li>
-<li>style: reformat config_manager.py and logger_manager.py with Black</li>
-<li>test: add CLI tests</li>
-</ul>
 <h3 id="quick-start-for-contributors">Quick Start for Contributors</h3>
 <ol>
 <li>Fork &amp; Clone</li>
 <li><code>pip install -e .</code></li>
 <li><code>pytest</code> (verify setup)</li>
 <li>Make changes</li>
-<li><code>black .</code> (format)</li>
+<li>Run code quality tools: <code>isort . &amp;&amp; black . &amp;&amp; flake8 &amp;&amp; docformatter -r .</code></li>
 <li><code>pytest</code> (test)</li>
 <li>Commit &amp; PR</li>
 </ol>
-<h2 id="todo-roadmap">TODO &amp; Roadmap</h2>
-<p>See root <code>TODO.md</code>. Check off with <code>- [x]</code> when done.</p>
 <h2 id="commit-types-overview">Commit Types Overview</h2>
 <table>
 <thead>

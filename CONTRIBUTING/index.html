@@ -1649,7 +1649,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
    <div class="highlight"><pre><span></span><code>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feature/my-awesome-feature<span class="w">  </span><span class="c1"># or docs/update-readme, infra/add-workflow, etc.</span>
 </code></pre></div></li>
 <li><strong>Code &amp; Test</strong>:</li>
-<li>Follow Black style: <code>black .</code></li>
+<li>Follow code style: <code>isort . &amp;&amp; black . &amp;&amp; flake8 &amp;&amp; docformatter -r .</code></li>
 <li>Add type hints everywhere</li>
 <li>Write tests in <code>tests/</code> (pytest)</li>
 <li>Validate changes with utilities below</li>
@@ -1661,7 +1661,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
    <div class="highlight"><pre><span></span><code>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>your-branch
 </code></pre></div></li>
 <li>Open PR against <code>main</code></li>
-<li>Fill PR template (see below)</li>
+<li>Fill the PR template from <code>.github/pull_request_template.md</code></li>
 <li>Request review (@marcofortina)</li>
 </ol>
 <h2 id="quick-contribution-flow">Quick Contribution Flow</h2>
@@ -1670,7 +1670,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <li><code>pip install -e .</code></li>
 <li><code>pytest</code> (verify setup)</li>
 <li>Make changes</li>
-<li><code>black .</code> (format)</li>
+<li>Run code quality tools: <code>isort . &amp;&amp; black . &amp;&amp; flake8 &amp;&amp; docformatter -r .</code></li>
 <li><code>pytest</code> (test)</li>
 <li>Commit &amp; PR</li>
 </ol>
@@ -1690,7 +1690,9 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <h2 id="code-style">Code Style</h2>
 <ul>
 <li>Python 3.11+</li>
-<li>Black formatting (<code>black .</code>)</li>
+<li>Code formatting: <code>isort . &amp;&amp; black .</code></li>
+<li>Linting: <code>flake8</code></li>
+<li>Docstring formatting: <code>docformatter -r .</code></li>
 <li>Type hints + mypy strict</li>
 <li>Conventional Commits (see <code>DEVELOPER-NOTES.md</code>)</li>
 </ul>
@@ -1732,39 +1734,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <div class="highlight"><pre><span></span><code>python<span class="w"> </span>utils/dry_run_validate.py
 </code></pre></div></p>
 <h2 id="pull-request-template">Pull Request Template</h2>
-<div class="highlight"><pre><span></span><code>## Description
-[Brief description of changes]
-
-## Type of Change
-- [ ] feat: New feature
-- [ ] fix: Bug fix
-- [ ] docs: Documentation
-- [ ] test: Tests
-- [ ] infra: CI/CD
-- [ ] build: Packaging
-- [ ] refactor: Code refactoring
-
-## Checklist
-- [ ] Code follows style guidelines (`black .`)
-- [ ] Tests added/updated (`pytest`)
-- [ ] Documentation updated
-- [ ] Branch naming follows convention
-- [ ] Commit messages follow conventional commits
-
-## Testing Performed
-- [ ] Unit tests added
-- [ ] Integration tests updated
-- [ ] Manual testing completed
-
-## Screenshots/Logs (if applicable)
-[Add relevant screenshots or log excerpts]
-
-## Related Issues
-[Fixes #issue_number or related issues]
-
-## Notes
-[Any additional information]
-</code></pre></div>
+<p>Use the template from <code>.github/pull_request_template.md</code> when creating pull requests.</p>
 <h2 id="debugging">Debugging</h2>
 <ul>
 <li>Check logs in <code>logs/</code> directory</li>
