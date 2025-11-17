@@ -10,7 +10,7 @@ def test_main_help(logger):
     """
     Verify that running main with --help returns 0.
     """
-    cwd = os.path.join(os.path.dirname(__file__), "../src")
+    cwd = os.path.join(os.path.dirname(__file__), "../../src")
     result = subprocess.run(
         ["python3", "-m", "automax", "--help"], cwd=cwd, capture_output=True, text=True
     )
@@ -113,7 +113,7 @@ steps_dir: "examples/steps"
 """
         )
 
-    cwd = os.path.join(os.path.dirname(__file__), "../src")
+    cwd = os.path.join(os.path.dirname(__file__), "../../src")
     result = subprocess.run(
         [
             "python3",
@@ -146,7 +146,7 @@ def test_main_invalid_config(tmp_path):
     """Integration test: Run with invalid config and verify failure."""
     invalid_config = tmp_path / "invalid.yaml"
     invalid_config.write_text(":::")  # Invalid YAML to trigger YAMLError
-    cwd = os.path.join(os.path.dirname(__file__), "../src")
+    cwd = os.path.join(os.path.dirname(__file__), "../../src")
     result = subprocess.run(
         [
             "python3",
@@ -190,7 +190,7 @@ steps_dir: "examples/steps"
 """
         )
 
-    cwd = os.path.join(os.path.dirname(__file__), "../src")
+    cwd = os.path.join(os.path.dirname(__file__), "../../src")
     result = subprocess.run(
         ["python3", "-m", "automax", "validate", "--config", str(config_path)],
         cwd=cwd,

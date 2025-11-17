@@ -1,84 +1,116 @@
 """
-Plugin for HTTP request utility.
+Plugin for making HTTP requests.
 """
 
-import json
-import urllib.error
-import urllib.request
+from typing import Any, Dict
 
-from automax.core.exceptions import AutomaxError
+import requests
+from requests.auth import HTTPBasicAuth
+
+from automax.plugins import BasePlugin, PluginMetadata, register_plugin
+from automax.plugins.exceptions import PluginExecutionError
 
 
-def run_http_request(
-    url: str,
-    method: str = "GET",
-    data: dict = None,
-    headers: dict = None,
-    logger=None,
-    timeout: int = 10,
-    fail_fast=True,
-    dry_run=False,
-):
+@register_plugin
+class RunHttpRequestPlugin(BasePlugin):
     """
-    Execute an HTTP request (GET or POST).
-
-    Args:
-        url (str): URL to request.
-        method (str): HTTP method (GET or POST).
-        data (dict, optional): Data for POST (JSON).
-        headers (dict, optional): Request headers.
-        logger (LoggerManager, optional): Logger instance.
-        timeout (int): Request timeout in seconds.
-        fail_fast (bool): If True, raise AutomaxError on failure.
-        dry_run (bool): If True, simulate request.
-
-    Returns:
-        str: Response content as string.
-
-    Raises:
-        AutomaxError: If fail_fast is True and request fails, with level 'FATAL'.
-
+    Make HTTP requests to APIs with optional Basic Auth.
     """
-    from automax.core.utils.common_utils import echo
 
-    if headers is None:
-        headers = {}
-    if data and method == "POST":
-        data = json.dumps(data).encode("utf-8")
-        headers["Content-Type"] = "application/json"
-
-    req = urllib.request.Request(
-        url, data=data if method == "POST" else None, headers=headers, method=method
+    METADATA = PluginMetadata(
+        name="run_http_request",
+        version="2.0.0",
+        description="Make HTTP requests to APIs with optional Basic Auth",
+        author="Automax Team",
+        category="communication",
+        tags=["http", "api", "request"],
+        required_config=["url"],
+        optional_config=[
+            "method",
+            "headers",
+            "data",
+            "params",
+            "timeout",
+            "verify_ssl",
+            "auth_username",
+            "auth_password",
+        ],
     )
 
-    if logger:
-        echo(f"HTTP Request: {method} {url}", logger, level="INFO")
+    SCHEMA = {
+        "url": {"type": str, "required": True},
+        "method": {"type": str, "required": False},
+        "headers": {"type": dict, "required": False},
+        "data": {"type": (dict, str), "required": False},
+        "params": {"type": dict, "required": False},
+        "timeout": {"type": (int, float), "required": False},
+        "verify_ssl": {"type": bool, "required": False},
+        "auth_username": {"type": str, "required": False},
+        "auth_password": {"type": str, "required": False},
+    }
 
-    if dry_run:
-        if logger:
-            echo(f"[DRY-RUN] HTTP {method} to {url}", logger, level="INFO")
-        return "Dry-run response"
+    def execute(self) -> Dict[str, Any]:
+        """
+        Make an HTTP request.
 
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as response:
-            return response.read().decode("utf-8")
-    except urllib.error.URLError as e:
-        msg = f"HTTP request failed: {e}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return None
+        Returns:
+            Dictionary containing the response data.
 
+        Raises:
+            PluginExecutionError: If the request fails.
 
-REGISTER_UTILITIES = [("run_http_request", run_http_request)]
+        """
+        url = self.config["url"]
+        method = self.config.get("method", "GET").upper()
+        headers = self.config.get("headers", {})
+        data = self.config.get("data")
+        params = self.config.get("params", {})
+        timeout = self.config.get("timeout", 30)
+        verify_ssl = self.config.get("verify_ssl", True)
+        auth_username = self.config.get("auth_username")
+        auth_password = self.config.get("auth_password")
 
-SCHEMA = {
-    "url": {"type": str, "required": True},
-    "method": {"type": str, "default": "GET"},
-    "data": {"type": dict, "default": None},
-    "headers": {"type": dict, "default": None},
-    "timeout": {"type": int, "default": 10},
-    "fail_fast": {"type": bool, "default": True},
-    "dry_run": {"type": bool, "default": False},
-}
+        self.logger.info(f"Making {method} request to: {url}")
+
+        try:
+            auth = (
+                HTTPBasicAuth(auth_username, auth_password)
+                if auth_username and auth_password
+                else None
+            )
+
+            response = requests.request(
+                method=method,
+                url=url,
+                headers=headers,
+                data=data,
+                params=params,
+                timeout=timeout,
+                verify=verify_ssl,
+                auth=auth,
+            )
+
+            result = {
+                "url": url,
+                "method": method,
+                "status_code": response.status_code,
+                "headers": dict(response.headers),
+                "content": response.text,
+                "elapsed": response.elapsed.total_seconds(),
+                "status": "success" if response.status_code < 400 else "failure",
+            }
+
+            self.logger.info(
+                f"HTTP request completed with status: {response.status_code}"
+            )
+            return result
+
+        except requests.exceptions.RequestException as e:
+            error_msg = f"HTTP request failed: {e}"
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e
+
+        except Exception as e:
+            error_msg = f"Unexpected error during HTTP request: {e}"
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e
