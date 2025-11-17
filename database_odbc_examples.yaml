@@ -1,57 +1,70 @@
-# ODBC Connection String Examples for Different Databases
+# ODBC Connection String Examples for Database Operations Plugin
 
-# SQL Server
+# SQL Server Example
 sql_server_example: |
-  plugin: execute_db_query
+  plugin: database_operations
   config:
     connection_string: "DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=mydb;UID=user;PWD=password"
     query: "SELECT * FROM users"
-    fetch: "all"
+    action: "select"
 
-# PostgreSQL
+# PostgreSQL Example
 postgresql_example: |
-  plugin: execute_db_query
+  plugin: database_operations
   config:
     connection_string: "DRIVER={PostgreSQL Unicode};SERVER=localhost;PORT=5432;DATABASE=mydb;UID=user;PWD=password"
-    query: "SELECT * FROM users"
-    fetch: "all"
+    query: "INSERT INTO logs (message, created_at) VALUES (?, ?)"
+    action: "insert"
+    parameters: ["Application started", "2024-01-01 10:00:00"]
 
-# MySQL
+# MySQL Example
 mysql_example: |
-  plugin: execute_db_query
+  plugin: database_operations
   config:
     connection_string: "DRIVER={MySQL ODBC 8.0 Unicode Driver};SERVER=localhost;PORT=3306;DATABASE=mydb;USER=user;PASSWORD=password"
-    query: "SELECT * FROM users"
-    fetch: "all"
+    query: "UPDATE settings SET value = ? WHERE name = ?"
+    action: "update"
+    parameters: ["new_value", "timeout"]
 
-# Oracle
+# Oracle Example
 oracle_example: |
-  plugin: execute_db_query
+  plugin: database_operations
   config:
     connection_string: "DRIVER={Oracle ODBC Driver};DBQ=localhost:1521/XE;UID=system;PWD=password"
-    query: "SELECT * FROM users"
-    fetch: "all"
+    query: "DELETE FROM temp_data WHERE created_at < ?"
+    action: "delete"
+    parameters: ["2024-01-01"]
 
-# SQLite
+# SQLite Example
 sqlite_example: |
-  plugin: execute_db_query
+  plugin: database_operations
   config:
     connection_string: "DRIVER={SQLite3 ODBC Driver};Database=/path/to/database.db"
-    query: "SELECT * FROM users"
-    fetch: "all"
+    query: "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)"
+    action: "execute"
 
-# Connection Test
+# Connection Test Example
 connection_test: |
-  plugin: check_db_connection
+  plugin: database_operations
   config:
     connection_string: "DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=mydb;UID=user;PWD=password"
+    query: "SELECT 1 as test_value"
+    action: "select"
 
-# List Available Drivers
-list_drivers: |
-  plugin: get_odbc_drivers
-  config: {}
+# Parameterized Query Example
+parameterized_example: |
+  plugin: database_operations
+  config:
+    connection_string: "DRIVER={ODBC Driver 17 for SQL Server};SERVER=localhost;DATABASE=mydb;UID=user;PWD=password"
+    query: "SELECT * FROM products WHERE category = ? AND price > ?"
+    action: "select"
+    parameters: ["electronics", 100]
 
-# List Data Sources
-list_data_sources: |
-  plugin: get_odbc_data_sources
-  config: {}
+# Multiple Row Insert Example
+batch_insert_example: |
+  plugin: database_operations
+  config:
+    connection_string: "DRIVER={PostgreSQL Unicode};SERVER=localhost;DATABASE=mydb;UID=user;PWD=password"
+    query: "INSERT INTO users (name, email) VALUES (?, ?)"
+    action: "insert"
+    parameters: ["John Doe", "john@example.com"]
