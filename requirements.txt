@@ -27,3 +27,6 @@ click
 
 # HTTP Requests
 requests
+
+# Ping Utility
+ping3
