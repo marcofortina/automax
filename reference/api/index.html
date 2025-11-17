@@ -2147,15 +2147,7 @@ implement.</p>
 
 
 
-
-
-
-
-
-
-
   <div class="doc doc-children">
-
 
 
 
@@ -2180,19 +2172,11 @@ implement.</p>
               Bases: <code><span title="abc.ABC">ABC</span></code></p>
 
 
-
         <p>Abstract base class defining the plugin interface.</p>
 <p>All Automax plugins must inherit from this class and implement the required abstract
 methods.</p>
 
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
+              <details class="quote">
                 <summary>Source code in <code>src/automax/plugins/base.py</code></summary>
                 <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 53</span>
 <span class="normal"> 54</span>
@@ -2424,7 +2408,6 @@ methods.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
@@ -2451,11 +2434,9 @@ methods.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
+            <td><code>config</code></td>
             <td>
-                <code>config</code>
-            </td>
-            <td>
-                  <code><span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>]</code>
+                  <code><span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2481,7 +2462,7 @@ methods.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="PluginConfigurationError (automax.plugins.exceptions.PluginConfigurationError)" href="#automax.plugins.exceptions.PluginConfigurationError">PluginConfigurationError</a></code>
+                  <code><a class="autorefs autorefs-internal" title="automax.plugins.exceptions.PluginConfigurationError" href="#automax.plugins.exceptions.PluginConfigurationError">PluginConfigurationError</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2492,8 +2473,7 @@ methods.</p>
       </tbody>
     </table>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/base.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">67</span>
 <span class="normal">68</span>
@@ -2541,8 +2521,7 @@ methods.</p>
 
         <p>Release resources and perform cleanup operations.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/base.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">131</span>
 <span class="normal">132</span>
@@ -2588,7 +2567,7 @@ methods.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>]</code>
+                  <code><span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2599,8 +2578,7 @@ methods.</p>
       </tbody>
     </table>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/base.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">110</span>
 <span class="normal">111</span>
@@ -2652,7 +2630,7 @@ methods.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>]</code>
+                  <code><span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2663,8 +2641,7 @@ methods.</p>
       </tbody>
     </table>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/base.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">147</span>
 <span class="normal">148</span>
@@ -2724,7 +2701,7 @@ methods.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="str">str</span></code>
+                  <code>str</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2735,8 +2712,7 @@ methods.</p>
       </tbody>
     </table>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/base.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">137</span>
 <span class="normal">138</span>
@@ -2786,7 +2762,7 @@ methods.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="bool">bool</span></code>
+                  <code>bool</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -2797,8 +2773,7 @@ methods.</p>
       </tbody>
     </table>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/base.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">121</span>
 <span class="normal">122</span>
@@ -2843,7 +2818,6 @@ methods.</p>
 
 
     <div class="doc doc-contents ">
-
 
 
         <p>Standardized metadata for plugin registration and discovery.</p>
@@ -2942,14 +2916,7 @@ methods.</p>
       </tbody>
     </table>
 
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
+              <details class="quote">
                 <summary>Source code in <code>src/automax/plugins/base.py</code></summary>
                 <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">16</span>
 <span class="normal">17</span>
@@ -3037,7 +3004,6 @@ methods.</p>
 
 
 
-
   </div>
 
     </div>
@@ -3071,15 +3037,7 @@ validation errors.</p>
 
 
 
-
-
-
-
-
-
-
   <div class="doc doc-children">
-
 
 
 
@@ -3101,20 +3059,12 @@ validation errors.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="PluginError (automax.plugins.exceptions.PluginError)" href="#automax.plugins.exceptions.PluginError">PluginError</a></code></p>
-
+              Bases: <code><a class="autorefs autorefs-internal" title="automax.plugins.exceptions.PluginError" href="#automax.plugins.exceptions.PluginError">PluginError</a></code></p>
 
 
         <p>Raised when plugin configuration is invalid or incomplete.</p>
 
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
+              <details class="quote">
                 <summary>Source code in <code>src/automax/plugins/exceptions.py</code></summary>
                 <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">61</span>
 <span class="normal">62</span>
@@ -3192,7 +3142,6 @@ validation errors.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
@@ -3206,8 +3155,7 @@ validation errors.</p>
 
         <p>String representation with configuration details.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/exceptions.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">79</span>
 <span class="normal">80</span>
@@ -3261,20 +3209,12 @@ validation errors.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="Exception">Exception</span></code></p>
-
+              Bases: <code>Exception</code></p>
 
 
         <p>Base exception for all plugin-related errors.</p>
 
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
+              <details class="quote">
                 <summary>Source code in <code>src/automax/plugins/exceptions.py</code></summary>
                 <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">14</span>
 <span class="normal">15</span>
@@ -3380,7 +3320,6 @@ validation errors.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
@@ -3394,8 +3333,7 @@ validation errors.</p>
 
         <p>String representation of the error.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/exceptions.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">32</span>
 <span class="normal">33</span>
@@ -3443,7 +3381,7 @@ validation errors.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>]</code>
+                  <code><span title="typing.Dict">Dict</span>[str, <span title="typing.Any">Any</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3454,8 +3392,7 @@ validation errors.</p>
       </tbody>
     </table>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/exceptions.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">41</span>
 <span class="normal">42</span>
@@ -3519,20 +3456,12 @@ validation errors.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="PluginError (automax.plugins.exceptions.PluginError)" href="#automax.plugins.exceptions.PluginError">PluginError</a></code></p>
-
+              Bases: <code><a class="autorefs autorefs-internal" title="automax.plugins.exceptions.PluginError" href="#automax.plugins.exceptions.PluginError">PluginError</a></code></p>
 
 
         <p>Raised when plugin execution fails.</p>
 
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
+              <details class="quote">
                 <summary>Source code in <code>src/automax/plugins/exceptions.py</code></summary>
                 <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 94</span>
 <span class="normal"> 95</span>
@@ -3596,7 +3525,6 @@ validation errors.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
@@ -3610,8 +3538,7 @@ validation errors.</p>
 
         <p>String representation with execution context.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/exceptions.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">110</span>
 <span class="normal">111</span>
@@ -3655,20 +3582,12 @@ validation errors.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="PluginError (automax.plugins.exceptions.PluginError)" href="#automax.plugins.exceptions.PluginError">PluginError</a></code></p>
-
+              Bases: <code><a class="autorefs autorefs-internal" title="automax.plugins.exceptions.PluginError" href="#automax.plugins.exceptions.PluginError">PluginError</a></code></p>
 
 
         <p>Raised when security constraints are violated.</p>
 
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
+              <details class="quote">
                 <summary>Source code in <code>src/automax/plugins/exceptions.py</code></summary>
                 <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">147</span>
 <span class="normal">148</span>
@@ -3738,7 +3657,6 @@ validation errors.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
@@ -3752,8 +3670,7 @@ validation errors.</p>
 
         <p>String representation with security context.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/exceptions.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">163</span>
 <span class="normal">164</span>
@@ -3803,20 +3720,12 @@ validation errors.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="PluginError (automax.plugins.exceptions.PluginError)" href="#automax.plugins.exceptions.PluginError">PluginError</a></code></p>
-
+              Bases: <code><a class="autorefs autorefs-internal" title="automax.plugins.exceptions.PluginError" href="#automax.plugins.exceptions.PluginError">PluginError</a></code></p>
 
 
         <p>Raised when plugin validation fails.</p>
 
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
+              <details class="quote">
                 <summary>Source code in <code>src/automax/plugins/exceptions.py</code></summary>
                 <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">120</span>
 <span class="normal">121</span>
@@ -3882,7 +3791,6 @@ validation errors.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
@@ -3896,8 +3804,7 @@ validation errors.</p>
 
         <p>String representation with validation details.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/exceptions.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">136</span>
 <span class="normal">137</span>
@@ -3957,11 +3864,9 @@ validation errors.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
+            <td><code>plugin_name</code></td>
             <td>
-                <code>plugin_name</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
+                  <code>str</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3998,8 +3903,7 @@ validation errors.</p>
       </tbody>
     </table>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/exceptions.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
 <span class="normal">177</span>
@@ -4090,15 +3994,7 @@ management.</p>
 
 
 
-
-
-
-
-
-
-
   <div class="doc doc-children">
-
 
 
 
@@ -4121,17 +4017,9 @@ management.</p>
     <div class="doc doc-contents ">
 
 
-
         <p>Central registry for plugin registration and discovery.</p>
 
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
+              <details class="quote">
                 <summary>Source code in <code>src/automax/plugins/registry.py</code></summary>
                 <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 18</span>
 <span class="normal"> 19</span>
@@ -4401,7 +4289,6 @@ management.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
@@ -4415,8 +4302,7 @@ management.</p>
 
         <p>Retrieve plugin metadata by name.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/registry.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">67</span>
 <span class="normal">68</span>
@@ -4450,8 +4336,7 @@ management.</p>
 
         <p>Retrieve plugin class by name.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/registry.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">59</span>
 <span class="normal">60</span>
@@ -4485,8 +4370,7 @@ management.</p>
 
         <p>Find plugins by tag.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/registry.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">87</span>
 <span class="normal">88</span>
@@ -4520,8 +4404,7 @@ management.</p>
 
         <p>List all registered plugins.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/registry.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">75</span>
 <span class="normal">76</span>
@@ -4563,8 +4446,7 @@ management.</p>
 
         <p>Discover and load all plugins from the plugins directory.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/registry.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 95</span>
 <span class="normal"> 96</span>
@@ -4638,8 +4520,7 @@ management.</p>
 
         <p>Register a plugin class in the registry.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/registry.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">29</span>
 <span class="normal">30</span>
@@ -4690,8 +4571,7 @@ management.</p>
 
         <p>Class decorator for automatic plugin registration.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/plugins/registry.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">151</span>
 <span class="normal">152</span>
@@ -4736,15 +4616,7 @@ management.</p>
 
 
 
-
-
-
-
-
-
-
   <div class="doc doc-children">
-
 
 
 
@@ -4767,19 +4639,11 @@ management.</p>
     <div class="doc doc-contents ">
 
 
-
         <p>Manages plugin loading and execution.</p>
 <p>This class provides backward compatibility with the existing system while
 integrating with the new plugin registry.</p>
 
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
+              <details class="quote">
                 <summary>Source code in <code>src/automax/core/managers/plugin_manager.py</code></summary>
                 <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 14</span>
 <span class="normal"> 15</span>
@@ -5025,7 +4889,6 @@ integrating with the new plugin registry.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
@@ -5052,11 +4915,9 @@ integrating with the new plugin registry.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
+            <td><code>logger</code></td>
             <td>
-                <code>logger</code>
-            </td>
-            <td>
-                  <code><span title="optional">optional</span></code>
+                  <code>optional</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -5070,8 +4931,7 @@ integrating with the new plugin registry.</p>
       </tbody>
     </table>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/plugin_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">23</span>
 <span class="normal">24</span>
@@ -5115,8 +4975,7 @@ integrating with the new plugin registry.</p>
 <p>This method first tries the new registry system, then falls back to legacy
 plugins for backward compatibility.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/plugin_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 70</span>
 <span class="normal"> 71</span>
@@ -5218,8 +5077,7 @@ plugins for backward compatibility.</p>
 
         <p>Get plugin class by name.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/plugin_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">112</span>
 <span class="normal">113</span>
@@ -5249,8 +5107,7 @@ plugins for backward compatibility.</p>
 
         <p>List all available plugins.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/plugin_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">118</span>
 <span class="normal">119</span>
@@ -5301,8 +5158,7 @@ plugins for backward compatibility.</p>
 
         <p>Get the global plugin manager instance.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/plugin_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">135</span>
 <span class="normal">136</span>
@@ -5350,15 +5206,7 @@ plugins for backward compatibility.</p>
 
 
 
-
-
-
-
-
-
-
   <div class="doc doc-children">
-
 
 
 
@@ -5383,18 +5231,10 @@ plugins for backward compatibility.</p>
               Bases: <code><span title="logging.Formatter">Formatter</span></code></p>
 
 
-
         <p>Formatter that aligns level names and formats timestamps in ISO 8601 with local
 timezone.</p>
 
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
+              <details class="quote">
                 <summary>Source code in <code>src/automax/core/managers/logger_manager.py</code></summary>
                 <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">30</span>
 <span class="normal">31</span>
@@ -5442,7 +5282,6 @@ timezone.</p>
 
 
 
-
   </div>
 
     </div>
@@ -5465,17 +5304,9 @@ timezone.</p>
               Bases: <code><span title="logging.Formatter">Formatter</span></code></p>
 
 
-
         <p>Formatter that outputs log records as JSON objects compliant with RFC 8259.</p>
 
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
+              <details class="quote">
                 <summary>Source code in <code>src/automax/core/managers/logger_manager.py</code></summary>
                 <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">47</span>
 <span class="normal">48</span>
@@ -5523,7 +5354,6 @@ timezone.</p>
 
 
 
-
   </div>
 
     </div>
@@ -5544,17 +5374,9 @@ timezone.</p>
     <div class="doc doc-contents ">
 
 
-
         <p>Manager class for centralized logging.</p>
 
-
-
-
-
-
-
-
-              <details class="mkdocstrings-source">
+              <details class="quote">
                 <summary>Source code in <code>src/automax/core/managers/logger_manager.py</code></summary>
                 <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 64</span>
 <span class="normal"> 65</span>
@@ -6004,7 +5826,6 @@ timezone.</p>
 
 
 
-
 <div class="doc doc-object doc-function">
 
 
@@ -6031,11 +5852,9 @@ timezone.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
+            <td><code>log_directory</code></td>
             <td>
-                <code>log_directory</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span> or <span title="pathlib.Path">Path</span></code>
+                  <code>str or <span title="pathlib.Path">Path</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6047,11 +5866,9 @@ timezone.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
+            <td><code>log_level</code></td>
             <td>
-                <code>log_level</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
+                  <code>str</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6063,11 +5880,9 @@ timezone.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
+            <td><code>json_log</code></td>
             <td>
-                <code>json_log</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
+                  <code>bool</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6081,8 +5896,7 @@ timezone.</p>
       </tbody>
     </table>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/logger_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">69</span>
 <span class="normal">70</span>
@@ -6136,8 +5950,7 @@ timezone.</p>
 
         <p>Log a message at DEBUG level.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/logger_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">190</span>
 <span class="normal">191</span>
@@ -6179,8 +5992,7 @@ timezone.</p>
 
         <p>Log a message at ERROR level and write to .err file.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/logger_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">226</span>
 <span class="normal">227</span>
@@ -6224,8 +6036,7 @@ timezone.</p>
 
         <p>Log a message at FATAL level and write to .err file.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/logger_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">239</span>
 <span class="normal">240</span>
@@ -6269,8 +6080,7 @@ timezone.</p>
 
         <p>Return the internal logger instance.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/logger_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">137</span>
 <span class="normal">138</span>
@@ -6300,8 +6110,7 @@ timezone.</p>
 
         <p>Log a message at INFO level.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/logger_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">202</span>
 <span class="normal">203</span>
@@ -6356,11 +6165,9 @@ timezone.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
+            <td><code>level</code></td>
             <td>
-                <code>level</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
+                  <code>str</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6372,11 +6179,9 @@ timezone.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
+            <td><code>msg</code></td>
             <td>
-                <code>msg</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
+                  <code>str</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6390,8 +6195,7 @@ timezone.</p>
       </tbody>
     </table>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/logger_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">252</span>
 <span class="normal">253</span>
@@ -6469,8 +6273,7 @@ timezone.</p>
 
         <p>Shutdown logger: flush and close all handlers.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/logger_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">175</span>
 <span class="normal">176</span>
@@ -6510,8 +6313,7 @@ timezone.</p>
 
         <p>Log a message at WARNING level.</p>
 
-
-            <details class="mkdocstrings-source">
+            <details class="quote">
               <summary>Source code in <code>src/automax/core/managers/logger_manager.py</code></summary>
               <div class="codehilite"><table class="codehilitetable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">214</span>
 <span class="normal">215</span>
