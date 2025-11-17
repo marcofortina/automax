@@ -11,10 +11,10 @@
       
       
       
-        <link rel="prev" href="../hashicorp-vault/">
+        <link rel="prev" href="../check-tcp-connection/">
       
       
-        <link rel="next" href="../ssh-command/">
+        <link rel="next" href="../read-file-content/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Local Command - Automax Documentation</title>
+        <title>ICMP Check - Automax Documentation</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#local-command-plugin" class="md-skip">
+        <a href="#icmp-check-plugin" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Local Command
+              ICMP Check
             
           </span>
         </div>
@@ -850,37 +850,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Local Command
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../local-command/" class="md-nav__link">
         
   
   
@@ -896,59 +869,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#return-values" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Return Values
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1014,10 +934,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../check-icmp-connection/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ICMP Check
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1033,6 +980,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#return-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Return Values
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1512,33 +1512,39 @@
   
 
 
-<h1 id="local-command-plugin">Local Command Plugin</h1>
-<p>Execute local system commands.</p>
+<h1 id="icmp-check-plugin">ICMP Check Plugin</h1>
+<p>Check ICMP connectivity to a host.</p>
 <h2 id="configuration">Configuration</h2>
 <p><strong>Required:</strong>
-- <code>command</code>: Command to execute</p>
+- <code>host</code>: Target host</p>
 <p><strong>Optional:</strong>
-- <code>timeout</code>: Command timeout in seconds (default: 30)
-- <code>shell</code>: Use shell execution (default: true)
-- <code>cwd</code>: Working directory
-- <code>env</code>: Environment variables
-- <code>input_data</code>: Input data for command</p>
+- <code>count</code>: Number of ping packets (default: 4)
+- <code>timeout</code>: Timeout in seconds for each packet (default: 2)
+- <code>interval</code>: Interval between packets in seconds (default: 0.2)
+- <code>fail_fast</code>: Raise error on failure (default: true)</p>
 <h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local_command</span>
+<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_icmp_connection</span>
 <span class="nt">config</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;echo</span><span class="nv"> </span><span class="s">&#39;Hello</span><span class="nv"> </span><span class="s">World&#39;&quot;</span>
-<span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
-<span class="w">  </span><span class="nt">shell</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;google.com&quot;</span>
+<span class="w">  </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">  </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="w">  </span><span class="nt">fail_fast</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
 <h2 id="return-values">Return Values</h2>
 <p>The plugin returns a dictionary with:
 - <code>status</code>: "success" or "failure"
-- <code>command</code>: The executed command
-- <code>returncode</code>: The exit code of the command
-- <code>stdout</code>: The standard output of the command
-- <code>stderr</code>: The standard error of the command
-- <code>timeout</code>: The timeout setting
-- <code>shell</code>: The shell setting</p>
+- <code>host</code>: The target host
+- <code>count</code>: The number of ping packets sent
+- <code>timeout</code>: The timeout per packet
+- <code>interval</code>: The interval between packets
+- <code>connected</code>: Boolean indicating if the host is reachable
+- <code>packet_loss</code>: Percentage of packet loss
+- <code>rtt_avg_ms</code>: Average round-trip time in milliseconds
+- <code>rtt_min_ms</code>: Minimum round-trip time in milliseconds
+- <code>rtt_max_ms</code>: Maximum round-trip time in milliseconds
+- <code>success_rate</code>: Percentage of successful packets
+- <code>error</code>: Error message if applicable</p>
 
 
 
