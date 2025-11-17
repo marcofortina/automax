@@ -26,7 +26,7 @@ class AzureKeyVaultPlugin(BasePlugin):
         name="azure_key_vault",
         version="2.0.0",
         description="Manage secrets in Azure Key Vault",
-        author="Automax Team",
+        author="Marco Fortina",
         category="cloud",
         tags=["azure", "secrets", "cloud"],
         required_config=["vault_url", "secret_name", "action"],

@@ -23,7 +23,7 @@ class CompressFilePlugin(BasePlugin):
         name="compress_file",
         version="2.0.0",
         description="Compress files or directories using gzip, tar, or zip",
-        author="Automax Team",
+        author="Marco Fortina",
         category="file_operations",
         tags=["compress", "archive", "file", "gzip", "tar", "zip"],
         required_config=["source_path", "output_path"],

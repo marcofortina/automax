@@ -26,7 +26,7 @@ class GoogleSecretManagerPlugin(BasePlugin):
         name="google_secret_manager",
         version="2.0.0",
         description="Manage secrets in Google Secret Manager",
-        author="Automax Team",
+        author="Marco Fortina",
         category="cloud",
         tags=["google", "gcp", "secrets"],
         required_config=["project_id", "secret_name", "action"],

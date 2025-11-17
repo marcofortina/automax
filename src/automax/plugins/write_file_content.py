@@ -26,7 +26,7 @@ class WriteFileContentPlugin(BasePlugin):
         name="write_file_content",
         version="2.0.0",
         description="Write content to files with encoding and mode support",
-        author="Automax Team",
+        author="Marco Fortina",
         category="file_operations",
         tags=["file", "write", "content"],
         required_config=["file_path", "content"],

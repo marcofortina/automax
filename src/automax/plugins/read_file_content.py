@@ -26,7 +26,7 @@ class ReadFileContentPlugin(BasePlugin):
         name="read_file_content",
         version="2.0.0",
         description="Read content from files with encoding support",
-        author="Automax Team",
+        author="Marco Fortina",
         category="file_operations",
         tags=["file", "read", "content"],
         required_config=["file_path"],

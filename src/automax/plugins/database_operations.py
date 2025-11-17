@@ -25,7 +25,7 @@ class DatabaseOperationsPlugin(BasePlugin):
         name="database_operations",
         version="2.0.0",
         description="Execute SQL queries via ODBC using pyodbc",
-        author="Automax Team",
+        author="Marco Fortina",
         category="database",
         tags=["database", "sql", "odbc"],
         required_config=["connection_string", "query", "action"],

@@ -21,7 +21,7 @@ class RunHttpRequestPlugin(BasePlugin):
         name="run_http_request",
         version="2.0.0",
         description="Make HTTP requests to APIs with optional Basic Auth",
-        author="Automax Team",
+        author="Marco Fortina",
         category="communication",
         tags=["http", "api", "request"],
         required_config=["url"],

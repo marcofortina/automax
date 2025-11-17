@@ -19,7 +19,7 @@ class CheckTCPConnectionPlugin(BasePlugin):
         name="check_tcp_connection",
         version="2.0.0",
         description="Check TCP connectivity to a host and port",
-        author="Automax Team",
+        author="Marco Fortina",
         category="network",
         tags=["network", "tcp", "connection"],
         required_config=["host", "port"],

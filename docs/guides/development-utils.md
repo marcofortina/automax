@@ -80,7 +80,7 @@ python utils/validate_plugin.py --plugin src/automax/plugins/aws_secrets_manager
    ✅ name: aws_secrets_manager
    ✅ version: 2.0.0
    ✅ description: Retrieve secrets from AWS Secrets Manager
-   ✅ author: Automax Team
+   ✅ author: Marco Fortina
    ✅ category: cloud
    ✅ tags: ['aws', 'secrets', 'cloud']
    ✅ required_config: ['secret_name']

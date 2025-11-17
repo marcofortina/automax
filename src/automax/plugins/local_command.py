@@ -19,7 +19,7 @@ class LocalCommandPlugin(BasePlugin):
         name="local_command",
         version="2.0.0",
         description="Execute local system commands with output capture",
-        author="Automax Team",
+        author="Marco Fortina",
         category="system",
         tags=["command", "local", "system", "execute"],
         required_config=["command"],

@@ -49,7 +49,7 @@ class FileReaderPlugin(BasePlugin):
         name="file_reader",
         version="1.0.0",
         description="Reads content from files",
-        author="Automax Team",
+        author="Marco Fortina",
         category="file_operations",
         tags=["file", "read"],
         required_config=["file_path"],

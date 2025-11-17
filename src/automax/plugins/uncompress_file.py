@@ -23,7 +23,7 @@ class UncompressFilePlugin(BasePlugin):
         name="uncompress_file",
         version="2.0.0",
         description="Uncompress files and archives using gzip, tar, or zip",
-        author="Automax Team",
+        author="Marco Fortina",
         category="file_operations",
         tags=["uncompress", "extract", "archive", "file", "gzip", "tar", "zip"],
         required_config=["source_path", "output_path"],
