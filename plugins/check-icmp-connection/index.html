@@ -1513,7 +1513,7 @@
 
 
 <h1 id="icmp-check-plugin">ICMP Check Plugin</h1>
-<p>Check ICMP connectivity to a host.</p>
+<p>Check ICMP connectivity to a host using ping3 library.</p>
 <h2 id="configuration">Configuration</h2>
 <p><strong>Required:</strong>
 - <code>host</code>: Target host</p>
@@ -1539,10 +1539,7 @@
 - <code>timeout</code>: The timeout per packet
 - <code>interval</code>: The interval between packets
 - <code>connected</code>: Boolean indicating if the host is reachable
-- <code>packet_loss</code>: Percentage of packet loss
-- <code>rtt_avg_ms</code>: Average round-trip time in milliseconds
-- <code>rtt_min_ms</code>: Minimum round-trip time in milliseconds
-- <code>rtt_max_ms</code>: Maximum round-trip time in milliseconds
+- <code>success_count</code>: Number of successful ping responses
 - <code>success_rate</code>: Percentage of successful packets
 - <code>error</code>: Error message if applicable</p>
 
