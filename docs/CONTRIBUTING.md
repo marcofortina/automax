@@ -1,6 +1,6 @@
 # Contributing to Automax
 
-Thanks for your interest in Automax! 🚀  
+Thanks for your interest in Automax! 🚀
 
 This is a lightweight, YAML-based automation framework. All contributions are welcome: features, bug fixes, docs, tests, or ideas.
 
@@ -29,7 +29,7 @@ This is a lightweight, YAML-based automation framework. All contributions are we
    git checkout -b feature/my-awesome-feature  # or docs/update-readme, infra/add-workflow, etc.
    ```
 5. **Code & Test**:
-   - Follow Black style: `black .`
+   - Follow code style: `isort . && black . && flake8 && docformatter -r .`
    - Add type hints everywhere
    - Write tests in `tests/` (pytest)
    - Validate changes with utilities below
@@ -43,7 +43,7 @@ This is a lightweight, YAML-based automation framework. All contributions are we
    git push origin your-branch
    ```
    - Open PR against `main`
-   - Fill PR template (see below)
+   - Fill the PR template from `.github/pull_request_template.md`
    - Request review (@marcofortina)
 
 ## Quick Contribution Flow
@@ -51,7 +51,7 @@ This is a lightweight, YAML-based automation framework. All contributions are we
 2. `pip install -e .`
 3. `pytest` (verify setup)
 4. Make changes
-5. `black .` (format)
+5. Run code quality tools: `isort . && black . && flake8 && docformatter -r .`
 6. `pytest` (test)
 7. Commit & PR
 
@@ -69,7 +69,9 @@ This is a lightweight, YAML-based automation framework. All contributions are we
 
 ## Code Style
 - Python 3.11+
-- Black formatting (`black .`)
+- Code formatting: `isort . && black .`
+- Linting: `flake8`
+- Docstring formatting: `docformatter -r .`
 - Type hints + mypy strict
 - Conventional Commits (see `DEVELOPER-NOTES.md`)
 
@@ -130,38 +132,7 @@ python utils/dry_run_validate.py
 ```
 
 ## Pull Request Template
-Description
-[Brief description of changes]
-
-Type of Change
-- [ ] feat: New feature
-- [ ] fix: Bug fix
-- [ ] docs: Documentation
-- [ ] test: Tests
-- [ ] infra: CI/CD
-- [ ] build: Packaging
-- [ ] setup: Configuration
-
-Checklist
-- [ ] Code follows style guidelines (`black .`)
-- [ ] Tests added/updated (`pytest`)
-- [ ] Documentation updated
-- [ ] Branch naming follows convention
-- [ ] Commit messages follow conventional commits
-
-Testing Performed
-- [ ] Unit tests added
-- [ ] Integration tests updated
-- [ ] Manual testing completed
-
-Screenshots/Logs (if applicable)
-[Add relevant screenshots or log excerpts]
-
-Related Issues
-Fixes # [Issue number]
-
-Notes
-[Any additional information]
+Use the template from `.github/pull_request_template.md` when creating pull requests.
 
 ## Debugging
 - Check logs in `logs/` directory
