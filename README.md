@@ -28,38 +28,34 @@
 ```
 automax/
 ├── .github/
-│   └── workflows/
-│       ├── ci.yml           # Continuous Integration workflow (tests, lint, etc.)
-│       └── publish.yml      # Automated publishing to PyPI
-├── docs/                    # Documentation
-│   ├── CONTRIBUTING.md
-│   ├── database_odbc_examples.yaml
-│   └── DEVELOPER-NOTES.md
-├── examples/                # Example configurations and demo data
-│   ├── config/
-│   │   └── config.yaml      # Example configuration file
-│   ├── .ssh/                # Demo SSH keys (for illustrative use only)
-│   └── steps/               # Example step definitions
-├── logs/                    # Runtime logs (ignored by Git)
-├── src/                     # Source code directory
-│   └── automax/             # Core package (installable as Python module)
-│       ├── cli/             # Command Line Interface package
-│       ├── core/            # Core logic: managers, validation, runtime components
-│       │   ├── managers/    # Core managers (config, plugins, steps, validation)
-│       │   └── utils/       # Common utilities and logging
-│       ├── plugins/         # Extensible plugin system
-│       ├── __main__.py      # Entry point for `python -m automax`
-│       └── main.py          # Programmatic API entry point
-├── tests/                   # Unit and integration test suite
-│   ├── test_core/           # Tests for core components
-│   ├── test_plugins/        # Tests for plugins
-│   └── test_steps/          # Tests for step logic
-├── utils/                   # Developer utilities and scripts
-├── pyproject.toml           # Modern build system configuration (PEP 621)
-├── LICENSE.md               # License information
-├── README.md                # Project overview and usage
-├── requirements.txt         # Development dependencies
-└── setup.py                 # Setup script (entry for setuptools)
+│   ├── workflows/           # CI/CD workflows
+│   │   ├── ci.yml
+│   │   ├── docs.yml
+│   │   └── publish.yml
+│   └── pull_request_template.md
+├── docs/                    # Comprehensive documentation
+│   ├── CONTRIBUTING.md      # Contribution guidelines
+│   ├── DEVELOPER-NOTES.md   # Internal developer guide
+│   ├── guides/              # Usage guides
+│   ├── plugins/             # Plugin documentation
+│   └── reference/           # API reference
+├── examples/                # Example configurations
+├── src/automax/             # Core package
+│   ├── cli/                 # Command Line Interface
+│   ├── core/                # Core logic and managers
+│   │   ├── managers/        # Config, plugin, step managers
+│   │   └── utils/           # Common utilities
+│   └── plugins/             # Extensible plugin system (15+ plugins)
+├── tests/                   # Test suite
+│   ├── test_cli/            # CLI tests
+│   ├── test_core/           # Core component tests
+│   ├── test_plugins/        # Plugin tests
+│   └── test_steps/          # Step execution tests
+├── utils/                   # Developer utilities
+├── pyproject.toml           # Build configuration
+├── requirements.txt         # Dependencies
+├── setup.py                 # Installation script
+└── README.md                # Project overview
 ```
 
 ---
@@ -162,7 +158,7 @@ python src/automax/cli/cli.py list-steps --config examples/config/config.yaml
 Automax provides standalone Python utilities for offline validation:
 
 - **validate_step.py**: Validate a single step YAML file using config and plugin schemas.
-- **validate_plugins.py**: Validate all plugins in the plugins directory.
+- **validate_plugin.py**: Validate all plugins in the plugins directory.
 - **check_step_deps.py**: Verify step dependencies and plugin references.
 - **check_config.py**: Validate config YAML structure and required keys.
 - **dry_run_validate.py**: Execute steps in dry-run mode programmatically.
@@ -200,6 +196,43 @@ substeps:
 export PYTHONPATH=$(pwd)/src
 pytest -v
 ```
+
+---
+
+## 👥 Contributing
+
+We welcome contributions from the community! Whether you're fixing bugs, adding new features, or improving documentation, your help is appreciated.
+
+### Getting Started
+- Read our [Contributing Guidelines](docs/CONTRIBUTING.md)
+- Check the [Developer Notes](docs/DEVELOPER-NOTES.md) for internal conventions
+- Explore the [plugin creation guide](docs/guides/creating-plugins.md)
+
+### Quick Contribution
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feat/amazing-feature`
+3. Make your changes and test: `pytest`
+4. Ensure code quality: `isort . && black . && flake8 && docformatter -r .`
+5. Commit your changes: `git commit -m "feat: add amazing feature"`
+6. Push and open a Pull Request
+
+### Development Tools
+We use modern Python tooling:
+- **Code formatting**: `isort . && black .`
+- **Linting**: `flake8`
+- **Docstring formatting**: `docformatter -r .`
+- **Testing**: `pytest` with 90%+ coverage goal
+
+See the [development utilities guide](docs/guides/development-utils.md) for more details.
+
+---
+
+## 💝 Donations
+
+If you find Automax useful and would like to support its development, consider making a donation. Your contribution helps maintain the project and develop new features.
+
+**Bitcoin Address:**
+`36jDV57roGb4o59TwK1CB7viPrXToQHGiP`
 
 ---
 
