@@ -10,6 +10,7 @@ import importlib
 import os
 
 from automax.core.exceptions import AutomaxError
+from automax.core.utils.data_transformer import DataTransformer
 from automax.core.utils.log_utils import print_substep_end, print_substep_start
 
 
@@ -120,6 +121,12 @@ class SubStepManager:
                     if "output_key" in sub_cfg and output is not None:
                         self.context[sub_cfg["output_key"]] = output
 
+                    # Apply advanced output mapping if specified
+                    if "output_mapping" in sub_cfg and output is not None:
+                        self._apply_output_mapping(
+                            output, sub_cfg["output_mapping"], sub_id
+                        )
+
                     result = "OK"
 
             except Exception as e:
@@ -137,6 +144,36 @@ class SubStepManager:
             self._execute_hook(self.post_run, "post_run")
 
         return success
+
+    def _apply_output_mapping(
+        self, result: any, output_mapping: dict, substep_id: str
+    ) -> None:
+        """
+        Apply advanced output mapping to transform and store result data.
+
+        Args:
+            result: Plugin execution result
+            output_mapping: Output mapping configuration
+            substep_id: Sub-step identifier for logging
+
+        Raises:
+            AutomaxError: If output mapping fails
+
+        """
+        try:
+            target_key = output_mapping["target"]
+            transformed_data = DataTransformer.transform(result, output_mapping)
+
+            self.context[target_key] = transformed_data
+            self.logger.debug(
+                f"Applied output mapping for sub-step {substep_id}, "
+                f"stored transformed data in context under key: {target_key}"
+            )
+
+        except Exception as e:
+            error_msg = f"Failed to apply output mapping for sub-step {substep_id}: {e}"
+            self.logger.error(error_msg)
+            raise AutomaxError(error_msg, level="ERROR")
 
     def _resolve_params(self, params: dict) -> dict:
         """
