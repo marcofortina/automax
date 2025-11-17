@@ -31,7 +31,7 @@ class AwsSecretsManagerPlugin(BasePlugin):
         name="aws_secrets_manager",
         version="2.0.0",
         description="Manage secrets in AWS Secrets Manager",
-        author="Automax Team",
+        author="Marco Fortina",
         category="cloud",
         tags=["aws", "secrets", "cloud"],
         required_config=["secret_name", "action"],

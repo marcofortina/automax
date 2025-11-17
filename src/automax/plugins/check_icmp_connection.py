@@ -25,7 +25,7 @@ class CheckIcmpConnectionPlugin(BasePlugin):
         name="check_icmp_connection",
         version="2.0.0",
         description="Check ICMP connectivity to a host using ping3 library",
-        author="Automax Team",
+        author="Marco Fortina",
         category="network",
         tags=["network", "icmp", "ping", "check"],
         required_config=["host"],

@@ -21,7 +21,7 @@ class SendEmailPlugin(BasePlugin):
         name="send_email",
         version="2.0.0",
         description="Send emails via SMTP",
-        author="Automax Team",
+        author="Marco Fortina",
         category="communication",
         tags=["email", "smtp", "mail"],
         required_config=[

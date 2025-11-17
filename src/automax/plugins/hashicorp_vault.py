@@ -25,7 +25,7 @@ class HashiCorpVaultPlugin(BasePlugin):
         name="hashicorp_vault",
         version="2.0.0",
         description="Manage secrets in HashiCorp Vault",
-        author="Automax Team",
+        author="Marco Fortina",
         category="cloud",
         tags=["vault", "hashicorp", "secrets"],
         required_config=["url", "mount_point", "path", "action"],

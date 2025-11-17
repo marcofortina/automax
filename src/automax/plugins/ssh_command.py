@@ -20,7 +20,7 @@ class SSHCommandPlugin(BasePlugin):
         name="ssh_command",
         version="2.0.0",
         description="Execute commands on remote servers via SSH",
-        author="Automax Team",
+        author="Marco Fortina",
         category="system",
         tags=["ssh", "remote", "command", "execute"],
         required_config=["host", "command"],
