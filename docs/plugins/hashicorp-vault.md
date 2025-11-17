@@ -5,20 +5,41 @@ Retrieve secrets from HashiCorp Vault.
 ## Configuration
 
 **Required:**
-- `vault_url`: Vault server URL
-- `secret_path`: Path to the secret
+- `url`: Vault server URL
+- `mount_point`: Secrets engine mount point
+- `path`: Secret path
+- `action`: Operation - "read", "write", "create"
 
 **Optional:**
 - `token`: Vault authentication token
-- `engine`: Secrets engine (default: secret)
-- `timeout`: Request timeout in seconds (default: 30)
+- `namespace`: Vault namespace
+- `value`: Secret value for write/create operations
 
 ## Example
 
 ```yaml
 plugin: hashicorp_vault
 config:
-  vault_url: "https://vault.example.com"
-  secret_path: "database/creds"
+  url: "https://vault.example.com"
+  mount_point: "secret"
+  path: "my-app/credentials"
+  action: "read"
   token: "s.1234567890"
 ```
+
+## Supported Actions
+
+- **read**: Read a secret from the specified path
+- **write**: Write a secret to the specified path (requires `value`)
+- **create**: Create a secret (same as write)
+
+## Return Values
+
+The plugin returns a dictionary with:
+- `status`: "success", "written", or "failure"
+- `mount_point`: The secrets engine mount point
+- `path`: The secret path
+- `action`: The performed action
+- `value`: The secret value (for read) or the written value (for write/create)
+- `version`: The secret version (for read)
+- `created_time`: The creation time of the secret (for read)
