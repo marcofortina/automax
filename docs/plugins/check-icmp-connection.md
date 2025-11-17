@@ -1,6 +1,6 @@
 # ICMP Check Plugin
 
-Check ICMP connectivity to a host.
+Check ICMP connectivity to a host using ping3 library.
 
 ## Configuration
 
@@ -34,9 +34,6 @@ The plugin returns a dictionary with:
 - `timeout`: The timeout per packet
 - `interval`: The interval between packets
 - `connected`: Boolean indicating if the host is reachable
-- `packet_loss`: Percentage of packet loss
-- `rtt_avg_ms`: Average round-trip time in milliseconds
-- `rtt_min_ms`: Minimum round-trip time in milliseconds
-- `rtt_max_ms`: Maximum round-trip time in milliseconds
+- `success_count`: Number of successful ping responses
 - `success_rate`: Percentage of successful packets
 - `error`: Error message if applicable

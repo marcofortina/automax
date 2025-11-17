@@ -8,24 +8,23 @@ from automax.plugins import BasePlugin, PluginMetadata, register_plugin
 from automax.plugins.exceptions import PluginExecutionError
 
 try:
-    from icmplib import exceptions as icmp_exceptions
-    from icmplib import ping as icmp_ping
+    from ping3 import errors, verbose_ping
 
-    ICMPLIB_AVAILABLE = True
+    PING3_AVAILABLE = True
 except ImportError:
-    ICMPLIB_AVAILABLE = False
+    PING3_AVAILABLE = False
 
 
 @register_plugin
 class CheckIcmpConnectionPlugin(BasePlugin):
     """
-    Check if a host is reachable via ICMP ping using pure Python.
+    Check if a host is reachable via ICMP ping using ping3 library.
     """
 
     METADATA = PluginMetadata(
         name="check_icmp_connection",
         version="2.0.0",
-        description="Check ICMP connectivity to a host using pure Python",
+        description="Check ICMP connectivity to a host using ping3 library",
         author="Automax Team",
         category="network",
         tags=["network", "icmp", "ping", "check"],
@@ -43,7 +42,7 @@ class CheckIcmpConnectionPlugin(BasePlugin):
 
     def execute(self) -> Dict[str, Any]:
         """
-        Check ICMP connectivity to host using pure Python.
+        Check ICMP connectivity to host using ping3.
 
         Returns:
             Dictionary containing ping status and details.
@@ -52,10 +51,10 @@ class CheckIcmpConnectionPlugin(BasePlugin):
             PluginExecutionError: If ping fails and fail_fast is True.
 
         """
-        if not ICMPLIB_AVAILABLE:
+        if not PING3_AVAILABLE:
             raise PluginExecutionError(
-                "icmplib library is required for ICMP checks. "
-                "Install it with: pip install icmplib"
+                "ping3 library is required for ICMP checks. "
+                "Install it with: pip install ping3"
             )
 
         host = self.config["host"]
@@ -69,24 +68,23 @@ class CheckIcmpConnectionPlugin(BasePlugin):
         )
 
         try:
-            # Use icmplib for pure Python ICMP implementation
-            result = icmp_ping(
-                address=host,
+            # Use ping3's verbose_ping function
+            success_count = verbose_ping(
+                dest_addr=host,
                 count=count,
                 timeout=timeout,
                 interval=interval,
-                privileged=False,
+                # Log the output using our logger
+                log_func=lambda msg: self.logger.info(f"PING: {msg}"),
             )
 
-            success = result.is_alive
-            packet_loss = result.packet_loss
-            rtt_avg = result.avg_rtt
-            rtt_min = result.min_rtt
-            rtt_max = result.max_rtt
+            # Calculate success rate
+            success_rate = (success_count / count) * 100 if count > 0 else 0
+            success = success_count > 0
 
             if success:
                 self.logger.info(
-                    f"ICMP ping to {host} successful (packet loss: {packet_loss}%)"
+                    f"ICMP ping to {host} successful ({success_count}/{count} packets received)"
                 )
                 return {
                     "status": "success",
@@ -95,14 +93,11 @@ class CheckIcmpConnectionPlugin(BasePlugin):
                     "timeout": timeout,
                     "interval": interval,
                     "connected": True,
-                    "packet_loss": packet_loss,
-                    "rtt_avg_ms": rtt_avg,
-                    "rtt_min_ms": rtt_min,
-                    "rtt_max_ms": rtt_max,
-                    "success_rate": 100 - packet_loss,
+                    "success_count": success_count,
+                    "success_rate": success_rate,
                 }
             else:
-                error_msg = f"ICMP ping to {host} failed (packet loss: {packet_loss}%)"
+                error_msg = f"ICMP ping to {host} failed (0/{count} packets received)"
                 self.logger.error(error_msg)
                 if fail_fast:
                     raise PluginExecutionError(error_msg)
@@ -114,11 +109,11 @@ class CheckIcmpConnectionPlugin(BasePlugin):
                     "interval": interval,
                     "connected": False,
                     "error": error_msg,
-                    "packet_loss": packet_loss,
-                    "success_rate": 100 - packet_loss,
+                    "success_count": 0,
+                    "success_rate": 0.0,
                 }
 
-        except icmp_exceptions.NameLookupError as e:
+        except errors.HostUnknown as e:
             error_msg = f"Hostname resolution failed for {host}: {e}"
             self.logger.error(error_msg)
             if fail_fast:
@@ -131,7 +126,10 @@ class CheckIcmpConnectionPlugin(BasePlugin):
                 "interval": interval,
                 "connected": False,
                 "error": error_msg,
+                "success_count": 0,
+                "success_rate": 0.0,
             }
+
         except Exception as e:
             error_msg = f"ICMP ping check failed: {str(e)}"
             self.logger.error(error_msg)
@@ -145,4 +143,6 @@ class CheckIcmpConnectionPlugin(BasePlugin):
                 "interval": interval,
                 "connected": False,
                 "error": error_msg,
+                "success_count": 0,
+                "success_rate": 0.0,
             }
