@@ -26,6 +26,7 @@ steps:
 
 - **Class-Based Plugin System**: Extensible architecture with 15+ built-in plugins
 - **YAML-Driven Workflows**: Define automation steps in simple YAML files
+- **Advanced Output Mapping**: Transform and filter data between steps with powerful data pipelines
 - **Multi-Cloud Support**: AWS, Azure, GCP, and HashiCorp Vault integration
 - **Comprehensive Testing**: Full test coverage with pytest
 - **Security First**: Secure secret management and access controls
@@ -35,6 +36,7 @@ steps:
 
 - [Browse available plugins](plugins/index.md)
 - [Create a new plugin](guides/creating-plugins.md)
+- [Learn output mapping](guides/output-mapping.md)
 - [API Reference](reference/api.md)
 
 ## Plugin Categories
