@@ -95,18 +95,52 @@ class ValidationManager:
                 f"YAML schema validation failed for {yaml_path}: {e}", level="FATAL"
             )
 
+        # Validate pre_run and post_run hooks if present
+        for hook_field in ["pre_run", "post_run"]:
+            if hook_field in data and data[hook_field]:
+                if not isinstance(data[hook_field], str):
+                    raise AutomaxError(
+                        f"Step {step_id} {hook_field} must be a string", level="ERROR"
+                    )
+                # Basic validation for function path format
+                if "." not in data[hook_field]:
+                    raise AutomaxError(
+                        f"Step {step_id} {hook_field} must be in format 'module.function'",
+                        level="ERROR",
+                    )
+
         # Validate each sub-step
         for sub in data["substeps"]:
             plugin_name = sub["plugin"]
-            if plugin_name not in self.plugin_manager.registry:
+            if plugin_name not in self.plugin_manager.list_plugins():
                 raise AutomaxError(
                     f"Unknown plugin '{plugin_name}' in sub-step {step_id}.{sub['id']}",
                     level="FATAL",
                 )
 
-            schema = self.plugin_manager.get_schema(plugin_name)
+            plugin_class = self.plugin_manager.get_plugin(plugin_name)
             params = sub["params"]
-            self._validate_params(params, schema)
+
+            # Try SCHEMA validation first, fall back to instance validation
+            if hasattr(plugin_class, "SCHEMA") and plugin_class.SCHEMA:
+                try:
+                    self._validate_params_with_schema(params, plugin_class.SCHEMA)
+                except Exception as e:
+                    raise AutomaxError(
+                        f"Plugin '{plugin_name}' schema validation error: {str(e)}",
+                        level="ERROR",
+                    )
+            else:
+                # Fall back to instance validation for plugins without SCHEMA
+                try:
+                    plugin_instance = plugin_class(params)
+                    if hasattr(plugin_instance, "validate"):
+                        plugin_instance.validate()
+                except Exception as e:
+                    raise AutomaxError(
+                        f"Plugin '{plugin_name}' validation error: {str(e)}",
+                        level="ERROR",
+                    )
 
             # Check for sensitive params (warn if hard-coded)
             sensitive_keys = ["password", "key_path"]  # Expand as needed
@@ -121,7 +155,7 @@ class ValidationManager:
                         f"Potential hard-coded sensitive param '{key}' in sub-step {step_id}.{sub['id']}. Consider using env vars."
                     )
 
-            # Validate placeholder resolution
+            # Validate placeholder resolution for config keys
             for k, v in params.items():
                 if isinstance(v, str) and "{" in v:
                     try:
@@ -172,6 +206,40 @@ class ValidationManager:
             if key in params:
                 expected_type = spec["type"]
                 if not isinstance(params[key], expected_type):
+                    raise AutomaxError(
+                        f"Invalid type for '{key}': expected {expected_type}, got {type(params[key])}",
+                        level="ERROR",
+                    )
+
+    def _validate_params_with_schema(self, params: dict, schema: dict):
+        """
+        Validate parameters against plugin SCHEMA.
+
+        Args:
+            params (dict): Sub-step parameters.
+            schema (dict): Plugin schema.
+
+        Raises:
+            AutomaxError: On param validation failures.
+
+        """
+        for key, spec in schema.items():
+            # Check required parameters
+            if spec.get("required") and key not in params:
+                raise AutomaxError(f"Missing required param '{key}'", level="ERROR")
+
+            # Validate type if parameter exists and type is specified
+            if key in params and "type" in spec:
+                expected_type = spec["type"]
+                # Handle tuple of allowed types
+                if isinstance(expected_type, tuple):
+                    if not any(isinstance(params[key], t) for t in expected_type):
+                        raise AutomaxError(
+                            f"Invalid type for '{key}': expected one of {expected_type}, got {type(params[key])}",
+                            level="ERROR",
+                        )
+                # Handle single type
+                elif not isinstance(params[key], expected_type):
                     raise AutomaxError(
                         f"Invalid type for '{key}': expected {expected_type}, got {type(params[key])}",
                         level="ERROR",

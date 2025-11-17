@@ -1,249 +1,342 @@
 """
-Unit tests for Azure Key Vault plugin.
+Tests for azure_key_vault plugin.
 """
 
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, patch
 
-from azure.core.exceptions import ResourceNotFoundError
 import pytest
 
-from automax.core.exceptions import AutomaxError
-from automax.plugins.azure_key_vault import azure_get_secret, azure_set_secret
+from automax.plugins.exceptions import PluginExecutionError
+from automax.plugins.registry import global_registry
 
 
 class TestAzureKeyVaultPlugin:
     """
-    Test suite for Azure Key Vault plugin.
+    Test suite for azure_key_vault plugin.
     """
 
-    def setup_method(self):
+    def test_azure_key_vault_plugin_registered(self):
         """
-        Set up test fixtures.
+        Verify that azure_key_vault plugin is properly registered.
         """
-        self.mock_logger = Mock()
+        global_registry.load_all_plugins()
+        assert "azure_key_vault" in global_registry.list_plugins()
+
+        # Verify metadata
+        metadata = global_registry.get_metadata("azure_key_vault")
+        assert metadata.name == "azure_key_vault"
+        assert "azure" in metadata.tags
+        assert "vault_url" in metadata.required_config
+        assert "secret_name" in metadata.required_config
+        assert "action" in metadata.required_config
+
+    def test_azure_key_vault_plugin_instantiation(self):
+        """
+        Verify azure_key_vault plugin can be instantiated with config.
+        """
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        config = {
+            "vault_url": "https://my-vault.vault.azure.net/",
+            "secret_name": "my-secret",
+            "action": "read",
+            "tenant_id": "tenant-123",
+            "client_id": "client-456",
+        }
+
+        plugin_instance = plugin_class(config)
+        assert plugin_instance is not None
+        assert plugin_instance.config == config
+
+    def test_azure_key_vault_plugin_configuration_validation(self):
+        """
+        Verify azure_key_vault plugin configuration validation.
+        """
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+
+        # Test with missing required configuration
+        with pytest.raises(Exception) as exc_info:
+            plugin_class({"vault_url": "https://vault.azure.net/"})
+
+        assert "required configuration" in str(exc_info.value).lower()
 
     @patch("automax.plugins.azure_key_vault.SecretClient")
     @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
-    def test_azure_get_secret_success_default_auth(
-        self, mock_credential, mock_secret_client
-    ):
+    def test_azure_key_vault_plugin_read_success(self, mock_credential, mock_client):
         """
-        Test successful secret retrieval with default authentication.
+        Test azure_key_vault plugin read action with successful secret retrieval.
         """
-        # Mock setup
-        mock_credential_instance = Mock()
-        mock_credential.return_value = mock_credential_instance
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+        mock_credential.return_value = MagicMock()
 
-        mock_secret_instance = Mock()
-        mock_secret_client.return_value = mock_secret_instance
+        mock_secret = MagicMock()
+        mock_secret.value = "my_azure_secret"
+        mock_secret.properties.version = "v1"
+        mock_secret.properties.enabled = True
+        mock_secret.properties.expires_on = None
+        mock_secret_client.get_secret.return_value = mock_secret
 
-        mock_secret = Mock()
-        mock_secret.value = "secret-value-123"
-        mock_secret_instance.get_secret.return_value = mock_secret
+        global_registry.load_all_plugins()
 
-        # Execute
-        result = azure_get_secret(
-            vault_url="https://test-vault.vault.azure.net/",
-            secret_name="test-secret",
-            auth_method="default",
-            logger=self.mock_logger,
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "my-secret",
+                "action": "read",
+            }
         )
 
-        # Assertions
-        mock_credential.assert_called_once()
-        mock_secret_client.assert_called_once_with(
-            vault_url="https://test-vault.vault.azure.net/",
-            credential=mock_credential_instance,
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "success"
+        assert result["vault_url"] == "https://my-vault.vault.azure.net/"
+        assert result["secret_name"] == "my-secret"
+        assert result["secret_value"] == "my_azure_secret"
+        assert result["version"] == "v1"
+        assert result["enabled"] is True
+        assert result["expires_on"] is None
+
+        # Verify mock calls
+        mock_client.assert_called_once_with(
+            vault_url="https://my-vault.vault.azure.net/",
+            credential=mock_credential.return_value,
         )
-        mock_secret_instance.get_secret.assert_called_once_with("test-secret")
-        assert result == "secret-value-123"
+        mock_secret_client.get_secret.assert_called_once_with("my-secret")
 
     @patch("automax.plugins.azure_key_vault.SecretClient")
+    @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
+    def test_azure_key_vault_plugin_write_success(self, mock_credential, mock_client):
+        """
+        Test azure_key_vault plugin write action with successful secret creation.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+        mock_credential.return_value = MagicMock()
+
+        mock_secret = MagicMock()
+        mock_secret.value = "new_secret_value"
+        mock_secret_client.set_secret.return_value = mock_secret
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "new-secret",
+                "action": "write",
+                "value": "new_secret_value",
+            }
+        )
+
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "written"
+        assert result["vault_url"] == "https://my-vault.vault.azure.net/"
+        assert result["secret_name"] == "new-secret"
+        assert result["secret_value"] == "new_secret_value"
+        assert result["action"] == "write"
+
+        # Verify mock calls
+        mock_client.assert_called_once_with(
+            vault_url="https://my-vault.vault.azure.net/",
+            credential=mock_credential.return_value,
+        )
+        mock_secret_client.set_secret.assert_called_once_with(
+            "new-secret", "new_secret_value"
+        )
+
+    @patch("automax.plugins.azure_key_vault.SecretClient")
+    @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
+    def test_azure_key_vault_plugin_create_success(self, mock_credential, mock_client):
+        """
+        Test azure_key_vault plugin create action with successful secret creation.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+        mock_credential.return_value = MagicMock()
+
+        mock_secret = MagicMock()
+        mock_secret.value = "new_secret_value"
+        mock_secret_client.set_secret.return_value = mock_secret
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "new-secret",
+                "action": "create",
+                "value": "new_secret_value",
+            }
+        )
+
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "written"
+        assert result["vault_url"] == "https://my-vault.vault.azure.net/"
+        assert result["secret_name"] == "new-secret"
+        assert result["secret_value"] == "new_secret_value"
+        assert result["action"] == "create"
+
+        # Verify mock calls
+        mock_secret_client.set_secret.assert_called_once_with(
+            "new-secret", "new_secret_value"
+        )
+
     @patch("automax.plugins.azure_key_vault.ClientSecretCredential")
-    def test_azure_get_secret_success_client_secret_auth(
-        self, mock_credential, mock_secret_client
-    ):
-        """
-        Test successful secret retrieval with client secret authentication.
-        """
-        # Mock setup
-        mock_credential_instance = Mock()
-        mock_credential.return_value = mock_credential_instance
-
-        mock_secret_instance = Mock()
-        mock_secret_client.return_value = mock_secret_instance
-
-        mock_secret = Mock()
-        mock_secret.value = "client-secret-value"
-        mock_secret_instance.get_secret.return_value = mock_secret
-
-        # Execute
-        result = azure_get_secret(
-            vault_url="https://test-vault.vault.azure.net/",
-            secret_name="test-secret",
-            auth_method="client_secret",
-            tenant_id="test-tenant",
-            client_id="test-client",
-            client_secret="test-secret",
-        )
-
-        # Assertions
-        mock_credential.assert_called_once_with(
-            tenant_id="test-tenant",
-            client_id="test-client",
-            client_secret="test-secret",
-        )
-        assert result == "client-secret-value"
-
     @patch("automax.plugins.azure_key_vault.SecretClient")
-    @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
-    def test_azure_get_secret_resource_not_found(
-        self, mock_credential, mock_secret_client
+    def test_azure_key_vault_plugin_with_service_principal(
+        self, mock_client, mock_credential_class
     ):
         """
-        Test ResourceNotFoundError handling.
+        Test azure_key_vault plugin execution with service principal authentication.
         """
-        # Mock setup
-        mock_credential_instance = Mock()
-        mock_credential.return_value = mock_credential_instance
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+        mock_credential = MagicMock()
+        mock_credential_class.return_value = mock_credential
 
-        mock_secret_instance = Mock()
-        mock_secret_client.return_value = mock_secret_instance
-        mock_secret_instance.get_secret.side_effect = ResourceNotFoundError(
-            "Secret not found"
+        mock_secret = MagicMock()
+        mock_secret.value = "my_azure_secret"
+        mock_secret.properties.version = "v1"
+        mock_secret.properties.enabled = True
+        mock_secret.properties.expires_on = None
+        mock_secret_client.get_secret.return_value = mock_secret
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "my-secret",
+                "action": "read",
+                "tenant_id": "tenant-123",
+                "client_id": "client-456",
+                "client_secret": "secret-789",
+            }
         )
 
-        # Execute with fail_fast=False
-        result = azure_get_secret(
-            vault_url="https://test-vault.vault.azure.net/",
-            secret_name="non-existent-secret",
-            auth_method="default",
-            fail_fast=False,
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "success"
+        assert result["secret_value"] == "my_azure_secret"
+
+        # Verify mock calls
+        mock_credential_class.assert_called_once_with(
+            "tenant-123", "client-456", "secret-789"
         )
-
-        # Should return empty string instead of raising exception
-        assert result == ""
-
-    def test_azure_get_secret_missing_client_secret_credentials(self):
-        """
-        Test missing client secret credentials.
-        """
-        with pytest.raises(AutomaxError) as exc_info:
-            azure_get_secret(
-                vault_url="https://test-vault.vault.azure.net/",
-                secret_name="test-secret",
-                auth_method="client_secret",
-                tenant_id="test-tenant",
-                client_id="test-client",
-                # Missing client_secret
-            )
-
-        assert (
-            "client_secret authentication requires tenant_id, client_id, and client_secret"
-            in str(exc_info.value)
+        mock_client.assert_called_once_with(
+            vault_url="https://my-vault.vault.azure.net/", credential=mock_credential
         )
 
     @patch("automax.plugins.azure_key_vault.SecretClient")
     @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
-    def test_azure_set_secret_success(self, mock_credential, mock_secret_client):
-        """
-        Test successful secret setting.
-        """
-        # Mock setup
-        mock_credential_instance = Mock()
-        mock_credential.return_value = mock_credential_instance
-
-        mock_secret_instance = Mock()
-        mock_secret_client.return_value = mock_secret_instance
-
-        # Execute
-        result = azure_set_secret(
-            vault_url="https://test-vault.vault.azure.net/",
-            secret_name="new-secret",
-            secret_value="new-secret-value",
-            auth_method="default",
-            logger=self.mock_logger,
-        )
-
-        # Assertions
-        mock_secret_instance.set_secret.assert_called_once_with(
-            "new-secret", "new-secret-value"
-        )
-        assert result is True
-
-    @patch("automax.plugins.azure_key_vault.SecretClient")
-    @patch("automax.plugins.azure_key_vault.ClientSecretCredential")
-    def test_azure_set_secret_client_secret_auth(
-        self, mock_credential, mock_secret_client
+    def test_azure_key_vault_plugin_secret_not_found(
+        self, mock_credential, mock_client
     ):
         """
-        Test secret setting with client secret authentication.
+        Test azure_key_vault plugin execution with secret not found.
         """
-        # Mock setup
-        mock_credential_instance = Mock()
-        mock_credential.return_value = mock_credential_instance
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+        mock_credential.return_value = MagicMock()
 
-        mock_secret_instance = Mock()
-        mock_secret_client.return_value = mock_secret_instance
+        mock_secret_client.get_secret.side_effect = Exception("Secret not found")
 
-        # Execute
-        result = azure_set_secret(
-            vault_url="https://test-vault.vault.azure.net/",
-            secret_name="new-secret",
-            secret_value="new-secret-value",
-            auth_method="client_secret",
-            tenant_id="test-tenant",
-            client_id="test-client",
-            client_secret="test-secret",
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "nonexistent-secret",
+                "action": "read",
+            }
         )
 
-        # Assertions
-        mock_credential.assert_called_once_with(
-            tenant_id="test-tenant",
-            client_id="test-client",
-            client_secret="test-secret",
-        )
-        assert result is True
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
 
-    @patch("automax.plugins.azure_key_vault.SecretClient")
+        assert "Secret not found" in str(exc_info.value)
+
+    def test_azure_key_vault_plugin_write_missing_value(self):
+        """
+        Test azure_key_vault plugin write action with missing value.
+        """
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "new-secret",
+                "action": "write",
+                # Missing 'value' parameter
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Missing 'value' for write/create action" in str(exc_info.value)
+
+    def test_azure_key_vault_plugin_invalid_action(self):
+        """
+        Test azure_key_vault plugin with invalid action.
+        """
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "my-secret",
+                "action": "invalid_action",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Invalid action" in str(exc_info.value)
+
     @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
-    def test_azure_set_secret_exception_handling(
-        self, mock_credential, mock_secret_client
-    ):
+    def test_azure_key_vault_plugin_credential_error(self, mock_credential):
         """
-        Test exception handling in set secret.
+        Test azure_key_vault plugin with credential error.
         """
-        # Mock setup
-        mock_credential_instance = Mock()
-        mock_credential.return_value = mock_credential_instance
+        # Setup mock to raise exception
+        mock_credential.side_effect = Exception("Credential error")
 
-        mock_secret_instance = Mock()
-        mock_secret_client.return_value = mock_secret_instance
-        mock_secret_instance.set_secret.side_effect = Exception("Set secret failed")
+        global_registry.load_all_plugins()
 
-        # Execute with fail_fast=False
-        result = azure_set_secret(
-            vault_url="https://test-vault.vault.azure.net/",
-            secret_name="new-secret",
-            secret_value="new-secret-value",
-            auth_method="default",
-            fail_fast=False,
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "my-secret",
+                "action": "read",
+            }
         )
 
-        # Should return False instead of raising exception
-        assert result is False
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
 
-    def test_azure_unsupported_auth_method(self):
-        """
-        Test unsupported authentication method.
-        """
-        with pytest.raises(AutomaxError) as exc_info:
-            azure_get_secret(
-                vault_url="https://test-vault.vault.azure.net/",
-                secret_name="test-secret",
-                auth_method="unsupported_method",
-            )
-
-        assert "Unsupported authentication method: unsupported_method" in str(
-            exc_info.value
-        )
+        assert "Failed to get Azure credential" in str(exc_info.value)

@@ -68,7 +68,6 @@ def run_automax(
     )
 
     plugin_mgr = PluginManager(logger=logger)
-    plugin_mgr.load_plugins()
 
     validator = ValidationManager(cfg, plugin_mgr, Path(cfg["steps_dir"]))
 

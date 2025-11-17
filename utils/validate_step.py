@@ -55,7 +55,6 @@ def main():
 
     # Load PluginManager
     plugin_mgr = PluginManager()
-    plugin_mgr.load_plugins()
 
     # Initialize ValidationManager
     validator = ValidationManager(

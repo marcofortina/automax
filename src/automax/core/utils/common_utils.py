@@ -1,11 +1,5 @@
 """
-Common utility functions for Automax project.
-
-Includes:
-- echo: unified message logging
-- Custom exceptions for error handling
-- Plugin loading for utilities
-
+Common utilities for Automax.
 """
 
 from automax.core.managers.logger_manager import LoggerManager

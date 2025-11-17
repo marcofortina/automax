@@ -1,219 +1,166 @@
 """
-Plugin for Hashicorp Vault integration.
+Plugin for retrieving and writing secrets in HashiCorp Vault.
 """
 
 from typing import Any, Dict
 
-import hvac
+from automax.plugins import BasePlugin, PluginMetadata, register_plugin
+from automax.plugins.exceptions import PluginExecutionError
 
-from automax.core.exceptions import AutomaxError
-from automax.core.utils.common_utils import echo
+try:
+    import hvac
+
+    HVAC_AVAILABLE = True
+except ImportError:
+    HVAC_AVAILABLE = False
 
 
-def vault_read_secret(
-    vault_url: str,
-    secret_path: str,
-    auth_method: str = "token",
-    auth_config: Dict[str, Any] = None,
-    kv_version: int = 2,
-    mount_point: str = "secret",
-    logger=None,
-    fail_fast: bool = True,
-) -> Dict[str, Any]:
+@register_plugin
+class HashiCorpVaultPlugin(BasePlugin):
     """
-    Read secret from Hashicorp Vault.
-
-    Args:
-        vault_url (str): Vault server URL.
-        secret_path (str): Path to the secret.
-        auth_method (str): Authentication method (token, approle).
-        auth_config (dict): Authentication configuration.
-        kv_version (int): KV secrets engine version (1 or 2).
-        mount_point (str): Mount point for secrets engine.
-        logger (LoggerManager, optional): Logger instance.
-        fail_fast (bool): If True, raise AutomaxError on failure.
-
-    Returns:
-        dict: Secret data.
-
-    Raises:
-        AutomaxError: If fail_fast is True and operation fails.
-
+    Retrieve and manage secrets in HashiCorp Vault.
     """
-    try:
-        # Initialize Vault client
-        client = hvac.Client(url=vault_url)
 
-        # Authenticate
-        if auth_method == "token":
-            if not auth_config or "token" not in auth_config:
-                raise AutomaxError(
-                    "Token authentication requires 'token' in auth_config"
+    METADATA = PluginMetadata(
+        name="hashicorp_vault",
+        version="2.0.0",
+        description="Manage secrets in HashiCorp Vault",
+        author="Automax Team",
+        category="cloud",
+        tags=["vault", "hashicorp", "secrets"],
+        required_config=["url", "mount_point", "path", "action"],
+        optional_config=["token", "namespace", "value"],
+    )
+
+    SCHEMA = {
+        "url": {"type": str, "required": True},
+        "mount_point": {"type": str, "required": True},
+        "path": {"type": str, "required": True},
+        "token": {"type": str, "required": False},
+        "namespace": {"type": str, "required": False},
+        "action": {"type": str, "required": True},  # read | write | create
+        "value": {"type": str, "required": False},
+    }
+
+    def execute(self) -> Dict[str, Any]:
+        """
+        Execute an operation on HashiCorp Vault Secrets.
+
+        Supported actions:
+            - read:   read_secret_version()
+            - write:  create_or_update_secret()
+            - create: same as write
+
+        Returns:
+            dict: containing path, mount_point, action,
+                  value (if available), metadata, status.
+
+        Raises:
+            PluginExecutionError: for any SDK or Vault-related failure.
+
+        """
+        if not HVAC_AVAILABLE:
+            raise PluginExecutionError(
+                "hvac SDK not installed. Install with: pip install hvac"
+            )
+
+        mount = self.config["mount_point"]
+        path = self.config["path"]
+        action = self.config["action"].lower()
+
+        self.logger.info(f"Vault action={action} mount={mount} path={path}")
+
+        valid_actions = {"read", "write", "create"}
+        if action not in valid_actions:
+            raise PluginExecutionError(
+                f"Invalid action '{action}'. Must be one of: {', '.join(valid_actions)}"
+            )
+
+        client = self._get_client()
+
+        if action == "read":
+            try:
+                resp = client.secrets.kv.v2.read_secret_version(
+                    path=path, mount_point=mount
                 )
-            client.token = auth_config["token"]
-        elif auth_method == "approle":
-            if (
-                not auth_config
-                or "role_id" not in auth_config
-                or "secret_id" not in auth_config
-            ):
-                raise AutomaxError(
-                    "AppRole authentication requires 'role_id' and 'secret_id'"
+
+                data = resp.get("data", {}).get("data", {})
+                metadata = resp.get("data", {}).get("metadata", {})
+
+                result = {
+                    "mount_point": mount,
+                    "path": path,
+                    "action": action,
+                    "value": data,
+                    "version": metadata.get("version"),
+                    "created_time": metadata.get("created_time"),
+                    "deletion_time": metadata.get("deletion_time"),
+                    "destroyed": metadata.get("destroyed"),
+                    "status": "success",
+                }
+
+                self.logger.info(f"Successfully read secret at {mount}/{path}")
+                return result
+
+            except Exception as e:
+                self.logger.error(f"HashiCorp Vault read error: {e}")
+                raise PluginExecutionError(str(e)) from e
+
+        elif action in ("write", "create"):
+            if "value" not in self.config:
+                raise PluginExecutionError("Missing 'value' for write/create action")
+
+            try:
+                client.secrets.kv.v2.create_or_update_secret(
+                    path=path,
+                    mount_point=mount,
+                    secret={"value": self.config["value"]},
                 )
-            auth_response = client.auth.approle.login(
-                role_id=auth_config["role_id"], secret_id=auth_config["secret_id"]
-            )
-            client.token = auth_response["auth"]["client_token"]
+
+                result = {
+                    "mount_point": mount,
+                    "path": path,
+                    "action": action,
+                    "value": self.config["value"],
+                    "status": "written",
+                }
+
+                self.logger.info(f"Successfully {action} secret at {mount}/{path}")
+                return result
+
+            except Exception as e:
+                self.logger.error(f"HashiCorp Vault {action} error: {e}")
+                raise PluginExecutionError(str(e)) from e
+
         else:
-            raise AutomaxError(f"Unsupported authentication method: {auth_method}")
+            raise PluginExecutionError(f"Unsupported action: {action}")
 
-        # Verify authentication
-        if not client.is_authenticated():
-            raise AutomaxError("Vault authentication failed")
+    def _get_client(self) -> hvac.Client:
+        """
+        Create and authenticate an hvac.Client using optional token and namespace.
 
-        # Read secret
-        if kv_version == 2:
-            response = client.secrets.kv.v2.read_secret_version(
-                path=secret_path, mount_point=mount_point
-            )
-            secret_data = response["data"]["data"]
-        else:
-            response = client.secrets.kv.v1.read_secret(
-                path=secret_path, mount_point=mount_point
-            )
-            secret_data = response["data"]
+        Raises:
+            PluginExecutionError: on connection/authentication errors.
 
-        if logger:
-            echo(
-                f"Successfully read secret from Vault: {secret_path}",
-                logger,
-                level="INFO",
+        """
+        try:
+            token = self.config.get("token")
+            namespace = self.config.get("namespace")
+
+            self.logger.info("Initializing HashiCorp Vault client")
+
+            client = hvac.Client(
+                url=self.config["url"],
+                token=token,
+                namespace=namespace,
             )
 
-        return secret_data
+            if not client.is_authenticated():
+                raise PluginExecutionError("Vault authentication failed")
 
-    except Exception as e:
-        msg = f"Vault read secret failed: {str(e)}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return {}
+            self.logger.info("Successfully created and authenticated Vault client")
+            return client
 
-
-def vault_write_secret(
-    vault_url: str,
-    secret_path: str,
-    secret_data: Dict[str, Any],
-    auth_method: str = "token",
-    auth_config: Dict[str, Any] = None,
-    kv_version: int = 2,
-    mount_point: str = "secret",
-    logger=None,
-    fail_fast: bool = True,
-) -> bool:
-    """
-    Write secret to Hashicorp Vault.
-
-    Args:
-        vault_url (str): Vault server URL.
-        secret_path (str): Path to the secret.
-        secret_data (dict): Secret data to write.
-        auth_method (str): Authentication method (token, approle).
-        auth_config (dict): Authentication configuration.
-        kv_version (int): KV secrets engine version (1 or 2).
-        mount_point (str): Mount point for secrets engine.
-        logger (LoggerManager, optional): Logger instance.
-        fail_fast (bool): If True, raise AutomaxError on failure.
-
-    Returns:
-        bool: True if successful.
-
-    Raises:
-        AutomaxError: If fail_fast is True and operation fails.
-
-    """
-    try:
-        # Initialize Vault client (same as read)
-        client = hvac.Client(url=vault_url)
-
-        # Authenticate (same as read)
-        if auth_method == "token":
-            if not auth_config or "token" not in auth_config:
-                raise AutomaxError(
-                    "Token authentication requires 'token' in auth_config"
-                )
-            client.token = auth_config["token"]
-        elif auth_method == "approle":
-            if (
-                not auth_config
-                or "role_id" not in auth_config
-                or "secret_id" not in auth_config
-            ):
-                raise AutomaxError(
-                    "AppRole authentication requires 'role_id' and 'secret_id'"
-                )
-            auth_response = client.auth.approle.login(
-                role_id=auth_config["role_id"], secret_id=auth_config["secret_id"]
-            )
-            client.token = auth_response["auth"]["client_token"]
-        else:
-            raise AutomaxError(f"Unsupported authentication method: {auth_method}")
-
-        if not client.is_authenticated():
-            raise AutomaxError("Vault authentication failed")
-
-        # Write secret
-        if kv_version == 2:
-            client.secrets.kv.v2.create_or_update_secret(
-                path=secret_path, secret=secret_data, mount_point=mount_point
-            )
-        else:
-            client.secrets.kv.v1.create_or_update_secret(
-                path=secret_path, secret=secret_data, mount_point=mount_point
-            )
-
-        if logger:
-            echo(
-                f"Successfully wrote secret to Vault: {secret_path}",
-                logger,
-                level="INFO",
-            )
-
-        return True
-
-    except Exception as e:
-        msg = f"Vault write secret failed: {str(e)}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return False
-
-
-REGISTER_UTILITIES = [
-    ("vault_read_secret", vault_read_secret),
-    ("vault_write_secret", vault_write_secret),
-]
-
-SCHEMA = {
-    "vault_read_secret": {
-        "vault_url": {"type": str, "required": True},
-        "secret_path": {"type": str, "required": True},
-        "auth_method": {"type": str, "default": "token"},
-        "auth_config": {"type": dict, "default": {}},
-        "kv_version": {"type": int, "default": 2},
-        "mount_point": {"type": str, "default": "secret"},
-        "fail_fast": {"type": bool, "default": True},
-    },
-    "vault_write_secret": {
-        "vault_url": {"type": str, "required": True},
-        "secret_path": {"type": str, "required": True},
-        "secret_data": {"type": dict, "required": True},
-        "auth_method": {"type": str, "default": "token"},
-        "auth_config": {"type": dict, "default": {}},
-        "kv_version": {"type": int, "default": 2},
-        "mount_point": {"type": str, "default": "secret"},
-        "fail_fast": {"type": bool, "default": True},
-    },
-}
+        except Exception as e:
+            self.logger.error(f"Failed to create Vault client: {e}")
+            raise PluginExecutionError(f"Failed to create Vault client: {e}") from e

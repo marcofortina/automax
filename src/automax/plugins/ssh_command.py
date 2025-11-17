@@ -1,107 +1,134 @@
 """
-Plugin for SSH command execution utility.
+Plugin for executing commands on remote servers via SSH.
 """
 
-from pathlib import Path
-import subprocess
+from typing import Any, Dict
 
-from automax.core.exceptions import AutomaxError
+import paramiko
+
+from automax.plugins import BasePlugin, PluginMetadata, register_plugin
+from automax.plugins.exceptions import PluginExecutionError
 
 
-def run_ssh_command(
-    host: str,
-    key_path: str,
-    command: str,
-    logger=None,
-    timeout: int = 10,
-    fail_fast=True,
-    user: str = None,
-    port: int = 22,
-    dry_run=False,
-):
+@register_plugin
+class SSHCommandPlugin(BasePlugin):
     """
-    Execute a command remotely via SSH using a private key.
-
-    Args:
-        host (str): Remote host
-        key_path (str): Path to private key file
-        command (str): Command to execute remotely
-        logger (LoggerManager, optional): Logger instance
-        timeout (int): SSH command timeout in seconds
-        fail_fast (bool): If True, raise AutomaxError on failure
-        user (str, optional): SSH username (default None)
-        port (int): SSH port (default 22)
-        dry_run (bool): If True, simulate execution and do not run real SSH
-
-    Returns:
-        subprocess.CompletedProcess: result object with stdout, stderr, returncode
-
-    Raises:
-        FileNotFoundError: If private key file not found
-        AutomaxError: if fail_fast is True and command fails, with level 'FATAL'
-
+    Execute commands on remote servers via SSH.
     """
-    from automax.core.utils.common_utils import echo
 
-    if not Path(key_path).exists():
-        msg = f"Private key not found: {key_path}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        raise FileNotFoundError(msg)
+    METADATA = PluginMetadata(
+        name="ssh_command",
+        version="2.0.0",
+        description="Execute commands on remote servers via SSH",
+        author="Automax Team",
+        category="system",
+        tags=["ssh", "remote", "command", "execute"],
+        required_config=["host", "command"],
+        optional_config=["port", "username", "password", "key_file", "timeout"],
+    )
 
-    ssh_user = f"{user}@" if user else ""
-    ssh_cmd = f'ssh -i {key_path} -o StrictHostKeyChecking=no -p {port} {ssh_user}{host} "{command}"'
+    SCHEMA = {
+        "host": {"type": str, "required": True},
+        "command": {"type": str, "required": True},
+        "username": {"type": str, "required": False},
+        "key_file": {"type": str, "required": False},
+        "password": {"type": str, "required": False},
+        "port": {"type": int, "required": False},
+        "timeout": {"type": (int, float), "required": False},
+    }
 
-    if logger:
-        echo(f"COMMAND = {ssh_cmd}", logger, level="DEBUG")
-        echo(f"Executing SSH command: {ssh_cmd}", logger, level="INFO")
+    def execute(self) -> Dict[str, Any]:
+        """
+        Execute a command on remote server via SSH.
 
-    if dry_run:
-        if logger:
-            echo(f"[DRY-RUN] SSH to {host}: {command}", logger, level="INFO")
-        return subprocess.CompletedProcess(
-            args=ssh_cmd, returncode=0, stdout="", stderr=""
-        )
+        Returns:
+            Dictionary containing command execution results.
 
-    # Execute using subprocess
-    try:
-        result = subprocess.run(
-            ssh_cmd, shell=True, capture_output=True, text=True, timeout=timeout
-        )
-    except subprocess.TimeoutExpired as e:
-        msg = f"SSH command timed out: {e}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
-        return subprocess.CompletedProcess(
-            args=ssh_cmd, returncode=1, stdout="", stderr=str(e)
-        )
+        Raises:
+            PluginExecutionError: If SSH connection or command execution fails.
 
-    if logger:
-        if result.stdout:
-            echo(result.stdout.strip(), logger, level="DEBUG")
-        if result.stderr:
-            echo(result.stderr.strip(), logger, level="ERROR")
+        """
+        host = self.config["host"]
+        command = self.config["command"]
+        port = self.config.get("port", 22)
+        username = self.config.get("username", "root")
+        password = self.config.get("password")
+        key_file = self.config.get("key_file")
+        timeout = self.config.get("timeout", 30)
 
-    if fail_fast and result.returncode != 0:
-        msg = f"SSH command failed with return code {result.returncode}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        raise AutomaxError(msg, level="FATAL")
+        self.logger.info(f"Executing SSH command on {host}:{port}: {command}")
+        self.logger.debug(f"SSH COMMAND on {host}:{port}: {command}")
 
-    return result
+        ssh_client = None
+        try:
+            ssh_client = paramiko.SSHClient()
+            ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
+            # Connect to the remote server
+            connect_kwargs = {
+                "hostname": host,
+                "port": port,
+                "username": username,
+                "timeout": timeout,
+            }
+            if password:
+                connect_kwargs["password"] = password
+            elif key_file:
+                connect_kwargs["key_filename"] = key_file
 
-REGISTER_UTILITIES = [("run_ssh_command", run_ssh_command)]
+            ssh_client.connect(**connect_kwargs)
+            self.logger.debug(f"SSH connection established to {host}:{port}")
 
-SCHEMA = {
-    "host": {"type": str, "required": True},
-    "key_path": {"type": str, "required": True},
-    "command": {"type": str, "required": True},
-    "timeout": {"type": int, "default": 10},
-    "fail_fast": {"type": bool, "default": True},
-    "user": {"type": str, "default": None},
-    "port": {"type": int, "default": 22},
-    "dry_run": {"type": bool, "default": False},
-}
+            # Execute the command
+            stdin, stdout, stderr = ssh_client.exec_command(command, timeout=timeout)
+            exit_code = stdout.channel.recv_exit_status()
+            stdout_output = stdout.read().decode("utf-8").strip()
+            stderr_output = stderr.read().decode("utf-8").strip()
+
+            if stdout_output:
+                self.logger.debug(f"SSH command output on {host}:\n{stdout_output}")
+            if stderr_output:
+                self.logger.debug(
+                    f"SSH command error output on {host}:\n{stderr_output}"
+                )
+
+            result = {
+                "host": host,
+                "port": port,
+                "command": command,
+                "exit_code": exit_code,
+                "stdout": stdout_output,
+                "stderr": stderr_output,
+                "status": "success" if exit_code == 0 else "failure",
+            }
+
+            if exit_code != 0:
+                self.logger.warning(
+                    f"SSH command exited with code {exit_code} on {host}: {command}"
+                )
+            else:
+                self.logger.info(
+                    f"SSH command executed successfully on {host}: {command}"
+                )
+
+            return result
+
+        except paramiko.AuthenticationException as e:
+            error_msg = f"SSH authentication failed for {username}@{host}:{port}"
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e
+
+        except paramiko.SSHException as e:
+            error_msg = f"SSH error connecting to {host}:{port}: {e}"
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e
+
+        except Exception as e:
+            error_msg = f"Failed to execute SSH command on {host}:{port}: {e}"
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e
+
+        finally:
+            if ssh_client:
+                ssh_client.close()
+                self.logger.debug(f"SSH connection closed to {host}:{port}")

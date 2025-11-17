@@ -1,244 +1,351 @@
 """
-Unit tests for AWS Secrets Manager plugin.
+Tests for aws_secrets_manager plugin.
 """
 
-import json
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError, NoCredentialsError
+import pytest
 
-from automax.plugins.aws_secrets_manager import aws_create_secret, aws_get_secret
+from automax.plugins.exceptions import PluginExecutionError
+from automax.plugins.registry import global_registry
 
 
-class TestAWSSecretsManagerPlugin:
+class TestAwsSecretsManagerPlugin:
     """
-    Test suite for AWS Secrets Manager plugin.
+    Test suite for aws_secrets_manager plugin.
     """
 
-    def setup_method(self):
+    def test_aws_secrets_manager_plugin_registered(self):
         """
-        Set up test fixtures.
+        Verify that aws_secrets_manager plugin is properly registered.
         """
-        self.mock_logger = Mock()
+        global_registry.load_all_plugins()
+        assert "aws_secrets_manager" in global_registry.list_plugins()
 
-    @patch("automax.plugins.aws_secrets_manager.boto3.client")
-    def test_aws_get_secret_success_json(self, mock_boto_client):
+        # Verify metadata
+        metadata = global_registry.get_metadata("aws_secrets_manager")
+        assert metadata.name == "aws_secrets_manager"
+        assert "aws" in metadata.tags
+        assert "secret_name" in metadata.required_config
+        assert "action" in metadata.required_config
+
+    def test_aws_secrets_manager_plugin_instantiation(self):
         """
-        Test successful secret retrieval with JSON data.
+        Verify aws_secrets_manager plugin can be instantiated with config.
         """
-        # Mock setup
-        mock_client = Mock()
-        mock_client.get_secret_value.return_value = {
-            "ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-secret",
-            "Name": "test-secret",
-            "SecretString": '{"username": "test-user", "password": "test-pass"}',
-            "VersionStages": ["AWSCURRENT"],
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+        config = {
+            "secret_name": "my-test-secret",
+            "action": "read",
+            "region_name": "us-east-1",
+            "profile_name": "default",
         }
-        mock_boto_client.return_value = mock_client
 
-        # Execute
-        result = aws_get_secret(
-            secret_id="test-secret", region_name="us-east-1", logger=self.mock_logger
-        )
+        plugin_instance = plugin_class(config)
+        assert plugin_instance is not None
+        assert plugin_instance.config == config
 
-        # Assertions
-        mock_boto_client.assert_called_once_with(
-            "secretsmanager", region_name="us-east-1"
-        )
-        mock_client.get_secret_value.assert_called_once_with(
-            SecretId="test-secret", VersionStage="AWSCURRENT"
-        )
-        assert result == {"username": "test-user", "password": "test-pass"}
-
-    @patch("automax.plugins.aws_secrets_manager.boto3.client")
-    def test_aws_get_secret_success_string(self, mock_boto_client):
+    def test_aws_secrets_manager_plugin_configuration_validation(self):
         """
-        Test successful secret retrieval with string data.
+        Verify aws_secrets_manager plugin configuration validation.
         """
-        # Mock setup
-        mock_client = Mock()
-        mock_client.get_secret_value.return_value = {
-            "ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-secret",
-            "Name": "test-secret",
-            "SecretString": "plain-text-secret",
-            "VersionStages": ["AWSCURRENT"],
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+
+        # Test with missing required configuration
+        with pytest.raises(Exception) as exc_info:
+            plugin_class({})
+
+        assert "required configuration" in str(exc_info.value).lower()
+
+    @patch("automax.plugins.aws_secrets_manager.boto3.Session")
+    def test_aws_secrets_manager_plugin_read_success(self, mock_session):
+        """
+        Test aws_secrets_manager plugin read action with successful secret retrieval.
+        """
+        # Setup mocks
+        mock_session_instance = MagicMock()
+        mock_session.return_value = mock_session_instance
+        mock_secrets_client = MagicMock()
+        mock_session_instance.client.return_value = mock_secrets_client
+
+        mock_response = {
+            "SecretString": "my_secret_value",
+            "ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-secret",
+            "VersionId": "v1",
+            "Name": "my-secret",
         }
-        mock_boto_client.return_value = mock_client
+        mock_secrets_client.get_secret_value.return_value = mock_response
 
-        # Execute
-        result = aws_get_secret(secret_id="test-secret")
+        global_registry.load_all_plugins()
 
-        # Should return string as-is
-        assert result == "plain-text-secret"
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+        plugin = plugin_class(
+            {"secret_name": "my-secret", "action": "read", "region_name": "us-east-1"}
+        )
 
-    @patch("automax.plugins.aws_secrets_manager.boto3.client")
-    def test_aws_get_secret_with_credentials(self, mock_boto_client):
+        result = plugin.execute()
+
+        # Verify result structure - allineata al nuovo plugin
+        assert result["status"] == "success"
+        assert result["secret_name"] == "my-secret"
+        assert result["action"] == "read"
+        assert result["value"] == "my_secret_value"
+
+        # Verify mock call
+        mock_secrets_client.get_secret_value.assert_called_once_with(
+            SecretId="my-secret"
+        )
+
+    @patch("automax.plugins.aws_secrets_manager.boto3.Session")
+    def test_aws_secrets_manager_plugin_read_binary_secret(self, mock_session):
         """
-        Test secret retrieval with explicit credentials.
+        Test aws_secrets_manager plugin read action with binary secret.
         """
-        # Mock setup
-        mock_client = Mock()
-        mock_client.get_secret_value.return_value = {
-            "ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:test-secret",
-            "Name": "test-secret",
-            "SecretString": '{"api_key": "test-key"}',
-            "VersionStages": ["AWSCURRENT"],
+        # Setup mocks
+        mock_session_instance = MagicMock()
+        mock_session.return_value = mock_session_instance
+        mock_secrets_client = MagicMock()
+        mock_session_instance.client.return_value = mock_secrets_client
+
+        import base64
+
+        binary_data = b"binary_secret_data"
+        mock_response = {
+            "SecretBinary": binary_data,
+            "ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-binary-secret",
+            "VersionId": "v1",
+            "Name": "my-binary-secret",
         }
-        mock_boto_client.return_value = mock_client
+        mock_secrets_client.get_secret_value.return_value = mock_response
 
-        # Execute with credentials
-        result = aws_get_secret(
-            secret_id="test-secret",
-            region_name="us-east-1",
-            aws_access_key_id="test-key",
-            aws_secret_access_key="test-secret",
-        )
-
-        # Assertions
-        mock_boto_client.assert_called_once_with(
-            "secretsmanager",
-            region_name="us-east-1",
-            aws_access_key_id="test-key",
-            aws_secret_access_key="test-secret",
-        )
-        assert result == {"api_key": "test-key"}
-
-    @patch("automax.plugins.aws_secrets_manager.boto3.client")
-    def test_aws_get_secret_no_credentials_error(self, mock_boto_client):
-        """
-        Test NoCredentialsError handling.
-        """
-        # Mock setup
-        mock_boto_client.side_effect = NoCredentialsError()
-
-        # Execute with fail_fast=False
-        result = aws_get_secret(
-            secret_id="test-secret", region_name="us-east-1", fail_fast=False
-        )
-
-        # Should return empty dict instead of raising exception
-        assert result == {}
-
-    @patch("automax.plugins.aws_secrets_manager.boto3.client")
-    def test_aws_get_secret_client_error(self, mock_boto_client):
-        """
-        Test ClientError handling.
-        """
-        # Mock setup
-        mock_client = Mock()
-        mock_client.get_secret_value.side_effect = ClientError(
+        global_registry.load_all_plugins()
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+        plugin = plugin_class(
             {
-                "Error": {
-                    "Code": "ResourceNotFoundException",
-                    "Message": "Secret not found",
-                }
-            },
-            "GetSecretValue",
-        )
-        mock_boto_client.return_value = mock_client
-
-        # Execute with fail_fast=False
-        result = aws_get_secret(
-            secret_id="non-existent-secret", region_name="us-east-1", fail_fast=False
+                "secret_name": "my-binary-secret",
+                "action": "read",
+                "region_name": "us-east-1",
+            }
         )
 
-        # Should return empty dict instead of raising exception
-        assert result == {}
+        result = plugin.execute()
 
-    @patch("automax.plugins.aws_secrets_manager.boto3.client")
-    def test_aws_create_secret_success(self, mock_boto_client):
+        assert result["status"] == "success"
+        assert result["secret_name"] == "my-binary-secret"
+        assert result["action"] == "read"
+        assert result["value"] == base64.b64encode(binary_data).decode("utf-8")
+
+    @patch("automax.plugins.aws_secrets_manager.boto3.Session")
+    def test_aws_secrets_manager_plugin_write_existing_secret(self, mock_session):
         """
-        Test successful secret creation.
+        Test aws_secrets_manager plugin write action with existing secret.
         """
-        # Mock setup
-        mock_client = Mock()
-        mock_boto_client.return_value = mock_client
+        # Setup mocks
+        mock_session_instance = MagicMock()
+        mock_session.return_value = mock_session_instance
+        mock_secrets_client = MagicMock()
+        mock_session_instance.client.return_value = mock_secrets_client
 
-        # Execute
-        result = aws_create_secret(
-            secret_id="new-secret",
-            secret_data={"api_key": "test-key", "api_secret": "test-secret"},
-            region_name="us-east-1",
-            description="Test API credentials",
-            logger=self.mock_logger,
-        )
+        mock_response = {
+            "VersionId": "v2",
+            "ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-secret",
+        }
+        mock_secrets_client.put_secret_value.return_value = mock_response
 
-        # Assertions
-        mock_client.create_secret.assert_called_once_with(
-            Name="new-secret",
-            SecretString=json.dumps(
-                {"api_key": "test-key", "api_secret": "test-secret"}
-            ),
-            Description="Test API credentials",
-        )
-        assert result is True
+        global_registry.load_all_plugins()
 
-    @patch("automax.plugins.aws_secrets_manager.boto3.client")
-    def test_aws_create_secret_string_data(self, mock_boto_client):
-        """
-        Test secret creation with string data.
-        """
-        # Mock setup
-        mock_client = Mock()
-        mock_boto_client.return_value = mock_client
-
-        # Execute with string data
-        result = aws_create_secret(
-            secret_id="new-secret",
-            secret_data="plain-text-secret",
-            region_name="us-east-1",
-        )
-
-        # Assertions
-        mock_client.create_secret.assert_called_once_with(
-            Name="new-secret", SecretString="plain-text-secret", Description=""
-        )
-        assert result is True
-
-    @patch("automax.plugins.aws_secrets_manager.boto3.client")
-    def test_aws_create_secret_no_credentials_error(self, mock_boto_client):
-        """
-        Test NoCredentialsError handling in create secret.
-        """
-        # Mock setup
-        mock_boto_client.side_effect = NoCredentialsError()
-
-        # Execute with fail_fast=False
-        result = aws_create_secret(
-            secret_id="new-secret",
-            secret_data={"key": "value"},
-            region_name="us-east-1",
-            fail_fast=False,
-        )
-
-        # Should return False instead of raising exception
-        assert result is False
-
-    @patch("automax.plugins.aws_secrets_manager.boto3.client")
-    def test_aws_create_secret_client_error(self, mock_boto_client):
-        """
-        Test ClientError handling in create secret.
-        """
-        # Mock setup
-        mock_client = Mock()
-        mock_client.create_secret.side_effect = ClientError(
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+        plugin = plugin_class(
             {
-                "Error": {
-                    "Code": "ResourceExistsException",
-                    "Message": "Secret already exists",
-                }
-            },
-            "CreateSecret",
-        )
-        mock_boto_client.return_value = mock_client
-
-        # Execute with fail_fast=False
-        result = aws_create_secret(
-            secret_id="existing-secret",
-            secret_data={"key": "value"},
-            region_name="us-east-1",
-            fail_fast=False,
+                "secret_name": "my-secret",
+                "action": "write",
+                "value": "new_secret_value",
+                "region_name": "us-east-1",
+            }
         )
 
-        # Should return False instead of raising exception
-        assert result is False
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "updated"
+        assert result["secret_name"] == "my-secret"
+        assert result["action"] == "write"
+        assert result["value"] == "new_secret_value"
+        assert result["version_id"] == "v2"
+
+        # Verify mock call
+        mock_secrets_client.put_secret_value.assert_called_once_with(
+            SecretId="my-secret", SecretString="new_secret_value"
+        )
+
+    @patch("automax.plugins.aws_secrets_manager.boto3.Session")
+    def test_aws_secrets_manager_plugin_create_secret(self, mock_session):
+        """
+        Test aws_secrets_manager plugin create action.
+        """
+        # Setup mocks
+        mock_session_instance = MagicMock()
+        mock_session.return_value = mock_session_instance
+        mock_secrets_client = MagicMock()
+        mock_session_instance.client.return_value = mock_secrets_client
+
+        mock_response = {
+            "ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:new-secret"
+        }
+        mock_secrets_client.create_secret.return_value = mock_response
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+        plugin = plugin_class(
+            {
+                "secret_name": "new-secret",
+                "action": "create",
+                "value": "secret_value",
+                "region_name": "us-east-1",
+            }
+        )
+
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "created"
+        assert result["secret_name"] == "new-secret"
+        assert result["action"] == "create"
+        assert result["value"] == "secret_value"
+        assert "arn" in result
+
+        # Verify mock call
+        mock_secrets_client.create_secret.assert_called_once_with(
+            Name="new-secret", SecretString="secret_value"
+        )
+
+    @patch("automax.plugins.aws_secrets_manager.boto3.Session")
+    def test_aws_secrets_manager_plugin_read_secret_not_found(self, mock_session):
+        """
+        Test aws_secrets_manager plugin read action with secret not found.
+        """
+        # Setup mocks
+        mock_session_instance = MagicMock()
+        mock_session.return_value = mock_session_instance
+        mock_secrets_client = MagicMock()
+        mock_session_instance.client.return_value = mock_secrets_client
+
+        error_response = {
+            "Error": {
+                "Code": "ResourceNotFoundException",
+                "Message": "Secret not found",
+            }
+        }
+        mock_secrets_client.get_secret_value.side_effect = ClientError(
+            error_response, "GetSecretValue"
+        )
+
+        global_registry.load_all_plugins()
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+        plugin = plugin_class(
+            {
+                "secret_name": "nonexistent-secret",
+                "action": "read",
+                "region_name": "us-east-1",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Secret 'nonexistent-secret' not found" in str(exc_info.value)
+
+    @patch("automax.plugins.aws_secrets_manager.boto3.Session")
+    def test_aws_secrets_manager_plugin_access_denied(self, mock_session):
+        """
+        Test aws_secrets_manager plugin execution with access denied.
+        """
+        # Setup mocks
+        mock_session_instance = MagicMock()
+        mock_session.return_value = mock_session_instance
+        mock_secrets_client = MagicMock()
+        mock_session_instance.client.return_value = mock_secrets_client
+
+        error_response = {
+            "Error": {"Code": "AccessDeniedException", "Message": "Access denied"}
+        }
+        mock_secrets_client.get_secret_value.side_effect = ClientError(
+            error_response, "GetSecretValue"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+        plugin = plugin_class(
+            {"secret_name": "my-secret", "action": "read", "region_name": "us-east-1"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Access denied" in str(exc_info.value)
+
+    @patch("automax.plugins.aws_secrets_manager.boto3.Session")
+    def test_aws_secrets_manager_plugin_no_credentials(self, mock_session):
+        """
+        Test aws_secrets_manager plugin execution with no AWS credentials.
+        """
+        # Setup mock to raise exception
+        mock_session.side_effect = NoCredentialsError()
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+        plugin = plugin_class(
+            {"secret_name": "my-secret", "action": "read", "region_name": "us-east-1"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Unable to locate credentials" in str(exc_info.value)
+
+    @patch("automax.plugins.aws_secrets_manager.boto3.Session")
+    def test_aws_secrets_manager_plugin_with_profile(self, mock_session):
+        """
+        Test aws_secrets_manager plugin execution with AWS profile.
+        """
+        # Setup mocks
+        mock_session_instance = MagicMock()
+        mock_session.return_value = mock_session_instance
+        mock_secrets_client = MagicMock()
+        mock_session_instance.client.return_value = mock_secrets_client
+
+        mock_response = {
+            "SecretString": "my_secret_value",
+            "ARN": "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-secret",
+            "VersionId": "v1",
+        }
+
+        mock_secrets_client.get_secret_value.return_value = mock_response
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+        plugin = plugin_class(
+            {
+                "secret_name": "my-secret",
+                "action": "read",
+                "region_name": "us-east-1",
+                "profile_name": "my-profile",
+            }
+        )
+
+        result = plugin.execute()
+
+        # Verify result structure
+        assert result["status"] == "success"
+
+        # Verify mock call
+        mock_session.assert_called_once_with(profile_name="my-profile")

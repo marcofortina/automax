@@ -1,85 +1,122 @@
 """
-Plugin for sending email utility.
+Plugin for sending emails.
 """
 
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
+from typing import Any, Dict
 
-from automax.core.exceptions import AutomaxError
+from automax.plugins import BasePlugin, PluginMetadata, register_plugin
+from automax.plugins.exceptions import PluginExecutionError
 
 
-def send_email(
-    smtp_server: str,
-    smtp_port: int,
-    from_email: str,
-    to_email: str,
-    subject: str,
-    body: str,
-    username: str = None,
-    password: str = None,
-    logger=None,
-    fail_fast=True,
-    dry_run=False,
-):
+@register_plugin
+class SendEmailPlugin(BasePlugin):
     """
-    Send an email via SMTP.
-
-    Args:
-        smtp_server (str): SMTP server host.
-        smtp_port (int): SMTP port.
-        from_email (str): Sender email.
-        to_email (str): Recipient email.
-        subject (str): Email subject.
-        body (str): Email body.
-        username (str, optional): SMTP username.
-        password (str, optional): SMTP password.
-        logger (LoggerManager, optional): Logger instance.
-        fail_fast (bool): If True, raise AutomaxError on failure.
-        dry_run (bool): If True, simulate sending.
-
-    Raises:
-        AutomaxError: If fail_fast is True and sending fails, with level 'FATAL'.
-
+    Send emails via SMTP.
     """
-    from automax.core.utils.common_utils import echo
 
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = from_email
-    msg["To"] = to_email
+    METADATA = PluginMetadata(
+        name="send_email",
+        version="2.0.0",
+        description="Send emails via SMTP",
+        author="Automax Team",
+        category="communication",
+        tags=["email", "smtp", "mail"],
+        required_config=[
+            "smtp_server",
+            "port",
+            "username",
+            "password",
+            "to",
+            "subject",
+            "body",
+        ],
+        optional_config=["from_addr", "cc", "bcc", "is_html"],
+    )
 
-    if logger:
-        echo(f"Sending email to {to_email}", logger, level="INFO")
+    SCHEMA = {
+        "smtp_server": {"type": str, "required": True},
+        "port": {"type": int, "required": True},
+        "username": {"type": str, "required": True},
+        "password": {"type": str, "required": True},
+        "to": {"type": (list, str), "required": True},
+        "subject": {"type": str, "required": True},
+        "body": {"type": str, "required": True},
+        "from_addr": {"type": str, "required": False},
+        "cc": {"type": (list, str), "required": False},
+        "bcc": {"type": (list, str), "required": False},
+        "is_html": {"type": bool, "required": False},
+    }
 
-    if dry_run:
-        if logger:
-            echo(f"[DRY-RUN] Email to {to_email}: {subject}", logger, level="INFO")
-        return
+    def execute(self) -> Dict[str, Any]:
+        """
+        Send an email.
 
-    try:
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            if username and password:
+        Returns:
+            Dictionary containing the send status.
+
+        Raises:
+            PluginExecutionError: If the email cannot be sent.
+
+        """
+        smtp_server = self.config["smtp_server"]
+        port = self.config["port"]
+        username = self.config["username"]
+        password = self.config["password"]
+        to_addrs = self.config["to"]
+        subject = self.config["subject"]
+        body = self.config["body"]
+        from_addr = self.config.get("from_addr", username)
+        cc = self.config.get("cc", [])
+        bcc = self.config.get("bcc", [])
+        is_html = self.config.get("is_html", False)
+
+        self.logger.info(f"Sending email to: {to_addrs} via {smtp_server}:{port}")
+
+        try:
+            # Create message
+            msg = MIMEMultipart()
+            msg["From"] = from_addr
+            msg["To"] = ", ".join(to_addrs) if isinstance(to_addrs, list) else to_addrs
+            msg["Subject"] = subject
+
+            if cc:
+                msg["Cc"] = ", ".join(cc) if isinstance(cc, list) else cc
+
+            # Add body
+            msg.attach(MIMEText(body, "html" if is_html else "plain"))
+
+            # Combine all recipients
+            all_recipients = to_addrs if isinstance(to_addrs, list) else [to_addrs]
+            if cc:
+                all_recipients.extend(cc if isinstance(cc, list) else [cc])
+            if bcc:
+                all_recipients.extend(bcc if isinstance(bcc, list) else [bcc])
+
+            # Send email
+            with smtplib.SMTP(smtp_server, port) as server:
+                server.starttls()
                 server.login(username, password)
-            server.sendmail(from_email, to_email, msg.as_string())
-    except Exception as e:
-        msg = f"Email sending failed: {e}"
-        if logger:
-            echo(msg, logger, level="ERROR")
-        if fail_fast:
-            raise AutomaxError(msg, level="FATAL")
+                server.send_message(msg)
 
+            self.logger.info(f"Successfully sent email to: {to_addrs}")
+            return {
+                "smtp_server": smtp_server,
+                "port": port,
+                "from": from_addr,
+                "to": to_addrs,
+                "subject": subject,
+                "status": "success",
+            }
 
-REGISTER_UTILITIES = [("send_email", send_email)]
+        except smtplib.SMTPException as e:
+            error_msg = f"SMTP error while sending email: {e}"
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e
 
-SCHEMA = {
-    "smtp_server": {"type": str, "required": True},
-    "smtp_port": {"type": int, "required": True},
-    "from_email": {"type": str, "required": True},
-    "to_email": {"type": str, "required": True},
-    "subject": {"type": str, "required": True},
-    "body": {"type": str, "required": True},
-    "username": {"type": str, "default": None},
-    "password": {"type": str, "default": None},
-    "fail_fast": {"type": bool, "default": True},
-    "dry_run": {"type": bool, "default": False},
-}
+        except Exception as e:
+            error_msg = f"Failed to send email: {e}"
+            self.logger.error(error_msg)
+            raise PluginExecutionError(error_msg) from e
