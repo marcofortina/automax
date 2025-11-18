@@ -1,329 +1,290 @@
 """
-Data transformation utilities for output mapping between substeps.
+Data transformation utilities for output mapping.
 
-Provides advanced data transformation capabilities including filtering, mapping,
-selection, and type conversion for complex output mapping scenarios.
+Supports various transformation types including template-based transformations.
 
 """
 
-import json
-from typing import Any, Dict, List, Union
+from automax.core.exceptions import AutomaxError
+from automax.core.managers.template_manager import TemplateManager
 
 
 class DataTransformer:
     """
-    Transforms data using various operations for output mapping between substeps.
+    Transforms data based on mapping configurations.
     """
 
-    @staticmethod
-    def transform(data: Any, transform_spec: Union[str, Dict]) -> Any:
+    def __init__(self, template_manager: TemplateManager = None):
         """
-        Transform data according to transformation specification.
+        Initialize DataTransformer.
 
         Args:
-            data: Input data to transform
-            transform_spec: Transformation specification (string or dict)
-
-        Returns:
-            Transformed data
-
-        Raises:
-            ValueError: If transformation specification is invalid
+            template_manager: TemplateManager instance for template transforms.
 
         """
-        if isinstance(transform_spec, str):
-            return DataTransformer._apply_single_transform(data, transform_spec)
-        elif isinstance(transform_spec, dict):
-            return DataTransformer._apply_transform_pipeline(data, transform_spec)
-        else:
-            raise ValueError(f"Invalid transform specification: {transform_spec}")
+        self.template_manager = template_manager
 
-    @staticmethod
-    def _apply_single_transform(data: Any, transform: str) -> Any:
+    def transform(self, data: any, mapping: dict) -> any:
+        """
+        Transform data based on mapping configuration.
+
+        Args:
+            data: Input data to transform.
+            mapping: Transformation mapping configuration.
+
+        Returns:
+            Transformed data.
+
+        Raises:
+            AutomaxError: If transformation fails.
+
+        """
+        try:
+            # Extract source if specified
+            if "source" in mapping:
+                data = self._extract_field(data, mapping["source"])
+
+            # If no transforms specified, return data as is
+            transforms = mapping.get("transforms", [])
+            if not transforms:
+                return data
+
+            # Apply transforms sequentially
+            transformed_data = data
+            for transform in transforms:
+                transformed_data = self._apply_transform(
+                    transformed_data, transform, mapping
+                )
+
+            return transformed_data
+
+        except Exception as e:
+            raise AutomaxError(f"Data transformation failed: {e}")
+
+    def _extract_field(self, data: any, field_path: str) -> any:
+        """
+        Extract a nested field from data using dot notation.
+
+        Args:
+            data: Input data.
+            field_path: Dot-separated path to the field.
+
+        Returns:
+            Extracted field value.
+
+        Raises:
+            AutomaxError: If field is not found.
+
+        """
+        current = data
+        for part in field_path.split("."):
+            if isinstance(current, dict) and part in current:
+                current = current[part]
+            else:
+                raise AutomaxError(f"Field '{part}' not found at path '{field_path}'")
+        return current
+
+    def _apply_transform(self, data: any, transform: str, mapping: dict) -> any:
         """
         Apply a single transformation to data.
 
         Args:
-            data: Input data
-            transform: Transformation string (e.g., "filter:status==active")
+            data: Input data.
+            transform: Transformation string (e.g., "template:{{ data | upper }}").
+            mapping: Full mapping configuration for context.
 
         Returns:
-            Transformed data
+            Transformed data.
+
+        Raises:
+            AutomaxError: If transform type is unknown.
 
         """
-        # Handle simple field selection
-        if transform.startswith("select:"):
-            path = transform[7:].strip()
-            return DataTransformer._select_path(data, path)
+        # Check if it's a template transform
+        if transform.startswith("template:"):
+            template_string = transform[len("template:") :]
+            return self._apply_template_transform(data, template_string, mapping)
 
-        # Handle filtering
-        elif transform.startswith("filter:"):
-            condition = transform[7:].strip()
-            return DataTransformer._filter_list(data, condition)
+        # Check if it's a filter transform
+        if transform.startswith("filter:"):
+            condition = transform[len("filter:") :]
+            return self._apply_filter_transform(data, condition)
 
-        # Handle mapping
-        elif transform.startswith("map:"):
-            expression = transform[4:].strip()
-            return DataTransformer._map_list(data, expression)
+        # Check if it's a map transform
+        if transform.startswith("map:"):
+            expression = transform[len("map:") :]
+            return self._apply_map_transform(data, expression)
 
-        # Handle type conversion
-        elif transform.startswith("as:"):
-            type_name = transform[3:].strip()
-            return DataTransformer._convert_type(data, type_name)
+        # Check if it's an "as" transform (e.g., "as:list")
+        if transform.startswith("as:"):
+            type_name = transform[len("as:") :]
+            return self._apply_as_transform(data, type_name)
 
-        # Handle JSON parsing
-        elif transform == "json_parse":
-            return DataTransformer._parse_json(data)
+        # Check if it's a built-in transform
+        if transform in DataTransformer._BUILTIN_TRANSFORMS:
+            return DataTransformer._BUILTIN_TRANSFORMS[transform](data)
 
-        # Handle JSON stringification
-        elif transform == "json_stringify":
-            return DataTransformer._stringify_json(data)
+        raise AutomaxError(f"Unknown transform: {transform}")
 
+    def _apply_template_transform(
+        self, data: any, template_string: str, mapping: dict
+    ) -> any:
+        """
+        Apply a template transformation to data.
+
+        Args:
+            data: Input data.
+            template_string: Jinja2 template string.
+            mapping: Full mapping configuration for context.
+
+        Returns:
+            Transformed data.
+
+        Raises:
+            AutomaxError: If template rendering fails.
+
+        """
+        if not self.template_manager:
+            raise AutomaxError(
+                "Template transforms require a TemplateManager instance."
+            )
+
+        # Prepare the context for the template
+        extra_context = {"data": data}
+
+        try:
+            rendered = self.template_manager.render(template_string, extra_context)
+            return rendered
+        except Exception as e:
+            raise AutomaxError(f"Template transformation failed: {e}")
+
+    def _apply_filter_transform(self, data: any, condition: str) -> any:
+        """
+        Apply a filter transformation to data.
+
+        Args:
+            data: Input data (should be a list).
+            condition: Filter condition (e.g., "active==True").
+
+        Returns:
+            Filtered data.
+
+        Raises:
+            AutomaxError: If data is not a list or condition is invalid.
+
+        """
+        if not isinstance(data, list):
+            raise AutomaxError("Filter transform can only be applied to lists")
+
+        # Parse condition (simple equality for now)
+        if "==" not in condition:
+            raise AutomaxError("Filter condition must use '==' operator")
+
+        field, value = condition.split("==", 1)
+        field = field.strip()
+        value = value.strip()
+
+        # Convert value to appropriate type
+        if value == "True":
+            value = True
+        elif value == "False":
+            value = False
         else:
-            raise ValueError(f"Unknown transformation: {transform}")
-
-    @staticmethod
-    def _apply_transform_pipeline(data: Any, pipeline: Dict) -> Any:
-        """
-        Apply a pipeline of transformations to data.
-
-        Args:
-            data: Input data
-            pipeline: Pipeline configuration with source and transforms
-
-        Returns:
-            Transformed data after applying entire pipeline
-
-        """
-        # Extract data from source path if specified
-        current_data = data
-        if "source" in pipeline:
-            current_data = DataTransformer._select_path(data, pipeline["source"])
-
-        # Apply transformations in sequence
-        if "transforms" in pipeline:
-            for transform in pipeline["transforms"]:
-                current_data = DataTransformer.transform(current_data, transform)
-
-        return current_data
-
-    @staticmethod
-    def _select_path(data: Any, path: str) -> Any:
-        """
-        Select data using dot notation path.
-
-        Args:
-            data: Input data (dict, list, or scalar)
-            path: Dot-separated path (e.g., "data.items.0.name")
-
-        Returns:
-            Selected data at specified path
-
-        """
-        if not path or path == ".":
-            return data
-
-        current = data
-        for part in path.split("."):
-            if isinstance(current, dict) and part in current:
-                current = current[part]
-            elif isinstance(current, list) and part.isdigit():
-                index = int(part)
-                if 0 <= index < len(current):
-                    current = current[index]
-                else:
-                    return None
-            else:
-                # Try to access as attribute for objects
+            try:
+                value = int(value)
+            except ValueError:
                 try:
-                    current = getattr(current, part)
-                except (AttributeError, TypeError):
-                    return None
+                    value = float(value)
+                except ValueError:
+                    # Remove quotes if present
+                    if (value.startswith('"') and value.endswith('"')) or (
+                        value.startswith("'") and value.endswith("'")
+                    ):
+                        value = value[1:-1]
 
-        return current
+        # Apply filter
+        filtered_data = []
+        for item in data:
+            if isinstance(item, dict) and item.get(field) == value:
+                filtered_data.append(item)
+            elif hasattr(item, field) and getattr(item, field) == value:
+                filtered_data.append(item)
 
-    @staticmethod
-    def _filter_list(data: List, condition: str) -> List:
+        return filtered_data
+
+    def _apply_map_transform(self, data: any, expression: str) -> any:
         """
-        Filter list based on condition.
+        Apply a map transformation to data.
 
         Args:
-            data: List to filter
-            condition: Filter condition (e.g., "status=='active'")
+            data: Input data (should be a list).
+            expression: Mapping expression (e.g., "item.name").
 
         Returns:
-            Filtered list
+            Mapped data.
+
+        Raises:
+            AutomaxError: If data is not a list or expression is invalid.
 
         """
         if not isinstance(data, list):
-            return data
+            raise AutomaxError("Map transform can only be applied to lists")
 
-        try:
-            # Simple condition evaluation for common patterns
-            filtered = []
-            for item in data:
-                if DataTransformer._evaluate_condition(item, condition):
-                    filtered.append(item)
-            return filtered
-        except Exception as e:
-            raise ValueError(f"Failed to evaluate filter condition '{condition}': {e}")
+        # Parse expression (simple field access for now)
+        if not expression.startswith("item."):
+            raise AutomaxError("Map expression must start with 'item.'")
 
-    @staticmethod
-    def _map_list(data: List, expression: str) -> List:
-        """
-        Map list using transformation expression.
+        field = expression[5:]  # Remove "item."
 
-        Args:
-            data: List to transform
-            expression: Mapping expression (e.g., "item.name")
-
-        Returns:
-            Transformed list
-
-        """
-        if not isinstance(data, list):
-            return data
-
-        try:
-            mapped = []
-            for item in data:
-                # Simple field extraction
-                if expression.startswith("item."):
-                    field = expression[5:]
-                    value = DataTransformer._select_path(item, field)
-                    mapped.append(value)
-                else:
-                    # For more complex expressions, use the expression as a template
-                    result = expression.replace("item", str(item))
-                    mapped.append(result)
-            return mapped
-        except Exception as e:
-            raise ValueError(f"Failed to apply map expression '{expression}': {e}")
-
-    @staticmethod
-    def _convert_type(data: Any, type_name: str) -> Any:
-        """
-        Convert data to specified type.
-
-        Args:
-            data: Data to convert
-            type_name: Target type (str, int, float, bool, list, dict)
-
-        Returns:
-            Converted data
-
-        """
-        type_name = type_name.lower()
-
-        if type_name == "str":
-            return str(data) if data is not None else ""
-        elif type_name == "int":
-            if data is None or data == "":
-                return 0
-            try:
-                return int(data)
-            except (ValueError, TypeError):
-                return 0
-        elif type_name == "float":
-            if data is None or data == "":
-                return 0.0
-            try:
-                return float(data)
-            except (ValueError, TypeError):
-                return 0.0
-        elif type_name == "bool":
-            if isinstance(data, str):
-                if data.lower() in ("true", "yes", "1", "on"):
-                    return True
-                elif data.lower() in ("false", "no", "0", "off", ""):
-                    return False
-            return bool(data)
-        elif type_name == "list":
-            if isinstance(data, list):
-                return data
-            elif data is None:
-                return []
+        # Apply map
+        mapped_data = []
+        for item in data:
+            if isinstance(item, dict) and field in item:
+                mapped_data.append(item[field])
+            elif hasattr(item, field):
+                mapped_data.append(getattr(item, field))
             else:
+                # Skip items that don't have the field
+                continue
+
+        return mapped_data
+
+    def _apply_as_transform(self, data: any, type_name: str) -> any:
+        """
+        Apply an "as" transformation to convert data to a specific type.
+
+        Args:
+            data: Input data.
+            type_name: Target type name.
+
+        Returns:
+            Converted data.
+
+        Raises:
+            AutomaxError: If conversion fails.
+
+        """
+        if type_name == "list":
+            if not isinstance(data, list):
                 return [data]
+            return data
         elif type_name == "dict":
-            if isinstance(data, dict):
-                return data
-            elif data is None:
-                return {}
-            else:
-                return {"value": data}
+            if not isinstance(data, dict):
+                # Try to convert to dict if possible
+                if hasattr(data, "__dict__"):
+                    return data.__dict__
+                else:
+                    raise AutomaxError("Cannot convert data to dict")
+            return data
         else:
-            raise ValueError(f"Unsupported type conversion: {type_name}")
+            raise AutomaxError(f"Unknown type for 'as' transform: {type_name}")
 
-    @staticmethod
-    def _parse_json(data: Any) -> Any:
-        """
-        Parse JSON string into Python object.
-
-        Args:
-            data: JSON string to parse
-
-        Returns:
-            Parsed Python object
-
-        """
-        if isinstance(data, str):
-            try:
-                return json.loads(data)
-            except json.JSONDecodeError:
-                return data
-        return data
-
-    @staticmethod
-    def _stringify_json(data: Any) -> str:
-        """
-        Convert Python object to JSON string.
-
-        Args:
-            data: Python object to serialize
-
-        Returns:
-            JSON string representation
-
-        """
-        try:
-            return json.dumps(data, default=str)
-        except (TypeError, ValueError):
-            return str(data)
-
-    @staticmethod
-    def _evaluate_condition(item: Any, condition: str) -> bool:
-        """
-        Evaluate simple condition against item.
-
-        Args:
-            item: Item to evaluate condition against
-            condition: Condition expression
-
-        Returns:
-            Boolean result of condition evaluation
-
-        """
-        # Handle common equality patterns
-        if "==" in condition:
-            field, value = condition.split("==", 1)
-            field = field.strip()
-            value = value.strip().strip("'\"")
-            field_value = DataTransformer._select_path(item, field)
-            return str(field_value) == value
-
-        # Handle inequality patterns
-        elif "!=" in condition:
-            field, value = condition.split("!=", 1)
-            field = field.strip()
-            value = value.strip().strip("'\"")
-            field_value = DataTransformer._select_path(item, field)
-            return str(field_value) != value
-
-        # Handle existence check
-        elif condition == "exists":
-            return item is not None
-
-        # Default: treat as boolean expression
-        else:
-            return bool(DataTransformer._select_path(item, condition))
+    # Built-in transforms
+    _BUILTIN_TRANSFORMS = {
+        "string": str,
+        "int": int,
+        "float": float,
+        "bool": bool,
+        "list": list,
+        "dict": dict,
+    }

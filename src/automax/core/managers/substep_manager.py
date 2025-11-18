@@ -180,7 +180,9 @@ class SubStepManager:
         """
         try:
             target_key = output_mapping["target"]
-            transformed_data = DataTransformer.transform(result, output_mapping)
+            # Use DataTransformer with template manager
+            data_transformer = DataTransformer(self.template_manager)
+            transformed_data = data_transformer.transform(result, output_mapping)
 
             self.context[target_key] = transformed_data
             self.logger.debug(

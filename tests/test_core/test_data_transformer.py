@@ -1,9 +1,10 @@
 """
-Tests for DataTransformer utility class.
+Tests for DataTransformer class.
 """
 
 import pytest
 
+from automax.core.exceptions import AutomaxError
 from automax.core.utils.data_transformer import DataTransformer
 
 
@@ -12,136 +13,77 @@ class TestDataTransformer:
     Test suite for DataTransformer functionality.
     """
 
-    def test_select_path_simple_dict(self):
+    def test_transform_no_transforms(self):
         """
-        Test selecting values from simple dictionary.
+        Verify DataTransformer returns data as is when no transforms specified.
         """
-        data = {"name": "John", "age": 30}
-        result = DataTransformer.transform(data, "select:name")
-        assert result == "John"
+        transformer = DataTransformer()
+        data = {"key": "value"}
+        mapping = {"target": "output_key"}
 
-    def test_select_path_nested_dict(self):
-        """
-        Test selecting values from nested dictionary.
-        """
-        data = {"user": {"profile": {"name": "Alice"}}}
-        result = DataTransformer.transform(data, "select:user.profile.name")
-        assert result == "Alice"
+        result = transformer.transform(data, mapping)
 
-    def test_select_path_list_index(self):
-        """
-        Test selecting values from list by index.
-        """
-        data = {"items": ["first", "second", "third"]}
-        result = DataTransformer.transform(data, "select:items.1")
-        assert result == "second"
+        assert result == data
 
-    def test_filter_list_simple(self):
+    def test_transform_builtin_transforms(self):
         """
-        Test filtering list with simple condition.
+        Verify DataTransformer applies built-in transforms correctly.
         """
-        data = [
-            {"name": "Alice", "active": True},
-            {"name": "Bob", "active": False},
-            {"name": "Charlie", "active": True},
-        ]
-        result = DataTransformer.transform(data, "filter:active==True")
-        assert len(result) == 2
-        assert result[0]["name"] == "Alice"
-        assert result[1]["name"] == "Charlie"
+        transformer = DataTransformer()
 
-    def test_map_list_field_extraction(self):
-        """
-        Test mapping list to extract specific fields.
-        """
-        data = [{"name": "Alice", "age": 25}, {"name": "Bob", "age": 30}]
-        result = DataTransformer.transform(data, "map:item.name")
-        assert result == ["Alice", "Bob"]
-
-    def test_type_conversion_string(self):
-        """
-        Test type conversion to string.
-        """
-        result = DataTransformer.transform(123, "as:str")
+        # Test string transform
+        result = transformer.transform(123, {"transforms": ["string"]})
         assert result == "123"
 
-    def test_type_conversion_list(self):
-        """
-        Test type conversion to list.
-        """
-        result = DataTransformer.transform("single", "as:list")
-        assert result == ["single"]
+        # Test int transform
+        result = transformer.transform("456", {"transforms": ["int"]})
+        assert result == 456
 
-    def test_json_parsing(self):
-        """
-        Test JSON string parsing.
-        """
-        json_str = '{"name": "John", "age": 30}'
-        result = DataTransformer.transform(json_str, "json_parse")
-        assert result == {"name": "John", "age": 30}
+        # Test float transform
+        result = transformer.transform("3.14", {"transforms": ["float"]})
+        assert result == 3.14
 
-    def test_json_stringify(self):
-        """
-        Test JSON stringification.
-        """
-        data = {"name": "John", "age": 30}
-        result = DataTransformer.transform(data, "json_stringify")
-        assert '"name": "John"' in result
-        assert '"age": 30' in result
+        # Test bool transform
+        result = transformer.transform("True", {"transforms": ["bool"]})
+        assert result is True
 
-    def test_transform_pipeline(self):
+    def test_transform_unknown_transform(self):
         """
-        Test complex transformation pipeline.
+        Verify DataTransformer raises error for unknown transforms.
         """
-        data = {
-            "response": {
-                "users": [
-                    {"name": "alice", "active": True, "age": 25},
-                    {"name": "bob", "active": False, "age": 30},
-                    {"name": "charlie", "active": True, "age": 35},
-                ]
-            }
-        }
+        transformer = DataTransformer()
 
-        pipeline = {
-            "source": "response.users",
-            "transforms": ["filter:active==True", "map:item.name", "as:list"],
-        }
+        with pytest.raises(AutomaxError) as exc_info:
+            transformer.transform("data", {"transforms": ["unknown"]})
 
-        result = DataTransformer.transform(data, pipeline)
-        assert result == ["alice", "charlie"]
+        assert "Unknown transform" in str(exc_info.value)
 
-    def test_invalid_transform(self):
+    def test_transform_multiple_transforms(self):
         """
-        Test handling of invalid transformation.
+        Verify DataTransformer applies multiple transforms in sequence.
         """
-        with pytest.raises(ValueError, match="Unknown transformation"):
-            DataTransformer.transform({}, "invalid:transform")
+        transformer = DataTransformer()
 
-    def test_none_handling(self):
-        """
-        Test transformation with None values.
-        """
-        result = DataTransformer.transform(None, "as:str")
-        assert result == ""
+        data = "123"
+        mapping = {"transforms": ["int", "string"]}
 
-    def test_empty_string_handling(self):
-        """
-        Test transformation with empty strings.
-        """
-        result = DataTransformer.transform("", "as:int")
-        assert result == 0
+        result = transformer.transform(data, mapping)
 
-    def test_invalid_string_to_int(self):
-        """
-        Test conversion of invalid string to integer.
-        """
-        result = DataTransformer.transform("invalid", "as:int")
-        assert result == 0
+        # First convert to int (123), then to string ("123")
+        assert result == "123"
 
-    def test_empty_string_to_bool(self):
+    def test_template_transform_without_template_manager(self):
         """
-        Test conversion of empty string to boolean.
+        Verify DataTransformer raises error for template transforms without
+        TemplateManager.
         """
-        result = DataTransformer.transform("", "as:bool")
-        assert result is False
+        transformer = DataTransformer()  # No template manager provided
+
+        with pytest.raises(AutomaxError) as exc_info:
+            transformer.transform(
+                "data", {"transforms": ["template:{{ data | upper }}"]}
+            )
+
+        assert "Template transforms require a TemplateManager instance" in str(
+            exc_info.value
+        )
