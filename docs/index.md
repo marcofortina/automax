@@ -36,6 +36,7 @@ steps:
 
 - [Browse available plugins](plugins/index.md)
 - [Create a new plugin](guides/creating-plugins.md)
+- [Learn templating](guides/templating.md)
 - [Learn output mapping](guides/output-mapping.md)
 - [API Reference](reference/api.md)
 
@@ -46,3 +47,14 @@ steps:
 - **File Operations**: Read/Write Files, Compression, Extraction
 - **Communication**: HTTP Requests, Email Notifications
 - **Database**: SQL operations via ODBC
+
+## Templating
+
+Automax now features Jinja2 templing support for dynamic parameter resolution:
+
+```yaml
+yaml
+params:
+  log_path: "{{ config.log_dir }}/{{ config.environment }}/app.log"
+  debug_flag: "{% if config.debug %}--verbose{% endif %}"
+```

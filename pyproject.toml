@@ -22,7 +22,8 @@ dependencies = [
     "click",
     "paramiko",
     "requests",
-    "ping3"
+    "ping3",
+    "Jinja2"
 ]
 
 classifiers = [
