@@ -10,9 +10,8 @@ import importlib
 import os
 import re
 
-from jinja2 import StrictUndefined, Template
-
 from automax.core.exceptions import AutomaxError
+from automax.core.managers.template_manager import TemplateManager
 from automax.core.utils.data_transformer import DataTransformer
 from automax.core.utils.log_utils import print_substep_end, print_substep_start
 
@@ -54,9 +53,25 @@ class SubStepManager:
         self.plugin_manager = plugin_manager
         self.step_id = step_id
         self.substeps_cfg = substeps_cfg
-        self.context = {}  # Shared context for output between sub-steps
+        self._context = {}  # Shared context for output between sub-steps
         self.pre_run = pre_run
         self.post_run = post_run
+        self.template_manager = TemplateManager(cfg, self._context)
+
+    @property
+    def context(self):
+        """
+        Get the current context.
+        """
+        return self._context
+
+    @context.setter
+    def context(self, value):
+        """
+        Set the context and update the TemplateManager.
+        """
+        self._context = value
+        self.template_manager.context = value
 
     def run(self, substep_ids: list[str] = None, dry_run: bool = False) -> bool:
         """
@@ -178,27 +193,6 @@ class SubStepManager:
             self.logger.error(error_msg)
             raise AutomaxError(error_msg, level="ERROR")
 
-    def _render_jinja_template(self, template_string: str) -> str:
-        """
-        Render a Jinja2 template string with current context.
-
-        Args:
-            template_string: The template string to render
-
-        Returns:
-            Rendered string
-
-        Raises:
-            AutomaxError: If template rendering fails
-
-        """
-        try:
-            template = Template(template_string, undefined=StrictUndefined)
-            context = {"config": self.cfg, "context": self.context, "env": os.environ}
-            return template.render(**context)
-        except Exception as e:
-            raise AutomaxError(f"Template rendering failed: {str(e)}")
-
     def _resolve_legacy_placeholders(self, value: str) -> str:
         """
         Resolve legacy placeholder patterns for backward compatibility.
@@ -259,7 +253,7 @@ class SubStepManager:
                 try:
                     # First, try to resolve as Jinja2 template if it contains template patterns
                     if "{{" in v or "{%" in v:
-                        v = self._render_jinja_template(v)
+                        v = self.template_manager.render(v)
                     else:
                         # Otherwise, use legacy resolution
                         v = self._resolve_legacy_placeholders(v)
