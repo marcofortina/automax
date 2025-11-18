@@ -30,3 +30,6 @@ requests
 
 # Ping Utility
 ping3
+
+# Templating
+Jinja2

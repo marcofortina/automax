@@ -8,6 +8,9 @@ invocation, retries, and output context management.
 
 import importlib
 import os
+import re
+
+from jinja2 import StrictUndefined, Template
 
 from automax.core.exceptions import AutomaxError
 from automax.core.utils.data_transformer import DataTransformer
@@ -175,11 +178,73 @@ class SubStepManager:
             self.logger.error(error_msg)
             raise AutomaxError(error_msg, level="ERROR")
 
+    def _render_jinja_template(self, template_string: str) -> str:
+        """
+        Render a Jinja2 template string with current context.
+
+        Args:
+            template_string: The template string to render
+
+        Returns:
+            Rendered string
+
+        Raises:
+            AutomaxError: If template rendering fails
+
+        """
+        try:
+            template = Template(template_string, undefined=StrictUndefined)
+            context = {"config": self.cfg, "context": self.context, "env": os.environ}
+            return template.render(**context)
+        except Exception as e:
+            raise AutomaxError(f"Template rendering failed: {str(e)}")
+
+    def _resolve_legacy_placeholders(self, value: str) -> str:
+        """
+        Resolve legacy placeholder patterns for backward compatibility.
+
+        Supports:
+        - {key} for configuration and context values
+        - $VAR and ${VAR} for environment variables
+
+        Args:
+            value: String with legacy placeholders
+
+        Returns:
+            String with resolved placeholders
+
+        Raises:
+            AutomaxError: If any placeholder key is missing
+
+        """
+        # Resolve {key} placeholders from config and context
+        for key in self.cfg:
+            placeholder = f"{{{key}}}"
+            if placeholder in value:
+                value = value.replace(placeholder, str(self.cfg[key]))
+
+        for key in self.context:
+            placeholder = f"{{{key}}}"
+            if placeholder in value:
+                value = value.replace(placeholder, str(self.context[key]))
+
+        # Check for any remaining {key} placeholders
+        remaining_placeholders = re.findall(r"\{[^}]+\}", value)
+        if remaining_placeholders:
+            raise AutomaxError(
+                f"Missing placeholder key: {remaining_placeholders[0][1:-1]}"
+            )
+
+        # Resolve environment variables
+        value = os.path.expandvars(value)
+
+        return value
+
     def _resolve_params(self, params: dict) -> dict:
         """
         Resolve placeholders and environment variables in parameters.
 
-        Supports {config_key} from cfg, {output_key} from context, and $ENV_VAR from os.environ.
+        Supports both Jinja2 templates and legacy placeholders for backward compatibility.
 
         Args:
             params (dict): Original parameters.
@@ -191,13 +256,17 @@ class SubStepManager:
         resolved = {}
         for k, v in params.items():
             if isinstance(v, str):
-                # Resolve config and context placeholders
                 try:
-                    v = v.format(**self.cfg, **self.context)
-                except KeyError as e:
-                    raise AutomaxError(f"Missing placeholder key: {e}", level="ERROR")
-                # Resolve env vars (e.g., $HOME)
-                v = os.path.expandvars(v)
+                    # First, try to resolve as Jinja2 template if it contains template patterns
+                    if "{{" in v or "{%" in v:
+                        v = self._render_jinja_template(v)
+                    else:
+                        # Otherwise, use legacy resolution
+                        v = self._resolve_legacy_placeholders(v)
+                except Exception as e:
+                    raise AutomaxError(
+                        f"Failed to resolve parameter '{k}': {str(e)}", level="ERROR"
+                    )
             resolved[k] = v
         return resolved
 
