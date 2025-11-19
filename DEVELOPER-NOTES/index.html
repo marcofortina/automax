@@ -1691,6 +1691,7 @@
 <li><code>Docs: update readme</code> → <code>docs: update README</code> (lowercase)</li>
 <li><code>fix(config): resolve issue</code> → <code>fix: resolve config issue</code> (no scope)</li>
 <li><code>feat!: breaking change</code> → <code>feat: implement new approach</code> (no ! for now)</li>
+<li><strong>Merge commits</strong>: <code>Merge PR #21: feat: implement feature</code> → <code>Merge PR #21: Implement Feature Description</code> (Title Case for merge descriptions)</li>
 </ul>
 <h3 id="pr-and-merge-convention">PR and Merge Convention</h3>
 <h4 id="pr-title-format">PR Title Format</h4>
@@ -1700,10 +1701,16 @@ Example: <code>feat: add advanced output mapping with transformations between su
 <h4 id="pr-description">PR Description</h4>
 <p>Use the template from <code>.github/pull_request_template.md</code> when creating pull requests.</p>
 <h4 id="merge-commit-format">Merge Commit Format</h4>
-<div class="highlight"><pre><span></span><code>Merge PR #PR_NUMBER: Description
+<p><div class="highlight"><pre><span></span><code>Merge PR #PR_NUMBER: Title Case Description
 
-[Detailed description of what the merge accomplishes, benefits, and testing confirmation]
+[Concise description of implementation, benefits, and testing status]
 </code></pre></div>
+Example:
+<div class="highlight"><pre><span></span><code>Merge PR #21: Implement Jinja2 Templating System for Dynamic Configurations
+
+Complete implementation of Jinja2 templating across Automax core components, enabling dynamic configuration rendering
+and advanced output transformations. All tests passing, backward compatibility maintained, and ready for production use.
+</code></pre></div></p>
 <h3 id="quick-start-for-contributors">Quick Start for Contributors</h3>
 <ol>
 <li>Fork &amp; Clone</li>
