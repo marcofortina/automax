@@ -16,6 +16,7 @@ from automax.core.exceptions import AutomaxError
 from automax.core.managers.logger_manager import LoggerManager
 from automax.core.managers.plugin_manager import PluginManager
 from automax.core.managers.substep_manager import SubStepManager
+from automax.core.managers.template_manager import TemplateManager
 from automax.core.utils.log_utils import print_step_end, print_step_start
 
 
@@ -42,6 +43,8 @@ class StepManager:
         self.logger = logger
         self.plugin_manager = plugin_manager
         self.steps_dir = Path(cfg.get("steps_dir", "steps")).resolve()
+        self._context = {}  # Global context shared between steps
+        self.template_manager = TemplateManager(cfg, self._context)
 
         # Ensure steps directory parent is in sys.path for dynamic imports
         steps_parent = str(self.steps_dir.parent)
@@ -50,6 +53,21 @@ class StepManager:
             self.logger.debug(
                 f"Added '{steps_parent}' to sys.path for step module imports"
             )
+
+    @property
+    def context(self):
+        """
+        Get the current context.
+        """
+        return self._context
+
+    @context.setter
+    def context(self, value):
+        """
+        Set the context and update the TemplateManager.
+        """
+        self._context = value
+        self.template_manager.context = value
 
     def run(
         self, step_ids: list[str] = None, substep_id: str = None, dry_run: bool = False
@@ -84,11 +102,15 @@ class StepManager:
         for step_id in step_ids:
             try:
                 step_cfg = self._load_step_config(step_id)
-                print_step_start(self.logger, step_id, step_cfg["description"])
+
+                # Render dynamic step configuration
+                rendered_step_cfg = self._render_step_config(step_cfg)
+
+                print_step_start(self.logger, step_id, rendered_step_cfg["description"])
 
                 # Optional pre_run hook
-                if "pre_run" in step_cfg:
-                    func = self._import_function(step_cfg["pre_run"])
+                if "pre_run" in rendered_step_cfg:
+                    func = self._import_function(rendered_step_cfg["pre_run"])
                     func(self.cfg, self.logger, dry_run)
 
                 # Execute sub-steps
@@ -97,8 +119,12 @@ class StepManager:
                     self.logger,
                     self.plugin_manager,
                     step_id,
-                    step_cfg["substeps"],
+                    rendered_step_cfg["substeps"],
                 )
+
+                # Share context between StepManager and SubStepManager
+                substep_manager.context = self.context
+
                 substep_success = substep_manager.run(
                     substep_ids=[substep_id] if substep_id else None, dry_run=dry_run
                 )
@@ -114,8 +140,8 @@ class StepManager:
                 raise AutomaxError(f"Failure in step {step_id}: {e}", level="ERROR")
             finally:
                 # Optional post_run hook
-                if "post_run" in step_cfg:
-                    func = self._import_function(step_cfg["post_run"])
+                if "post_run" in rendered_step_cfg:
+                    func = self._import_function(rendered_step_cfg["post_run"])
                     func(self.cfg, self.logger, dry_run, step_result == "OK")
                 print_step_end(self.logger, step_id, step_result)
 
@@ -149,6 +175,81 @@ class StepManager:
             return config
         except yaml.YAMLError as e:
             raise AutomaxError(f"Invalid YAML in {yaml_path}: {e}", level="FATAL")
+
+    def _render_step_config(self, step_cfg: dict) -> dict:
+        """
+        Render dynamic step configuration using Jinja2 templates.
+
+        Args:
+            step_cfg (dict): Original step configuration.
+
+        Returns:
+            dict: Rendered step configuration.
+
+        """
+        rendered_cfg = step_cfg.copy()
+
+        # Render step-level fields
+        if isinstance(rendered_cfg.get("id"), str) and (
+            "{{" in rendered_cfg["id"] or "{%" in rendered_cfg["id"]
+        ):
+            rendered_cfg["id"] = self.template_manager.render(rendered_cfg["id"])
+
+        if isinstance(rendered_cfg.get("description"), str) and (
+            "{{" in rendered_cfg["description"] or "{%" in rendered_cfg["description"]
+        ):
+            rendered_cfg["description"] = self.template_manager.render(
+                rendered_cfg["description"]
+            )
+
+        # Render substep configurations
+        rendered_substeps = []
+        for substep in rendered_cfg.get("substeps", []):
+            rendered_substep = self._render_substep_config(substep)
+            rendered_substeps.append(rendered_substep)
+
+        rendered_cfg["substeps"] = rendered_substeps
+
+        return rendered_cfg
+
+    def _render_substep_config(self, substep_cfg: dict) -> dict:
+        """
+        Render dynamic substep configuration using Jinja2 templates.
+
+        Args:
+            substep_cfg (dict): Original substep configuration.
+
+        Returns:
+            dict: Rendered substep configuration.
+
+        """
+        rendered_substep = substep_cfg.copy()
+
+        # Render substep ID and description
+        if isinstance(rendered_substep.get("id"), str) and (
+            "{{" in rendered_substep["id"] or "{%" in rendered_substep["id"]
+        ):
+            rendered_substep["id"] = self.template_manager.render(
+                rendered_substep["id"]
+            )
+
+        if isinstance(rendered_substep.get("description"), str) and (
+            "{{" in rendered_substep["description"]
+            or "{%" in rendered_substep["description"]
+        ):
+            rendered_substep["description"] = self.template_manager.render(
+                rendered_substep["description"]
+            )
+
+        # Render parameters if they contain templates
+        if "params" in rendered_substep and isinstance(
+            rendered_substep["params"], dict
+        ):
+            rendered_substep["params"] = self.template_manager.render_dict(
+                rendered_substep["params"]
+            )
+
+        return rendered_substep
 
     def _import_function(self, path: str):
         """

@@ -8,8 +8,10 @@ invocation, retries, and output context management.
 
 import importlib
 import os
+import re
 
 from automax.core.exceptions import AutomaxError
+from automax.core.managers.template_manager import TemplateManager
 from automax.core.utils.data_transformer import DataTransformer
 from automax.core.utils.log_utils import print_substep_end, print_substep_start
 
@@ -51,9 +53,25 @@ class SubStepManager:
         self.plugin_manager = plugin_manager
         self.step_id = step_id
         self.substeps_cfg = substeps_cfg
-        self.context = {}  # Shared context for output between sub-steps
+        self._context = {}  # Shared context for output between sub-steps
         self.pre_run = pre_run
         self.post_run = post_run
+        self.template_manager = TemplateManager(cfg, self._context)
+
+    @property
+    def context(self):
+        """
+        Get the current context.
+        """
+        return self._context
+
+    @context.setter
+    def context(self, value):
+        """
+        Set the context and update the TemplateManager.
+        """
+        self._context = value
+        self.template_manager.context = value
 
     def run(self, substep_ids: list[str] = None, dry_run: bool = False) -> bool:
         """
@@ -162,7 +180,9 @@ class SubStepManager:
         """
         try:
             target_key = output_mapping["target"]
-            transformed_data = DataTransformer.transform(result, output_mapping)
+            # Use DataTransformer with template manager
+            data_transformer = DataTransformer(self.template_manager)
+            transformed_data = data_transformer.transform(result, output_mapping)
 
             self.context[target_key] = transformed_data
             self.logger.debug(
@@ -175,11 +195,52 @@ class SubStepManager:
             self.logger.error(error_msg)
             raise AutomaxError(error_msg, level="ERROR")
 
+    def _resolve_legacy_placeholders(self, value: str) -> str:
+        """
+        Resolve legacy placeholder patterns for backward compatibility.
+
+        Supports:
+        - {key} for configuration and context values
+        - $VAR and ${VAR} for environment variables
+
+        Args:
+            value: String with legacy placeholders
+
+        Returns:
+            String with resolved placeholders
+
+        Raises:
+            AutomaxError: If any placeholder key is missing
+
+        """
+        # Resolve {key} placeholders from config and context
+        for key in self.cfg:
+            placeholder = f"{{{key}}}"
+            if placeholder in value:
+                value = value.replace(placeholder, str(self.cfg[key]))
+
+        for key in self.context:
+            placeholder = f"{{{key}}}"
+            if placeholder in value:
+                value = value.replace(placeholder, str(self.context[key]))
+
+        # Check for any remaining {key} placeholders
+        remaining_placeholders = re.findall(r"\{[^}]+\}", value)
+        if remaining_placeholders:
+            raise AutomaxError(
+                f"Missing placeholder key: {remaining_placeholders[0][1:-1]}"
+            )
+
+        # Resolve environment variables
+        value = os.path.expandvars(value)
+
+        return value
+
     def _resolve_params(self, params: dict) -> dict:
         """
         Resolve placeholders and environment variables in parameters.
 
-        Supports {config_key} from cfg, {output_key} from context, and $ENV_VAR from os.environ.
+        Supports both Jinja2 templates and legacy placeholders for backward compatibility.
 
         Args:
             params (dict): Original parameters.
@@ -189,15 +250,34 @@ class SubStepManager:
 
         """
         resolved = {}
+        template_fields = []
+
+        # First pass: identify template fields
         for k, v in params.items():
+            if k.endswith("_is_template") and v is True:
+                field_name = k[:-12]  # Remove '_is_template' suffix
+                template_fields.append(field_name)
+
+        # Second pass: resolve values
+        for k, v in params.items():
+            # Skip template flags
+            if k.endswith("_is_template"):
+                continue
+
             if isinstance(v, str):
-                # Resolve config and context placeholders
                 try:
-                    v = v.format(**self.cfg, **self.context)
-                except KeyError as e:
-                    raise AutomaxError(f"Missing placeholder key: {e}", level="ERROR")
-                # Resolve env vars (e.g., $HOME)
-                v = os.path.expandvars(v)
+                    # Check if this field should be treated as template
+                    is_template = k in template_fields or "{{" in v or "{%" in v
+
+                    if is_template:
+                        v = self.template_manager.render(v)
+                    else:
+                        # Otherwise, use legacy resolution
+                        v = self._resolve_legacy_placeholders(v)
+                except Exception as e:
+                    raise AutomaxError(
+                        f"Failed to resolve parameter '{k}': {str(e)}", level="ERROR"
+                    )
             resolved[k] = v
         return resolved
 
