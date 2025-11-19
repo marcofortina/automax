@@ -452,6 +452,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#templating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Templating
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -637,6 +648,34 @@
     
   
     Output Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guides/templating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templating
   
 
     
@@ -1569,6 +1608,7 @@ on-premises systems, and custom applications.</p>
 <ul>
 <li><a href="plugins/">Browse available plugins</a></li>
 <li><a href="guides/creating-plugins/">Create a new plugin</a></li>
+<li><a href="guides/templating/">Learn templating</a></li>
 <li><a href="guides/output-mapping/">Learn output mapping</a></li>
 <li><a href="reference/api/">API Reference</a></li>
 </ul>
@@ -1580,6 +1620,13 @@ on-premises systems, and custom applications.</p>
 <li><strong>Communication</strong>: HTTP Requests, Email Notifications</li>
 <li><strong>Database</strong>: SQL operations via ODBC</li>
 </ul>
+<h2 id="templating">Templating</h2>
+<p>Automax now features Jinja2 templing support for dynamic parameter resolution:</p>
+<div class="highlight"><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">yaml</span>
+<span class="l l-Scalar l-Scalar-Plain">params</span><span class="p p-Indicator">:</span>
+<span class="w">  </span><span class="nt">log_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">config.log_dir</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">config.environment</span><span class="nv"> </span><span class="s">}}/app.log&quot;</span>
+<span class="w">  </span><span class="nt">debug_flag</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{%</span><span class="nv"> </span><span class="s">if</span><span class="nv"> </span><span class="s">config.debug</span><span class="nv"> </span><span class="s">%}--verbose{%</span><span class="nv"> </span><span class="s">endif</span><span class="nv"> </span><span class="s">%}&quot;</span>
+</code></pre></div>
 
 
 

@@ -11,10 +11,10 @@
       
       
       
-        <link rel="prev" href="../../DEVELOPER-NOTES/">
+        <link rel="prev" href="../output-mapping/">
       
       
-        <link rel="next" href="../development-utils/">
+        <link rel="next" href="../../plugins/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Creating Plugins - Automax Documentation</title>
+        <title>Templating - Automax Documentation</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#creating-custom-plugins" class="md-skip">
+        <a href="#templating-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Creating Plugins
+              Templating
             
           </span>
         </div>
@@ -216,7 +216,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../creating-plugins/" class="md-tabs__link">
           
   
   
@@ -475,37 +475,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Creating Plugins
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../creating-plugins/" class="md-nav__link">
         
   
   
@@ -521,120 +494,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#plugin-structure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Plugin Structure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#required-methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Required Methods
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Required Methods">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#execute" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        execute()
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#metadata" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Metadata
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-simple-file-reader" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example: Simple File Reader
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Best Practices
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing-your-plugin" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing Your Plugin
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#distribution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Distribution
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -700,10 +559,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../templating/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Templating
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -719,6 +605,281 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#syntax-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Syntax Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Syntax Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-variable-substitution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Variable Substitution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Filters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conditional-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditional Logic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#complex-expressions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complex Expressions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Features
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dynamic-step-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dynamic Step Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-output-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Template Output Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#explicit-template-flags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explicit Template Flags
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backward-compatibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backward Compatibility
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backward Compatibility">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#legacy-syntax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legacy Syntax
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-syntax-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Syntax (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#context-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#advanced-path-construction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Path Construction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conditional-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Conditional Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-value-construction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-value Construction
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1612,86 +1773,120 @@
   
 
 
-<h1 id="creating-custom-plugins">Creating Custom Plugins</h1>
-<p>This guide explains how to create custom plugins for Automax.</p>
-<h2 id="plugin-structure">Plugin Structure</h2>
-<p>All plugins must inherit from <code>BasePlugin</code> and implement the required methods:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">automax.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasePlugin</span><span class="p">,</span> <span class="n">PluginMetadata</span><span class="p">,</span> <span class="n">register_plugin</span>
-
-<span class="nd">@register_plugin</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">CustomPlugin</span><span class="p">(</span><span class="n">BasePlugin</span><span class="p">):</span>
-    <span class="n">METADATA</span> <span class="o">=</span> <span class="n">PluginMetadata</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;custom_plugin&quot;</span><span class="p">,</span>
-        <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;My custom plugin description&quot;</span><span class="p">,</span>
-        <span class="n">author</span><span class="o">=</span><span class="s2">&quot;Your Name&quot;</span><span class="p">,</span>
-        <span class="n">category</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span>
-        <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="s2">&quot;example&quot;</span><span class="p">],</span>
-        <span class="n">required_config</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;required_param&quot;</span><span class="p">],</span>
-        <span class="n">optional_config</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;optional_param&quot;</span><span class="p">]</span>
-    <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="c1"># Your plugin logic here</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;your result&quot;</span><span class="p">}</span>
+<h1 id="templating-guide">Templating Guide</h1>
+<p>Automax now supports Jinja2 templing for parameter resolution, providing powerful template capabilities while maintaining full backward compatibility.</p>
+<h2 id="overview">Overview</h2>
+<p>Jinja2 integration allows you to use advanced template features in your parameter values, including:</p>
+<ul>
+<li>Variable substitution with filters</li>
+<li>Conditional logic</li>
+<li>Loops and iterations</li>
+<li>Complex expressions</li>
+<li>Custom filters (future)</li>
+</ul>
+<h2 id="syntax-reference">Syntax Reference</h2>
+<h3 id="basic-variable-substitution">Basic Variable Substitution</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">params</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">config.temp_dir</span><span class="nv"> </span><span class="s">}}/logs&quot;</span>
+<span class="w">  </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">config.user</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">  </span><span class="nt">file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">context.previous_output</span><span class="nv"> </span><span class="s">}}&quot;</span>
 </code></pre></div>
-<h2 id="required-methods">Required Methods</h2>
-<h3 id="execute"><code>execute()</code></h3>
-<p>The main method that performs the plugin's work. Must return a dictionary.</p>
-<h3 id="metadata">Metadata</h3>
-<p>Define plugin metadata including name, version, and configuration requirements.</p>
-<h2 id="example-simple-file-reader">Example: Simple File Reader</h2>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">automax.plugins</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasePlugin</span><span class="p">,</span> <span class="n">PluginMetadata</span><span class="p">,</span> <span class="n">register_plugin</span>
-
-<span class="nd">@register_plugin</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">FileReaderPlugin</span><span class="p">(</span><span class="n">BasePlugin</span><span class="p">):</span>
-    <span class="n">METADATA</span> <span class="o">=</span> <span class="n">PluginMetadata</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;file_reader&quot;</span><span class="p">,</span>
-        <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Reads content from files&quot;</span><span class="p">,</span>
-        <span class="n">author</span><span class="o">=</span><span class="s2">&quot;Marco Fortina&quot;</span><span class="p">,</span>
-        <span class="n">category</span><span class="o">=</span><span class="s2">&quot;file_operations&quot;</span><span class="p">,</span>
-        <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;file&quot;</span><span class="p">,</span> <span class="s2">&quot;read&quot;</span><span class="p">],</span>
-        <span class="n">required_config</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;file_path&quot;</span><span class="p">],</span>
-        <span class="n">optional_config</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;encoding&quot;</span><span class="p">]</span>
-    <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-        <span class="n">file_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;file_path&quot;</span><span class="p">])</span>
-        <span class="n">encoding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;encoding&quot;</span><span class="p">,</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">file_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="n">PluginExecutionError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File not found: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="n">content</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s2">&quot;file_path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">file_path</span><span class="p">),</span>
-            <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">content</span><span class="p">,</span>
-            <span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
-        <span class="p">}</span>
+<h3 id="environment-variables">Environment Variables</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">params</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">home_dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">env.HOME</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">  </span><span class="nt">path_var</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">env.PATH</span><span class="nv"> </span><span class="s">}}&quot;</span>
 </code></pre></div>
+<h3 id="filters">Filters</h3>
+<p>Jinja2 provides built-in filters for data transformation:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">params</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">upper_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">config.app_name</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">upper</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">  </span><span class="nt">lower_env</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">config.environment</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">lower</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">  </span><span class="nt">join_items</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">context.items</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">join(&#39;,</span><span class="nv"> </span><span class="s">&#39;)</span><span class="nv"> </span><span class="s">}}&quot;</span>
+</code></pre></div>
+<h3 id="conditional-logic">Conditional Logic</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">params</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">debug_flag</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{%</span><span class="nv"> </span><span class="s">if</span><span class="nv"> </span><span class="s">config.environment</span><span class="nv"> </span><span class="s">==</span><span class="nv"> </span><span class="s">&#39;development&#39;</span><span class="nv"> </span><span class="s">%}--debug{%</span><span class="nv"> </span><span class="s">else</span><span class="nv"> </span><span class="s">%}--production{%</span><span class="nv"> </span><span class="s">endif</span><span class="nv"> </span><span class="s">%}&quot;</span>
+</code></pre></div>
+<h3 id="complex-expressions">Complex Expressions</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">params</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">full_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">config.base_path</span><span class="nv"> </span><span class="s">}}/releases/{{</span><span class="nv"> </span><span class="s">context.version</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">config.app_name</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">  </span><span class="nt">formatted</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Version</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">context.major</span><span class="nv"> </span><span class="s">}}.{{</span><span class="nv"> </span><span class="s">context.minor</span><span class="nv"> </span><span class="s">}}.{{</span><span class="nv"> </span><span class="s">context.patch</span><span class="nv"> </span><span class="s">}}&quot;</span>
+</code></pre></div>
+<h2 id="advanced-features">Advanced Features</h2>
+<h3 id="dynamic-step-configuration">Dynamic Step Configuration</h3>
+<p>Step and substep IDs and descriptions can use templates:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;deploy-{{</span><span class="nv"> </span><span class="s">config.environment</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Deploy</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">config.app_name</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="nt">substeps</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;backup-{{</span><span class="nv"> </span><span class="s">context.timestamp</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Backup</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">config.app_name</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">    </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;local_command&quot;</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;backup</span><span class="nv"> </span><span class="s">--app</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">config.app_name</span><span class="nv"> </span><span class="s">}}&quot;</span>
+</code></pre></div>
+<h3 id="template-output-mapping">Template Output Mapping</h3>
+<p>Transform output data using Jinja2 templates:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">output_mapping</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">source</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;data&quot;</span>
+<span class="w">  </span><span class="nt">transforms</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;template:{{</span><span class="nv"> </span><span class="s">data</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">selectattr(&#39;active&#39;)</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">map(attribute=&#39;name&#39;)</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">list</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">  </span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;active_users&quot;</span>
+</code></pre></div>
+<h3 id="explicit-template-flags">Explicit Template Flags</h3>
+<p>Use <code>_is_template</code> suffix for explicit template rendering:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;write_file_content&quot;</span>
+<span class="nt">params</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/opt/app/config.yaml&quot;</span>
+<span class="w">  </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Environment:</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">config.environment</span><span class="nv"> </span><span class="s">}}&quot;</span>
+<span class="w">  </span><span class="nt">content_is_template</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h2 id="backward-compatibility">Backward Compatibility</h2>
+<p>The legacy placeholder syntax continues to work unchanged:</p>
+<h3 id="legacy-syntax">Legacy Syntax</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">params</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{temp_dir}/files&quot;</span>
+<span class="w">  </span><span class="nt">env_var</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;$HOME&quot;</span>
+</code></pre></div>
+<h3 id="new-syntax-recommended">New Syntax (Recommended)</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">params</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">config.temp_dir</span><span class="nv"> </span><span class="s">}}/files&quot;</span>
+<span class="w">  </span><span class="nt">env_var</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">env.HOME</span><span class="nv"> </span><span class="s">}}&quot;</span>
+</code></pre></div>
+<h3 id="context-variables">Context Variables</h3>
+<p>The following context is available in templates:</p>
+<ul>
+<li>config: Complete configuration dictionary</li>
+<li>context: Step execution context (outputs from previous steps)</li>
+<li>env: Environment variables</li>
+</ul>
 <h2 id="best-practices">Best Practices</h2>
 <ol>
-<li><strong>Error Handling</strong>: Use specific exception types for different error scenarios</li>
-<li><strong>Validation</strong>: Validate configuration in <code>__init__</code> method</li>
-<li><strong>Logging</strong>: Use <code>self.logger</code> for consistent logging</li>
-<li><strong>Resource Management</strong>: Implement <code>cleanup()</code> for resource cleanup</li>
-<li><strong>Testing</strong>: Write unit tests for your plugins</li>
+<li>Use New Syntax: Prefer {{ config.key }} over {key} for better readability</li>
+<li>Error Handling: Templates fail fast on undefined variables - ensure all variables exist</li>
+<li>Complex Logic: Use filters and conditionals for data transformation instead of custom code</li>
+<li>Testing: Test complex templates with sample data before deployment</li>
 </ol>
-<h2 id="testing-your-plugin">Testing Your Plugin</h2>
-<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">test_file_reader</span><span class="p">():</span>
-    <span class="n">config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;file_path&quot;</span><span class="p">:</span> <span class="s2">&quot;test.txt&quot;</span><span class="p">}</span>
-    <span class="n">plugin</span> <span class="o">=</span> <span class="n">FileReaderPlugin</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
-    <span class="k">assert</span> <span class="s2">&quot;content&quot;</span> <span class="ow">in</span> <span class="n">result</span>
+<h2 id="examples">Examples</h2>
+<h3 id="advanced-path-construction">Advanced Path Construction</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">params</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">log_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">config.log_dir</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">config.environment</span><span class="nv"> </span><span class="s">}}/app-{{</span><span class="nv"> </span><span class="s">context.timestamp</span><span class="nv"> </span><span class="s">}}.log&quot;</span>
 </code></pre></div>
-<h2 id="distribution">Distribution</h2>
-<p>Place your plugin file in the <code>src/automax/plugins/</code> directory or
-create a separate package following Python packaging standards.</p>
+<h3 id="conditional-configuration">Conditional Configuration</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">params</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{%</span><span class="nv"> </span><span class="s">if</span><span class="nv"> </span><span class="s">config.debug</span><span class="nv"> </span><span class="s">%}--verbose</span><span class="nv"> </span><span class="s">--log-level=DEBUG{%</span><span class="nv"> </span><span class="s">else</span><span class="nv"> </span><span class="s">%}--quiet{%</span><span class="nv"> </span><span class="s">endif</span><span class="nv"> </span><span class="s">%}&quot;</span>
+</code></pre></div>
+<h3 id="multi-value-construction">Multi-value Construction</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">params</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;deploy.sh</span><span class="nv"> </span><span class="s">--env={{</span><span class="nv"> </span><span class="s">config.environment</span><span class="nv"> </span><span class="s">}}</span><span class="nv"> </span><span class="s">--version={{</span><span class="nv"> </span><span class="s">context.build_version</span><span class="nv"> </span><span class="s">}}</span><span class="nv"> </span><span class="s">--region={{</span><span class="nv"> </span><span class="s">config.region</span><span class="nv"> </span><span class="s">}}&quot;</span>
+</code></pre></div>
+<h2 id="error-handling">Error Handling</h2>
+<p>Template errors provide detailed information about the failure:</p>
+<ul>
+<li>Undefined variables</li>
+<li>Syntax errors</li>
+<li>Filter application errors</li>
+</ul>
+<p>Always test templates with representative data to catch errors early.</p>
 
 
 
