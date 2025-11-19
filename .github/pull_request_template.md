@@ -11,6 +11,7 @@
 - [ ] refactor: Code refactoring
 - [ ] perf: Performance improvement
 - [ ] style: Code style changes
+- [ ] security: Security improvements
 
 ## Technical Changes
 <!-- Describe the technical implementation details -->

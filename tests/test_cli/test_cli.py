@@ -18,10 +18,35 @@ def test_main_help(logger):
     assert "Automax - YAML-driven automation framework" in result.stdout
 
 
-def test_main_list(tmp_path, cfg):
+def test_main_list(tmp_path):
     """
     Verify --list shows available steps.
     """
+    log_dir = tmp_path / "logs"
+    log_dir.mkdir()
+
+    # Create fake SSH key for testing
+    ssh_dir = tmp_path / ".ssh"
+    ssh_dir.mkdir()
+    fake_key = ssh_dir / "id_ed25519"
+    fake_key.write_text("fake-ssh-key-for-testing")
+
+    # Create temporary config file
+    config_path = tmp_path / "config.yaml"
+    with open(config_path, "w") as f:
+        f.write(
+            f"""
+ssh:
+  private_key: "{fake_key}"
+  timeout: 300
+log_dir: "{log_dir}"
+log_level: "INFO"
+json_log: false
+temp_dir: "/tmp"
+steps_dir: "examples/steps"
+"""
+        )
+
     result = subprocess.run(
         [
             "python3",
@@ -29,7 +54,7 @@ def test_main_list(tmp_path, cfg):
             "automax",
             "list-steps",
             "--config",
-            "tests/config/config.yaml",
+            str(config_path),
         ],
         capture_output=True,
         text=True,
@@ -44,15 +69,18 @@ def test_main_execution_success(tmp_path):
     log_dir = tmp_path / "logs"
     log_dir.mkdir()
 
-    # Use the example SSH key
-    ssh_key_path = os.path.abspath("examples/.ssh/id_ed25519")
+    # Create fake SSH key for testing
+    ssh_dir = tmp_path / ".ssh"
+    ssh_dir.mkdir()
+    fake_key = ssh_dir / "id_ed25519"
+    fake_key.write_text("fake-ssh-key-for-testing")
 
     config_path = tmp_path / "config.yaml"
     with open(config_path, "w") as f:
         f.write(
             f"""
 ssh:
-  private_key: "{ssh_key_path}"
+  private_key: "{fake_key}"
   timeout: 300
 log_dir: "{log_dir}"
 log_level: "INFO"
@@ -95,15 +123,18 @@ def test_main_execution_failure(tmp_path):
     log_dir = tmp_path / "logs"
     log_dir.mkdir()
 
-    # Use the example SSH key
-    ssh_key_path = os.path.abspath("examples/.ssh/id_ed25519")
+    # Create fake SSH key for testing
+    ssh_dir = tmp_path / ".ssh"
+    ssh_dir.mkdir()
+    fake_key = ssh_dir / "id_ed25519"
+    fake_key.write_text("fake-ssh-key-for-testing")
 
     config_path = tmp_path / "config.yaml"
     with open(config_path, "w") as f:
         f.write(
             f"""
 ssh:
-  private_key: "{ssh_key_path}"
+  private_key: "{fake_key}"
   timeout: 300
 log_dir: "{log_dir}"
 log_level: "INFO"
@@ -172,15 +203,18 @@ def test_main_validate_only(tmp_path):
     log_dir = tmp_path / "logs"
     log_dir.mkdir()
 
-    # Use the test SSH key
-    ssh_key_path = os.path.abspath("examples/.ssh/id_ed25519")
+    # Create fake SSH key for testing
+    ssh_dir = tmp_path / ".ssh"
+    ssh_dir.mkdir()
+    fake_key = ssh_dir / "id_ed25519"
+    fake_key.write_text("fake-ssh-key-for-testing")
 
     config_path = tmp_path / "config.yaml"
     with open(config_path, "w") as f:
         f.write(
             f"""
 ssh:
-  private_key: "{ssh_key_path}"
+  private_key: "{fake_key}"
   timeout: 300
 log_dir: "{log_dir}"
 log_level: "INFO"

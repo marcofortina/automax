@@ -2,7 +2,7 @@
 
 # SSH configuration
 ssh:
-  private_key: "examples/.ssh/id_ed25519"
+  private_key: "/path/to/your/ssh/private/key"  # Update this path
   timeout: 300
 
 # Logging configuration
