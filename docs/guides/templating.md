@@ -57,6 +57,47 @@ params:
   formatted: "Version {{ context.major }}.{{ context.minor }}.{{ context.patch }}"
 ```
 
+## Advanced Features
+
+### Dynamic Step Configuration
+
+Step and substep IDs and descriptions can use templates:
+
+```yaml
+id: "deploy-{{ config.environment }}"
+description: "Deploy {{ config.app_name }}"
+substeps:
+  - id: "backup-{{ context.timestamp }}"
+    description: "Backup {{ config.app_name }}"
+    plugin: "local_command"
+    params:
+      command: "backup --app {{ config.app_name }}"
+```
+
+### Template Output Mapping
+
+Transform output data using Jinja2 templates:
+
+```yaml
+output_mapping:
+  source: "data"
+  transforms:
+    - "template:{{ data | selectattr('active') | map(attribute='name') | list }}"
+  target: "active_users"
+```
+
+### Explicit Template Flags
+
+Use `_is_template` suffix for explicit template rendering:
+
+```yaml
+plugin: "write_file_content"
+params:
+  file_path: "/opt/app/config.yaml"
+  content: "Environment: {{ config.environment }}"
+  content_is_template: true
+```
+
 ## Backward Compatibility
 
 The legacy placeholder syntax continues to work unchanged:
