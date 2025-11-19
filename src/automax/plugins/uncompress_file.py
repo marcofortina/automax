@@ -17,6 +17,20 @@ from automax.plugins.exceptions import PluginExecutionError
 class UncompressFilePlugin(BasePlugin):
     """
     Uncompress files and archives.
+
+    Returns:
+        Dictionary containing:
+            - source_path (str): The path of the compressed file
+            - output_path (str): The path where files were extracted
+            - format (str): The format of the compressed file
+            - compressed_size (int): Size of the compressed file in bytes
+            - extracted_size (int): Total size of extracted files in bytes
+            - status (str): "success" if the operation was successful
+
+    Raises:
+        PluginExecutionError: If extraction fails due to missing archive,
+                            corrupt file, unsupported format, or write permissions.
+
     """
 
     METADATA = PluginMetadata(
@@ -41,10 +55,17 @@ class UncompressFilePlugin(BasePlugin):
         Uncompress a file or archive.
 
         Returns:
-            Dictionary containing the extraction results.
+            Dictionary containing:
+                - source_path (str): The path of the compressed file
+                - output_path (str): The path where files were extracted
+                - format (str): The format used for extraction
+                - compressed_size (int): Size of the compressed file in bytes
+                - extracted_size (int): Total size of extracted files in bytes
+                - status (str): "success" if the operation was successful
 
         Raises:
-            PluginExecutionError: If extraction fails.
+            PluginExecutionError: If extraction fails due to missing source file,
+                                unsupported format, corrupt archive, or IO errors.
 
         """
         source_path = Path(self.config["source_path"])
