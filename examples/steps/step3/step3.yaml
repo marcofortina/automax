@@ -1,0 +1,19 @@
+description: "Demonstrate Jinja2 templating features"
+substeps:
+  - id: "dynamic-config"
+    description: "Show dynamic configuration with templates"
+    plugin: "local_command"
+    params:
+      command: "echo 'App: {{ config.app_name }}, Env: {{ config.environment }}'"
+  
+  - id: "template-content"
+    description: "Write templated content to file"
+    plugin: "write_file_content"
+    params:
+      file_path: "/tmp/automax-demo-{{ config.environment }}.txt"
+      content: |
+        # Generated configuration
+        environment: {{ config.environment }}
+        app_name: {{ config.app_name }}
+      content_is_template: true
+      create_dirs: true
