@@ -250,11 +250,26 @@ class SubStepManager:
 
         """
         resolved = {}
+        template_fields = []
+
+        # First pass: identify template fields
         for k, v in params.items():
+            if k.endswith("_is_template") and v is True:
+                field_name = k[:-12]  # Remove '_is_template' suffix
+                template_fields.append(field_name)
+
+        # Second pass: resolve values
+        for k, v in params.items():
+            # Skip template flags
+            if k.endswith("_is_template"):
+                continue
+
             if isinstance(v, str):
                 try:
-                    # First, try to resolve as Jinja2 template if it contains template patterns
-                    if "{{" in v or "{%" in v:
+                    # Check if this field should be treated as template
+                    is_template = k in template_fields or "{{" in v or "{%" in v
+
+                    if is_template:
                         v = self.template_manager.render(v)
                     else:
                         # Otherwise, use legacy resolution
