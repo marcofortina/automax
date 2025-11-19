@@ -8,5 +8,8 @@ dist/
 build/
 *.egg-info/
 
+# SSH keys
+examples/.ssh/
+
 # MkDocs build output
 site/
