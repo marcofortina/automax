@@ -52,11 +52,20 @@ class HashiCorpVaultPlugin(BasePlugin):
             - create: same as write
 
         Returns:
-            dict: containing path, mount_point, action,
-                  value (if available), metadata, status.
+            Dictionary containing:
+                - mount_point (str): The Vault secrets engine mount point
+                - path (str): The path of the secret
+                - action (str): The action performed (read, write, create)
+                - value (str/dict): The secret value (for read and write actions)
+                - version (int): The version of the secret (for read actions)
+                - created_time (str): Creation timestamp (for read actions)
+                - deletion_time (str): Deletion timestamp if applicable (for read actions)
+                - destroyed (bool): Whether secret is destroyed (for read actions)
+                - status (str): Operation status (success, written)
 
         Raises:
-            PluginExecutionError: for any SDK or Vault-related failure.
+            PluginExecutionError: If Vault authentication fails, secret not found,
+                                insufficient permissions, or other Vault errors occur.
 
         """
         if not HVAC_AVAILABLE:
