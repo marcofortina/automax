@@ -349,3 +349,137 @@ class TestAwsSecretsManagerPlugin:
 
         # Verify mock call
         mock_session.assert_called_once_with(profile_name="my-profile")
+
+
+class TestAwsSecretsManagerErrorHandling:
+    """
+    Additional test suite for AWS Secrets Manager error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    @patch("automax.plugins.aws_secrets_manager.boto3.Session")
+    def test_aws_secrets_manager_plugin_invalid_region(self, mock_session):
+        """
+        Test aws_secrets_manager plugin execution with invalid region.
+        """
+        # Setup mock to raise exception for invalid region
+        mock_session.side_effect = ClientError(
+            {"Error": {"Code": "InvalidRegionException"}}, "GetSecretValue"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+        plugin = plugin_class(
+            {
+                "secret_name": "my-secret",
+                "action": "read",
+                "region_name": "invalid-region",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "InvalidRegionException" in str(exc_info.value)
+
+    @patch("automax.plugins.aws_secrets_manager.boto3.Session")
+    def test_aws_secrets_manager_plugin_throttling_exception(self, mock_session):
+        """
+        Test aws_secrets_manager plugin execution with throttling exception.
+        """
+        # Setup mocks
+        mock_session_instance = MagicMock()
+        mock_session.return_value = mock_session_instance
+        mock_secrets_client = MagicMock()
+        mock_session_instance.client.return_value = mock_secrets_client
+
+        error_response = {
+            "Error": {
+                "Code": "ThrottlingException",
+                "Message": "Rate exceeded",
+            }
+        }
+        mock_secrets_client.get_secret_value.side_effect = ClientError(
+            error_response, "GetSecretValue"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+        plugin = plugin_class(
+            {"secret_name": "my-secret", "action": "read", "region_name": "us-east-1"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "ThrottlingException" in str(exc_info.value)
+
+    @patch("automax.plugins.aws_secrets_manager.boto3.Session")
+    def test_aws_secrets_manager_plugin_internal_service_error(self, mock_session):
+        """
+        Test aws_secrets_manager plugin execution with internal service error.
+        """
+        # Setup mocks
+        mock_session_instance = MagicMock()
+        mock_session.return_value = mock_session_instance
+        mock_secrets_client = MagicMock()
+        mock_session_instance.client.return_value = mock_secrets_client
+
+        error_response = {
+            "Error": {
+                "Code": "InternalServiceError",
+                "Message": "Internal service error",
+            }
+        }
+        mock_secrets_client.get_secret_value.side_effect = ClientError(
+            error_response, "GetSecretValue"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+        plugin = plugin_class(
+            {"secret_name": "my-secret", "action": "read", "region_name": "us-east-1"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "InternalServiceError" in str(exc_info.value)
+
+    @patch("automax.plugins.aws_secrets_manager.boto3.Session")
+    def test_aws_secrets_manager_plugin_decryption_failure(self, mock_session):
+        """
+        Test aws_secrets_manager plugin execution with decryption failure.
+        """
+        # Setup mocks
+        mock_session_instance = MagicMock()
+        mock_session.return_value = mock_session_instance
+        mock_secrets_client = MagicMock()
+        mock_session_instance.client.return_value = mock_secrets_client
+
+        error_response = {
+            "Error": {
+                "Code": "DecryptionFailure",
+                "Message": "Unable to decrypt secret",
+            }
+        }
+        mock_secrets_client.get_secret_value.side_effect = ClientError(
+            error_response, "GetSecretValue"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("aws_secrets_manager")
+        plugin = plugin_class(
+            {"secret_name": "my-secret", "action": "read", "region_name": "us-east-1"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "DecryptionFailure" in str(exc_info.value)
