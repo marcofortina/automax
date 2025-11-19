@@ -40,10 +40,18 @@ class LocalCommandPlugin(BasePlugin):
         Execute a local system command.
 
         Returns:
-            dict: command, returncode, stdout, stderr, timeout, shell, status
+            Dictionary containing:
+                - command (str): The command that was executed
+                - returncode (int): The return code of the command
+                - stdout (str): The standard output of the command
+                - stderr (str): The standard error of the command
+                - timeout (int/float): The timeout value used
+                - shell (bool): Whether shell mode was used
+                - status (str): "success" if returncode is 0, "failure" otherwise
 
         Raises:
-            PluginExecutionError: If command execution fails or times out.
+            PluginExecutionError: If command execution fails, times out,
+                                or command is not found.
 
         """
         command = self.config["command"]
