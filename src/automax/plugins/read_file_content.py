@@ -43,10 +43,16 @@ class ReadFileContentPlugin(BasePlugin):
         Read content from specified file.
 
         Returns:
-            Dictionary containing file content and metadata
+            Dictionary containing:
+                - file_path (str): The path of the file read
+                - content (str): The content of the file
+                - encoding (str): The encoding used to read the file
+                - size (int): The size of the content in bytes
+                - status (str): "success" if the operation was successful
 
         Raises:
-            PluginExecutionError: If file cannot be read
+            PluginExecutionError: If file cannot be read due to not found,
+                                permission issues, or encoding problems.
 
         """
         file_path = Path(self.config["file_path"])
