@@ -2,6 +2,7 @@
 Tests for ssh_command plugin.
 """
 
+import socket
 from unittest.mock import ANY, MagicMock, patch
 
 import paramiko
@@ -292,3 +293,183 @@ class TestSSHCommandPlugin:
             timeout=30,
             key_filename="/path/to/key.pem",
         )
+
+
+class TestSSHCommandErrorHandling:
+    """
+    Additional test suite for SSH Command error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    @patch("paramiko.SSHClient")
+    def test_ssh_command_plugin_connection_timeout(self, mock_ssh_client):
+        """
+        Test SSH command plugin execution with connection timeout.
+        """
+        # Setup mocks
+        mock_client = MagicMock()
+        mock_ssh_client.return_value = mock_client
+        mock_client.connect.side_effect = socket.timeout("Connection timeout")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("ssh_command")
+        plugin = plugin_class(
+            {
+                "host": "example.com",
+                "command": "ls -la",
+                "username": "user",
+                "timeout": 5,
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Connection timeout" in str(exc_info.value)
+
+    @patch("paramiko.SSHClient")
+    def test_ssh_command_plugin_connection_refused(self, mock_ssh_client):
+        """
+        Test SSH command plugin execution with connection refused.
+        """
+        # Setup mocks
+        mock_client = MagicMock()
+        mock_ssh_client.return_value = mock_client
+        mock_client.connect.side_effect = ConnectionRefusedError("Connection refused")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("ssh_command")
+        plugin = plugin_class(
+            {
+                "host": "example.com",
+                "command": "ls -la",
+                "username": "user",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Connection refused" in str(exc_info.value)
+
+    @patch("paramiko.SSHClient")
+    def test_ssh_command_plugin_no_route_to_host(self, mock_ssh_client):
+        """
+        Test SSH command plugin execution with no route to host.
+        """
+        # Setup mocks
+        mock_client = MagicMock()
+        mock_ssh_client.return_value = mock_client
+        mock_client.connect.side_effect = OSError("No route to host")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("ssh_command")
+        plugin = plugin_class(
+            {
+                "host": "unreachable.example.com",
+                "command": "ls -la",
+                "username": "user",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "No route to host" in str(exc_info.value)
+
+    @patch("paramiko.SSHClient")
+    def test_ssh_command_plugin_invalid_key_file(self, mock_ssh_client):
+        """
+        Test SSH command plugin execution with invalid key file.
+        """
+        # Setup mocks
+        mock_client = MagicMock()
+        mock_ssh_client.return_value = mock_client
+        mock_client.connect.side_effect = paramiko.SSHException("Invalid key file")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("ssh_command")
+        plugin = plugin_class(
+            {
+                "host": "example.com",
+                "command": "ls -la",
+                "username": "user",
+                "key_file": "/invalid/key.pem",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Invalid key file" in str(exc_info.value)
+
+    @patch("paramiko.SSHClient")
+    def test_ssh_command_plugin_command_timeout(self, mock_ssh_client):
+        """
+        Test SSH command plugin execution with command timeout.
+        """
+        # Setup mocks
+        mock_client = MagicMock()
+        mock_ssh_client.return_value = mock_client
+
+        mock_stdin = MagicMock()
+        mock_stdout = MagicMock()
+        mock_stderr = MagicMock()
+
+        mock_client.exec_command.return_value = (mock_stdin, mock_stdout, mock_stderr)
+        mock_stdout.channel.recv_exit_status.side_effect = socket.timeout(
+            "Command timeout"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("ssh_command")
+        plugin = plugin_class(
+            {
+                "host": "example.com",
+                "command": "sleep 30",
+                "username": "user",
+                "timeout": 5,
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Command timeout" in str(exc_info.value)
+
+    @patch("paramiko.SSHClient")
+    def test_ssh_command_plugin_channel_error(self, mock_ssh_client):
+        """
+        Test SSH command plugin execution with channel error.
+        """
+        # Setup mocks
+        mock_client = MagicMock()
+        mock_ssh_client.return_value = mock_client
+
+        # Correzione: ChannelException richiede parametri specifici
+        mock_client.exec_command.side_effect = paramiko.ChannelException(
+            1, "Channel error"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("ssh_command")
+        plugin = plugin_class(
+            {
+                "host": "example.com",
+                "command": "ls -la",
+                "username": "user",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Channel error" in str(exc_info.value)
