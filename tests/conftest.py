@@ -2,7 +2,6 @@
 Global pytest fixtures for Automax.
 """
 
-import os
 from pathlib import Path
 
 import pytest
@@ -13,12 +12,36 @@ from automax.core.managers.plugin_manager import PluginManager
 
 
 @pytest.fixture
-def cfg():
+def cfg(tmp_path):
     """
-    Load the config/config.yaml for tests.
+    Load a temporary config with fake SSH key for tests.
     """
-    config_file = Path(os.path.join(os.path.dirname(__file__), "config/config.yaml"))
-    config_mgr = ConfigManager(config_file)
+    # Create fake SSH key for testing
+    ssh_dir = tmp_path / ".ssh"
+    ssh_dir.mkdir()
+    fake_key = ssh_dir / "id_ed25519"
+    fake_key.write_text("fake-ssh-key-for-testing")
+
+    log_dir = tmp_path / "logs"
+    log_dir.mkdir()
+
+    # Create temporary config file
+    config_file = tmp_path / "config.yaml"
+    with open(config_file, "w") as f:
+        f.write(
+            f"""
+ssh:
+  private_key: "{fake_key}"
+  timeout: 300
+log_dir: "{log_dir}"
+log_level: "INFO"
+json_log: false
+temp_dir: "/tmp"
+steps_dir: "examples/steps"
+"""
+        )
+
+    config_mgr = ConfigManager(Path(config_file))
     return config_mgr.cfg
 
 
