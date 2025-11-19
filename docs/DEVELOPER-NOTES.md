@@ -27,6 +27,8 @@ We use **lowercase** types + imperative mood. No scope unless needed `(core)`, n
   Es: `fix: restore step execution features from legacy system`
 - `refactor:` Code refactoring without changing behavior
   Es: `refactor: replace argparse with Click`
+- `security:` Security improvements, vulnerability fixes, and security-related configuration changes
+  Es: `security: remove SSH keys and update configuration`
 
 ### Alternative types (use only if nothing above fits)
 - `config:` → specific config files (es. pytest.ini, but we prefer setup)
@@ -88,5 +90,6 @@ and advanced output transformations. All tests passing, backward compatibility m
 | `build`    | Packaging                         | `build: add setup.py` |
 | `setup`    | Config files & utils              | `setup: add validation scripts` |
 | `test`     | Test files                        | `test: add plugin tests` |
+| `security` | Security improvements             | `security: remove SSH keys` |
 
 Keep it clean, keep it fast! 🚀

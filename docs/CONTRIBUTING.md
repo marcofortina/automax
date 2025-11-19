@@ -67,6 +67,7 @@ This is a lightweight, YAML-based automation framework. All contributions are we
 - `style/` → formatting, linting
 - `test/` → tests only
 - `release/` → version bumps, changelog
+- `security/` → security improvements, vulnerability fixes
 
 ## Code Style
 - Python 3.11+
