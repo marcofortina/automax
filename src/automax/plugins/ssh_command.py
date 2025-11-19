@@ -42,10 +42,18 @@ class SSHCommandPlugin(BasePlugin):
         Execute a command on remote server via SSH.
 
         Returns:
-            Dictionary containing command execution results.
+            Dictionary containing:
+                - host (str): The remote host where command was executed
+                - port (int): The SSH port used
+                - command (str): The command that was executed
+                - exit_code (int): The exit code of the command
+                - stdout (str): The standard output of the command
+                - stderr (str): The standard error of the command
+                - status (str): "success" if exit_code is 0, "failure" otherwise
 
         Raises:
-            PluginExecutionError: If SSH connection or command execution fails.
+            PluginExecutionError: If SSH connection fails, authentication fails,
+                                command execution fails, or connection times out.
 
         """
         host = self.config["host"]
