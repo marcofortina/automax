@@ -46,10 +46,18 @@ class WriteFileContentPlugin(BasePlugin):
         Write content to specified file.
 
         Returns:
-            Dictionary containing operation results
+            Dictionary containing:
+                - file_path (str): The path of the file written
+                - content_length (int): The length of the content written
+                - file_size (int): The size of the file after writing
+                - encoding (str): The encoding used to write the file
+                - mode (str): The mode used to open the file
+                - create_dirs (bool): Whether directories were created
+                - status (str): "success" if the operation was successful
 
         Raises:
-            PluginExecutionError: If file cannot be written
+            PluginExecutionError: If file cannot be written due to permission issues,
+                                IO errors, or invalid mode.
 
         """
         file_path = Path(self.config["file_path"])

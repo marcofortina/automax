@@ -15,6 +15,20 @@ from automax.plugins.exceptions import PluginExecutionError
 class RunHttpRequestPlugin(BasePlugin):
     """
     Make HTTP requests to APIs with optional Basic Auth.
+
+    Returns:
+        Dictionary containing:
+            - url (str): The requested URL
+            - method (str): HTTP method used (GET, POST, etc.)
+            - status_code (int): HTTP status code received
+            - headers (dict): Response headers
+            - content (str): Response body content
+            - elapsed (float): Request duration in seconds
+            - status (str): "success" for status < 400, "failure" otherwise
+
+    Raises:
+        PluginExecutionError: If request fails due to network issues or HTTP errors.
+
     """
 
     METADATA = PluginMetadata(
@@ -54,10 +68,18 @@ class RunHttpRequestPlugin(BasePlugin):
         Make an HTTP request.
 
         Returns:
-            Dictionary containing the response data.
+            Dictionary containing:
+                - url (str): The requested URL
+                - method (str): HTTP method used (GET, POST, etc.)
+                - status_code (int): HTTP status code received
+                - headers (dict): Response headers
+                - content (str): Response body content
+                - elapsed (float): Request duration in seconds
+                - status (str): "success" for status < 400, "failure" otherwise
 
         Raises:
-            PluginExecutionError: If the request fails.
+            PluginExecutionError: If request fails due to network issues,
+                                timeouts, invalid URLs, or HTTP errors.
 
         """
         url = self.config["url"]

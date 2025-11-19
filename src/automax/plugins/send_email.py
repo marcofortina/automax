@@ -15,6 +15,19 @@ from automax.plugins.exceptions import PluginExecutionError
 class SendEmailPlugin(BasePlugin):
     """
     Send emails via SMTP.
+
+    Returns:
+        Dictionary containing:
+            - smtp_server (str): SMTP server used
+            - port (int): SMTP port used
+            - from (str): Sender email address
+            - to (str/list): Recipient email addresses
+            - subject (str): Email subject
+            - status (str): "success" if email was sent
+
+    Raises:
+        PluginExecutionError: If SMTP connection fails or email sending fails.
+
     """
 
     METADATA = PluginMetadata(
@@ -55,10 +68,17 @@ class SendEmailPlugin(BasePlugin):
         Send an email.
 
         Returns:
-            Dictionary containing the send status.
+            Dictionary containing:
+                - smtp_server (str): SMTP server used
+                - port (int): SMTP port used
+                - from (str): Sender email address
+                - to (str/list): Recipient email addresses
+                - subject (str): Email subject
+                - status (str): "success" if email was sent
 
         Raises:
-            PluginExecutionError: If the email cannot be sent.
+            PluginExecutionError: If SMTP connection fails, authentication fails,
+                                or email sending fails.
 
         """
         smtp_server = self.config["smtp_server"]

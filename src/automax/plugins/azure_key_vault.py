@@ -53,10 +53,19 @@ class AzureKeyVaultPlugin(BasePlugin):
             - create: same as write
 
         Returns:
-            dict: secret_name, action, secret_value (if read/write), status
+            Dictionary containing:
+                - vault_url (str): The URL of the Azure Key Vault
+                - secret_name (str): The name of the secret
+                - action (str): The action performed (read, write, create)
+                - secret_value (str): The secret value (for read and write actions)
+                - version (str): The version of the secret (for read actions)
+                - enabled (bool): Whether the secret is enabled (for read actions)
+                - expires_on (str): ISO format expiration date if set (for read actions)
+                - status (str): Operation status (success, written)
 
         Raises:
-            PluginExecutionError: if action unsupported or Azure error
+            PluginExecutionError: If Azure credentials are invalid, secret not found,
+                                insufficient permissions, or other Azure errors occur.
 
         """
         if not AZURE_AVAILABLE:

@@ -19,6 +19,19 @@ except ImportError:
 class DatabaseOperationsPlugin(BasePlugin):
     """
     Execute SQL queries using any ODBC connection via pyodbc.
+
+    Returns:
+        Dictionary containing:
+            - query (str): The SQL query executed
+            - columns (list): Column names for SELECT queries
+            - rows (list): Result rows for SELECT queries
+            - row_count (int): Number of rows affected
+            - lastrowid (int/None): Last inserted row ID if available
+            - status (str): "success" if operation completed
+
+    Raises:
+        PluginExecutionError: If pyodbc is missing or database errors occur.
+
     """
 
     METADATA = PluginMetadata(
@@ -54,10 +67,17 @@ class DatabaseOperationsPlugin(BasePlugin):
             - execute : run any SQL without expecting result rows
 
         Returns:
-            dict: query, result rows (if select), row_count, lastrowid (if available), status
+            Dictionary containing:
+                - query (str): The SQL query executed
+                - columns (list): Column names for SELECT queries
+                - rows (list): Result rows for SELECT queries
+                - row_count (int): Number of rows affected
+                - lastrowid (int/None): Last inserted row ID if available
+                - status (str): "success" if operation completed
 
         Raises:
-            PluginExecutionError: if pyodbc is missing or any DB error occurs.
+            PluginExecutionError: If pyodbc is missing, invalid action specified,
+                                or database errors occur during execution.
 
         """
         if not PYODBC_AVAILABLE:

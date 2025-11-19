@@ -19,6 +19,21 @@ except ImportError:
 class CheckIcmpConnectionPlugin(BasePlugin):
     """
     Check if a host is reachable via ICMP ping using ping3 library.
+
+    Returns:
+        Dictionary containing:
+            - status (str): "success" or "failure"
+            - host (str): The target hostname or IP address
+            - count (int): Number of ping attempts
+            - timeout (float): Timeout for each ping attempt
+            - interval (float): Interval between pings
+            - connected (bool): True if host is reachable
+            - success_count (int): Number of successful pings
+            - success_rate (float): Percentage of successful pings
+
+    Raises:
+        PluginExecutionError: If ping3 library is missing or host resolution fails.
+
     """
 
     METADATA = PluginMetadata(
@@ -45,10 +60,20 @@ class CheckIcmpConnectionPlugin(BasePlugin):
         Check ICMP connectivity to host using ping3.
 
         Returns:
-            Dictionary containing ping status and details.
+            Dictionary containing:
+                - status (str): "success" or "failure"
+                - host (str): The target hostname or IP address
+                - count (int): Number of ping attempts
+                - timeout (float): Timeout for each ping attempt
+                - interval (float): Interval between pings
+                - connected (bool): True if host is reachable
+                - success_count (int): Number of successful pings
+                - success_rate (float): Percentage of successful pings
+                - error (str): Error message if operation failed
 
         Raises:
-            PluginExecutionError: If ping fails and fail_fast is True.
+            PluginExecutionError: If ping3 library is missing, host resolution fails,
+                                or fail_fast is True and ping fails.
 
         """
         if not PING3_AVAILABLE:

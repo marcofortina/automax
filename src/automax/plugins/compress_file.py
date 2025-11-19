@@ -17,6 +17,22 @@ from automax.plugins.exceptions import PluginExecutionError
 class CompressFilePlugin(BasePlugin):
     """
     Compress files and directories using gzip, tar, or zip.
+
+    Returns:
+        Dictionary containing:
+            - source_path (str): The original path that was compressed
+            - output_path (str): The path of the created compressed file
+            - format (str): The format used for compression (gzip, tar, zip)
+            - compression_level (int): The compression level used
+            - original_size (int): The size of the original file/directory in bytes
+            - compressed_size (int): The size of the compressed file in bytes
+            - compression_ratio (float): The ratio of compressed size to original size
+            - status (str): "success" if the operation was successful
+
+    Raises:
+        PluginExecutionError: If compression fails due to missing files,
+                            permission issues, unsupported formats, or other errors.
+
     """
 
     METADATA = PluginMetadata(
