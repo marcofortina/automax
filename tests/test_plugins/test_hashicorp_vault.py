@@ -388,3 +388,275 @@ class TestHashicorpVaultPlugin:
         mock_client_class.assert_called_once_with(
             url="https://vault.example.com", token="s.1234567890", namespace=None
         )
+
+
+class TestHashicorpVaultErrorHandling:
+    """
+    Additional test suite for HashiCorp Vault error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    @patch("hvac.Client")
+    def test_hashicorp_vault_plugin_invalid_url(self, mock_client_class):
+        """
+        Test hashicorp_vault plugin execution with invalid Vault URL.
+        """
+        # Setup mock client
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+        mock_client.is_authenticated.return_value = True
+
+        mock_client.secrets.kv.v2.read_secret_version.side_effect = Exception(
+            "Connection failed"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("hashicorp_vault")
+        plugin = plugin_class(
+            {
+                "url": "https://invalid-vault.example.com",
+                "mount_point": "secret",
+                "path": "my-app/credentials",
+                "action": "read",
+                "token": "s.1234567890",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Connection failed" in str(exc_info.value)
+
+    @patch("hvac.Client")
+    def test_hashicorp_vault_plugin_invalid_token(self, mock_client_class):
+        """
+        Test hashicorp_vault plugin execution with invalid token.
+        """
+        # Setup mock client that fails authentication
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+        mock_client.is_authenticated.return_value = False
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("hashicorp_vault")
+        plugin = plugin_class(
+            {
+                "url": "https://vault.example.com",
+                "mount_point": "secret",
+                "path": "my-app/credentials",
+                "action": "read",
+                "token": "invalid-token",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Vault authentication failed" in str(exc_info.value)
+
+    @patch("hvac.Client")
+    def test_hashicorp_vault_plugin_permission_denied(self, mock_client_class):
+        """
+        Test hashicorp_vault plugin execution with permission denied.
+        """
+        # Setup mock client
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+        mock_client.is_authenticated.return_value = True
+
+        from hvac.exceptions import Forbidden
+
+        mock_client.secrets.kv.v2.read_secret_version.side_effect = Forbidden(
+            "Permission denied"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("hashicorp_vault")
+        plugin = plugin_class(
+            {
+                "url": "https://vault.example.com",
+                "mount_point": "secret",
+                "path": "my-app/credentials",
+                "action": "read",
+                "token": "s.1234567890",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Permission denied" in str(exc_info.value)
+
+    @patch("hvac.Client")
+    def test_hashicorp_vault_plugin_mount_point_not_found(self, mock_client_class):
+        """
+        Test hashicorp_vault plugin execution with non-existent mount point.
+        """
+        # Setup mock client
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+        mock_client.is_authenticated.return_value = True
+
+        from hvac.exceptions import InvalidPath
+
+        mock_client.secrets.kv.v2.read_secret_version.side_effect = InvalidPath(
+            "Mount point not found"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("hashicorp_vault")
+        plugin = plugin_class(
+            {
+                "url": "https://vault.example.com",
+                "mount_point": "nonexistent-mount",
+                "path": "my-app/credentials",
+                "action": "read",
+                "token": "s.1234567890",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Mount point not found" in str(exc_info.value)
+
+    @patch("hvac.Client")
+    def test_hashicorp_vault_plugin_vault_sealed(self, mock_client_class):
+        """
+        Test hashicorp_vault plugin execution when Vault is sealed.
+        """
+        # Setup mock client
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+        mock_client.is_authenticated.return_value = True
+
+        from hvac.exceptions import VaultDown
+
+        mock_client.secrets.kv.v2.read_secret_version.side_effect = VaultDown(
+            "Vault is sealed"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("hashicorp_vault")
+        plugin = plugin_class(
+            {
+                "url": "https://vault.example.com",
+                "mount_point": "secret",
+                "path": "my-app/credentials",
+                "action": "read",
+                "token": "s.1234567890",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Vault is sealed" in str(exc_info.value)
+
+    @patch("hvac.Client")
+    def test_hashicorp_vault_plugin_rate_limited(self, mock_client_class):
+        """
+        Test hashicorp_vault plugin execution when rate limited.
+        """
+        # Setup mock client
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+        mock_client.is_authenticated.return_value = True
+
+        # Usiamo una eccezione generica per rate limiting
+        mock_client.secrets.kv.v2.read_secret_version.side_effect = Exception(
+            "Vault rate limit exceeded"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("hashicorp_vault")
+        plugin = plugin_class(
+            {
+                "url": "https://vault.example.com",
+                "mount_point": "secret",
+                "path": "my-app/credentials",
+                "action": "read",
+                "token": "s.1234567890",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Vault rate limit exceeded" in str(exc_info.value)
+
+    @patch("hvac.Client")
+    def test_hashicorp_vault_plugin_internal_server_error(self, mock_client_class):
+        """
+        Test hashicorp_vault plugin execution with internal server error.
+        """
+        # Setup mock client
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+        mock_client.is_authenticated.return_value = True
+
+        from hvac.exceptions import InternalServerError
+
+        mock_client.secrets.kv.v2.read_secret_version.side_effect = InternalServerError(
+            "Internal server error"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("hashicorp_vault")
+        plugin = plugin_class(
+            {
+                "url": "https://vault.example.com",
+                "mount_point": "secret",
+                "path": "my-app/credentials",
+                "action": "read",
+                "token": "s.1234567890",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Internal server error" in str(exc_info.value)
+
+    @patch("hvac.Client")
+    def test_hashicorp_vault_plugin_network_timeout(self, mock_client_class):
+        """
+        Test hashicorp_vault plugin execution with network timeout.
+        """
+        # Setup mock client
+        mock_client = MagicMock()
+        mock_client_class.return_value = mock_client
+        mock_client.is_authenticated.return_value = True
+
+        import requests
+
+        mock_client.secrets.kv.v2.read_secret_version.side_effect = (
+            requests.exceptions.Timeout("Request timeout")
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("hashicorp_vault")
+        plugin = plugin_class(
+            {
+                "url": "https://vault.example.com",
+                "mount_point": "secret",
+                "path": "my-app/credentials",
+                "action": "read",
+                "token": "s.1234567890",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Request timeout" in str(exc_info.value)
