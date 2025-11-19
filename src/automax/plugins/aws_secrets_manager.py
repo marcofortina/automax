@@ -57,10 +57,17 @@ class AwsSecretsManagerPlugin(BasePlugin):
             - create : create_secret()
 
         Returns:
-            dict: secret_name, action, value (if available), status, aws_response
+            Dictionary containing:
+                - secret_name (str): The name of the secret
+                - action (str): The action performed (read, write, create)
+                - value (str): The secret value (for read and write actions)
+                - status (str): Operation status (success, created, updated)
+                - version_id (str): Version ID of the secret (for write actions)
+                - arn (str): Amazon Resource Name of the secret (for create actions)
 
         Raises:
-            PluginExecutionError: invalid action or AWS error
+            PluginExecutionError: If AWS credentials are invalid, secret not found,
+                                insufficient permissions, or other AWS errors occur.
 
         """
         if not AWS_AVAILABLE:
