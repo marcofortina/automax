@@ -43,6 +43,7 @@ We use **lowercase** types + imperative mood. No scope unless needed `(core)`, n
 - `Docs: update readme` → `docs: update README` (lowercase)
 - `fix(config): resolve issue` → `fix: resolve config issue` (no scope)
 - `feat!: breaking change` → `feat: implement new approach` (no ! for now)
+- **Merge commits**: `Merge PR #21: feat: implement feature` → `Merge PR #21: Implement Feature Description` (Title Case for merge descriptions)
 
 ### PR and Merge Convention
 
@@ -57,9 +58,16 @@ Use the template from `.github/pull_request_template.md` when creating pull requ
 
 #### Merge Commit Format
 ```text
-Merge PR #PR_NUMBER: Description
+Merge PR #PR_NUMBER: Title Case Description
 
-[Detailed description of what the merge accomplishes, benefits, and testing confirmation]
+[Concise description of implementation, benefits, and testing status]
+```
+Example:
+```text
+Merge PR #21: Implement Jinja2 Templating System for Dynamic Configurations
+
+Complete implementation of Jinja2 templating across Automax core components, enabling dynamic configuration rendering
+and advanced output transformations. All tests passing, backward compatibility maintained, and ready for production use.
 ```
 
 ### Quick Start for Contributors
