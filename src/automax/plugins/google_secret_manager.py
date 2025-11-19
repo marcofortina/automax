@@ -51,10 +51,18 @@ class GoogleSecretManagerPlugin(BasePlugin):
             - write/add_version : add_secret_version()
 
         Returns:
-            dict: project_id, secret_name, version_id/value/status
+            Dictionary containing:
+                - project_id (str): The GCP project ID
+                - secret_name (str): The name of the secret
+                - action (str): The action performed (read, create, write/add_version)
+                - value (str): The secret value (for read and write actions)
+                - version_id (str): The version identifier (for read actions)
+                - version_name (str): The full version name (for write actions)
+                - status (str): Operation status (success, created, version_added)
 
         Raises:
-            PluginExecutionError: if SDK missing or action unsupported
+            PluginExecutionError: If GCP credentials are invalid, secret not found,
+                                insufficient permissions, or other GCP errors occur.
 
         """
         if not GOOGLE_AVAILABLE:
