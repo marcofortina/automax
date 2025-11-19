@@ -38,6 +38,7 @@ This is a lightweight, YAML-based automation framework. All contributions are we
    ```bash
    git commit -m "feat: add parallel execution with asyncio"
    ```
+   **Note**: For merge commits, use the format: `Merge PR #PR_NUMBER: Title Case Description`
 7. **Push & PR**:
    ```bash
    git push origin your-branch
@@ -145,6 +146,7 @@ Use the template from `.github/pull_request_template.md` when creating pull requ
 - Update `CHANGELOG.md`
 - Verify all tests pass
 - Check documentation is current
+- **Merge commits** should follow the format: `Merge PR #PR_NUMBER: Title Case Description`
 
 ## Questions?
 Open an issue or discussion on GitHub.
