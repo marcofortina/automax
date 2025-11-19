@@ -1,17 +1,21 @@
-# Automax configuration file
-
-# Logging configuration
-log_dir: "logs"             # Directory where log and report files are saved
-log_level: "DEBUG"          # Logging level: DEBUG, INFO, WARN, ERROR
-json_log: true              # Enable or disable JSON log output (can be overridden by CLI flag)
-
-# Temporary directories or paths used by steps
-temp_dir: "/tmp"            # Default temp directory for step operations
+# Main configuration for Automax examples
 
 # SSH configuration
 ssh:
-  private_key: "examples/.ssh/id_ed25519"  # Path to private key for SSH connections
-  timeout: 300                             # Timeout in seconds for SSH commands
+  private_key: "examples/.ssh/id_ed25519"
+  timeout: 300
+
+# Logging configuration
+log_dir: "logs"
+log_level: "INFO"
+json_log: false
+
+# Temporary directory
+temp_dir: "/tmp"
 
 # Steps directory
 steps_dir: "examples/steps"  # Base directory for step YAML files (e.g., steps/step1/step1.yaml)
+
+# Demo configurations for Jinja2 templating
+app_name: "automax-demo"
+environment: "production"
