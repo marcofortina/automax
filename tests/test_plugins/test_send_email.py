@@ -3,6 +3,7 @@ Tests for send_email plugin.
 """
 
 import smtplib
+import socket
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -252,3 +253,194 @@ class TestSendEmailPlugin:
             plugin.execute()
 
         assert "Failed to send email" in str(exc_info.value)
+
+
+class TestSendEmailErrorHandling:
+    """
+    Additional test suite for Send Email error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    @patch("smtplib.SMTP")
+    def test_send_email_plugin_connection_refused(self, mock_smtp):
+        """
+        Test send_email plugin execution with connection refused.
+        """
+        # Setup mock to raise connection refused
+        mock_smtp.side_effect = ConnectionRefusedError("Connection refused")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("send_email")
+        plugin = plugin_class(
+            {
+                "smtp_server": "smtp.example.com",
+                "port": 587,
+                "username": "user@example.com",
+                "password": "password123",
+                "to": "recipient@example.com",
+                "subject": "Test Subject",
+                "body": "Test Body",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Connection refused" in str(exc_info.value)
+
+    @patch("smtplib.SMTP")
+    def test_send_email_plugin_connection_timeout(self, mock_smtp):
+        """
+        Test send_email plugin execution with connection timeout.
+        """
+        # Setup mock to raise timeout
+        mock_smtp.side_effect = socket.timeout("Connection timeout")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("send_email")
+        plugin = plugin_class(
+            {
+                "smtp_server": "smtp.example.com",
+                "port": 587,
+                "username": "user@example.com",
+                "password": "password123",
+                "to": "recipient@example.com",
+                "subject": "Test Subject",
+                "body": "Test Body",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Connection timeout" in str(exc_info.value)
+
+    @patch("smtplib.SMTP")
+    def test_send_email_plugin_tls_error(self, mock_smtp):
+        """
+        Test send_email plugin execution with TLS error.
+        """
+        # Setup mocks
+        mock_server = MagicMock()
+        mock_smtp.return_value.__enter__ = MagicMock(return_value=mock_server)
+        mock_smtp.return_value.__exit__ = MagicMock(return_value=None)
+
+        mock_server.starttls.side_effect = Exception("TLS negotiation failed")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("send_email")
+        plugin = plugin_class(
+            {
+                "smtp_server": "smtp.example.com",
+                "port": 587,
+                "username": "user@example.com",
+                "password": "password123",
+                "to": "recipient@example.com",
+                "subject": "Test Subject",
+                "body": "Test Body",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "TLS negotiation failed" in str(exc_info.value)
+
+    @patch("smtplib.SMTP")
+    def test_send_email_plugin_invalid_recipient(self, mock_smtp):
+        """
+        Test send_email plugin execution with invalid recipient.
+        """
+        # Setup mocks
+        mock_server = MagicMock()
+        mock_smtp.return_value.__enter__ = MagicMock(return_value=mock_server)
+        mock_smtp.return_value.__exit__ = MagicMock(return_value=None)
+
+        mock_server.send_message.side_effect = smtplib.SMTPRecipientsRefused(
+            {"invalid@example.com": (550, b"User unknown")}
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("send_email")
+        plugin = plugin_class(
+            {
+                "smtp_server": "smtp.example.com",
+                "port": 587,
+                "username": "user@example.com",
+                "password": "password123",
+                "to": "invalid@example.com",
+                "subject": "Test Subject",
+                "body": "Test Body",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "User unknown" in str(exc_info.value)
+
+    @patch("smtplib.SMTP")
+    def test_send_email_plugin_helo_error(self, mock_smtp):
+        """
+        Test send_email plugin execution with HELO error.
+        """
+        # Setup mock to raise exception during SMTP connection
+        mock_smtp.side_effect = smtplib.SMTPHeloError(502, "HELO error")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("send_email")
+        plugin = plugin_class(
+            {
+                "smtp_server": "smtp.example.com",
+                "port": 587,
+                "username": "user@example.com",
+                "password": "password123",
+                "to": "recipient@example.com",
+                "subject": "Test Subject",
+                "body": "Test Body",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "HELO error" in str(exc_info.value)
+
+    @patch("smtplib.SMTP")
+    def test_send_email_plugin_data_error(self, mock_smtp):
+        """
+        Test send_email plugin execution with data error.
+        """
+        # Setup mocks
+        mock_server = MagicMock()
+        mock_smtp.return_value.__enter__ = MagicMock(return_value=mock_server)
+        mock_smtp.return_value.__exit__ = MagicMock(return_value=None)
+
+        mock_server.send_message.side_effect = smtplib.SMTPDataError(554, "Data error")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("send_email")
+        plugin = plugin_class(
+            {
+                "smtp_server": "smtp.example.com",
+                "port": 587,
+                "username": "user@example.com",
+                "password": "password123",
+                "to": "recipient@example.com",
+                "subject": "Test Subject",
+                "body": "Test Body",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Data error" in str(exc_info.value)
