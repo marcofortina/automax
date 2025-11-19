@@ -13,6 +13,19 @@ from automax.plugins.exceptions import PluginExecutionError
 class CheckTCPConnectionPlugin(BasePlugin):
     """
     Check if a TCP connection to host:port is reachable.
+
+    Returns:
+        Dictionary containing:
+            - status (str): "success" or "failure"
+            - host (str): The target hostname or IP address
+            - port (int): The target port number
+            - timeout (float): Connection timeout in seconds
+            - connected (bool): True if connection was successful
+            - error (str): Error message if connection failed
+
+    Raises:
+        PluginExecutionError: If connection fails and fail_fast is True.
+
     """
 
     METADATA = PluginMetadata(
@@ -38,10 +51,16 @@ class CheckTCPConnectionPlugin(BasePlugin):
         Attempt a TCP connection to the specified host and port.
 
         Returns:
-            dict: host, port, timeout, connected (bool), status, error (if any)
+            Dictionary containing:
+                - status (str): "success" or "failure"
+                - host (str): The target hostname or IP address
+                - port (int): The target port number
+                - timeout (float): Connection timeout in seconds
+                - connected (bool): True if connection was successful
+                - error (str): Error message if connection failed
 
         Raises:
-            PluginExecutionError: if fail_fast is True and connection fails
+            PluginExecutionError: If connection fails and fail_fast is True.
 
         """
         host = self.config["host"]
