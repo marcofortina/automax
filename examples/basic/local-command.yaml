@@ -1,0 +1,32 @@
+# Basic Local Command Example
+# Simple example showing local command execution
+
+name: "basic_local_commands"
+description: "Execute basic local system commands"
+
+steps:
+  - name: "check_system_info"
+    plugin: "local_command"
+    parameters:
+      command: "uname -a && whoami"
+
+  - name: "list_current_directory"
+    plugin: "local_command"
+    parameters:
+      command: "ls -la"
+      working_directory: "."
+
+  - name: "check_disk_usage"
+    plugin: "local_command"
+    parameters:
+      command: "df -h"
+
+  - name: "create_test_file"
+    plugin: "local_command"
+    parameters:
+      command: "echo 'Hello from Automax!' > /tmp/automax_test.txt"
+
+  - name: "verify_file_created"
+    plugin: "local_command"
+    parameters:
+      command: "cat /tmp/automax_test.txt"
