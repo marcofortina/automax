@@ -125,6 +125,38 @@ automax --version
 
 ---
 
+## 📚 Examples
+
+Automax comes with comprehensive examples to help you get started:
+
+### Basic Examples (`examples/basic/`)
+- **Local Commands**: Execute system commands and check system info
+- **File Operations**: Read, write, and manage files
+- **HTTP Requests**: Make API calls and web requests
+- **Network Checks**: Test connectivity and ports
+
+### Advanced Examples (`examples/advanced/`)
+- **Multi-Cloud Secrets**: Manage secrets across AWS, Azure, GCP, and HashiCorp Vault
+- **CI/CD Pipeline**: Complete testing and deployment workflow
+- **Data Processing**: ETL workflows with database integration
+- **Monitoring Alerts**: System health checks with conditional notifications
+
+### Running Examples
+```bash
+# List available examples
+find examples/ -name "*.yaml" | sort
+
+# Run a basic example
+automax run --config examples/config/config.yaml --steps basic/local-commands
+
+# Run an advanced example
+automax run --config examples/config/config.yaml --steps advanced/ci-cd-pipeline
+```
+
+See the [Using Examples Guide](docs/guides/using-examples.md) for detailed instructions.
+
+---
+
 ## 🧩 Programmatic Usage
 
 ```python
