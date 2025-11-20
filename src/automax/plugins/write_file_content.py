@@ -101,6 +101,11 @@ class WriteFileContentPlugin(BasePlugin):
             self.logger.info(f"Successfully wrote {len(content)} bytes to {file_path}")
             return result
 
+        except UnicodeEncodeError as e:
+            raise PluginExecutionError(
+                f"Encoding error writing to {file_path}: {e}"
+            ) from e
+
         except PermissionError as e:
             raise PluginExecutionError(
                 f"Permission denied writing to {file_path}: {e}"
