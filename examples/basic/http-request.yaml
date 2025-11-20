@@ -1,0 +1,33 @@
+# Basic HTTP Request Example
+# Simple HTTP API calls
+
+name: "basic_http_requests"
+description: "Basic HTTP requests to test APIs"
+
+steps:
+  - name: "get_public_api"
+    plugin: "run_http_request"
+    parameters:
+      url: "https://httpbin.org/get"
+      method: "GET"
+      timeout: 10
+
+  - name: "post_to_api"
+    plugin: "run_http_request"
+    parameters:
+      url: "https://httpbin.org/post"
+      method: "POST"
+      headers:
+        Content-Type: "application/json"
+        User-Agent: "Automax/1.0"
+      body:
+        name: "Automax User"
+        action: "test"
+      timeout: 10
+
+  - name: "check_status_codes"
+    plugin: "run_http_request"
+    parameters:
+      url: "https://httpbin.org/status/200"
+      method: "GET"
+      timeout: 5
