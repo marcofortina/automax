@@ -453,7 +453,6 @@ class TestSSHCommandErrorHandling:
         mock_client = MagicMock()
         mock_ssh_client.return_value = mock_client
 
-        # Correzione: ChannelException richiede parametri specifici
         mock_client.exec_command.side_effect = paramiko.ChannelException(
             1, "Channel error"
         )
