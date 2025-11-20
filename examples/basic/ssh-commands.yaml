@@ -1,0 +1,33 @@
+# Basic SSH Commands Example
+# Simple example showing SSH command execution on remote servers
+
+name: "basic_ssh_commands"
+description: "Execute basic commands on remote servers via SSH"
+
+steps:
+  - name: "check_remote_system"
+    plugin: "ssh_command"
+    parameters:
+      host: "example-server.com"
+      username: "user"
+      private_key_path: "/path/to/private/key"
+      command: "uname -a && whoami"
+      timeout: 30
+
+  - name: "check_disk_usage_remote"
+    plugin: "ssh_command"
+    parameters:
+      host: "example-server.com"
+      username: "user"
+      private_key_path: "/path/to/private/key"
+      command: "df -h"
+      timeout: 30
+
+  - name: "list_remote_directory"
+    plugin: "ssh_command"
+    parameters:
+      host: "example-server.com"
+      username: "user"
+      private_key_path: "/path/to/private/key"
+      command: "ls -la /tmp"
+      timeout: 30
