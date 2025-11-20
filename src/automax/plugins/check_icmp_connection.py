@@ -93,14 +93,11 @@ class CheckIcmpConnectionPlugin(BasePlugin):
         )
 
         try:
-            # Use ping3's verbose_ping function
             success_count = verbose_ping(
                 dest_addr=host,
                 count=count,
                 timeout=timeout,
                 interval=interval,
-                # Log the output using our logger
-                log_func=lambda msg: self.logger.info(f"PING: {msg}"),
             )
 
             # Calculate success rate
