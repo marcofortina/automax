@@ -32,6 +32,7 @@ nav:
   - Developer Notes: DEVELOPER-NOTES.md
   - Guides:
     - Creating Plugins: guides/creating-plugins.md
+    - Using Examples: guides/using-examples.md
     - Development Utilities: guides/development-utils.md
     - Output Mapping: guides/output-mapping.md
     - Templating: guides/templating.md
