@@ -969,6 +969,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -977,16 +988,105 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        Required Parameters
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#execute-simple-system-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute Simple System Command
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-command-with-working-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute Command with Working Directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-command-with-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute Command with Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-command-with-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute Command with Timeout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-pipeline-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute Pipeline Commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -998,6 +1098,106 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Return Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#success-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timeout-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeout Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1569,32 +1769,161 @@
 
 
 <h1 id="local-command-plugin">Local Command Plugin</h1>
-<p>Execute local system commands.</p>
+<p>Execute commands on the local system.</p>
+<h2 id="description">Description</h2>
+<p>This plugin enables executing shell commands on the local machine where Automax is running. It provides detailed output capture including stdout, stderr, exit codes, and execution time metrics.</p>
 <h2 id="configuration">Configuration</h2>
-<p><strong>Required:</strong>
-- <code>command</code>: Command to execute</p>
-<p><strong>Optional:</strong>
-- <code>timeout</code>: Command timeout in seconds (default: 30)
-- <code>shell</code>: Use shell execution (default: true)
-- <code>cwd</code>: Working directory
-- <code>env</code>: Environment variables
-- <code>input_data</code>: Input data for command</p>
-<h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local_command</span>
-<span class="nt">config</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;echo</span><span class="nv"> </span><span class="s">&#39;Hello</span><span class="nv"> </span><span class="s">World&#39;&quot;</span>
-<span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
-<span class="w">  </span><span class="nt">shell</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<h3 id="required-parameters">Required Parameters</h3>
+<ul>
+<li><code>command</code> (string): Command to execute on the local system</li>
+</ul>
+<h3 id="optional-parameters">Optional Parameters</h3>
+<ul>
+<li><code>working_directory</code> (string): Working directory for command execution</li>
+<li><code>timeout</code> (integer): Command execution timeout in seconds (default: 300)</li>
+<li><code>environment</code> (object): Environment variables as key-value pairs</li>
+<li><code>shell</code> (boolean): Use shell execution (default: true)</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<h3 id="execute-simple-system-command">Execute Simple System Command</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_system_info</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local_command</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;uname</span><span class="nv"> </span><span class="s">-a</span><span class="nv"> </span><span class="s">&amp;&amp;</span><span class="nv"> </span><span class="s">whoami&quot;</span>
+</code></pre></div>
+<h3 id="execute-command-with-working-directory">Execute Command with Working Directory</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">list_project_files</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local_command</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ls</span><span class="nv"> </span><span class="s">-la&quot;</span>
+<span class="w">    </span><span class="nt">working_directory</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/home/user/projects/automax&quot;</span>
+</code></pre></div>
+<h3 id="execute-command-with-environment-variables">Execute Command with Environment Variables</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">build_application</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local_command</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;echo</span><span class="nv"> </span><span class="s">$BUILD_ENV</span><span class="nv"> </span><span class="s">&amp;&amp;</span><span class="nv"> </span><span class="s">npm</span><span class="nv"> </span><span class="s">run</span><span class="nv"> </span><span class="s">build&quot;</span>
+<span class="w">    </span><span class="nt">working_directory</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/app&quot;</span>
+<span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">BUILD_ENV</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;production&quot;</span>
+<span class="w">      </span><span class="nt">NODE_ENV</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;production&quot;</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">600</span>
+</code></pre></div>
+<h3 id="execute-command-with-timeout">Execute Command with Timeout</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">long_running_process</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local_command</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;python</span><span class="nv"> </span><span class="s">long_script.py&quot;</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3600</span>
+</code></pre></div>
+<h3 id="execute-pipeline-commands">Execute Pipeline Commands</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system_health_check</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local_command</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ps</span><span class="nv"> </span><span class="s">aux</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">grep</span><span class="nv"> </span><span class="s">automax</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">wc</span><span class="nv"> </span><span class="s">-l&quot;</span>
 </code></pre></div>
 <h2 id="return-values">Return Values</h2>
-<p>The plugin returns a dictionary with:
-- <code>status</code>: "success" or "failure"
-- <code>command</code>: The executed command
-- <code>returncode</code>: The exit code of the command
-- <code>stdout</code>: The standard output of the command
-- <code>stderr</code>: The standard error of the command
-- <code>timeout</code>: The timeout setting
-- <code>shell</code>: The shell setting</p>
+<h3 id="success-response">Success Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ls -la&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;working_directory&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/user/projects&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stdout&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;total 128\ndrwxr-xr-x 12 user user  4096 Jan  1 12:00 .\ndrwxr-xr-x  5 user user  4096 Jan  1 11:30 ..&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stderr&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;exit_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;execution_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.123</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="error-response">Error Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;invalid_command&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;working_directory&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/home/user&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stdout&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stderr&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bash: invalid_command: command not found&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;exit_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">127</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;execution_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.045</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Command failed with exit code 127&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="timeout-response">Timeout Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sleep 100&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stdout&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stderr&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;exit_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;execution_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">30.0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Command timed out after 30 seconds&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-errors">Common Errors</h3>
+<ul>
+<li><strong><code>Command not found</code></strong>: The specified command doesn't exist</li>
+<li>Verify the command is installed and available in PATH</li>
+<li>Use full paths for commands (e.g., <code>/usr/bin/python3</code> instead of <code>python3</code>)</li>
+<li>
+<p>Check command spelling and syntax</p>
+</li>
+<li>
+<p><strong><code>Permission denied</code></strong>: Insufficient permissions to execute command</p>
+</li>
+<li>Ensure the user has execute permissions for the command</li>
+<li>Check file permissions and ownership</li>
+<li>
+<p>Run as appropriate user or use sudo (if configured for passwordless execution)</p>
+</li>
+<li>
+<p><strong><code>Timeout</code></strong>: Command execution timed out</p>
+</li>
+<li>Increase timeout value for long-running commands</li>
+<li>Optimize command performance or split into smaller commands</li>
+<li>
+<p>Check system resources (CPU, memory, disk I/O)</p>
+</li>
+<li>
+<p><strong><code>Working directory not found</code></strong>: Specified directory doesn't exist</p>
+</li>
+<li>Verify the working directory path exists</li>
+<li>Check directory permissions</li>
+<li>
+<p>Use absolute paths for reliability</p>
+</li>
+<li>
+<p><strong><code>Invalid environment variables</code></strong>: Malformed environment configuration</p>
+</li>
+<li>Ensure environment keys are valid (no spaces, special characters)</li>
+<li>Verify values are properly formatted</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li>Use absolute paths for commands and working directories</li>
+<li>Implement proper error handling for command failures</li>
+<li>Set appropriate timeouts for different types of commands</li>
+<li>Validate and sanitize command inputs to prevent injection attacks</li>
+<li>Use environment variables for configuration instead of hardcoded values</li>
+<li>Monitor command execution times for performance optimization</li>
+<li>Implement retry logic for transient failures</li>
+</ol>
+<h3 id="security-considerations">Security Considerations</h3>
+<ul>
+<li>Never execute untrusted or user-provided commands</li>
+<li>Validate all command parameters before execution</li>
+<li>Use principle of least privilege for command execution</li>
+<li>Avoid executing commands with elevated privileges unless necessary</li>
+<li>Log command execution for audit purposes</li>
+<li>Sanitize environment variables to prevent injection</li>
+</ul>
+<h3 id="common-use-cases">Common Use Cases</h3>
+<ul>
+<li><strong>System administration</strong>: Package updates, service management</li>
+<li><strong>File operations</strong>: Copy, move, delete files</li>
+<li><strong>Build processes</strong>: Compilation, testing, packaging</li>
+<li><strong>Deployment scripts</strong>: Application deployment, configuration</li>
+<li><strong>Monitoring</strong>: System health checks, log analysis</li>
+<li><strong>Data processing</strong>: ETL jobs, file conversion</li>
+</ul>
 
 
 

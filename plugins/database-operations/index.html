@@ -1438,6 +1438,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1446,27 +1457,105 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        Required Parameters
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#supported-actions" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supported Actions
+        Optional Parameters
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#execute-insert-query-postgresql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute INSERT Query (PostgreSQL)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-select-query-with-fetch-all-mysql" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute SELECT Query with Fetch All (MySQL)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-select-query-with-fetch-one-sqlite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute SELECT Query with Fetch One (SQLite)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-update-query-with-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute UPDATE Query with Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-transaction-with-multiple-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute Transaction with Multiple Queries
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1478,6 +1567,106 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Return Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#execute-action-insertupdatedelete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute Action (INSERT/UPDATE/DELETE)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fetchone-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FetchOne Action
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fetchall-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FetchAll Action
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connection-string-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Connection String Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1580,37 +1769,198 @@
 
 
 <h1 id="database-operations-plugin">Database Operations Plugin</h1>
-<p>Execute database operations using ODBC connection strings.</p>
+<p>Execute database operations on various database systems.</p>
+<h2 id="description">Description</h2>
+<p>This plugin enables executing SQL queries and commands on different database systems including PostgreSQL, MySQL, SQLite, and Oracle. It supports parameterized queries, transactions, and returns results in structured format.</p>
 <h2 id="configuration">Configuration</h2>
-<p><strong>Required:</strong>
-- <code>connection_string</code>: ODBC connection string
-- <code>query</code>: SQL query to execute
-- <code>action</code>: Operation type - "select", "insert", "update", "delete", "execute"</p>
-<p><strong>Optional:</strong>
-- <code>parameters</code>: Query parameters as list</p>
-<h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database_operations</span>
-<span class="nt">config</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">connection_string</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;DRIVER={SQL</span><span class="nv"> </span><span class="s">Server};SERVER=localhost;DATABASE=test;UID=user;PWD=password&quot;</span>
-<span class="w">  </span><span class="nt">query</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;SELECT</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">FROM</span><span class="nv"> </span><span class="s">users</span><span class="nv"> </span><span class="s">WHERE</span><span class="nv"> </span><span class="s">id</span><span class="nv"> </span><span class="s">=</span><span class="nv"> </span><span class="s">?&quot;</span>
-<span class="w">  </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;select&quot;</span>
-<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">]</span>
-</code></pre></div>
-<h2 id="supported-actions">Supported Actions</h2>
+<h3 id="required-parameters">Required Parameters</h3>
 <ul>
-<li><strong>select</strong>: Execute SELECT queries and return results</li>
-<li><strong>insert</strong>: Execute INSERT queries, returns affected rows and lastrowid</li>
-<li><strong>update</strong>: Execute UPDATE queries, returns affected rows</li>
-<li><strong>delete</strong>: Execute DELETE queries, returns affected rows</li>
-<li><strong>execute</strong>: Execute DDL or other statements, returns affected rows</li>
+<li><code>connection_string</code> (string): Database connection string</li>
+<li><code>query</code> (string): SQL query to execute</li>
+<li><code>action</code> (string): Operation type - <code>execute</code>, <code>fetchone</code>, <code>fetchall</code></li>
 </ul>
+<h3 id="optional-parameters">Optional Parameters</h3>
+<ul>
+<li><code>parameters</code> (object|array): Query parameters for parameterized queries</li>
+<li><code>commit</code> (boolean): Whether to commit the transaction (default: true for execute actions)</li>
+<li><code>timeout</code> (integer): Query timeout in seconds</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<h3 id="execute-insert-query-postgresql">Execute INSERT Query (PostgreSQL)</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">insert_user</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database_operations</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">connection_string</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgresql://user:password@localhost:5432/mydb&quot;</span>
+<span class="w">    </span><span class="nt">query</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;INSERT</span><span class="nv"> </span><span class="s">INTO</span><span class="nv"> </span><span class="s">users</span><span class="nv"> </span><span class="s">(name,</span><span class="nv"> </span><span class="s">email)</span><span class="nv"> </span><span class="s">VALUES</span><span class="nv"> </span><span class="s">(%s,</span><span class="nv"> </span><span class="s">%s)&quot;</span>
+<span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;execute&quot;</span>
+<span class="w">    </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;John</span><span class="nv"> </span><span class="s">Doe&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;john@example.com&quot;</span>
+<span class="w">    </span><span class="nt">commit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h3 id="execute-select-query-with-fetch-all-mysql">Execute SELECT Query with Fetch All (MySQL)</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">get_all_users</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database_operations</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">connection_string</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;mysql://user:password@localhost:3306/mydb&quot;</span>
+<span class="w">    </span><span class="nt">query</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;SELECT</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">FROM</span><span class="nv"> </span><span class="s">users</span><span class="nv"> </span><span class="s">WHERE</span><span class="nv"> </span><span class="s">active</span><span class="nv"> </span><span class="s">=</span><span class="nv"> </span><span class="s">%s&quot;</span>
+<span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;fetchall&quot;</span>
+<span class="w">    </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h3 id="execute-select-query-with-fetch-one-sqlite">Execute SELECT Query with Fetch One (SQLite)</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">get_user_count</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database_operations</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">connection_string</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sqlite:///path/to/database.db&quot;</span>
+<span class="w">    </span><span class="nt">query</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;SELECT</span><span class="nv"> </span><span class="s">COUNT(*)</span><span class="nv"> </span><span class="s">as</span><span class="nv"> </span><span class="s">user_count</span><span class="nv"> </span><span class="s">FROM</span><span class="nv"> </span><span class="s">users&quot;</span>
+<span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;fetchone&quot;</span>
+</code></pre></div>
+<h3 id="execute-update-query-with-parameters">Execute UPDATE Query with Parameters</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">update_user_email</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database_operations</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">connection_string</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgresql://user:password@localhost:5432/mydb&quot;</span>
+<span class="w">    </span><span class="nt">query</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;UPDATE</span><span class="nv"> </span><span class="s">users</span><span class="nv"> </span><span class="s">SET</span><span class="nv"> </span><span class="s">email</span><span class="nv"> </span><span class="s">=</span><span class="nv"> </span><span class="s">%s</span><span class="nv"> </span><span class="s">WHERE</span><span class="nv"> </span><span class="s">id</span><span class="nv"> </span><span class="s">=</span><span class="nv"> </span><span class="s">%s&quot;</span>
+<span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;execute&quot;</span>
+<span class="w">    </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;newemail@example.com&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">123</span>
+<span class="w">    </span><span class="nt">commit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h3 id="execute-transaction-with-multiple-queries">Execute Transaction with Multiple Queries</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">transfer_funds</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database_operations</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">connection_string</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;mysql://user:password@localhost:3306/bank&quot;</span>
+<span class="w">    </span><span class="nt">query</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">      </span><span class="no">UPDATE accounts SET balance = balance - %s WHERE id = %s;</span>
+<span class="w">      </span><span class="no">UPDATE accounts SET balance = balance + %s WHERE id = %s;</span>
+<span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;execute&quot;</span>
+<span class="w">    </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100.00</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100.00</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">commit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
 <h2 id="return-values">Return Values</h2>
-<p>The plugin returns a dictionary with:
-- <code>status</code>: "success" or "failure"
-- <code>row_count</code>: Number of affected/returned rows
-- <code>columns</code>: List of column names (for SELECT)
-- <code>rows</code>: List of result rows (for SELECT)
-- <code>lastrowid</code>: Last inserted row ID (for INSERT)</p>
+<h3 id="execute-action-insertupdatedelete">Execute Action (INSERT/UPDATE/DELETE)</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;execute&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;query&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;INSERT INTO users (name, email) VALUES (%s, %s)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;row_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Query executed successfully&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="fetchone-action">FetchOne Action</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fetchone&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;query&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SELECT * FROM users WHERE id = %s&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;result&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">123</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;John Doe&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;email&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;john@example.com&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2023-01-01 00:00:00&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="fetchall-action">FetchAll Action</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;fetchall&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;query&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SELECT * FROM users WHERE active = %s&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;results&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">123</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;John Doe&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;email&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;john@example.com&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">124</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Jane Smith&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;email&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;jane@example.com&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;row_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-errors">Common Errors</h3>
+<ul>
+<li><strong><code>Connection failed</code></strong>: Unable to connect to database</li>
+<li>Verify connection string format and credentials</li>
+<li>Check if database server is running and accessible</li>
+<li>
+<p>Ensure network connectivity and firewall rules</p>
+</li>
+<li>
+<p><strong><code>Authentication failed</code></strong>: Invalid username or password</p>
+</li>
+<li>Verify database credentials</li>
+<li>Check if user has necessary permissions</li>
+<li>
+<p>Ensure user is not locked or expired</p>
+</li>
+<li>
+<p><strong><code>Syntax error in query</code></strong>: Invalid SQL syntax</p>
+</li>
+<li>Validate SQL query syntax</li>
+<li>Check for missing semicolons or typos</li>
+<li>
+<p>Verify table and column names exist</p>
+</li>
+<li>
+<p><strong><code>Table does not exist</code></strong>: Referenced table not found</p>
+</li>
+<li>Verify database schema and table names</li>
+<li>Check if using correct database</li>
+<li>
+<p>Ensure migrations have been applied</p>
+</li>
+<li>
+<p><strong><code>Timeout</code></strong>: Query execution timed out</p>
+</li>
+<li>Increase timeout parameter for long-running queries</li>
+<li>Check database performance and indexes</li>
+<li>
+<p>Optimize query for better performance</p>
+</li>
+<li>
+<p><strong><code>Transaction conflict</code></strong>: Transaction-related issues</p>
+</li>
+<li>Ensure proper transaction handling</li>
+<li>Check for deadlocks or lock timeouts</li>
+<li>Use appropriate isolation levels</li>
+</ul>
+<h3 id="connection-string-formats">Connection String Formats</h3>
+<ul>
+<li><strong>PostgreSQL</strong>: <code>postgresql://username:password@host:port/database</code></li>
+<li><strong>MySQL</strong>: <code>mysql://username:password@host:port/database</code></li>
+<li><strong>SQLite</strong>: <code>sqlite:///path/to/database.db</code></li>
+<li><strong>Oracle</strong>: <code>oracle://username:password@host:port/database</code></li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li>Always use parameterized queries to prevent SQL injection</li>
+<li>Handle database connections properly and close them after use</li>
+<li>Use transactions for multiple related operations</li>
+<li>Implement proper error handling and logging</li>
+<li>Use connection pooling for frequent database operations</li>
+<li>Validate and sanitize all user inputs</li>
+<li>Use appropriate indexes for better query performance</li>
+</ol>
+<h3 id="security-considerations">Security Considerations</h3>
+<ul>
+<li>Never embed database credentials in code</li>
+<li>Use environment variables or secret managers for connection strings</li>
+<li>Implement least privilege principle for database users</li>
+<li>Regularly rotate database passwords</li>
+<li>Encrypt sensitive data in database</li>
+<li>Audit database access and queries</li>
+</ul>
 
 
 

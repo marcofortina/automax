@@ -1347,6 +1347,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1355,16 +1366,94 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        Required Parameters
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#send-simple-text-email" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Send Simple Text Email
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#send-html-email-with-cc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Send HTML Email with CC
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#send-email-with-attachments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Send Email with Attachments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#send-email-without-authentication-local-smtp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Send Email without Authentication (Local SMTP)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1376,6 +1465,95 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Return Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#success-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-smtp-server-configurations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common SMTP Server Configurations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1569,41 +1747,196 @@
 
 
 <h1 id="send-email-plugin">Send Email Plugin</h1>
-<p>Send emails via SMTP.</p>
+<p>Send emails via SMTP protocol.</p>
+<h2 id="description">Description</h2>
+<p>This plugin enables sending emails through SMTP servers. It supports HTML and plain text content, file attachments, multiple recipients, and various authentication methods.</p>
 <h2 id="configuration">Configuration</h2>
-<p><strong>Required:</strong>
-- <code>smtp_server</code>: SMTP server hostname
-- <code>port</code>: SMTP server port
-- <code>username</code>: SMTP username
-- <code>password</code>: SMTP password
-- <code>to</code>: Recipient email address(es)
-- <code>subject</code>: Email subject
-- <code>body</code>: Email body</p>
-<p><strong>Optional:</strong>
-- <code>from_addr</code>: Sender address (default: username)
-- <code>cc</code>: CC recipients
-- <code>bcc</code>: BCC recipients
-- <code>is_html</code>: Body is HTML (default: false)</p>
-<h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">send_email</span>
-<span class="nt">config</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">smtp_server</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;smtp.gmail.com&quot;</span>
-<span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">587</span>
-<span class="w">  </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;user@gmail.com&quot;</span>
-<span class="w">  </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;app-password&quot;</span>
-<span class="w">  </span><span class="nt">to</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;recipient@example.com&quot;</span>
-<span class="w">  </span><span class="nt">subject</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Test</span><span class="nv"> </span><span class="s">Email&quot;</span>
-<span class="w">  </span><span class="nt">body</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;This</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">test</span><span class="nv"> </span><span class="s">email&quot;</span>
-<span class="w">  </span><span class="nt">is_html</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<h3 id="required-parameters">Required Parameters</h3>
+<ul>
+<li><code>smtp_server</code> (string): SMTP server hostname</li>
+<li><code>smtp_port</code> (integer): SMTP server port</li>
+<li><code>from_address</code> (string): Sender email address</li>
+<li><code>to_addresses</code> (array): List of recipient email addresses</li>
+<li><code>subject</code> (string): Email subject line</li>
+</ul>
+<h3 id="optional-parameters">Optional Parameters</h3>
+<ul>
+<li><code>username</code> (string): SMTP authentication username</li>
+<li><code>password</code> (string): SMTP authentication password</li>
+<li><code>body</code> (string): Email body content</li>
+<li><code>body_html</code> (string): HTML email body content</li>
+<li><code>cc_addresses</code> (array): List of CC recipient email addresses</li>
+<li><code>bcc_addresses</code> (array): List of BCC recipient email addresses</li>
+<li><code>attachments</code> (array): List of file paths to attach</li>
+<li><code>use_tls</code> (boolean): Use TLS encryption (default: true)</li>
+<li><code>use_ssl</code> (boolean): Use SSL encryption (default: false)</li>
+<li><code>timeout</code> (integer): Connection timeout in seconds (default: 30)</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<h3 id="send-simple-text-email">Send Simple Text Email</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">send_notification</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">send_email</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">smtp_server</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;smtp.gmail.com&quot;</span>
+<span class="w">    </span><span class="nt">smtp_port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">587</span>
+<span class="w">    </span><span class="nt">from_address</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;noreply@example.com&quot;</span>
+<span class="w">    </span><span class="nt">to_addresses</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;user@example.com&quot;</span>
+<span class="w">    </span><span class="nt">subject</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Automax</span><span class="nv"> </span><span class="s">Notification&quot;</span>
+<span class="w">    </span><span class="nt">body</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;This</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">test</span><span class="nv"> </span><span class="s">email</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">Automax.&quot;</span>
+<span class="w">    </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;your-email@gmail.com&quot;</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;your-app-password&quot;</span>
+<span class="w">    </span><span class="nt">use_tls</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h3 id="send-html-email-with-cc">Send HTML Email with CC</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">send_html_newsletter</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">send_email</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">smtp_server</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;smtp.company.com&quot;</span>
+<span class="w">    </span><span class="nt">smtp_port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">465</span>
+<span class="w">    </span><span class="nt">from_address</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;newsletter@company.com&quot;</span>
+<span class="w">    </span><span class="nt">to_addresses</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;subscriber1@example.com&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;subscriber2@example.com&quot;</span>
+<span class="w">    </span><span class="nt">cc_addresses</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;manager@company.com&quot;</span>
+<span class="w">    </span><span class="nt">subject</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Monthly</span><span class="nv"> </span><span class="s">Newsletter&quot;</span>
+<span class="w">    </span><span class="nt">body</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;This</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">plain</span><span class="nv"> </span><span class="s">text</span><span class="nv"> </span><span class="s">version.&quot;</span>
+<span class="w">    </span><span class="nt">body_html</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;h1&gt;Monthly</span><span class="nv"> </span><span class="s">Newsletter&lt;/h1&gt;&lt;p&gt;This</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">&lt;strong&gt;HTML&lt;/strong&gt;</span><span class="nv"> </span><span class="s">version.&lt;/p&gt;&quot;</span>
+<span class="w">    </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;newsletter@company.com&quot;</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;smtp-password&quot;</span>
+<span class="w">    </span><span class="nt">use_ssl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h3 id="send-email-with-attachments">Send Email with Attachments</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">send_report_with_attachments</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">send_email</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">smtp_server</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;smtp.office365.com&quot;</span>
+<span class="w">    </span><span class="nt">smtp_port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">587</span>
+<span class="w">    </span><span class="nt">from_address</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;reports@company.com&quot;</span>
+<span class="w">    </span><span class="nt">to_addresses</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;team@company.com&quot;</span>
+<span class="w">    </span><span class="nt">subject</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Daily</span><span class="nv"> </span><span class="s">Report&quot;</span>
+<span class="w">    </span><span class="nt">body</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Please</span><span class="nv"> </span><span class="s">find</span><span class="nv"> </span><span class="s">the</span><span class="nv"> </span><span class="s">attached</span><span class="nv"> </span><span class="s">daily</span><span class="nv"> </span><span class="s">report.&quot;</span>
+<span class="w">    </span><span class="nt">attachments</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/reports/daily_report.pdf&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/reports/data.csv&quot;</span>
+<span class="w">    </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;reports@company.com&quot;</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;email-password&quot;</span>
+<span class="w">    </span><span class="nt">use_tls</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span>
+</code></pre></div>
+<h3 id="send-email-without-authentication-local-smtp">Send Email without Authentication (Local SMTP)</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">send_local_notification</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">send_email</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">smtp_server</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;localhost&quot;</span>
+<span class="w">    </span><span class="nt">smtp_port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">25</span>
+<span class="w">    </span><span class="nt">from_address</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;automax@localhost&quot;</span>
+<span class="w">    </span><span class="nt">to_addresses</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;admin@company.com&quot;</span>
+<span class="w">    </span><span class="nt">subject</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;System</span><span class="nv"> </span><span class="s">Alert&quot;</span>
+<span class="w">    </span><span class="nt">body</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;System</span><span class="nv"> </span><span class="s">check</span><span class="nv"> </span><span class="s">completed</span><span class="nv"> </span><span class="s">successfully.&quot;</span>
+<span class="w">    </span><span class="nt">use_tls</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
 <h2 id="return-values">Return Values</h2>
-<p>The plugin returns a dictionary with:
-- <code>status</code>: "success" or "failure"
-- <code>smtp_server</code>: The SMTP server
-- <code>port</code>: The SMTP port
-- <code>from</code>: The sender address
-- <code>to</code>: The recipient address(es)
-- <code>subject</code>: The email subject</p>
+<h3 id="success-response">Success Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;from_address&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;noreply@example.com&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;to_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;user@example.com&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;subject&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Automax Notification&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;message_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;20230101120000.12345@example.com&gt;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;sent_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2023-01-01T12:00:00Z&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="error-response">Error Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;from_address&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;noreply@example.com&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;to_addresses&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;user@example.com&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;subject&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Automax Notification&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SMTPAuthenticationError: Authentication failed&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;details&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Username and Password not accepted.&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-errors">Common Errors</h3>
+<ul>
+<li><strong><code>SMTPAuthenticationError</code></strong>: Authentication failed</li>
+<li>Verify username and password are correct</li>
+<li>Check if you're using app passwords for services like Gmail</li>
+<li>
+<p>Ensure the account is not locked or requires 2-factor authentication</p>
+</li>
+<li>
+<p><strong><code>SMTPConnectError</code></strong>: Unable to connect to SMTP server</p>
+</li>
+<li>Verify SMTP server hostname and port</li>
+<li>Check network connectivity and firewall rules</li>
+<li>
+<p>Ensure the SMTP server is running</p>
+</li>
+<li>
+<p><strong><code>SMTPServerDisconnected</code></strong>: Connection unexpectedly closed</p>
+</li>
+<li>Check if the server has idle timeouts</li>
+<li>Verify TLS/SSL configuration matches server requirements</li>
+<li>
+<p>Ensure credentials are correct</p>
+</li>
+<li>
+<p><strong><code>Timeout</code></strong>: Connection or operation timed out</p>
+</li>
+<li>Increase timeout value for slow connections</li>
+<li>Check network latency to SMTP server</li>
+<li>
+<p>Verify server performance</p>
+</li>
+<li>
+<p><strong><code>FileNotFoundError</code></strong>: Attachment file not found</p>
+</li>
+<li>Verify attachment file paths are correct</li>
+<li>Check file permissions and accessibility</li>
+<li>
+<p>Ensure files exist before sending</p>
+</li>
+<li>
+<p><strong><code>SMTPRecipientsRefused</code></strong>: Recipient addresses rejected</p>
+</li>
+<li>Verify recipient email addresses are valid</li>
+<li>Check if the domain exists</li>
+<li>Ensure the sender is authorized to send to recipients</li>
+</ul>
+<h3 id="common-smtp-server-configurations">Common SMTP Server Configurations</h3>
+<ul>
+<li><strong>Gmail</strong>: smtp.gmail.com, port 587 (TLS) or 465 (SSL)</li>
+<li><strong>Outlook/Office365</strong>: smtp.office365.com, port 587 (TLS)</li>
+<li><strong>Yahoo</strong>: smtp.mail.yahoo.com, port 587 (TLS) or 465 (SSL)</li>
+<li><strong>iCloud</strong>: smtp.mail.me.com, port 587 (TLS)</li>
+<li><strong>SendGrid</strong>: smtp.sendgrid.net, port 587 (TLS) or 465 (SSL)</li>
+<li><strong>Amazon SES</strong>: email-smtp.us-east-1.amazonaws.com, port 587 (TLS)</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li>Use environment variables or secret managers for SMTP credentials</li>
+<li>Implement proper error handling and retry mechanisms</li>
+<li>Validate email addresses before sending</li>
+<li>Use meaningful subject lines that reflect email content</li>
+<li>Include both plain text and HTML versions for better compatibility</li>
+<li>Compress large attachments before sending</li>
+<li>Monitor email delivery rates and bouncebacks</li>
+<li>Respect anti-spam regulations and recipient preferences</li>
+</ol>
+<h3 id="security-considerations">Security Considerations</h3>
+<ul>
+<li>Never hardcode email passwords in configuration files</li>
+<li>Use app-specific passwords for third-party email services</li>
+<li>Implement rate limiting to prevent abuse</li>
+<li>Validate and sanitize all email content to prevent injection attacks</li>
+<li>Use TLS encryption for sensitive information</li>
+<li>Regularly audit email sending patterns and permissions</li>
+</ul>
 
 
 

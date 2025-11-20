@@ -997,6 +997,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1005,16 +1016,94 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        Required Parameters
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#execute-command-with-password-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute Command with Password Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-command-with-key-based-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute Command with Key-Based Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-command-with-private-key-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute Command with Private Key String
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execute-multiple-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execute Multiple Commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1026,6 +1115,84 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Return Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#success-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1570,34 +1737,142 @@
 
 <h1 id="ssh-command-plugin">SSH Command Plugin</h1>
 <p>Execute commands on remote servers via SSH.</p>
+<h2 id="description">Description</h2>
+<p>This plugin enables executing commands on remote servers using SSH protocol. It supports password-based authentication, key-based authentication, and provides detailed output capture including stdout, stderr, and exit codes.</p>
 <h2 id="configuration">Configuration</h2>
-<p><strong>Required:</strong>
-- <code>host</code>: Remote host
-- <code>command</code>: Command to execute</p>
-<p><strong>Optional:</strong>
-- <code>port</code>: SSH port (default: 22)
-- <code>username</code>: SSH username (default: root)
-- <code>password</code>: SSH password
-- <code>key_file</code>: SSH private key file
-- <code>timeout</code>: Connection timeout in seconds (default: 30)</p>
-<h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ssh_command</span>
-<span class="nt">config</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;server.example.com&quot;</span>
-<span class="w">  </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ls</span><span class="nv"> </span><span class="s">-la</span><span class="nv"> </span><span class="s">/opt&quot;</span>
-<span class="w">  </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;deploy&quot;</span>
-<span class="w">  </span><span class="nt">key_file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/home/user/.ssh/id_rsa&quot;</span>
-<span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<h3 id="required-parameters">Required Parameters</h3>
+<ul>
+<li><code>host</code> (string): Remote server hostname or IP address</li>
+<li><code>username</code> (string): Username for SSH authentication</li>
+<li><code>command</code> (string): Command to execute on the remote server</li>
+</ul>
+<h3 id="optional-parameters">Optional Parameters</h3>
+<ul>
+<li><code>port</code> (integer): SSH port number (default: 22)</li>
+<li><code>password</code> (string): Password for authentication (if using password auth)</li>
+<li><code>private_key_path</code> (string): Path to private key file (if using key-based auth)</li>
+<li><code>private_key_string</code> (string): Private key as string (alternative to file path)</li>
+<li><code>timeout</code> (integer): Connection timeout in seconds (default: 30)</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<h3 id="execute-command-with-password-authentication">Execute Command with Password Authentication</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_disk_usage</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ssh_command</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;server.example.com&quot;</span>
+<span class="w">    </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;admin&quot;</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;my-password&quot;</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;df</span><span class="nv"> </span><span class="s">-h&quot;</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span>
+</code></pre></div>
+<h3 id="execute-command-with-key-based-authentication">Execute Command with Key-Based Authentication</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">restart_service</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ssh_command</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;prod-server.example.com&quot;</span>
+<span class="w">    </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;deploy&quot;</span>
+<span class="w">    </span><span class="nt">private_key_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/home/user/.ssh/id_rsa&quot;</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sudo</span><span class="nv"> </span><span class="s">systemctl</span><span class="nv"> </span><span class="s">restart</span><span class="nv"> </span><span class="s">myapp&quot;</span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2222</span>
+</code></pre></div>
+<h3 id="execute-command-with-private-key-string">Execute Command with Private Key String</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deploy_application</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ssh_command</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;192.168.1.100&quot;</span>
+<span class="w">    </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;deployer&quot;</span>
+<span class="w">    </span><span class="nt">private_key_string</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;-----BEGIN</span><span class="nv"> </span><span class="s">RSA</span><span class="nv"> </span><span class="s">PRIVATE</span><span class="nv"> </span><span class="s">KEY-----\\n...\\n-----END</span><span class="nv"> </span><span class="s">RSA</span><span class="nv"> </span><span class="s">PRIVATE</span><span class="nv"> </span><span class="s">KEY-----&quot;</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;cd</span><span class="nv"> </span><span class="s">/app</span><span class="nv"> </span><span class="s">&amp;&amp;</span><span class="nv"> </span><span class="s">git</span><span class="nv"> </span><span class="s">pull</span><span class="nv"> </span><span class="s">&amp;&amp;</span><span class="nv"> </span><span class="s">npm</span><span class="nv"> </span><span class="s">install&quot;</span>
+</code></pre></div>
+<h3 id="execute-multiple-commands">Execute Multiple Commands</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system_health_check</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ssh_command</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;monitoring-server.com&quot;</span>
+<span class="w">    </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;monitor&quot;</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;secure-pass&quot;</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;uptime</span><span class="nv"> </span><span class="s">&amp;&amp;</span><span class="nv"> </span><span class="s">free</span><span class="nv"> </span><span class="s">-m</span><span class="nv"> </span><span class="s">&amp;&amp;</span><span class="nv"> </span><span class="s">ps</span><span class="nv"> </span><span class="s">aux</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">grep</span><span class="nv"> </span><span class="s">myapp&quot;</span>
 </code></pre></div>
 <h2 id="return-values">Return Values</h2>
-<p>The plugin returns a dictionary with:
-- <code>status</code>: "success" or "failure"
-- <code>host</code>: The remote host
-- <code>port</code>: The SSH port
-- <code>command</code>: The executed command
-- <code>exit_code</code>: The exit code of the command
-- <code>stdout</code>: The standard output of the command
-- <code>stderr</code>: The standard error of the command</p>
+<h3 id="success-response">Success Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;server.example.com&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;admin&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;df -h&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stdout&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Filesystem      Size  Used Avail Use% Mounted on\\n/dev/sda1        20G  5.2G   14G  28% /&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stderr&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;exit_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;execution_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">2.34</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="error-response">Error Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;server.example.com&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;username&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;admin&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;invalid-command&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stdout&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stderr&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bash: invalid-command: command not found&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;exit_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">127</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;execution_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.12</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Command failed with exit code 127&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-errors">Common Errors</h3>
+<ul>
+<li><strong><code>Authentication failed</code></strong>: Unable to authenticate with the remote server</li>
+<li>Verify username and password/key are correct</li>
+<li>Check if the user account is active and accessible</li>
+<li>
+<p>Ensure private key format is correct (PEM format)</p>
+</li>
+<li>
+<p><strong><code>Connection timeout</code></strong>: Unable to establish SSH connection</p>
+</li>
+<li>Verify the host is reachable and SSH port is open</li>
+<li>Check firewall rules and network connectivity</li>
+<li>
+<p>Increase timeout value for slow connections</p>
+</li>
+<li>
+<p><strong><code>Host key verification failed</code></strong>: SSH host key mismatch</p>
+</li>
+<li>Verify the host key in known_hosts file</li>
+<li>
+<p>For automation, consider managing host keys explicitly</p>
+</li>
+<li>
+<p><strong><code>Command not found</code></strong>: Remote command does not exist</p>
+</li>
+<li>Check the command path and availability on remote system</li>
+<li>
+<p>Use full paths for commands (e.g., <code>/usr/bin/docker</code> instead of <code>docker</code>)</p>
+</li>
+<li>
+<p><strong><code>Permission denied</code></strong>: Insufficient permissions on remote system</p>
+</li>
+<li>Ensure the user has execute permissions for the command</li>
+<li>Use <code>sudo</code> if required (but note it may need password or NOPASSWD setup)</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li>Use key-based authentication for better security</li>
+<li>Always handle sensitive passwords/keys securely</li>
+<li>Use timeouts to prevent hanging connections</li>
+<li>Validate commands before execution</li>
+<li>Use absolute paths for critical commands</li>
+<li>Implement error handling for command failures</li>
+</ol>
+<h3 id="security-considerations">Security Considerations</h3>
+<ul>
+<li>Never hardcode passwords in YAML files</li>
+<li>Use environment variables or secret managers for credentials</li>
+<li>Regularly rotate SSH keys and passwords</li>
+<li>Limit user permissions on remote systems</li>
+<li>Use separate deployment users with restricted access</li>
+</ul>
 
 
 

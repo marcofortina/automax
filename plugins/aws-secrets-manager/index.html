@@ -794,6 +794,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -802,27 +813,94 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        Required Parameters
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#supported-actions" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supported Actions
+        Optional Parameters
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-a-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read a Secret
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-a-secret-with-specific-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read a Secret with Specific Profile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-new-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a New Secret
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-an-existing-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update an Existing Secret
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -834,6 +912,112 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Return Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read Action
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writecreate-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write/Create Action
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#required-aws-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required AWS Permissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Required AWS Permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read Secrets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writecreate-secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write/Create Secrets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1581,35 +1765,131 @@
 
 <h1 id="aws-secrets-manager-plugin">AWS Secrets Manager Plugin</h1>
 <p>Retrieve secrets from AWS Secrets Manager.</p>
+<h2 id="description">Description</h2>
+<p>This plugin allows you to retrieve, create, and update secrets stored in AWS Secrets Manager. It supports both string and binary secrets, and can handle JSON-formatted secrets automatically.</p>
 <h2 id="configuration">Configuration</h2>
-<p><strong>Required:</strong>
-- <code>secret_name</code>: Name of the secret to retrieve
-- <code>action</code>: Operation - "read", "write", "create"</p>
-<p><strong>Optional:</strong>
-- <code>region_name</code>: AWS region (default: us-east-1)
-- <code>profile_name</code>: AWS profile name
-- <code>role_arn</code>: IAM role ARN for cross-account access
-- <code>value</code>: Secret value for write/create operations</p>
-<h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws_secrets_manager</span>
-<span class="nt">config</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">secret_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;my-database-password&quot;</span>
-<span class="w">  </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;read&quot;</span>
-<span class="w">  </span><span class="nt">region_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;eu-west-1&quot;</span>
-</code></pre></div>
-<h2 id="supported-actions">Supported Actions</h2>
+<h3 id="required-parameters">Required Parameters</h3>
 <ul>
-<li><strong>read</strong>: Retrieve the secret value</li>
-<li><strong>write</strong>: Update an existing secret (requires <code>value</code>)</li>
-<li><strong>create</strong>: Create a new secret (requires <code>value</code>)</li>
+<li><code>secret_name</code> (string): The name or ARN of the secret to retrieve</li>
+<li><code>action</code> (string): Operation to perform - <code>read</code>, <code>write</code>, or <code>create</code></li>
 </ul>
+<h3 id="optional-parameters">Optional Parameters</h3>
+<ul>
+<li><code>region_name</code> (string): AWS region name (default: us-east-1)</li>
+<li><code>profile_name</code> (string): AWS profile name to use</li>
+<li><code>value</code> (string): Secret value for write/create actions</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<h3 id="read-a-secret">Read a Secret</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">get_database_credentials</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws_secrets_manager</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">secret_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;prod/database/credentials&quot;</span>
+<span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;read&quot;</span>
+<span class="w">    </span><span class="nt">region_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;us-east-1&quot;</span>
+</code></pre></div>
+<h3 id="read-a-secret-with-specific-profile">Read a Secret with Specific Profile</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">get_api_key</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws_secrets_manager</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">secret_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;api/keys/service&quot;</span>
+<span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;read&quot;</span>
+<span class="w">    </span><span class="nt">region_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;eu-west-1&quot;</span>
+<span class="w">    </span><span class="nt">profile_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;production&quot;</span>
+</code></pre></div>
+<h3 id="create-a-new-secret">Create a New Secret</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">create_new_secret</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws_secrets_manager</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">secret_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;new/application/secret&quot;</span>
+<span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;create&quot;</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;my-secret-value&quot;</span>
+<span class="w">    </span><span class="nt">region_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;us-west-2&quot;</span>
+</code></pre></div>
+<h3 id="update-an-existing-secret">Update an Existing Secret</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">update_secret</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws_secrets_manager</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">secret_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;existing/secret&quot;</span>
+<span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;write&quot;</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;updated-secret-value&quot;</span>
+</code></pre></div>
 <h2 id="return-values">Return Values</h2>
-<p>The plugin returns a dictionary with:
-- <code>status</code>: "success", "updated", "created", or "failure"
-- <code>secret_name</code>: The name of the secret
-- <code>value</code>: The secret value (for read) or the written value (for write/create)
-- <code>version_id</code>: The version ID of the secret (for read/write)
-- <code>arn</code>: The Amazon Resource Name (ARN) of the secret (for create)</p>
+<h3 id="read-action">Read Action</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;secret_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;prod/database/credentials&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;read&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{\&quot;username\&quot;:\&quot;admin\&quot;,\&quot;password\&quot;:\&quot;secret123\&quot;}&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;version_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;v1&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="writecreate-action">Write/Create Action</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;created&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;secret_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;new/application/secret&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;create&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-secret-value&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;version_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;v2&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-errors">Common Errors</h3>
+<ul>
+<li><strong><code>ResourceNotFoundException</code></strong>: The specified secret doesn't exist</li>
+<li>Verify the secret name and region</li>
+<li>
+<p>Check if you have permissions to access the secret</p>
+</li>
+<li>
+<p><strong><code>AccessDeniedException</code></strong>: Insufficient permissions</p>
+</li>
+<li>Ensure your AWS credentials have <code>secretsmanager:GetSecretValue</code> permission</li>
+<li>
+<p>Verify the IAM role or user has appropriate access</p>
+</li>
+<li>
+<p><strong><code>NoCredentialsError</code></strong>: AWS credentials not found</p>
+</li>
+<li>Configure AWS credentials using AWS CLI or environment variables</li>
+<li>
+<p>Check if the profile exists if using <code>profile_name</code></p>
+</li>
+<li>
+<p><strong><code>DecryptionFailure</code></strong>: Unable to decrypt the secret</p>
+</li>
+<li>Verify the KMS key is accessible and properly configured</li>
+<li>Check encryption permissions</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li>Use meaningful secret names with path-like structure (e.g., <code>environment/service/secret</code>)</li>
+<li>Always handle secrets securely and avoid logging them</li>
+<li>Use IAM roles instead of access keys when possible</li>
+<li>Regularly rotate secrets and update accordingly</li>
+</ol>
+<h2 id="required-aws-permissions">Required AWS Permissions</h2>
+<h3 id="read-secrets">Read Secrets</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;Effect&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;Action&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;secretsmanager:GetSecretValue&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;secretsmanager:DescribeSecret&quot;</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;Resource&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;*&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="writecreate-secrets">Write/Create Secrets</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;Effect&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;Action&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;secretsmanager:CreateSecret&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;secretsmanager:PutSecretValue&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;secretsmanager:UpdateSecret&quot;</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;Resource&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;*&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
 
 
 
