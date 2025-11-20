@@ -1,0 +1,34 @@
+# Basic Network Checks Example
+# Simple network connectivity tests
+
+name: "basic_network_checks"
+description: "Basic network connectivity testing"
+
+steps:
+  - name: "check_google_dns"
+    plugin: "check_tcp_connection"
+    parameters:
+      host: "8.8.8.8"
+      port: 53
+      timeout: 5
+
+  - name: "check_http_connectivity"
+    plugin: "check_tcp_connection"
+    parameters:
+      host: "httpbin.org"
+      port: 80
+      timeout: 5
+
+  - name: "check_https_connectivity"
+    plugin: "check_tcp_connection"
+    parameters:
+      host: "httpbin.org"
+      port: 443
+      timeout: 5
+
+  - name: "ping_google"
+    plugin: "check_icmp_connection"
+    parameters:
+      host: "google.com"
+      count: 3
+      timeout: 2
