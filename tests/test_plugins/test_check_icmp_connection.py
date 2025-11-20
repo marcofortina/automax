@@ -83,14 +83,13 @@ class TestCheckIcmpConnectionPlugin:
         assert result["success_count"] == 4
         assert result["success_rate"] == 100.0
 
-        # Verify mock call without checking the exact log_func
-        mock_verbose_ping.assert_called_once()
-        call_args = mock_verbose_ping.call_args
-        assert call_args.kwargs["dest_addr"] == "example.com"
-        assert call_args.kwargs["count"] == 4
-        assert call_args.kwargs["timeout"] == 2
-        assert call_args.kwargs["interval"] == 0.2
-        assert callable(call_args.kwargs["log_func"])
+        # Verify mock call
+        mock_verbose_ping.assert_called_once_with(
+            dest_addr="example.com",
+            count=4,
+            timeout=2,
+            interval=0.2,
+        )
 
     @patch("automax.plugins.check_icmp_connection.verbose_ping")
     def test_check_icmp_plugin_execution_failure(self, mock_verbose_ping):
@@ -120,13 +119,12 @@ class TestCheckIcmpConnectionPlugin:
         assert "error" in result
 
         # Verify mock call
-        mock_verbose_ping.assert_called_once()
-        call_args = mock_verbose_ping.call_args
-        assert call_args.kwargs["dest_addr"] == "example.com"
-        assert call_args.kwargs["count"] == 4
-        assert call_args.kwargs["timeout"] == 2
-        assert call_args.kwargs["interval"] == 0.2
-        assert callable(call_args.kwargs["log_func"])
+        mock_verbose_ping.assert_called_once_with(
+            dest_addr="example.com",
+            count=4,
+            timeout=2,
+            interval=0.2,
+        )
 
     @patch("automax.plugins.check_icmp_connection.verbose_ping")
     def test_check_icmp_plugin_execution_fail_fast(self, mock_verbose_ping):
@@ -149,13 +147,12 @@ class TestCheckIcmpConnectionPlugin:
         assert "ICMP ping to example.com failed" in str(exc_info.value)
 
         # Verify mock call
-        mock_verbose_ping.assert_called_once()
-        call_args = mock_verbose_ping.call_args
-        assert call_args.kwargs["dest_addr"] == "example.com"
-        assert call_args.kwargs["count"] == 4
-        assert call_args.kwargs["timeout"] == 2
-        assert call_args.kwargs["interval"] == 0.2
-        assert callable(call_args.kwargs["log_func"])
+        mock_verbose_ping.assert_called_once_with(
+            dest_addr="example.com",
+            count=4,
+            timeout=2,
+            interval=0.2,
+        )
 
     @patch("automax.plugins.check_icmp_connection.verbose_ping")
     def test_check_icmp_plugin_execution_host_unknown(self, mock_verbose_ping):
@@ -184,13 +181,12 @@ class TestCheckIcmpConnectionPlugin:
         assert "Host not found" in result["error"]
 
         # Verify mock call
-        mock_verbose_ping.assert_called_once()
-        call_args = mock_verbose_ping.call_args
-        assert call_args.kwargs["dest_addr"] == "invalid-host"
-        assert call_args.kwargs["count"] == 4
-        assert call_args.kwargs["timeout"] == 2
-        assert call_args.kwargs["interval"] == 0.2
-        assert callable(call_args.kwargs["log_func"])
+        mock_verbose_ping.assert_called_once_with(
+            dest_addr="invalid-host",
+            count=4,
+            timeout=2,
+            interval=0.2,
+        )
 
     @patch("automax.plugins.check_icmp_connection.verbose_ping")
     def test_check_icmp_plugin_execution_general_error(self, mock_verbose_ping):
@@ -217,10 +213,96 @@ class TestCheckIcmpConnectionPlugin:
         assert "Network error" in result["error"]
 
         # Verify mock call
-        mock_verbose_ping.assert_called_once()
-        call_args = mock_verbose_ping.call_args
-        assert call_args.kwargs["dest_addr"] == "example.com"
-        assert call_args.kwargs["count"] == 4
-        assert call_args.kwargs["timeout"] == 2
-        assert call_args.kwargs["interval"] == 0.2
-        assert callable(call_args.kwargs["log_func"])
+        mock_verbose_ping.assert_called_once_with(
+            dest_addr="example.com",
+            count=4,
+            timeout=2,
+            interval=0.2,
+        )
+
+
+class TestCheckICMPConnectionErrorHandling:
+    """
+    Additional test suite for Check ICMP Connection error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    @patch("automax.plugins.check_icmp_connection.verbose_ping")
+    def test_check_icmp_connection_plugin_dns_resolution_error(self, mock_verbose_ping):
+        """
+        Test check_icmp_connection plugin execution with DNS resolution error.
+        """
+        from ping3 import errors
+
+        # Setup mock to raise DNS error
+        mock_verbose_ping.side_effect = errors.HostUnknown("Name or service not known")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("check_icmp_connection")
+        plugin = plugin_class(
+            {"host": "invalid-hostname", "timeout": 5, "fail_fast": False}
+        )
+
+        result = plugin.execute()
+
+        assert result["status"] == "failure"
+        assert result["connected"] is False
+
+    @patch("automax.plugins.check_icmp_connection.verbose_ping")
+    def test_check_icmp_connection_plugin_network_unreachable(self, mock_verbose_ping):
+        """
+        Test check_icmp_connection plugin execution with network unreachable.
+        """
+        # Setup mock - nessun ping riuscito
+        mock_verbose_ping.return_value = 0
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("check_icmp_connection")
+        plugin = plugin_class(
+            {"host": "unreachable.example.com", "timeout": 5, "fail_fast": False}
+        )
+
+        result = plugin.execute()
+
+        assert result["status"] == "failure"
+        assert result["connected"] is False
+
+    @patch("automax.plugins.check_icmp_connection.verbose_ping")
+    def test_check_icmp_connection_plugin_permission_denied(self, mock_verbose_ping):
+        """
+        Test check_icmp_connection plugin execution with permission denied.
+        """
+        # Setup mock to raise permission error
+        mock_verbose_ping.side_effect = PermissionError("Permission denied")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("check_icmp_connection")
+        plugin = plugin_class({"host": "example.com", "timeout": 5, "fail_fast": True})
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Permission denied" in str(exc_info.value)
+
+    @patch("automax.plugins.check_icmp_connection.verbose_ping")
+    def test_check_icmp_connection_plugin_ping_not_available(self, mock_verbose_ping):
+        """
+        Test check_icmp_connection plugin execution when ping is not available.
+        """
+        # Setup mock to raise file not found error
+        mock_verbose_ping.side_effect = FileNotFoundError("ping command not found")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("check_icmp_connection")
+        plugin = plugin_class({"host": "example.com", "timeout": 5, "fail_fast": True})
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "ping command not found" in str(exc_info.value)

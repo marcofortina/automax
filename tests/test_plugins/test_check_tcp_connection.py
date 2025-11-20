@@ -2,6 +2,7 @@
 Tests for check_tcp_connection plugin.
 """
 
+import socket
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -132,3 +133,100 @@ class TestCheckTcpConnectionPlugin:
             plugin.execute()
 
         assert "TCP connection to example.com:80 failed" in str(exc_info.value)
+
+
+class TestCheckTCPConnectionErrorHandling:
+    """
+    Additional test suite for Check TCP Connection error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    @patch("socket.create_connection")
+    def test_check_tcp_connection_plugin_dns_resolution_error(
+        self, mock_create_connection
+    ):
+        """
+        Test check_tcp_connection plugin execution with DNS resolution error.
+        """
+        # Setup mock to raise DNS error
+        mock_create_connection.side_effect = socket.gaierror(
+            "Name or service not known"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("check_tcp_connection")
+        plugin = plugin_class(
+            {"host": "invalid-hostname", "port": 80, "fail_fast": False}
+        )
+
+        result = plugin.execute()
+
+        assert result["status"] == "failure"
+        assert result["connected"] is False
+        assert "error" in result
+
+    @patch("socket.create_connection")
+    def test_check_tcp_connection_plugin_connection_aborted(
+        self, mock_create_connection
+    ):
+        """
+        Test check_tcp_connection plugin execution with connection aborted.
+        """
+        # Setup mock to raise connection aborted error
+        mock_create_connection.side_effect = ConnectionAbortedError(
+            "Connection aborted"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("check_tcp_connection")
+        plugin = plugin_class({"host": "example.com", "port": 80, "fail_fast": False})
+
+        result = plugin.execute()
+
+        assert result["status"] == "failure"
+        assert result["connected"] is False
+        assert "error" in result
+
+    @patch("socket.create_connection")
+    def test_check_tcp_connection_plugin_connection_reset(self, mock_create_connection):
+        """
+        Test check_tcp_connection plugin execution with connection reset.
+        """
+        # Setup mock to raise connection reset error
+        mock_create_connection.side_effect = ConnectionResetError(
+            "Connection reset by peer"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("check_tcp_connection")
+        plugin = plugin_class({"host": "example.com", "port": 80, "fail_fast": False})
+
+        result = plugin.execute()
+
+        assert result["status"] == "failure"
+        assert result["connected"] is False
+        assert "error" in result
+
+    @patch("socket.create_connection")
+    def test_check_tcp_connection_plugin_socket_error(self, mock_create_connection):
+        """
+        Test check_tcp_connection plugin execution with general socket error.
+        """
+        # Setup mock to raise socket error
+        mock_create_connection.side_effect = socket.error("Socket error")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("check_tcp_connection")
+        plugin = plugin_class({"host": "example.com", "port": 80, "fail_fast": False})
+
+        result = plugin.execute()
+
+        assert result["status"] == "failure"
+        assert result["connected"] is False
+        assert "error" in result
