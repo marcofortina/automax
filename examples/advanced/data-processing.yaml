@@ -1,0 +1,117 @@
+# Data Processing Example
+# Demonstrates a data processing workflow with file operations and database integration
+
+name: "data_processing_workflow"
+description: "Process data files, load into database, and generate reports"
+
+steps:
+  # Get database credentials
+  - name: "get_db_credentials"
+    plugin: "azure_key_vault"
+    parameters:
+      vault_url: "https://data-vault.vault.azure.net/"
+      secret_name: "data-warehouse-credentials"
+      action: "read"
+
+  # Download data files from remote source
+  - name: "download_data_files"
+    plugin: "run_http_request"
+    parameters:
+      url: "https://data-source.company.com/api/datasets/latest"
+      method: "GET"
+      headers:
+        Authorization: "Bearer ${DATA_API_TOKEN}"
+      timeout: 60
+
+  # Save downloaded data to file
+  - name: "save_data_file"
+    plugin: "write_file_content"
+    parameters:
+      file_path: "/tmp/data/latest_dataset.json"
+      content: "${steps.download_data_files.output.body}"
+      mode: "overwrite"
+      create_dirs: true
+
+  # Process data: extract and transform
+  - name: "process_data"
+    plugin: "local_command"
+    parameters:
+      command: |
+        python /scripts/process_data.py \
+          --input /tmp/data/latest_dataset.json \
+          --output /tmp/data/processed_data.csv
+      working_directory: "/tmp"
+
+  # Compress processed data for backup
+  - name: "compress_processed_data"
+    plugin: "compress_file"
+    parameters:
+      source_path: "/tmp/data/processed_data.csv"
+      output_path: "/tmp/backups/processed_data_$(date +%Y%m%d).zip"
+      compression_type: "zip"
+      compression_level: 9
+
+  # Load data into database
+  - name: "load_data_to_database"
+    plugin: "database_operations"
+    parameters:
+      connection_string: "postgresql://${steps.get_db_credentials.output.secret_value.username}:${steps.get_db_credentials.output.secret_value.password}@${steps.get_db_credentials.output.secret_value.host}:5432/data_warehouse"
+      query: |
+        COPY sales_data FROM '/tmp/data/processed_data.csv' WITH CSV HEADER;
+      action: "execute"
+      timeout: 300
+
+  # Generate report from database
+  - name: "generate_sales_report"
+    plugin: "database_operations"
+    parameters:
+      connection_string: "postgresql://${steps.get_db_credentials.output.secret_value.username}:${steps.get_db_credentials.output.secret_value.password}@${steps.get_db_credentials.output.secret_value.host}:5432/data_warehouse"
+      query: |
+        SELECT
+          date_trunc('month', sale_date) as month,
+          SUM(amount) as total_sales,
+          COUNT(*) as transaction_count
+        FROM sales_data
+        WHERE sale_date >= current_date - interval '30 days'
+        GROUP BY month
+        ORDER BY month;
+      action: "fetchall"
+
+  # Save report to file
+  - name: "save_report"
+    plugin: "write_file_content"
+    parameters:
+      file_path: "/tmp/reports/sales_report_$(date +%Y%m%d).json"
+      content: "${steps.generate_sales_report.output.results}"
+      mode: "overwrite"
+      create_dirs: true
+
+  # Send report via email
+  - name: "send_report_email"
+    plugin: "send_email"
+    parameters:
+      smtp_server: "smtp.office365.com"
+      smtp_port: 587
+      from_address: "reports@company.com"
+      to_addresses:
+        - "management@company.com"
+        - "sales@company.com"
+      subject: "Sales Report - $(date +%Y-%m-%d)"
+      body: |
+        Attached is the latest sales report.
+
+        Summary:
+        - Total records processed: ${steps.generate_sales_report.output.row_count}
+        - Report generated on: $(date)
+
+        The detailed report is attached as a JSON file.
+      attachments:
+        - "/tmp/reports/sales_report_$(date +%Y%m%d).json"
+      username: "${REPORT_EMAIL_USER}"
+      password: "${REPORT_EMAIL_PASSWORD}"
+
+  # Cleanup temporary files
+  - name: "cleanup_temporary_files"
+    plugin: "local_command"
+    parameters:
+      command: "rm -rf /tmp/data /tmp/reports"

@@ -1,0 +1,42 @@
+# Basic Database Operations Example
+# Simple example showing database operations
+
+name: "basic_database_operations"
+description: "Basic database operations and queries"
+
+steps:
+  - name: "create_test_table"
+    plugin: "database_operations"
+    parameters:
+      connection_string: "sqlite:///tmp/test.db"
+      query: |
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL
+        );
+      action: "execute"
+
+  - name: "insert_test_data"
+    plugin: "database_operations"
+    parameters:
+      connection_string: "sqlite:///tmp/test.db"
+      query: "INSERT INTO users (name, email) VALUES (?, ?)"
+      action: "execute"
+      parameters:
+        - "John Doe"
+        - "john@example.com"
+
+  - name: "query_test_data"
+    plugin: "database_operations"
+    parameters:
+      connection_string: "sqlite:///tmp/test.db"
+      query: "SELECT * FROM users"
+      action: "fetchall"
+
+  - name: "drop_test_table"
+    plugin: "database_operations"
+    parameters:
+      connection_string: "sqlite:///tmp/test.db"
+      query: "DROP TABLE IF EXISTS users"
+      action: "execute"

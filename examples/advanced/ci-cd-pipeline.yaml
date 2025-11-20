@@ -1,0 +1,127 @@
+# CI/CD Pipeline Example
+# Demonstrates a complete CI/CD pipeline using multiple plugins
+
+name: "ci_cd_pipeline"
+description: "Automated CI/CD pipeline for application deployment"
+
+steps:
+  # Checkout code (simulated with local command)
+  - name: "checkout_code"
+    plugin: "local_command"
+    parameters:
+      command: "git clone https://github.com/company/app.git /tmp/app && cd /tmp/app && git checkout ${BRANCH}"
+      working_directory: "/tmp"
+
+  # Run tests
+  - name: "run_unit_tests"
+    plugin: "local_command"
+    parameters:
+      command: "cd /tmp/app && python -m pytest tests/ -v --cov=app"
+      working_directory: "/tmp/app"
+      environment:
+        PYTHONPATH: "/tmp/app"
+
+  # Build Docker image
+  - name: "build_docker_image"
+    plugin: "local_command"
+    parameters:
+      command: "cd /tmp/app && docker build -t app:${BUILD_NUMBER} ."
+      working_directory: "/tmp/app"
+
+  # Get database credentials for testing
+  - name: "get_db_credentials"
+    plugin: "aws_secrets_manager"
+    parameters:
+      secret_name: "ci/database/credentials"
+      region_name: "us-east-1"
+      action: "read"
+
+  # Run integration tests with database
+  - name: "run_integration_tests"
+    plugin: "local_command"
+    parameters:
+      command: |
+        cd /tmp/app &&
+        export DB_HOST="${steps.get_db_credentials.output.value.host}" &&
+        export DB_USER="${steps.get_db_credentials.output.value.username}" &&
+        export DB_PASSWORD="${steps.get_db_credentials.output.value.password}" &&
+        python -m pytest integration_tests/ -v
+      working_directory: "/tmp/app"
+      environment:
+        PYTHONPATH: "/tmp/app"
+
+  # Deploy to staging environment via SSH
+  - name: "deploy_to_staging"
+    plugin: "ssh_command"
+    parameters:
+      host: "staging-server.company.com"
+      username: "deploy"
+      private_key_path: "/home/runner/.ssh/id_rsa"
+      command: |
+        docker pull app:${BUILD_NUMBER} &&
+        docker stop app-staging || true &&
+        docker rm app-staging || true &&
+        docker run -d --name app-staging -p 8080:8080 \
+          -e DB_HOST="${steps.get_db_credentials.output.value.host}" \
+          -e DB_USER="${steps.get_db_credentials.output.value.username}" \
+          -e DB_PASSWORD="${steps.get_db_credentials.output.value.password}" \
+          app:${BUILD_NUMBER}
+
+  # Health check on staging
+  - name: "health_check_staging"
+    plugin: "run_http_request"
+    parameters:
+      url: "http://staging-server.company.com:8080/health"
+      method: "GET"
+      timeout: 30
+      follow_redirects: true
+
+  # If health check passes, deploy to production
+  - name: "deploy_to_production"
+    plugin: "ssh_command"
+    parameters:
+      host: "prod-server.company.com"
+      username: "deploy"
+      private_key_path: "/home/runner/.ssh/id_rsa"
+      command: |
+        docker pull app:${BUILD_NUMBER} &&
+        docker stop app-prod || true &&
+        docker rm app-prod || true &&
+        docker run -d --name app-prod -p 8080:8080 \
+          -e DB_HOST="${steps.get_db_credentials.output.value.host}" \
+          -e DB_USER="${steps.get_db_credentials.output.value.username}" \
+          -e DB_PASSWORD="${steps.get_db_credentials.output.value.password}" \
+          app:${BUILD_NUMBER}
+
+  # Final health check on production
+  - name: "health_check_production"
+    plugin: "run_http_request"
+    parameters:
+      url: "http://prod-server.company.com:8080/health"
+      method: "GET"
+      timeout: 30
+      follow_redirects: true
+
+  # Send deployment notification
+  - name: "send_deployment_notification"
+    plugin: "send_email"
+    parameters:
+      smtp_server: "smtp.gmail.com"
+      smtp_port: 587
+      from_address: "ci-cd@company.com"
+      to_addresses:
+        - "devops@company.com"
+        - "developers@company.com"
+      subject: "Deployment Completed - Build ${BUILD_NUMBER}"
+      body: |
+        CI/CD Pipeline completed successfully!
+
+        Build Number: ${BUILD_NUMBER}
+        Branch: ${BRANCH}
+
+        Staging Health: ${steps.health_check_staging.output.status_code}
+        Production Health: ${steps.health_check_production.output.status_code}
+
+        All tests passed and deployment was successful.
+      username: "${EMAIL_USERNAME}"
+      password: "${EMAIL_PASSWORD}"
