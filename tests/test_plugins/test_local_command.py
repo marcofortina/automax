@@ -202,3 +202,85 @@ class TestLocalCommandPlugin:
             text=True,
             encoding="utf-8",
         )
+
+
+class TestLocalCommandErrorHandling:
+    """
+    Additional test suite for Local Command error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    @patch("subprocess.run")
+    def test_local_command_plugin_permission_denied(self, mock_run):
+        """
+        Test local_command plugin execution with permission denied.
+        """
+        # Setup mock to raise permission error
+        mock_run.side_effect = PermissionError("Permission denied")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("local_command")
+        plugin = plugin_class({"command": "rm /root/file", "shell": True})
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Permission denied" in str(exc_info.value)
+
+    @patch("subprocess.run")
+    def test_local_command_plugin_invalid_working_directory(self, mock_run):
+        """
+        Test local_command plugin execution with invalid working directory.
+        """
+        # Setup mock to raise file not found error for working directory
+        mock_run.side_effect = FileNotFoundError("No such file or directory")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("local_command")
+        plugin = plugin_class({"command": "ls", "cwd": "/invalid/directory"})
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Command not found" in str(exc_info.value)
+
+    @patch("subprocess.run")
+    def test_local_command_plugin_invalid_environment(self, mock_run):
+        """
+        Test local_command plugin execution with invalid environment variables.
+        """
+        # Setup mock to raise exception for invalid env
+        mock_run.side_effect = Exception("Invalid environment")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("local_command")
+        plugin = plugin_class({"command": "echo $TEST", "env": {"INVALID_VAR": None}})
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Failed to execute command" in str(exc_info.value)
+        assert "Invalid environment" in str(exc_info.value)
+
+    @patch("subprocess.run")
+    def test_local_command_plugin_process_error(self, mock_run):
+        """
+        Test local_command plugin execution with process error.
+        """
+        # Setup mock to raise general process error
+        mock_run.side_effect = Exception("Process error")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("local_command")
+        plugin = plugin_class({"command": "invalid_command", "shell": True})
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Process error" in str(exc_info.value)
