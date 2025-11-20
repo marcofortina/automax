@@ -420,6 +420,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#examples-tutorials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples &amp; Tutorials
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples &amp; Tutorials">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🚀 Getting Started
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-start_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🛠️ Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#key-features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -431,7 +470,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#getting-started" class="md-nav__link">
+  <a href="#getting-started_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Getting Started
@@ -592,6 +631,34 @@
     
   
     Creating Plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guides/using-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Using Examples
   
 
     
@@ -1594,6 +1661,18 @@ on-premises systems, and custom applications.</p>
 <span class="w">      </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">443</span>
 <span class="w">      </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
 </code></pre></div>
+<h2 id="examples-tutorials">Examples &amp; Tutorials</h2>
+<p>Jumpstart your automation with our comprehensive examples:</p>
+<h3 id="getting-started">🚀 Getting Started</h3>
+<ul>
+<li><a href="guides/using-examples/#basic-examples">Basic Examples</a> - Simple workflows for learning</li>
+<li><a href="guides/using-examples/#advanced-examples">Advanced Examples</a> - Production-ready workflows</li>
+<li><a href="guides/using-examples/">Using Examples Guide</a> - Complete usage instructions</li>
+</ul>
+<h3 id="quick-start_1">🛠️ Quick Start</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Run your first example</span>
+automax<span class="w"> </span>run<span class="w"> </span>--config<span class="w"> </span>examples/config/config.yaml<span class="w"> </span>--steps<span class="w"> </span>basic/local-commands
+</code></pre></div>
 <h2 id="key-features">Key Features</h2>
 <ul>
 <li><strong>Class-Based Plugin System</strong>: Extensible architecture with 15+ built-in plugins</li>
@@ -1604,7 +1683,7 @@ on-premises systems, and custom applications.</p>
 <li><strong>Security First</strong>: Secure secret management and access controls</li>
 <li><strong>Validation Framework</strong>: Schema-based configuration validation</li>
 </ul>
-<h2 id="getting-started">Getting Started</h2>
+<h2 id="getting-started_1">Getting Started</h2>
 <ul>
 <li><a href="plugins/">Browse available plugins</a></li>
 <li><a href="guides/creating-plugins/">Create a new plugin</a></li>
@@ -1621,9 +1700,8 @@ on-premises systems, and custom applications.</p>
 <li><strong>Database</strong>: SQL operations via ODBC</li>
 </ul>
 <h2 id="templating">Templating</h2>
-<p>Automax now features Jinja2 templing support for dynamic parameter resolution:</p>
-<div class="highlight"><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">yaml</span>
-<span class="l l-Scalar l-Scalar-Plain">params</span><span class="p p-Indicator">:</span>
+<p>Automax now features Jinja2 templating support for dynamic parameter resolution:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">params</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">log_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">config.log_dir</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">config.environment</span><span class="nv"> </span><span class="s">}}/app.log&quot;</span>
 <span class="w">  </span><span class="nt">debug_flag</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{%</span><span class="nv"> </span><span class="s">if</span><span class="nv"> </span><span class="s">config.debug</span><span class="nv"> </span><span class="s">%}--verbose{%</span><span class="nv"> </span><span class="s">endif</span><span class="nv"> </span><span class="s">%}&quot;</span>
 </code></pre></div>
