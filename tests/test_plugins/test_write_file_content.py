@@ -119,3 +119,97 @@ class TestWriteFileContentPlugin:
             plugin.execute()
 
         assert "invalid file mode" in str(exc_info.value).lower()
+
+
+class TestWriteFileContentErrorHandling:
+    """
+    Additional test suite for Write File Content error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    @patch("pathlib.Path.mkdir")
+    @patch("builtins.open")
+    def test_write_file_content_plugin_permission_denied(self, mock_open, mock_mkdir):
+        """
+        Test write_file_content plugin execution with permission denied.
+        """
+        # Setup mocks
+        mock_mkdir.side_effect = PermissionError("Permission denied")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("write_file_content")
+        plugin = plugin_class({"file_path": "/root/file.txt", "content": "test"})
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Permission denied" in str(exc_info.value)
+
+    @patch("pathlib.Path.mkdir")
+    @patch("builtins.open")
+    def test_write_file_content_plugin_disk_full(self, mock_open, mock_mkdir):
+        """
+        Test write_file_content plugin execution with disk full.
+        """
+        # Setup mocks
+        mock_open.side_effect = OSError("No space left on device")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("write_file_content")
+        plugin = plugin_class({"file_path": "file.txt", "content": "test"})
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "No space left on device" in str(exc_info.value)
+
+    @patch("pathlib.Path.mkdir")
+    @patch("builtins.open")
+    def test_write_file_content_plugin_invalid_encoding(self, mock_open, mock_mkdir):
+        """
+        Test write_file_content plugin execution with invalid encoding.
+        """
+        # Setup mocks
+        mock_file = MagicMock()
+        mock_open.return_value.__enter__ = MagicMock(return_value=mock_file)
+        mock_open.return_value.__exit__ = MagicMock(return_value=None)
+        mock_file.write.side_effect = UnicodeEncodeError(
+            "utf-8", "test", 0, 1, "Invalid character"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("write_file_content")
+        plugin = plugin_class(
+            {"file_path": "file.txt", "content": "test", "encoding": "utf-8"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Encoding error" in str(exc_info.value)
+
+    @patch("pathlib.Path.mkdir")
+    @patch("builtins.open")
+    def test_write_file_content_plugin_read_only_filesystem(
+        self, mock_open, mock_mkdir
+    ):
+        """
+        Test write_file_content plugin execution with read-only filesystem.
+        """
+        # Setup mocks
+        mock_open.side_effect = OSError("Read-only file system")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("write_file_content")
+        plugin = plugin_class({"file_path": "/rofs/file.txt", "content": "test"})
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Read-only file system" in str(exc_info.value)
