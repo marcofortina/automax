@@ -232,3 +232,140 @@ class TestRunHttpRequestPlugin:
             plugin.execute()
 
         assert "HTTP request failed" in str(exc_info.value)
+
+
+class TestRunHttpRequestErrorHandling:
+    """
+    Additional test suite for Run HTTP Request error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    @patch("requests.request")
+    def test_run_http_request_plugin_connection_error(self, mock_request):
+        """
+        Test run_http_request plugin execution with connection error.
+        """
+        # Setup mock to raise connection error
+        mock_request.side_effect = requests.exceptions.ConnectionError(
+            "Connection error"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("run_http_request")
+        plugin = plugin_class(
+            {"url": "https://unreachable.example.com", "method": "GET"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Connection error" in str(exc_info.value)
+
+    @patch("requests.request")
+    def test_run_http_request_plugin_timeout(self, mock_request):
+        """
+        Test run_http_request plugin execution with timeout.
+        """
+        # Setup mock to raise timeout
+        mock_request.side_effect = requests.exceptions.Timeout("Request timeout")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("run_http_request")
+        plugin = plugin_class(
+            {
+                "url": "https://slow.example.com",
+                "method": "GET",
+                "timeout": 5,
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Request timeout" in str(exc_info.value)
+
+    @patch("requests.request")
+    def test_run_http_request_plugin_ssl_error(self, mock_request):
+        """
+        Test run_http_request plugin execution with SSL error.
+        """
+        # Setup mock to raise SSL error
+        mock_request.side_effect = requests.exceptions.SSLError("SSL certificate error")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("run_http_request")
+        plugin = plugin_class(
+            {"url": "https://invalid-ssl.example.com", "method": "GET"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "SSL certificate error" in str(exc_info.value)
+
+    @patch("requests.request")
+    def test_run_http_request_plugin_invalid_url(self, mock_request):
+        """
+        Test run_http_request plugin execution with invalid URL.
+        """
+        # Setup mock to raise invalid URL error
+        mock_request.side_effect = requests.exceptions.InvalidURL("Invalid URL")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("run_http_request")
+        plugin = plugin_class({"url": "invalid-url", "method": "GET"})
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Invalid URL" in str(exc_info.value)
+
+    @patch("requests.request")
+    def test_run_http_request_plugin_too_many_redirects(self, mock_request):
+        """
+        Test run_http_request plugin execution with too many redirects.
+        """
+        # Setup mock to raise too many redirects error
+        mock_request.side_effect = requests.exceptions.TooManyRedirects(
+            "Too many redirects"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("run_http_request")
+        plugin = plugin_class(
+            {"url": "https://redirect-loop.example.com", "method": "GET"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Too many redirects" in str(exc_info.value)
+
+    @patch("requests.request")
+    def test_run_http_request_plugin_chunked_encoding_error(self, mock_request):
+        """
+        Test run_http_request plugin execution with chunked encoding error.
+        """
+        # Setup mock to raise chunked encoding error
+        mock_request.side_effect = requests.exceptions.ChunkedEncodingError(
+            "Chunked encoding error"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("run_http_request")
+        plugin = plugin_class(
+            {"url": "https://chunked-error.example.com", "method": "GET"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Chunked encoding error" in str(exc_info.value)

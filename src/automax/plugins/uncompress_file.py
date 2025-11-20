@@ -81,6 +81,10 @@ class UncompressFilePlugin(BasePlugin):
             if not source_path.exists():
                 raise PluginExecutionError(f"Source path does not exist: {source_path}")
 
+            # Validate that source path is either a file or directory
+            if not source_path.is_file():
+                raise PluginExecutionError(f"Source path is not a file: {source_path}")
+
             # Create output directory if it doesn't exist
             output_path.parent.mkdir(parents=True, exist_ok=True)
 

@@ -475,3 +475,180 @@ class TestDatabaseOperationsPlugin:
         finally:
             # Restore original value
             db_module.PYODBC_AVAILABLE = original_available
+
+
+class TestDatabaseOperationsErrorHandling:
+    """
+    Additional test suite for Database Operations error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    @patch("pyodbc.connect")
+    def test_database_operations_plugin_invalid_connection_string(self, mock_connect):
+        """
+        Test database_operations plugin execution with invalid connection string.
+        """
+        # Setup mock to raise connection error
+        mock_connect.side_effect = Exception("Invalid connection string")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("database_operations")
+        plugin = plugin_class(
+            {
+                "connection_string": "INVALID_CONNECTION_STRING",
+                "query": "SELECT * FROM users",
+                "action": "select",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Invalid connection string" in str(exc_info.value)
+
+    @patch("pyodbc.connect")
+    def test_database_operations_plugin_connection_timeout(self, mock_connect):
+        """
+        Test database_operations plugin execution with connection timeout.
+        """
+        # Setup mock to raise timeout error
+        mock_connect.side_effect = Exception("Connection timeout")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("database_operations")
+        plugin = plugin_class(
+            {
+                "connection_string": "DRIVER={SQL Server};SERVER=slow-server;DATABASE=test;",
+                "query": "SELECT * FROM users",
+                "action": "select",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Connection timeout" in str(exc_info.value)
+
+    @patch("pyodbc.connect")
+    def test_database_operations_plugin_syntax_error(self, mock_connect):
+        """
+        Test database_operations plugin execution with SQL syntax error.
+        """
+        # Setup mocks
+        mock_conn = MagicMock()
+        mock_connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_connect.return_value.__exit__ = MagicMock(return_value=None)
+
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.execute.side_effect = Exception("SQL syntax error")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("database_operations")
+        plugin = plugin_class(
+            {
+                "connection_string": "DRIVER={SQL Server};SERVER=localhost;DATABASE=test;",
+                "query": "SELECT * FROM non_existent_table",
+                "action": "select",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "SQL syntax error" in str(exc_info.value)
+
+    @patch("pyodbc.connect")
+    def test_database_operations_plugin_table_not_found(self, mock_connect):
+        """
+        Test database_operations plugin execution with table not found.
+        """
+        # Setup mocks
+        mock_conn = MagicMock()
+        mock_connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_connect.return_value.__exit__ = MagicMock(return_value=None)
+
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.execute.side_effect = Exception("Table not found")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("database_operations")
+        plugin = plugin_class(
+            {
+                "connection_string": "DRIVER={SQL Server};SERVER=localhost;DATABASE=test;",
+                "query": "SELECT * FROM non_existent_table",
+                "action": "select",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Table not found" in str(exc_info.value)
+
+    @patch("pyodbc.connect")
+    def test_database_operations_plugin_deadlock(self, mock_connect):
+        """
+        Test database_operations plugin execution with deadlock.
+        """
+        # Setup mocks
+        mock_conn = MagicMock()
+        mock_connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_connect.return_value.__exit__ = MagicMock(return_value=None)
+
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.execute.side_effect = Exception("Deadlock detected")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("database_operations")
+        plugin = plugin_class(
+            {
+                "connection_string": "DRIVER={SQL Server};SERVER=localhost;DATABASE=test;",
+                "query": "UPDATE users SET status = 1",
+                "action": "update",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Deadlock detected" in str(exc_info.value)
+
+    @patch("pyodbc.connect")
+    def test_database_operations_plugin_permission_denied(self, mock_connect):
+        """
+        Test database_operations plugin execution with permission denied.
+        """
+        # Setup mocks
+        mock_conn = MagicMock()
+        mock_connect.return_value.__enter__ = MagicMock(return_value=mock_conn)
+        mock_connect.return_value.__exit__ = MagicMock(return_value=None)
+
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        mock_cursor.execute.side_effect = Exception("Permission denied")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("database_operations")
+        plugin = plugin_class(
+            {
+                "connection_string": "DRIVER={SQL Server};SERVER=localhost;DATABASE=test;",
+                "query": "DROP TABLE users",
+                "action": "execute",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Permission denied" in str(exc_info.value)

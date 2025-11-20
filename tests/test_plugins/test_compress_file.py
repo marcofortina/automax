@@ -277,3 +277,191 @@ class TestCompressFilePlugin:
             assert result["format"] == "zip"
             assert result["original_size"] == 1000
             assert result["compressed_size"] == 600
+
+
+class TestCompressFileErrorHandling:
+    """
+    Additional test suite for Compress File error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    def test_compress_file_plugin_source_not_directory_or_file(self):
+        """
+        Test compress_file plugin execution with source that is neither directory nor
+        file.
+        """
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("compress_file")
+        plugin = plugin_class(
+            {
+                "source_path": "/path/to/source",
+                "output_path": "/path/to/output.gz",
+            }
+        )
+
+        with patch("automax.plugins.compress_file.Path") as MockPath:
+            # Mock source path
+            mock_source = MagicMock()
+            mock_source.exists.return_value = True
+            mock_source.is_file.return_value = False
+            mock_source.is_dir.return_value = False
+            mock_source.__str__ = lambda self: "/path/to/source"
+
+            # Mock output path
+            mock_output = MagicMock()
+            mock_output.__str__ = lambda self: "/path/to/output.gz"
+            mock_output.parent = MagicMock()
+
+            def path_side_effect(path_str):
+                if path_str == "/path/to/source":
+                    return mock_source
+                elif path_str == "/path/to/output.gz":
+                    return mock_output
+                return MagicMock()
+
+            MockPath.side_effect = path_side_effect
+
+            with pytest.raises(PluginExecutionError) as exc_info:
+                plugin.execute()
+
+            assert "Source path is neither a file nor a directory" in str(
+                exc_info.value
+            )
+
+    @patch("automax.plugins.compress_file.gzip.open")
+    @patch("automax.plugins.compress_file.open")
+    def test_compress_file_plugin_gzip_compression_error(
+        self, mock_open, mock_gzip_open
+    ):
+        """
+        Test compress_file plugin execution with gzip compression error.
+        """
+        # Setup mocks
+        mock_gzip_open.side_effect = Exception("Compression error")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("compress_file")
+        plugin = plugin_class(
+            {
+                "source_path": "/path/to/source.txt",
+                "output_path": "/path/to/output.gz",
+                "format": "gzip",
+            }
+        )
+
+        with patch("automax.plugins.compress_file.Path") as MockPath:
+            mock_source = MagicMock()
+            mock_source.exists.return_value = True
+            mock_source.is_file.return_value = True
+            mock_source.is_dir.return_value = False
+            mock_source.__str__ = lambda self: "/path/to/source.txt"
+
+            mock_output = MagicMock()
+            mock_output.__str__ = lambda self: "/path/to/output.gz"
+            mock_output.parent = MagicMock()
+
+            def path_side_effect(path_str):
+                if path_str == "/path/to/source.txt":
+                    return mock_source
+                elif path_str == "/path/to/output.gz":
+                    return mock_output
+                return MagicMock()
+
+            MockPath.side_effect = path_side_effect
+
+            with pytest.raises(PluginExecutionError) as exc_info:
+                plugin.execute()
+
+            assert "Compression error" in str(exc_info.value)
+
+    @patch("automax.plugins.compress_file.tarfile.open")
+    def test_compress_file_plugin_tar_compression_error(self, mock_tarfile_open):
+        """
+        Test compress_file plugin execution with tar compression error.
+        """
+        # Setup mocks
+        mock_tarfile_open.side_effect = Exception("Tar compression error")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("compress_file")
+        plugin = plugin_class(
+            {
+                "source_path": "/path/to/source",
+                "output_path": "/path/to/output.tar",
+                "format": "tar",
+            }
+        )
+
+        with patch("automax.plugins.compress_file.Path") as MockPath:
+            mock_source = MagicMock()
+            mock_source.exists.return_value = True
+            mock_source.is_file.return_value = False
+            mock_source.is_dir.return_value = True
+            mock_source.__str__ = lambda self: "/path/to/source"
+
+            mock_output = MagicMock()
+            mock_output.__str__ = lambda self: "/path/to/output.tar"
+            mock_output.parent = MagicMock()
+
+            def path_side_effect(path_str):
+                if path_str == "/path/to/source":
+                    return mock_source
+                elif path_str == "/path/to/output.tar":
+                    return mock_output
+                return MagicMock()
+
+            MockPath.side_effect = path_side_effect
+
+            with pytest.raises(PluginExecutionError) as exc_info:
+                plugin.execute()
+
+            assert "Tar compression error" in str(exc_info.value)
+
+    @patch("automax.plugins.compress_file.zipfile.ZipFile")
+    def test_compress_file_plugin_zip_compression_error(self, mock_zipfile):
+        """
+        Test compress_file plugin execution with zip compression error.
+        """
+        # Setup mocks
+        mock_zipfile.side_effect = Exception("Zip compression error")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("compress_file")
+        plugin = plugin_class(
+            {
+                "source_path": "/path/to/source",
+                "output_path": "/path/to/output.zip",
+                "format": "zip",
+            }
+        )
+
+        with patch("automax.plugins.compress_file.Path") as MockPath:
+            mock_source = MagicMock()
+            mock_source.exists.return_value = True
+            mock_source.is_file.return_value = False
+            mock_source.is_dir.return_value = True
+            mock_source.__str__ = lambda self: "/path/to/source"
+
+            mock_output = MagicMock()
+            mock_output.__str__ = lambda self: "/path/to/output.zip"
+            mock_output.parent = MagicMock()
+
+            def path_side_effect(path_str):
+                if path_str == "/path/to/source":
+                    return mock_source
+                elif path_str == "/path/to/output.zip":
+                    return mock_output
+                return MagicMock()
+
+            MockPath.side_effect = path_side_effect
+
+            with pytest.raises(PluginExecutionError) as exc_info:
+                plugin.execute()
+
+            assert "Zip compression error" in str(exc_info.value)

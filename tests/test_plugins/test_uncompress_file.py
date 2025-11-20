@@ -267,3 +267,187 @@ class TestUncompressFilePlugin:
                 plugin.execute()
 
             assert "Unsupported compression format" in str(exc_info.value)
+
+
+class TestUncompressFileErrorHandling:
+    """
+    Additional test suite for Uncompress File error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    @patch("automax.plugins.uncompress_file.gzip.open")
+    @patch("automax.plugins.uncompress_file.open")
+    def test_uncompress_file_plugin_gzip_decompression_error(
+        self, mock_open, mock_gzip_open
+    ):
+        """
+        Test uncompress_file plugin execution with gzip decompression error.
+        """
+        # Setup mocks
+        mock_gzip_open.side_effect = Exception("Decompression error")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("uncompress_file")
+        plugin = plugin_class(
+            {
+                "source_path": "/path/to/archive.gz",
+                "output_path": "/path/to/extracted",
+                "format": "gzip",
+            }
+        )
+
+        with patch("automax.plugins.uncompress_file.Path") as MockPath:
+            mock_source = MagicMock()
+            mock_source.exists.return_value = True
+            mock_source.__str__ = lambda self: "/path/to/archive.gz"
+
+            mock_output = MagicMock()
+            mock_output.__str__ = lambda self: "/path/to/extracted"
+            mock_output.parent = MagicMock()
+
+            def path_side_effect(path_str):
+                if path_str == "/path/to/archive.gz":
+                    return mock_source
+                elif path_str == "/path/to/extracted":
+                    return mock_output
+                return MagicMock()
+
+            MockPath.side_effect = path_side_effect
+
+            with pytest.raises(PluginExecutionError) as exc_info:
+                plugin.execute()
+
+            assert "Decompression error" in str(exc_info.value)
+
+    @patch("automax.plugins.uncompress_file.tarfile.open")
+    def test_uncompress_file_plugin_tar_decompression_error(self, mock_tarfile_open):
+        """
+        Test uncompress_file plugin execution with tar decompression error.
+        """
+        # Setup mocks
+        mock_tarfile_open.side_effect = Exception("Tar decompression error")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("uncompress_file")
+        plugin = plugin_class(
+            {
+                "source_path": "/path/to/archive.tar",
+                "output_path": "/path/to/extracted",
+                "format": "tar",
+            }
+        )
+
+        with patch("automax.plugins.uncompress_file.Path") as MockPath:
+            mock_source = MagicMock()
+            mock_source.exists.return_value = True
+            mock_source.__str__ = lambda self: "/path/to/archive.tar"
+
+            mock_output = MagicMock()
+            mock_output.__str__ = lambda self: "/path/to/extracted"
+            mock_output.parent = MagicMock()
+
+            def path_side_effect(path_str):
+                if path_str == "/path/to/archive.tar":
+                    return mock_source
+                elif path_str == "/path/to/extracted":
+                    return mock_output
+                return MagicMock()
+
+            MockPath.side_effect = path_side_effect
+
+            with pytest.raises(PluginExecutionError) as exc_info:
+                plugin.execute()
+
+            assert "Tar decompression error" in str(exc_info.value)
+
+    @patch("automax.plugins.uncompress_file.zipfile.ZipFile")
+    def test_uncompress_file_plugin_zip_decompression_error(self, mock_zipfile):
+        """
+        Test uncompress_file plugin execution with zip decompression error.
+        """
+        # Setup mocks
+        mock_zipfile.side_effect = Exception("Zip decompression error")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("uncompress_file")
+        plugin = plugin_class(
+            {
+                "source_path": "/path/to/archive.zip",
+                "output_path": "/path/to/extracted",
+                "format": "zip",
+            }
+        )
+
+        with patch("automax.plugins.uncompress_file.Path") as MockPath:
+            mock_source = MagicMock()
+            mock_source.exists.return_value = True
+            mock_source.__str__ = lambda self: "/path/to/archive.zip"
+
+            mock_output = MagicMock()
+            mock_output.__str__ = lambda self: "/path/to/extracted"
+            mock_output.parent = MagicMock()
+
+            def path_side_effect(path_str):
+                if path_str == "/path/to/archive.zip":
+                    return mock_source
+                elif path_str == "/path/to/extracted":
+                    return mock_output
+                return MagicMock()
+
+            MockPath.side_effect = path_side_effect
+
+            with pytest.raises(PluginExecutionError) as exc_info:
+                plugin.execute()
+
+            assert "Zip decompression error" in str(exc_info.value)
+
+    @patch("automax.plugins.uncompress_file.gzip.open")
+    @patch("automax.plugins.uncompress_file.open")
+    def test_uncompress_file_plugin_corrupted_archive(self, mock_open, mock_gzip_open):
+        """
+        Test uncompress_file plugin execution with corrupted archive.
+        """
+        # Setup mocks
+        mock_gzip_file = MagicMock()
+        mock_gzip_open.return_value.__enter__ = MagicMock(return_value=mock_gzip_file)
+        mock_gzip_open.return_value.__exit__ = MagicMock(return_value=None)
+        mock_gzip_file.read.side_effect = Exception("Corrupted archive")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("uncompress_file")
+        plugin = plugin_class(
+            {
+                "source_path": "/path/to/corrupted.gz",
+                "output_path": "/path/to/extracted",
+                "format": "gzip",
+            }
+        )
+
+        with patch("automax.plugins.uncompress_file.Path") as MockPath:
+            mock_source = MagicMock()
+            mock_source.exists.return_value = True
+            mock_source.__str__ = lambda self: "/path/to/corrupted.gz"
+
+            mock_output = MagicMock()
+            mock_output.__str__ = lambda self: "/path/to/extracted"
+            mock_output.parent = MagicMock()
+
+            def path_side_effect(path_str):
+                if path_str == "/path/to/corrupted.gz":
+                    return mock_source
+                elif path_str == "/path/to/extracted":
+                    return mock_output
+                return MagicMock()
+
+            MockPath.side_effect = path_side_effect
+
+            with pytest.raises(PluginExecutionError) as exc_info:
+                plugin.execute()
+
+            assert "Corrupted archive" in str(exc_info.value)
