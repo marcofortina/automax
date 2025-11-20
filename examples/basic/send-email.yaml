@@ -1,0 +1,35 @@
+# Basic Send Email Example
+# Simple example showing email sending
+
+name: "basic_send_email"
+description: "Send basic email notifications"
+
+steps:
+  - name: "send_text_email"
+    plugin: "send_email"
+    parameters:
+      smtp_server: "smtp.gmail.com"
+      smtp_port: 587
+      from_address: "sender@example.com"
+      to_addresses:
+        - "recipient@example.com"
+      subject: "Test Email from Automax"
+      body: "This is a test email sent from Automax."
+      username: "${EMAIL_USERNAME}"
+      password: "${EMAIL_PASSWORD}"
+      use_tls: true
+
+  - name: "send_html_email"
+    plugin: "send_email"
+    parameters:
+      smtp_server: "smtp.gmail.com"
+      smtp_port: 587
+      from_address: "sender@example.com"
+      to_addresses:
+        - "recipient@example.com"
+      subject: "Test HTML Email from Automax"
+      body: "This is the plain text version."
+      body_html: "<h1>Test HTML Email</h1><p>This is the <strong>HTML</strong> version.</p>"
+      username: "${EMAIL_USERNAME}"
+      password: "${EMAIL_PASSWORD}"
+      use_tls: true
