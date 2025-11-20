@@ -1,0 +1,52 @@
+# Basic File Operations Example
+# Simple file read/write/compress/uncompress operations
+
+name: "basic_file_operations"
+description: "Basic file reading, writing, compression, and extraction"
+
+steps:
+  - name: "create_config_file"
+    plugin: "write_file_content"
+    parameters:
+      file_path: "/tmp/app_config.yaml"
+      content: |
+        app:
+          name: "My Application"
+          version: "1.0.0"
+        database:
+          host: "localhost"
+          port: 5432
+      mode: "overwrite"
+
+  - name: "read_config_file"
+    plugin: "read_file_content"
+    parameters:
+      file_path: "/tmp/app_config.yaml"
+
+  - name: "append_log_entry"
+    plugin: "write_file_content"
+    parameters:
+      file_path: "/tmp/app.log"
+      content: "$(date): Application started successfully\n"
+      mode: "append"
+
+  - name: "read_log_file"
+    plugin: "read_file_content"
+    parameters:
+      file_path: "/tmp/app.log"
+
+  - name: "compress_files"
+    plugin: "compress_file"
+    parameters:
+      source_path:
+        - "/tmp/app_config.yaml"
+        - "/tmp/app.log"
+      output_path: "/tmp/backup.zip"
+      compression_type: "zip"
+
+  - name: "uncompress_files"
+    plugin: "uncompress_file"
+    parameters:
+      archive_path: "/tmp/backup.zip"
+      output_dir: "/tmp/extracted"
+      preserve_paths: false

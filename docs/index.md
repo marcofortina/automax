@@ -22,6 +22,21 @@ steps:
       timeout: 10
 ```
 
+## Examples & Tutorials
+
+Jumpstart your automation with our comprehensive examples:
+
+### 🚀 Getting Started
+- [Basic Examples](guides/using-examples.md#basic-examples) - Simple workflows for learning
+- [Advanced Examples](guides/using-examples.md#advanced-examples) - Production-ready workflows
+- [Using Examples Guide](guides/using-examples.md) - Complete usage instructions
+
+### 🛠️ Quick Start
+```bash
+# Run your first example
+automax run --config examples/config/config.yaml --steps basic/local-commands
+```
+
 ## Key Features
 
 - **Class-Based Plugin System**: Extensible architecture with 15+ built-in plugins
@@ -50,10 +65,9 @@ steps:
 
 ## Templating
 
-Automax now features Jinja2 templing support for dynamic parameter resolution:
+Automax now features Jinja2 templating support for dynamic parameter resolution:
 
 ```yaml
-yaml
 params:
   log_path: "{{ config.log_dir }}/{{ config.environment }}/app.log"
   debug_flag: "{% if config.debug %}--verbose{% endif %}"
