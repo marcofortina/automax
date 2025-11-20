@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#http-request-plugin" class="md-skip">
+        <a href="#run-http-request-plugin" class="md-skip">
           Skip to content
         </a>
       
@@ -1319,6 +1319,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1327,16 +1338,105 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        Required Parameters
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#simple-get-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simple GET Request
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-request-with-json-body" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST Request with JSON Body
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#post-request-with-raw-body" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST Request with Raw Body
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-with-query-parameters-and-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request with Query Parameters and Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-with-ssl-verification-disabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request with SSL Verification Disabled
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1348,6 +1448,95 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Return Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#success-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http-methods-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP Methods Guide
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#status-code-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status Code Categories
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1568,39 +1757,196 @@
   
 
 
-<h1 id="http-request-plugin">HTTP Request Plugin</h1>
-<p>Make HTTP requests to APIs.</p>
+<h1 id="run-http-request-plugin">Run HTTP Request Plugin</h1>
+<p>Execute HTTP requests to interact with web services and APIs.</p>
+<h2 id="description">Description</h2>
+<p>This plugin enables making HTTP requests to various endpoints. It supports multiple HTTP methods (GET, POST, PUT, DELETE, etc.), headers, query parameters, and request body with automatic JSON handling.</p>
 <h2 id="configuration">Configuration</h2>
-<p><strong>Required:</strong>
-- <code>url</code>: Target URL</p>
-<p><strong>Optional:</strong>
-- <code>method</code>: HTTP method (default: GET)
-- <code>headers</code>: Request headers
-- <code>data</code>: Request body data
-- <code>params</code>: Query parameters
-- <code>timeout</code>: Request timeout in seconds (default: 30)
-- <code>verify_ssl</code>: Verify SSL certificates (default: true)
-- <code>auth_username</code>: Username for Basic Authentication
-- <code>auth_password</code>: Password for Basic Authentication</p>
-<h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">run_http_request</span>
-<span class="nt">config</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://api.example.com/data&quot;</span>
-<span class="w">  </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;POST&quot;</span>
-<span class="w">  </span><span class="nt">headers</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">Authorization</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Bearer</span><span class="nv"> </span><span class="s">token123&quot;</span>
-<span class="w">  </span><span class="nt">data</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;{&quot;key&quot;:</span><span class="nv"> </span><span class="s">&quot;value&quot;}&#39;</span>
-<span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<h3 id="required-parameters">Required Parameters</h3>
+<ul>
+<li><code>url</code> (string): The URL to send the request to</li>
+<li><code>method</code> (string): HTTP method - <code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>DELETE</code>, <code>PATCH</code>, <code>HEAD</code>, <code>OPTIONS</code></li>
+</ul>
+<h3 id="optional-parameters">Optional Parameters</h3>
+<ul>
+<li><code>headers</code> (object): HTTP headers as key-value pairs</li>
+<li><code>query_params</code> (object): Query parameters as key-value pairs</li>
+<li><code>body</code> (string|object): Request body (string for raw, object for JSON)</li>
+<li><code>timeout</code> (integer): Request timeout in seconds (default: 30)</li>
+<li><code>verify_ssl</code> (boolean): Verify SSL certificates (default: true)</li>
+<li><code>auth</code> (object): Authentication credentials with <code>username</code> and <code>password</code> fields</li>
+<li><code>follow_redirects</code> (boolean): Follow HTTP redirects (default: true)</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<h3 id="simple-get-request">Simple GET Request</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">get_user_data</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">run_http_request</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://api.example.com/users/123&quot;</span>
+<span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;GET&quot;</span>
+<span class="w">    </span><span class="nt">headers</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Accept</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;application/json&quot;</span>
+<span class="w">      </span><span class="nt">User-Agent</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Automax/1.0&quot;</span>
+</code></pre></div>
+<h3 id="post-request-with-json-body">POST Request with JSON Body</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">create_new_user</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">run_http_request</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://api.example.com/users&quot;</span>
+<span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;POST&quot;</span>
+<span class="w">    </span><span class="nt">headers</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Content-Type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;application/json&quot;</span>
+<span class="w">      </span><span class="nt">Authorization</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Bearer</span><span class="nv"> </span><span class="s">${api_token}&quot;</span>
+<span class="w">    </span><span class="nt">body</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;John</span><span class="nv"> </span><span class="s">Doe&quot;</span>
+<span class="w">      </span><span class="nt">email</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;john@example.com&quot;</span>
+<span class="w">      </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;user&quot;</span>
+</code></pre></div>
+<h3 id="post-request-with-raw-body">POST Request with Raw Body</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">send_xml_data</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">run_http_request</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://api.example.com/data&quot;</span>
+<span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;POST&quot;</span>
+<span class="w">    </span><span class="nt">headers</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">Content-Type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;application/xml&quot;</span>
+<span class="w">    </span><span class="nt">body</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;?xml</span><span class="nv"> </span><span class="s">version=&#39;1.0&#39;?&gt;&lt;user&gt;&lt;name&gt;John&lt;/name&gt;&lt;/user&gt;&quot;</span>
+</code></pre></div>
+<h3 id="request-with-query-parameters-and-authentication">Request with Query Parameters and Authentication</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">search_products</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">run_http_request</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://api.example.com/products&quot;</span>
+<span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;GET&quot;</span>
+<span class="w">    </span><span class="nt">query_params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;electronics&quot;</span>
+<span class="w">      </span><span class="nt">min_price</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;100&quot;</span>
+<span class="w">      </span><span class="nt">max_price</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;500&quot;</span>
+<span class="w">    </span><span class="nt">auth</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;api_user&quot;</span>
+<span class="w">      </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;api_password&quot;</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span>
+</code></pre></div>
+<h3 id="request-with-ssl-verification-disabled">Request with SSL Verification Disabled</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test_internal_endpoint</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">run_http_request</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://internal-api.local/users&quot;</span>
+<span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;GET&quot;</span>
+<span class="w">    </span><span class="nt">verify_ssl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
 </code></pre></div>
 <h2 id="return-values">Return Values</h2>
-<p>The plugin returns a dictionary with:
-- <code>status</code>: "success" or "failure"
-- <code>url</code>: The target URL
-- <code>method</code>: The HTTP method used
-- <code>status_code</code>: The HTTP status code
-- <code>headers</code>: The response headers
-- <code>content</code>: The response content
-- <code>elapsed</code>: The request elapsed time in seconds</p>
+<h3 id="success-response">Success Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://api.example.com/users/123&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;method&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GET&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;status_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">200</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;headers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;Content-Type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;Content-Length&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;125&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;body&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">123</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;John Doe&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;email&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;john@example.com&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;response_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.45</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;cookies&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="error-response">Error Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://api.example.com/users/999&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;method&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;GET&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;status_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">404</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;headers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;Content-Type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;application/json&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;body&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;User not found&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;code&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">404</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;response_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.23</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;HTTP 404: Not Found&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-errors">Common Errors</h3>
+<ul>
+<li><strong><code>ConnectionError</code></strong>: Unable to connect to the server</li>
+<li>Verify the URL is correct and accessible</li>
+<li>Check network connectivity and DNS resolution</li>
+<li>
+<p>Ensure the server is running and accepting connections</p>
+</li>
+<li>
+<p><strong><code>Timeout</code></strong>: Request timed out</p>
+</li>
+<li>Increase timeout value for slow endpoints</li>
+<li>Check server performance and network latency</li>
+<li>
+<p>Verify the endpoint is responsive</p>
+</li>
+<li>
+<p><strong><code>SSLError</code></strong>: SSL certificate verification failed</p>
+</li>
+<li>Verify the certificate is valid and trusted</li>
+<li>Use <code>verify_ssl: false</code> for self-signed certificates (development only)</li>
+<li>
+<p>Check certificate expiration dates</p>
+</li>
+<li>
+<p><strong><code>HTTPError</code></strong>: HTTP error status code (4xx, 5xx)</p>
+</li>
+<li>Check the API documentation for expected status codes</li>
+<li>Verify request parameters, headers, and body format</li>
+<li>
+<p>Ensure authentication credentials are valid</p>
+</li>
+<li>
+<p><strong><code>InvalidURL</code></strong>: Malformed or invalid URL</p>
+</li>
+<li>Verify URL format and protocol (http:// or https://)</li>
+<li>Check for typos in the URL</li>
+<li>
+<p>Ensure special characters are properly encoded</p>
+</li>
+<li>
+<p><strong><code>JSONDecodeError</code></strong>: Unable to parse response as JSON</p>
+</li>
+<li>Check if the response is actually JSON format</li>
+<li>Verify the Content-Type header is application/json</li>
+<li>Use raw body access for non-JSON responses</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li>Always handle sensitive data (tokens, passwords) securely</li>
+<li>Use appropriate timeouts for different types of requests</li>
+<li>Implement retry logic for transient failures</li>
+<li>Validate response status codes and handle errors gracefully</li>
+<li>Use headers appropriately (Content-Type, Accept, Authorization)</li>
+<li>Monitor API rate limits and implement backoff strategies</li>
+</ol>
+<h3 id="http-methods-guide">HTTP Methods Guide</h3>
+<ul>
+<li><code>GET</code>: Retrieve data from server (should not modify data)</li>
+<li><code>POST</code>: Create new resources or submit data</li>
+<li><code>PUT</code>: Update existing resources (full update)</li>
+<li><code>PATCH</code>: Partial update of resources</li>
+<li><code>DELETE</code>: Remove resources</li>
+<li><code>HEAD</code>: Retrieve headers only</li>
+<li><code>OPTIONS</code>: Get supported methods for endpoint</li>
+</ul>
+<h3 id="status-code-categories">Status Code Categories</h3>
+<ul>
+<li><code>2xx</code>: Success (200 OK, 201 Created, 204 No Content)</li>
+<li><code>3xx</code>: Redirection (301 Moved, 304 Not Modified)</li>
+<li><code>4xx</code>: Client errors (400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found)</li>
+<li><code>5xx</code>: Server errors (500 Internal Server Error, 502 Bad Gateway, 503 Service Unavailable)</li>
+</ul>
 
 
 

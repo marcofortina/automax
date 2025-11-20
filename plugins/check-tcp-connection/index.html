@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#tcp-check-plugin" class="md-skip">
+        <a href="#check-tcp-connection-plugin" class="md-skip">
           Skip to content
         </a>
       
@@ -1025,6 +1025,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1033,16 +1044,105 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        Required Parameters
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-tcp-connection-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic TCP Connection Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-database-port" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Database Port
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-with-multiple-attempts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test with Multiple Attempts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-with-specific-source-port" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test with Specific Source Port
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-local-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Local Service
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1054,6 +1154,106 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Return Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#success-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failure-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-ports-for-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Ports for Testing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monitoring-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring Scenarios
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1568,31 +1768,183 @@
   
 
 
-<h1 id="tcp-check-plugin">TCP Check Plugin</h1>
-<p>Check TCP connectivity to a host and port.</p>
+<h1 id="check-tcp-connection-plugin">Check TCP Connection Plugin</h1>
+<p>Test TCP connectivity to remote hosts and ports.</p>
+<h2 id="description">Description</h2>
+<p>This plugin enables testing TCP connectivity to specified hosts and ports. It's useful for verifying network connectivity, checking service availability, and monitoring network endpoints.</p>
 <h2 id="configuration">Configuration</h2>
-<p><strong>Required:</strong>
-- <code>host</code>: Target host
-- <code>port</code>: Target port</p>
-<p><strong>Optional:</strong>
-- <code>timeout</code>: Connection timeout in seconds (default: 5)
-- <code>fail_fast</code>: Raise error on failure (default: true)</p>
-<h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_tcp_connection</span>
-<span class="nt">config</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;google.com&quot;</span>
-<span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">443</span>
-<span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
-<span class="w">  </span><span class="nt">fail_fast</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<h3 id="required-parameters">Required Parameters</h3>
+<ul>
+<li><code>host</code> (string): Target hostname or IP address</li>
+<li><code>port</code> (integer): Target port number</li>
+</ul>
+<h3 id="optional-parameters">Optional Parameters</h3>
+<ul>
+<li><code>timeout</code> (integer): Connection timeout in seconds (default: 10)</li>
+<li><code>source_port</code> (integer): Source port to use for connection (default: random)</li>
+<li><code>attempts</code> (integer): Number of connection attempts (default: 1)</li>
+<li><code>retry_delay</code> (integer): Delay between retries in seconds (default: 1)</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<h3 id="basic-tcp-connection-test">Basic TCP Connection Test</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_web_server</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_tcp_connection</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;example.com&quot;</span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</code></pre></div>
+<h3 id="test-database-port">Test Database Port</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_database</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_tcp_connection</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;db-server.example.com&quot;</span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5432</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+</code></pre></div>
+<h3 id="test-with-multiple-attempts">Test with Multiple Attempts</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_flaky_service</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_tcp_connection</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;api.service.com&quot;</span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">443</span>
+<span class="w">    </span><span class="nt">attempts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="nt">retry_delay</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15</span>
+</code></pre></div>
+<h3 id="test-with-specific-source-port">Test with Specific Source Port</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_from_fixed_port</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_tcp_connection</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;192.168.1.100&quot;</span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">22</span>
+<span class="w">    </span><span class="nt">source_port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">54321</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+</code></pre></div>
+<h3 id="test-local-service">Test Local Service</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_local_redis</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_tcp_connection</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;localhost&quot;</span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6379</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
 </code></pre></div>
 <h2 id="return-values">Return Values</h2>
-<p>The plugin returns a dictionary with:
-- <code>status</code>: "success" or "failure"
-- <code>host</code>: The target host
-- <code>port</code>: The target port
-- <code>timeout</code>: The connection timeout
-- <code>connected</code>: Boolean indicating if the connection was successful
-- <code>error</code>: Error message if applicable</p>
+<h3 id="success-response">Success Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;example.com&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">80</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;connected&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;response_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.045</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;attempts&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T12:00:00Z&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="failure-response">Failure Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;example.com&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">8080</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;connected&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Connection refused&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;attempts&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;response_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">10.123</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T12:00:00Z&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-errors">Common Errors</h3>
+<ul>
+<li><strong><code>Connection refused</code></strong>: No service listening on the target port</li>
+<li>Verify the service is running on the target host</li>
+<li>Check if the correct port is being used</li>
+<li>
+<p>Ensure the service is bound to the correct interface</p>
+</li>
+<li>
+<p><strong><code>Connection timeout</code></strong>: No response received within timeout period</p>
+</li>
+<li>Increase timeout value for slow connections</li>
+<li>Check network connectivity and firewall rules</li>
+<li>
+<p>Verify the host is reachable via ICMP or other methods</p>
+</li>
+<li>
+<p><strong><code>Host not found</code></strong>: Unable to resolve hostname</p>
+</li>
+<li>Verify the hostname is correct and DNS is working</li>
+<li>Check DNS configuration and network settings</li>
+<li>
+<p>Use IP address instead of hostname for testing</p>
+</li>
+<li>
+<p><strong><code>Network unreachable</code></strong>: No route to the target host</p>
+</li>
+<li>Check network configuration and routing tables</li>
+<li>Verify the host is on the same network or accessible via gateway</li>
+<li>
+<p>Check for network outages or misconfigurations</p>
+</li>
+<li>
+<p><strong><code>Permission denied</code></strong>: Insufficient privileges to create socket</p>
+</li>
+<li>Run with appropriate user privileges</li>
+<li>Check SELinux/AppArmor policies</li>
+<li>
+<p>Verify user has network access permissions</p>
+</li>
+<li>
+<p><strong><code>Port in use</code></strong>: Source port already in use (when using specific source_port)</p>
+</li>
+<li>Use a different source port</li>
+<li>Let the system choose a random port (omit source_port parameter)</li>
+</ul>
+<h3 id="common-ports-for-testing">Common Ports for Testing</h3>
+<ul>
+<li><code>22</code>: SSH</li>
+<li><code>80</code>: HTTP</li>
+<li><code>443</code>: HTTPS</li>
+<li><code>53</code>: DNS</li>
+<li><code>25</code>: SMTP</li>
+<li><code>143</code>: IMAP</li>
+<li><code>993</code>: IMAPS</li>
+<li><code>110</code>: POP3</li>
+<li><code>995</code>: POP3S</li>
+<li><code>5432</code>: PostgreSQL</li>
+<li><code>3306</code>: MySQL</li>
+<li><code>27017</code>: MongoDB</li>
+<li><code>6379</code>: Redis</li>
+<li><code>9200</code>: Elasticsearch</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li>Use appropriate timeouts for different types of services</li>
+<li>Implement retry logic for transient network failures</li>
+<li>Monitor connection times for performance baseline</li>
+<li>Test from multiple network locations if possible</li>
+<li>Use both hostname and IP address testing</li>
+<li>Document expected response times for critical services</li>
+<li>Set up alerting for connection failures</li>
+</ol>
+<h3 id="monitoring-scenarios">Monitoring Scenarios</h3>
+<ul>
+<li><strong>Service health checks</strong>: Verify critical services are accessible</li>
+<li><strong>Network troubleshooting</strong>: Isolate network vs service issues</li>
+<li><strong>Firewall testing</strong>: Verify port accessibility through firewalls</li>
+<li><strong>Load balancer health</strong>: Check backend service availability</li>
+<li><strong>DNS validation</strong>: Test hostname resolution and connectivity</li>
+<li><strong>Geographic monitoring</strong>: Test from different network locations</li>
+</ul>
+<h3 id="security-considerations">Security Considerations</h3>
+<ul>
+<li>Be cautious when testing ports on external networks</li>
+<li>Respect network policies and obtain proper authorization</li>
+<li>Avoid excessive testing that could be perceived as scanning</li>
+<li>Use appropriate source ports to avoid firewall blocks</li>
+<li>Log connection attempts for audit purposes</li>
+<li>Implement rate limiting for automated testing</li>
+</ul>
 
 
 

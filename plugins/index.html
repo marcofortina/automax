@@ -721,10 +721,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#cloud-integration" class="md-nav__link">
+  <a href="#cloud-secrets-management" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Cloud Integration
+        Cloud Secrets Management
       
     </span>
   </a>
@@ -747,6 +747,17 @@
     <span class="md-ellipsis">
       
         File Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network Operations
       
     </span>
   </a>
@@ -789,6 +800,73 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Using Plugins">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-plugin-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Plugin Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plugin-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plugin Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Plugin Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#complete-workflow-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Workflow Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -796,6 +874,17 @@
     <span class="md-ellipsis">
       
         Creating Custom Plugins
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
       
     </span>
   </a>
@@ -1631,47 +1720,118 @@
 <p>Automax plugins are the building blocks of your automation workflows.
 Each plugin performs a specific task and can be combined to create complex workflows.</p>
 <h2 id="plugin-categories">Plugin Categories</h2>
-<h3 id="cloud-integration">Cloud Integration</h3>
+<h3 id="cloud-secrets-management">Cloud Secrets Management</h3>
 <ul>
-<li><strong>AWS Secrets Manager</strong>: Retrieve secrets from AWS Secrets Manager</li>
-<li><strong>Azure Key Vault</strong>: Access secrets from Azure Key Vault</li>
-<li><strong>Google Secret Manager</strong>: Get secrets from GCP Secret Manager</li>
-<li><strong>HashiCorp Vault</strong>: Integrate with HashiCorp Vault</li>
+<li><a href="aws-secrets-manager/">AWS Secrets Manager</a> - Retrieve, create, and update secrets from AWS Secrets Manager</li>
+<li><a href="azure-key-vault/">Azure Key Vault</a> - Access secrets from Azure Key Vault using managed identity or service principal</li>
+<li><a href="google-secret-manager/">Google Secret Manager</a> - Get secrets from GCP Secret Manager with service account or default credentials</li>
+<li><a href="hashicorp-vault/">HashiCorp Vault</a> - Integrate with HashiCorp Vault using token or AppRole authentication</li>
 </ul>
 <h3 id="system-operations">System Operations</h3>
 <ul>
-<li><strong>Local Command</strong>: Execute local system commands</li>
-<li><strong>SSH Command</strong>: Run commands on remote servers via SSH</li>
-<li><strong>Network Check</strong>: Verify network connectivity</li>
+<li><a href="local-command/">Local Command</a> - Execute local system commands with environment variables and working directory support</li>
+<li><a href="ssh-command/">SSH Command</a> - Run commands on remote servers via SSH with password or key-based authentication</li>
 </ul>
 <h3 id="file-operations">File Operations</h3>
 <ul>
-<li><strong>Read File</strong>: Read content from files</li>
-<li><strong>Write File</strong>: Write content to files</li>
-<li><strong>Compress File</strong>: Compress files and directories</li>
-<li><strong>Uncompress File</strong>: Extract compressed archives</li>
+<li><a href="read-file-content/">Read File Content</a> - Read content from files with support for multiple encodings and binary data</li>
+<li><a href="write-file-content/">Write File Content</a> - Write content to files with overwrite, append, or create-new modes</li>
+<li><a href="compress-file/">Compress File</a> - Compress files and directories to ZIP, TAR.GZ, or TAR.BZ2 formats</li>
+<li><a href="uncompress-file/">Uncompress File</a> - Extract files from compressed archives with password support</li>
+</ul>
+<h3 id="network-operations">Network Operations</h3>
+<ul>
+<li><a href="check-tcp-connection/">Check TCP Connection</a> - Test TCP connectivity to remote hosts and ports</li>
+<li><a href="check-icmp-connection/">Check ICMP Connection</a> - Test ICMP connectivity (ping) to remote hosts with latency metrics</li>
 </ul>
 <h3 id="communication">Communication</h3>
 <ul>
-<li><strong>HTTP Request</strong>: Make HTTP API calls</li>
-<li><strong>Email</strong>: Send email notifications</li>
+<li><a href="run-http-request/">Run HTTP Request</a> - Make HTTP API calls with headers, authentication, and JSON support</li>
+<li><a href="send-email/">Send Email</a> - Send email notifications via SMTP with HTML content and attachments</li>
 </ul>
 <h3 id="database">Database</h3>
 <ul>
-<li><strong>Database Operations</strong>: Execute SQL queries and operations</li>
+<li><a href="database-operations/">Database Operations</a> - Execute SQL queries and operations on PostgreSQL, MySQL, SQLite, and Oracle databases</li>
 </ul>
 <h2 id="using-plugins">Using Plugins</h2>
-<p>Plugins are configured in your workflow YAML files:</p>
+<p>Plugins are configured in your workflow YAML files using the <code>parameters</code> section:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">steps</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;get_database_password&quot;</span>
 <span class="w">    </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;aws_secrets_manager&quot;</span>
-<span class="w">    </span><span class="nt">config</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">parameters</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">secret_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;production/database/password&quot;</span>
 <span class="w">      </span><span class="nt">region_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;us-east-1&quot;</span>
+<span class="w">      </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;read&quot;</span>
+</code></pre></div>
+<h3 id="common-plugin-parameters">Common Plugin Parameters</h3>
+<p>Most plugins support these common parameters:
+- <code>action</code>: Operation to perform (read, write, create, execute, etc.)
+- <code>timeout</code>: Operation timeout in seconds
+- Authentication credentials specific to each service</p>
+<h3 id="error-handling">Error Handling</h3>
+<p>All plugins provide structured error responses:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Descriptive error message&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;details&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Additional context for troubleshooting&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="best-practices">Best Practices</h2>
+<ol>
+<li><strong>Use secrets management</strong> for credentials and sensitive data</li>
+<li><strong>Implement error handling</strong> in your workflows</li>
+<li><strong>Set appropriate timeouts</strong> for network operations</li>
+<li><strong>Validate inputs</strong> before executing operations</li>
+<li><strong>Use structured logging</strong> for debugging and monitoring</li>
+</ol>
+<h2 id="plugin-examples">Plugin Examples</h2>
+<h3 id="complete-workflow-example">Complete Workflow Example</h3>
+<div class="highlight"><pre><span></span><code><span class="nt">steps</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;get_api_credentials&quot;</span>
+<span class="w">    </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;hashicorp_vault&quot;</span>
+<span class="w">    </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">vault_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://vault.example.com&quot;</span>
+<span class="w">      </span><span class="nt">secret_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;api/credentials&quot;</span>
+<span class="w">      </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;read&quot;</span>
+<span class="w">      </span><span class="nt">vault_token</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${VAULT_TOKEN}&quot;</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;call_external_api&quot;</span>
+<span class="w">    </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;run_http_request&quot;</span>
+<span class="w">    </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://api.example.com/data&quot;</span>
+<span class="w">      </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;GET&quot;</span>
+<span class="w">      </span><span class="nt">headers</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">Authorization</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Bearer</span><span class="nv"> </span><span class="s">${steps.get_api_credentials.output.data.token}&quot;</span>
+<span class="w">      </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;save_results&quot;</span>
+<span class="w">    </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;write_file_content&quot;</span>
+<span class="w">    </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/tmp/api_response.json&quot;</span>
+<span class="w">      </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${steps.call_external_api.output.body}&quot;</span>
+<span class="w">      </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;overwrite&quot;</span>
+
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;send_notification&quot;</span>
+<span class="w">    </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;send_email&quot;</span>
+<span class="w">    </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">smtp_server</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;smtp.gmail.com&quot;</span>
+<span class="w">      </span><span class="nt">smtp_port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">587</span>
+<span class="w">      </span><span class="nt">from_address</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;automax@example.com&quot;</span>
+<span class="w">      </span><span class="nt">to_addresses</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;admin@example.com&quot;</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">subject</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;API</span><span class="nv"> </span><span class="s">Sync</span><span class="nv"> </span><span class="s">Completed&quot;</span>
+<span class="w">      </span><span class="nt">body</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;External</span><span class="nv"> </span><span class="s">API</span><span class="nv"> </span><span class="s">data</span><span class="nv"> </span><span class="s">has</span><span class="nv"> </span><span class="s">been</span><span class="nv"> </span><span class="s">successfully</span><span class="nv"> </span><span class="s">retrieved</span><span class="nv"> </span><span class="s">and</span><span class="nv"> </span><span class="s">saved.&quot;</span>
+<span class="w">      </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${EMAIL_USER}&quot;</span>
+<span class="w">      </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${EMAIL_PASSWORD}&quot;</span>
 </code></pre></div>
 <h2 id="creating-custom-plugins">Creating Custom Plugins</h2>
 <p>See the <a href="../guides/creating-plugins/">Creating Plugins</a> guide for instructions
 on developing your own plugins.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p>For plugin-specific issues, refer to the individual plugin documentation pages linked above. Each plugin documentation includes:
+- Authentication and permission requirements
+- Common error messages and solutions
+- Configuration examples and best practices
+- Network and connectivity requirements</p>
 
 
 

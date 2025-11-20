@@ -1144,6 +1144,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1152,16 +1163,105 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        Required Parameters
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-text-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read Text File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-json-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read JSON File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-file-with-different-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read File with Different Encoding
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-binary-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read Binary File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-file-with-size-limit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read File with Size Limit
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1173,6 +1273,128 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Return Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#success-response-text-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Response (Text File)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#success-response-binary-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Response (Binary File)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supported-encodings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Encodings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Tips
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#common-use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1569,25 +1791,178 @@
 
 
 <h1 id="read-file-content-plugin">Read File Content Plugin</h1>
-<p>Read content from files.</p>
+<p>Read and retrieve content from files on the local filesystem.</p>
+<h2 id="description">Description</h2>
+<p>This plugin enables reading content from various types of files including text files, JSON, XML, and binary files. It supports different encoding formats and provides flexible output handling.</p>
 <h2 id="configuration">Configuration</h2>
-<p><strong>Required:</strong>
-- <code>file_path</code>: Path to the file</p>
-<p><strong>Optional:</strong>
-- <code>encoding</code>: File encoding (default: utf-8)</p>
-<h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read_file_content</span>
-<span class="nt">config</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/config.yaml&quot;</span>
-<span class="w">  </span><span class="nt">encoding</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span>
+<h3 id="required-parameters">Required Parameters</h3>
+<ul>
+<li><code>file_path</code> (string): Path to the file to read</li>
+</ul>
+<h3 id="optional-parameters">Optional Parameters</h3>
+<ul>
+<li><code>encoding</code> (string): File encoding (default: utf-8)</li>
+<li><code>as_bytes</code> (boolean): Return content as bytes instead of string (default: false)</li>
+<li><code>max_size</code> (integer): Maximum file size to read in bytes (default: 10485760 = 10MB)</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<h3 id="read-text-file">Read Text File</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read_config_file</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read_file_content</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/etc/automax/config.yaml&quot;</span>
+<span class="w">    </span><span class="nt">encoding</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span>
+</code></pre></div>
+<h3 id="read-json-file">Read JSON File</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read_package_json</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read_file_content</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/app/package.json&quot;</span>
+<span class="w">    </span><span class="nt">encoding</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span>
+</code></pre></div>
+<h3 id="read-file-with-different-encoding">Read File with Different Encoding</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read_windows_file</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read_file_content</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;C:\\Users\\Admin\\file.txt&quot;</span>
+<span class="w">    </span><span class="nt">encoding</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;utf-16&quot;</span>
+</code></pre></div>
+<h3 id="read-binary-file">Read Binary File</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read_binary_file</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read_file_content</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/tmp/image.png&quot;</span>
+<span class="w">    </span><span class="nt">as_bytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h3 id="read-file-with-size-limit">Read File with Size Limit</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read_large_file</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read_file_content</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/var/log/app.log&quot;</span>
+<span class="w">    </span><span class="nt">max_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5242880</span>
 </code></pre></div>
 <h2 id="return-values">Return Values</h2>
-<p>The plugin returns a dictionary with:
-- <code>file_path</code>: The path to the file
-- <code>content</code>: The content of the file
-- <code>encoding</code>: The encoding used
-- <code>size</code>: The size of the content in bytes
-- <code>status</code>: "success" or "failure"</p>
+<h3 id="success-response-text-file">Success Response (Text File)</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;file_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/etc/automax/config.yaml&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;content&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;database:\n  host: localhost\n  port: 5432\n  name: automax&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;encoding&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">65</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;read_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0023</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="success-response-binary-file">Success Response (Binary File)</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;file_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/tmp/image.png&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;content&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;encoding&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;base64&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1024</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;read_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0015</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="error-response">Error Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;file_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/nonexistent/file.txt&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;content&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;File not found: /nonexistent/file.txt&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-errors">Common Errors</h3>
+<ul>
+<li><strong><code>File not found</code></strong>: The specified file doesn't exist</li>
+<li>Verify the file path is correct</li>
+<li>Check if the file has been moved or deleted</li>
+<li>
+<p>Ensure path uses correct forward/backward slashes for the OS</p>
+</li>
+<li>
+<p><strong><code>Permission denied</code></strong>: Insufficient permissions to read the file</p>
+</li>
+<li>Check file permissions and ownership</li>
+<li>Ensure the user has read access to the file</li>
+<li>
+<p>Verify directory permissions in the file path</p>
+</li>
+<li>
+<p><strong><code>File too large</code></strong>: File exceeds maximum size limit</p>
+</li>
+<li>Increase <code>max_size</code> parameter for larger files</li>
+<li>Consider processing the file in chunks if very large</li>
+<li>
+<p>Use streaming approaches for extremely large files</p>
+</li>
+<li>
+<p><strong><code>Encoding error</code></strong>: Unable to decode file with specified encoding</p>
+</li>
+<li>Verify the file encoding matches the specified encoding</li>
+<li>Try different encodings (utf-8, latin-1, utf-16, etc.)</li>
+<li>
+<p>Use <code>as_bytes: true</code> for binary files or unknown encodings</p>
+</li>
+<li>
+<p><strong><code>Invalid file path</code></strong>: Malformed or invalid file path</p>
+</li>
+<li>Check for illegal characters in file path</li>
+<li>Verify path length limits for the operating system</li>
+<li>
+<p>Ensure absolute paths are used when appropriate</p>
+</li>
+<li>
+<p><strong><code>File in use</code></strong>: File is locked by another process</p>
+</li>
+<li>Check if another application has the file open</li>
+<li>Wait and retry the operation</li>
+<li>Use file locking mechanisms if available</li>
+</ul>
+<h3 id="supported-encodings">Supported Encodings</h3>
+<ul>
+<li><code>utf-8</code> (default): Universal character encoding</li>
+<li><code>utf-16</code>: 16-bit Unicode encoding</li>
+<li><code>latin-1</code>: ISO-8859-1 encoding</li>
+<li><code>ascii</code>: Basic ASCII encoding</li>
+<li><code>cp1252</code>: Windows-1252 encoding</li>
+<li><code>iso-8859-1</code>: Latin-1 encoding</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li>Always validate file paths before reading</li>
+<li>Use appropriate encoding for the file type</li>
+<li>Set reasonable size limits to prevent memory issues</li>
+<li>Handle binary files with <code>as_bytes: true</code> parameter</li>
+<li>Implement error handling for file operations</li>
+<li>Use absolute paths for reliability</li>
+<li>Consider file locking for concurrent access scenarios</li>
+</ol>
+<h3 id="security-considerations">Security Considerations</h3>
+<ul>
+<li>Validate and sanitize all file paths to prevent directory traversal attacks</li>
+<li>Limit file access to authorized directories only</li>
+<li>Be cautious when reading files from user input or untrusted sources</li>
+<li>Set appropriate file size limits to prevent denial of service attacks</li>
+<li>Monitor file access patterns for suspicious activity</li>
+<li>Use secure temporary file handling when processing sensitive data</li>
+</ul>
+<h3 id="performance-tips">Performance Tips</h3>
+<ul>
+<li>For large files, consider streaming processing instead of loading entire file</li>
+<li>Use appropriate buffer sizes for optimal I/O performance</li>
+<li>Cache frequently accessed files when appropriate</li>
+<li>Monitor memory usage when processing multiple large files</li>
+<li>Use solid-state drives (SSD) for better I/O performance</li>
+</ul>
+<h3 id="common-use-cases">Common Use Cases</h3>
+<ul>
+<li><strong>Configuration files</strong>: Read application settings and parameters</li>
+<li><strong>Log files</strong>: Analyze and process application logs</li>
+<li><strong>Data files</strong>: Process CSV, JSON, XML data files</li>
+<li><strong>Templates</strong>: Read and process template files</li>
+<li><strong>Certificates</strong>: Read SSL/TLS certificates and keys</li>
+<li><strong>Documents</strong>: Process text documents and reports</li>
+</ul>
 
 
 

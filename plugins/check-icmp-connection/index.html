@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#icmp-check-plugin" class="md-skip">
+        <a href="#check-icmp-connection-plugin" class="md-skip">
           Skip to content
         </a>
       
@@ -1053,6 +1053,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1061,16 +1072,105 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        Required Parameters
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-icmp-ping-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic ICMP Ping Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ping-with-custom-packet-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ping with Custom Packet Size
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ping-local-network-device" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ping Local Network Device
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-ping-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Ping Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extended-ping-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extended Ping Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1082,6 +1182,117 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Return Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#success-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#partial-success-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Partial Success Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#failure-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failure Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use Cases
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1568,36 +1779,194 @@
   
 
 
-<h1 id="icmp-check-plugin">ICMP Check Plugin</h1>
-<p>Check ICMP connectivity to a host using ping3 library.</p>
+<h1 id="check-icmp-connection-plugin">Check ICMP Connection Plugin</h1>
+<p>Test ICMP connectivity to remote hosts (ping).</p>
+<h2 id="description">Description</h2>
+<p>This plugin enables testing ICMP connectivity to specified hosts, commonly known as "ping". It's useful for verifying network reachability, measuring latency, and monitoring host availability.</p>
 <h2 id="configuration">Configuration</h2>
-<p><strong>Required:</strong>
-- <code>host</code>: Target host</p>
-<p><strong>Optional:</strong>
-- <code>count</code>: Number of ping packets (default: 4)
-- <code>timeout</code>: Timeout in seconds for each packet (default: 2)
-- <code>interval</code>: Interval between packets in seconds (default: 0.2)
-- <code>fail_fast</code>: Raise error on failure (default: true)</p>
-<h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_icmp_connection</span>
-<span class="nt">config</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;google.com&quot;</span>
-<span class="w">  </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
-<span class="w">  </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
-<span class="w">  </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
-<span class="w">  </span><span class="nt">fail_fast</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<h3 id="required-parameters">Required Parameters</h3>
+<ul>
+<li><code>host</code> (string): Target hostname or IP address</li>
+</ul>
+<h3 id="optional-parameters">Optional Parameters</h3>
+<ul>
+<li><code>count</code> (integer): Number of ping attempts (default: 3)</li>
+<li><code>timeout</code> (integer): Timeout for each ping attempt in seconds (default: 5)</li>
+<li><code>packet_size</code> (integer): Size of ICMP packet in bytes (default: 56)</li>
+<li><code>interval</code> (float): Interval between pings in seconds (default: 1.0)</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<h3 id="basic-icmp-ping-test">Basic ICMP Ping Test</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ping_google</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_icmp_connection</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;google.com&quot;</span>
+<span class="w">    </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</code></pre></div>
+<h3 id="ping-with-custom-packet-size">Ping with Custom Packet Size</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ping_with_large_packets</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_icmp_connection</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;192.168.1.1&quot;</span>
+<span class="w">    </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">    </span><span class="nt">packet_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1024</span>
+<span class="w">    </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+</code></pre></div>
+<h3 id="ping-local-network-device">Ping Local Network Device</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ping_router</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_icmp_connection</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;192.168.1.254&quot;</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</code></pre></div>
+<h3 id="quick-ping-test">Quick Ping Test</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">quick_ping</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_icmp_connection</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;example.com&quot;</span>
+<span class="w">    </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</code></pre></div>
+<h3 id="extended-ping-test">Extended Ping Test</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">extended_ping_test</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">check_icmp_connection</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;server.example.com&quot;</span>
+<span class="w">    </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">    </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span>
+<span class="w">    </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">    </span><span class="nt">packet_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">512</span>
 </code></pre></div>
 <h2 id="return-values">Return Values</h2>
-<p>The plugin returns a dictionary with:
-- <code>status</code>: "success" or "failure"
-- <code>host</code>: The target host
-- <code>count</code>: The number of ping packets sent
-- <code>timeout</code>: The timeout per packet
-- <code>interval</code>: The interval between packets
-- <code>connected</code>: Boolean indicating if the host is reachable
-- <code>success_count</code>: Number of successful ping responses
-- <code>success_rate</code>: Percentage of successful packets
-- <code>error</code>: Error message if applicable</p>
+<h3 id="success-response">Success Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;google.com&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;reachable&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;packets_sent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;packets_received&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;packet_loss&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;min_latency&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">12.345</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;avg_latency&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">15.678</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;max_latency&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">20.123</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stddev_latency&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">3.456</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;response_times&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">12.345</span><span class="p">,</span><span class="w"> </span><span class="mf">15.678</span><span class="p">,</span><span class="w"> </span><span class="mf">18.901</span><span class="p">,</span><span class="w"> </span><span class="mf">20.123</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T12:00:00Z&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="partial-success-response">Partial Success Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;example.com&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;reachable&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;packets_sent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;packets_received&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;packet_loss&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">25.0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;min_latency&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">45.678</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;avg_latency&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">50.123</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;max_latency&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">55.678</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;stddev_latency&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">5.432</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;response_times&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">45.678</span><span class="p">,</span><span class="w"> </span><span class="mf">55.678</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="mf">49.012</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T12:00:00Z&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="failure-response">Failure Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;unreachable-host.com&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;reachable&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;packets_sent&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;packets_received&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;packet_loss&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">100.0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Destination host unreachable&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T12:00:00Z&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-errors">Common Errors</h3>
+<ul>
+<li><strong><code>Destination host unreachable</code></strong>: No route to the target host</li>
+<li>Check network configuration and routing</li>
+<li>Verify the host is on the same network or accessible via gateway</li>
+<li>
+<p>Check for network outages or misconfigurations</p>
+</li>
+<li>
+<p><strong><code>Request timeout</code></strong>: No response received within timeout period</p>
+</li>
+<li>The host may be down or blocking ICMP</li>
+<li>Increase timeout value for high-latency networks</li>
+<li>
+<p>Check firewall rules on target host</p>
+</li>
+<li>
+<p><strong><code>Permission denied</code></strong>: Insufficient privileges to send ICMP packets</p>
+</li>
+<li>Run with appropriate user privileges (often requires root/admin)</li>
+<li>Use sudo or run as administrator</li>
+<li>
+<p>Configure system to allow non-privileged ICMP</p>
+</li>
+<li>
+<p><strong><code>Name or service not known</code></strong>: Unable to resolve hostname</p>
+</li>
+<li>Verify the hostname is correct and DNS is working</li>
+<li>Check DNS configuration and network settings</li>
+<li>
+<p>Use IP address instead of hostname for testing</p>
+</li>
+<li>
+<p><strong><code>Network unreachable</code></strong>: Local network configuration issue</p>
+</li>
+<li>Check local network interface status</li>
+<li>Verify IP configuration and default gateway</li>
+<li>
+<p>Restart network services if needed</p>
+</li>
+<li>
+<p><strong><code>Operation not permitted</code></strong>: ICMP operations blocked by system policy</p>
+</li>
+<li>Check system firewall settings</li>
+<li>Verify ICMP is allowed in security policies</li>
+<li>Run with elevated privileges if required</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li>Use appropriate packet sizes for different network types</li>
+<li>Set reasonable timeouts based on expected network latency</li>
+<li>Use multiple attempts to account for transient network issues</li>
+<li>Monitor packet loss percentages for network quality assessment</li>
+<li>Establish baseline latency for critical network paths</li>
+<li>Test from multiple network locations if possible</li>
+<li>Document expected response times for important hosts</li>
+</ol>
+<h3 id="performance-metrics">Performance Metrics</h3>
+<ul>
+<li><strong>Latency</strong>: Round-trip time for ICMP packets (lower is better)</li>
+<li><strong>Packet Loss</strong>: Percentage of packets not returned (should be 0% for stable networks)</li>
+<li><strong>Jitter</strong>: Variation in latency times (standard deviation)</li>
+<li><strong>Reachability</strong>: Ability to establish ICMP communication with target</li>
+</ul>
+<h3 id="security-considerations">Security Considerations</h3>
+<ul>
+<li>Many networks block ICMP for security reasons</li>
+<li>Respect network policies and obtain proper authorization</li>
+<li>Avoid excessive pinging that could be perceived as scanning</li>
+<li>Be aware that some hosts intentionally don't respond to ICMP</li>
+<li>Use alternative connectivity checks (TCP) when ICMP is blocked</li>
+<li>Log ping attempts for audit purposes</li>
+</ul>
+<h3 id="use-cases">Use Cases</h3>
+<ul>
+<li><strong>Network monitoring</strong>: Continuous availability monitoring</li>
+<li><strong>Troubleshooting</strong>: Isolate network connectivity issues</li>
+<li><strong>Performance testing</strong>: Measure network latency and quality</li>
+<li><strong>Geographic testing</strong>: Test connectivity from different locations</li>
+<li><strong>Service dependency checks</strong>: Verify network prerequisites</li>
+<li><strong>Baseline establishment</strong>: Create performance benchmarks</li>
+</ul>
 
 
 

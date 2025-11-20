@@ -1172,6 +1172,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1180,16 +1191,105 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        Required Parameters
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#write-text-file-overwrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write Text File (Overwrite)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#append-to-existing-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Append to Existing File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-json-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write JSON Content
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-new-file-only-fail-if-exists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create New File Only (Fail if Exists)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-with-different-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write with Different Encoding
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1201,6 +1301,106 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Return Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#success-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#write-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write Modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Tips
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1569,32 +1769,170 @@
 
 
 <h1 id="write-file-content-plugin">Write File Content Plugin</h1>
-<p>Write content to files.</p>
+<p>Write content to files on the local filesystem.</p>
+<h2 id="description">Description</h2>
+<p>This plugin enables writing content to files with support for different encoding formats, file modes, and automatic directory creation. It can handle both text and binary content.</p>
 <h2 id="configuration">Configuration</h2>
-<p><strong>Required:</strong>
-- <code>file_path</code>: Path to the file
-- <code>content</code>: Content to write</p>
-<p><strong>Optional:</strong>
-- <code>encoding</code>: File encoding (default: utf-8)
-- <code>mode</code>: Write mode - "w", "a", "x" (default: w)
-- <code>create_dirs</code>: Create directories if missing (default: false)</p>
-<h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write_file_content</span>
-<span class="nt">config</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/var/log/app.log&quot;</span>
-<span class="w">  </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Log</span><span class="nv"> </span><span class="s">entry&quot;</span>
-<span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a&quot;</span>
-<span class="w">  </span><span class="nt">create_dirs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<h3 id="required-parameters">Required Parameters</h3>
+<ul>
+<li><code>file_path</code> (string): Path to the file to write</li>
+<li><code>content</code> (string): Content to write to the file</li>
+</ul>
+<h3 id="optional-parameters">Optional Parameters</h3>
+<ul>
+<li><code>encoding</code> (string): File encoding (default: utf-8)</li>
+<li><code>mode</code> (string): File write mode - <code>overwrite</code>, <code>append</code>, or <code>create_new</code> (default: overwrite)</li>
+<li><code>create_dirs</code> (boolean): Create parent directories if they don't exist (default: true)</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<h3 id="write-text-file-overwrite">Write Text File (Overwrite)</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write_config_file</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write_file_content</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/etc/automax/config.yaml&quot;</span>
+<span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">      </span><span class="no">database:</span>
+<span class="w">        </span><span class="no">host: localhost</span>
+<span class="w">        </span><span class="no">port: 5432</span>
+<span class="w">        </span><span class="no">name: automax</span>
+<span class="w">      </span><span class="no">logging:</span>
+<span class="w">        </span><span class="no">level: INFO</span>
+<span class="w">    </span><span class="nt">encoding</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span>
+<span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;overwrite&quot;</span>
+</code></pre></div>
+<h3 id="append-to-existing-file">Append to Existing File</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">append_log_entry</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write_file_content</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/var/log/automax.log&quot;</span>
+<span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2024-01-01</span><span class="nv"> </span><span class="s">12:00:00</span><span class="nv"> </span><span class="s">-</span><span class="nv"> </span><span class="s">Task</span><span class="nv"> </span><span class="s">completed</span><span class="nv"> </span><span class="s">successfully\n&quot;</span>
+<span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;append&quot;</span>
+<span class="w">    </span><span class="nt">create_dirs</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h3 id="write-json-content">Write JSON Content</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write_json_config</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write_file_content</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/app/config.json&quot;</span>
+<span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;{&quot;database&quot;:</span><span class="nv"> </span><span class="s">{&quot;host&quot;:</span><span class="nv"> </span><span class="s">&quot;localhost&quot;,</span><span class="nv"> </span><span class="s">&quot;port&quot;:</span><span class="nv"> </span><span class="s">5432},</span><span class="nv"> </span><span class="s">&quot;features&quot;:</span><span class="nv"> </span><span class="s">{&quot;enabled&quot;:</span><span class="nv"> </span><span class="s">true}}&#39;</span>
+<span class="w">    </span><span class="nt">encoding</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;utf-8&quot;</span>
+</code></pre></div>
+<h3 id="create-new-file-only-fail-if-exists">Create New File Only (Fail if Exists)</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">create_new_lockfile</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write_file_content</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/tmp/automax.lock&quot;</span>
+<span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;process_12345&quot;</span>
+<span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;create_new&quot;</span>
+</code></pre></div>
+<h3 id="write-with-different-encoding">Write with Different Encoding</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write_encoded_file</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write_file_content</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/output.txt&quot;</span>
+<span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Special</span><span class="nv"> </span><span class="s">characters:</span><span class="nv"> </span><span class="s">ñáéíóú&quot;</span>
+<span class="w">    </span><span class="nt">encoding</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;utf-16&quot;</span>
 </code></pre></div>
 <h2 id="return-values">Return Values</h2>
-<p>The plugin returns a dictionary with:
-- <code>file_path</code>: The path to the file
-- <code>content_length</code>: The length of the written content
-- <code>file_size</code>: The size of the file after writing
-- <code>encoding</code>: The encoding used
-- <code>mode</code>: The write mode used
-- <code>create_dirs</code>: Whether directories were created
-- <code>status</code>: "success" or "failure"</p>
+<h3 id="success-response">Success Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;file_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/etc/automax/config.yaml&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;content_length&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">125</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;overwrite&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;encoding&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;write_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.0045</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="error-response">Error Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;file_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/etc/automax/config.yaml&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Permission denied: /etc/automax/config.yaml&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;details&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cannot write to protected system directory&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-errors">Common Errors</h3>
+<ul>
+<li><strong><code>Permission denied</code></strong>: Insufficient permissions to write the file</li>
+<li>Check file and directory permissions</li>
+<li>Ensure user has write access to the target directory</li>
+<li>
+<p>Use appropriate user privileges or sudo if required</p>
+</li>
+<li>
+<p><strong><code>File exists</code></strong>: File already exists when using <code>create_new</code> mode</p>
+</li>
+<li>Choose a different filename or use <code>overwrite</code> mode</li>
+<li>Delete the existing file first if appropriate</li>
+<li>
+<p>Check for race conditions in concurrent operations</p>
+</li>
+<li>
+<p><strong><code>Directory not found</code></strong>: Parent directories don't exist</p>
+</li>
+<li>Enable <code>create_dirs: true</code> to automatically create directories</li>
+<li>Manually create the directory structure beforehand</li>
+<li>
+<p>Verify the directory path is correct</p>
+</li>
+<li>
+<p><strong><code>Disk full</code></strong>: No space left on device</p>
+</li>
+<li>Check available disk space</li>
+<li>Clean up temporary files or old logs</li>
+<li>
+<p>Use storage monitoring to prevent outages</p>
+</li>
+<li>
+<p><strong><code>Encoding error</code></strong>: Unable to encode content with specified encoding</p>
+</li>
+<li>Verify the content is compatible with the chosen encoding</li>
+<li>Use <code>utf-8</code> for maximum compatibility</li>
+<li>
+<p>Check for invalid characters in the content</p>
+</li>
+<li>
+<p><strong><code>Invalid file path</code></strong>: Malformed or invalid file path</p>
+</li>
+<li>Check for illegal characters in file path</li>
+<li>Verify path length limits for the operating system</li>
+<li>Use absolute paths for reliability</li>
+</ul>
+<h3 id="write-modes">Write Modes</h3>
+<ul>
+<li><code>overwrite</code>: Replace existing file content (default)</li>
+<li><code>append</code>: Add content to the end of existing file</li>
+<li><code>create_new</code>: Only write if file doesn't exist (fails if file exists)</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li>Always validate file paths before writing</li>
+<li>Use appropriate encoding for the content type</li>
+<li>Implement proper error handling for file operations</li>
+<li>Use atomic writes for critical configuration files</li>
+<li>Set appropriate file permissions for sensitive data</li>
+<li>Monitor disk space to prevent write failures</li>
+<li>Use temporary files for large writes to avoid corruption</li>
+</ol>
+<h3 id="security-considerations">Security Considerations</h3>
+<ul>
+<li>Validate and sanitize all file paths to prevent directory traversal attacks</li>
+<li>Set appropriate file permissions for sensitive data</li>
+<li>Avoid writing to system directories without proper privileges</li>
+<li>Be cautious when writing files based on user input</li>
+<li>Use secure temporary file handling</li>
+<li>Implement proper file locking for concurrent access</li>
+</ul>
+<h3 id="performance-tips">Performance Tips</h3>
+<ul>
+<li>Use buffered writes for large content</li>
+<li>Avoid frequent small writes to the same file</li>
+<li>Use appropriate chunk sizes for optimal I/O performance</li>
+<li>Consider compression for large text files</li>
+<li>Monitor I/O performance for high-frequency write operations</li>
+</ul>
 
 
 

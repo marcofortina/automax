@@ -1228,6 +1228,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1236,27 +1247,105 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        Required Parameters
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#supported-formats" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supported Formats
+        Optional Parameters
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extract-zip-archive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract ZIP Archive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-targz-archive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract TAR.GZ Archive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-specific-files-from-archive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract Specific Files from Archive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-password-protected-archive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract Password-Protected Archive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extract-without-preserving-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extract Without Preserving Paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1268,6 +1357,95 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Return Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#success-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Success Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Response
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supported-formats" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported Formats
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1580,34 +1758,178 @@
 
 
 <h1 id="uncompress-file-plugin">Uncompress File Plugin</h1>
-<p>Extract compressed files and archives.</p>
+<p>Extract files from compressed archives.</p>
+<h2 id="description">Description</h2>
+<p>This plugin enables extracting files from various compressed archive formats including ZIP, TAR.GZ, TAR.BZ2, and more. It supports extraction to specified directories with options for preserving directory structure and handling existing files.</p>
 <h2 id="configuration">Configuration</h2>
-<p><strong>Required:</strong>
-- <code>source_path</code>: Source archive file
-- <code>output_path</code>: Output directory or file</p>
-<p><strong>Optional:</strong>
-- <code>format</code>: Compression format - "gzip", "tar", "zip" (auto-detected from file extension if not provided)</p>
-<h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uncompress_file</span>
-<span class="nt">config</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">source_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/backup/data.zip&quot;</span>
-<span class="w">  </span><span class="nt">output_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/tmp/extracted&quot;</span>
-<span class="w">  </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;zip&quot;</span>
-</code></pre></div>
-<h2 id="supported-formats">Supported Formats</h2>
+<h3 id="required-parameters">Required Parameters</h3>
 <ul>
-<li><strong>gzip</strong>: Extract a gzip file to a specified output file</li>
-<li><strong>tar</strong>: Extract a tar archive to a directory</li>
-<li><strong>zip</strong>: Extract a zip archive to a directory</li>
+<li><code>archive_path</code> (string): Path to the compressed archive file</li>
+<li><code>output_dir</code> (string): Directory where files will be extracted</li>
 </ul>
+<h3 id="optional-parameters">Optional Parameters</h3>
+<ul>
+<li><code>preserve_paths</code> (boolean): Preserve full directory structure from archive (default: true)</li>
+<li><code>overwrite</code> (boolean): Overwrite existing files (default: false)</li>
+<li><code>password</code> (string): Password for encrypted archives (if required)</li>
+<li><code>members</code> (array): Specific files to extract from archive (default: all files)</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<h3 id="extract-zip-archive">Extract ZIP Archive</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">extract_backup_zip</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uncompress_file</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">archive_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/backup/website-20240101.zip&quot;</span>
+<span class="w">    </span><span class="nt">output_dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/tmp/extracted&quot;</span>
+<span class="w">    </span><span class="nt">preserve_paths</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">overwrite</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
+<h3 id="extract-targz-archive">Extract TAR.GZ Archive</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">extract_source_code</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uncompress_file</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">archive_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/downloads/project-1.0.0.tar.gz&quot;</span>
+<span class="w">    </span><span class="nt">output_dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/opt/project&quot;</span>
+<span class="w">    </span><span class="nt">preserve_paths</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">overwrite</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h3 id="extract-specific-files-from-archive">Extract Specific Files from Archive</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">extract_config_files</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uncompress_file</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">archive_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/backup/full-backup.zip&quot;</span>
+<span class="w">    </span><span class="nt">output_dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/tmp/configs&quot;</span>
+<span class="w">    </span><span class="nt">members</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;etc/app/config.yaml&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;etc/app/secrets.json&quot;</span>
+<span class="w">    </span><span class="nt">preserve_paths</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
+<h3 id="extract-password-protected-archive">Extract Password-Protected Archive</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">extract_encrypted_archive</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uncompress_file</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">archive_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/secure/encrypted-backup.zip&quot;</span>
+<span class="w">    </span><span class="nt">output_dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/tmp/decrypted&quot;</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;my-secret-password&quot;</span>
+<span class="w">    </span><span class="nt">overwrite</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+<h3 id="extract-without-preserving-paths">Extract Without Preserving Paths</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">extract_flattened</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uncompress_file</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">archive_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/files.tar.bz2&quot;</span>
+<span class="w">    </span><span class="nt">output_dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/tmp/flat&quot;</span>
+<span class="w">    </span><span class="nt">preserve_paths</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">    </span><span class="nt">overwrite</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
 <h2 id="return-values">Return Values</h2>
-<p>The plugin returns a dictionary with:
-- <code>status</code>: "success" or "failure"
-- <code>source_path</code>: The source archive path
-- <code>output_path</code>: The output path
-- <code>format</code>: The compression format used
-- <code>compressed_size</code>: The compressed size in bytes
-- <code>extracted_size</code>: The extracted size in bytes (for gzip)</p>
+<h3 id="success-response">Success Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;archive_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/backup/website-20240101.zip&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;output_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/tmp/extracted&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;extracted_files&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="s2">&quot;/tmp/extracted/index.html&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;/tmp/extracted/css/style.css&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="s2">&quot;/tmp/extracted/js/app.js&quot;</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;file_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;extraction_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">2.34</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;total_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1048576</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="error-response">Error Response</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;archive_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/backup/corrupted.zip&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;output_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/tmp/extracted&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Archive is corrupted or incomplete&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;details&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Bad zip file&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-errors">Common Errors</h3>
+<ul>
+<li><strong><code>Archive not found</code></strong>: The specified archive file doesn't exist</li>
+<li>Verify the archive path is correct</li>
+<li>Check if the file has been moved or deleted</li>
+<li>
+<p>Ensure the user has read access to the archive</p>
+</li>
+<li>
+<p><strong><code>Permission denied</code></strong>: Insufficient permissions to write to output directory</p>
+</li>
+<li>Check output directory permissions</li>
+<li>Ensure user has write access to the target directory</li>
+<li>
+<p>Create the output directory beforehand if needed</p>
+</li>
+<li>
+<p><strong><code>Output directory not found</code></strong>: Output directory doesn't exist</p>
+</li>
+<li>Create the output directory before extraction</li>
+<li>Verify the directory path is correct</li>
+<li>
+<p>Use absolute paths for reliability</p>
+</li>
+<li>
+<p><strong><code>Archive corrupted</code></strong>: The archive file is damaged or incomplete</p>
+</li>
+<li>Verify the archive was downloaded completely</li>
+<li>Check for file corruption</li>
+<li>
+<p>Try downloading the archive again</p>
+</li>
+<li>
+<p><strong><code>Password required</code></strong>: Archive is encrypted but no password provided</p>
+</li>
+<li>Provide the <code>password</code> parameter for encrypted archives</li>
+<li>Verify the password is correct</li>
+<li>
+<p>Contact the archive creator for the password</p>
+</li>
+<li>
+<p><strong><code>Unsupported format</code></strong>: Archive format not supported</p>
+</li>
+<li>Use supported formats: ZIP, TAR, TAR.GZ, TAR.BZ2</li>
+<li>Convert the archive to a supported format</li>
+<li>
+<p>Check if the archive uses proprietary compression</p>
+</li>
+<li>
+<p><strong><code>File exists</code></strong>: Output file already exists and overwrite is disabled</p>
+</li>
+<li>Enable <code>overwrite: true</code> to replace existing files</li>
+<li>Remove existing files manually before extraction</li>
+<li>Use a different output directory</li>
+</ul>
+<h3 id="supported-formats">Supported Formats</h3>
+<ul>
+<li><code>zip</code>: ZIP archive format</li>
+<li><code>tar</code>: Tape archive format (uncompressed)</li>
+<li><code>tar.gz</code>: Gzip compressed tar archive</li>
+<li><code>tar.bz2</code>: Bzip2 compressed tar archive</li>
+<li><code>tar.xz</code>: XZ compressed tar archive</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li>Always verify archive integrity before extraction</li>
+<li>Use temporary directories for extraction when possible</li>
+<li>Implement proper cleanup after extraction</li>
+<li>Handle password-protected archives securely</li>
+<li>Validate extracted files for completeness</li>
+<li>Monitor disk space during extraction of large archives</li>
+<li>Use checksums to verify archive integrity</li>
+</ol>
+<h3 id="security-considerations">Security Considerations</h3>
+<ul>
+<li>Validate archive files from untrusted sources</li>
+<li>Scan extracted files for malware if from unknown sources</li>
+<li>Handle passwords securely (use environment variables or secret managers)</li>
+<li>Avoid extracting to system directories without proper privileges</li>
+<li>Set appropriate file permissions on extracted files</li>
+<li>Implement proper error handling for extraction failures</li>
+</ul>
 
 
 

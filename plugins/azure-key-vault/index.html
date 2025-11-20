@@ -822,6 +822,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -830,27 +841,94 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example
+        Required Parameters
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#supported-actions" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#optional-parameters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Supported Actions
+        Optional Parameters
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-a-secret-using-managed-identity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read a Secret using Managed Identity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-a-secret-using-service-principal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read a Secret using Service Principal
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-new-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a New Secret
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-a-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update a Secret
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -862,6 +940,112 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Return Values">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Read Action
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writecreate-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write/Create Action
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication Methods
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#required-azure-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required Azure Permissions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Required Azure Permissions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-vault-secrets-user" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Vault Secrets User
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-vault-secrets-officer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Vault Secrets Officer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1580,39 +1764,139 @@
 
 
 <h1 id="azure-key-vault-plugin">Azure Key Vault Plugin</h1>
-<p>Retrieve secrets from Azure Key Vault.</p>
+<p>Manage secrets in Azure Key Vault.</p>
+<h2 id="description">Description</h2>
+<p>This plugin enables secure storage and retrieval of secrets from Azure Key Vault. It supports reading, writing, and creating secrets using various authentication methods including service principals and managed identities.</p>
 <h2 id="configuration">Configuration</h2>
-<p><strong>Required:</strong>
-- <code>vault_url</code>: URL of the Azure Key Vault
-- <code>secret_name</code>: Name of the secret to retrieve
-- <code>action</code>: Operation - "read", "write", "create"</p>
-<p><strong>Optional:</strong>
-- <code>tenant_id</code>: Azure tenant ID
-- <code>client_id</code>: Azure client ID
-- <code>client_secret</code>: Azure client secret
-- <code>value</code>: Secret value for write/create operations</p>
-<h2 id="example">Example</h2>
-<div class="highlight"><pre><span></span><code><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">azure_key_vault</span>
-<span class="nt">config</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">vault_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://my-vault.vault.azure.net/&quot;</span>
-<span class="w">  </span><span class="nt">secret_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;api-key&quot;</span>
-<span class="w">  </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;read&quot;</span>
-</code></pre></div>
-<h2 id="supported-actions">Supported Actions</h2>
+<h3 id="required-parameters">Required Parameters</h3>
 <ul>
-<li><strong>read</strong>: Retrieve the secret value</li>
-<li><strong>write</strong>: Write a secret (requires <code>value</code>)</li>
-<li><strong>create</strong>: Create a secret (same as write, requires <code>value</code>)</li>
+<li><code>vault_url</code> (string): The URL of your Azure Key Vault</li>
+<li><code>secret_name</code> (string): Name of the secret to access</li>
+<li><code>action</code> (string): Operation to perform - <code>read</code>, <code>write</code>, or <code>create</code></li>
 </ul>
+<h3 id="optional-parameters">Optional Parameters</h3>
+<ul>
+<li><code>tenant_id</code> (string): Azure tenant ID for service principal auth</li>
+<li><code>client_id</code> (string): Client ID for service principal auth</li>
+<li><code>client_secret</code> (string): Client secret for service principal auth</li>
+<li><code>value</code> (string): Secret value for write/create actions</li>
+</ul>
+<h2 id="examples">Examples</h2>
+<h3 id="read-a-secret-using-managed-identity">Read a Secret using Managed Identity</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">get_database_password</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">azure_key_vault</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">vault_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://my-vault.vault.azure.net/&quot;</span>
+<span class="w">    </span><span class="nt">secret_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;database-password&quot;</span>
+<span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;read&quot;</span>
+</code></pre></div>
+<h3 id="read-a-secret-using-service-principal">Read a Secret using Service Principal</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">get_api_key</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">azure_key_vault</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">vault_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://prod-vault.vault.azure.net/&quot;</span>
+<span class="w">    </span><span class="nt">secret_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;api-key&quot;</span>
+<span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;read&quot;</span>
+<span class="w">    </span><span class="nt">tenant_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;12345678-1234-1234-1234-123456789012&quot;</span>
+<span class="w">    </span><span class="nt">client_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;87654321-4321-4321-4321-210987654321&quot;</span>
+<span class="w">    </span><span class="nt">client_secret</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;my-client-secret&quot;</span>
+</code></pre></div>
+<h3 id="create-a-new-secret">Create a New Secret</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">create_application_secret</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">azure_key_vault</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">vault_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://my-vault.vault.azure.net/&quot;</span>
+<span class="w">    </span><span class="nt">secret_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;new-application-secret&quot;</span>
+<span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;create&quot;</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;very-secret-value&quot;</span>
+</code></pre></div>
+<h3 id="update-a-secret">Update a Secret</h3>
+<div class="highlight"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">update_secret</span>
+<span class="w">  </span><span class="nt">plugin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">azure_key_vault</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">vault_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://my-vault.vault.azure.net/&quot;</span>
+<span class="w">    </span><span class="nt">secret_name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;existing-secret&quot;</span>
+<span class="w">    </span><span class="nt">action</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;write&quot;</span>
+<span class="w">    </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;updated-secret-value&quot;</span>
+</code></pre></div>
 <h2 id="return-values">Return Values</h2>
-<p>The plugin returns a dictionary with:
-- <code>status</code>: "success", "written", or "failure"
-- <code>vault_url</code>: The Azure Key Vault URL
-- <code>secret_name</code>: The name of the secret
-- <code>secret_value</code>: The secret value (for read) or the written value (for write/create)
-- <code>version</code>: The secret version (for read)
-- <code>enabled</code>: Whether the secret is enabled (for read)
-- <code>expires_on</code>: The expiration date of the secret (for read)</p>
+<h3 id="read-action">Read Action</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;vault_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://my-vault.vault.azure.net/&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;secret_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;database-password&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;secret_value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-password&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a1b2c3d4e5f6g7h8i9j0&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;enabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;expires_on&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="writecreate-action">Write/Create Action</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;written&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;vault_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://my-vault.vault.azure.net/&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;secret_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;new-secret&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;secret_value&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;very-secret-value&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;create&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="common-errors">Common Errors</h3>
+<ul>
+<li><strong><code>Secret not found</code></strong>: The specified secret doesn't exist</li>
+<li>Verify the secret name and vault URL</li>
+<li>
+<p>Check if the secret has been deleted or disabled</p>
+</li>
+<li>
+<p><strong><code>Vault authentication failed</code></strong>: Unable to authenticate with Azure</p>
+</li>
+<li>Verify your credentials or managed identity configuration</li>
+<li>
+<p>Check if the service principal has access to the key vault</p>
+</li>
+<li>
+<p><strong><code>Missing 'value' for write/create action</code></strong>: No value provided for write operations</p>
+</li>
+<li>
+<p>Ensure the <code>value</code> parameter is provided for write and create actions</p>
+</li>
+<li>
+<p><strong><code>Invalid action</code></strong>: Unsupported action specified</p>
+</li>
+<li>Use only <code>read</code>, <code>write</code>, or <code>create</code> actions</li>
+</ul>
+<h3 id="authentication-methods">Authentication Methods</h3>
+<ol>
+<li><strong>Managed Identity</strong> (Recommended for Azure resources):</li>
+<li>No additional configuration needed</li>
+<li>
+<p>Automatically uses the system-assigned or user-assigned identity</p>
+</li>
+<li>
+<p><strong>Service Principal</strong>:</p>
+</li>
+<li>Provide <code>tenant_id</code>, <code>client_id</code>, and <code>client_secret</code></li>
+<li>
+<p>Ensure the service principal has Key Vault access</p>
+</li>
+<li>
+<p><strong>Azure CLI Credentials</strong>:</p>
+</li>
+<li>Uses logged-in Azure CLI user context</li>
+<li>Run <code>az login</code> before execution</li>
+</ol>
+<h2 id="required-azure-permissions">Required Azure Permissions</h2>
+<h3 id="key-vault-secrets-user">Key Vault Secrets User</h3>
+<ul>
+<li><code>Microsoft.KeyVault/vaults/secrets/read</code></li>
+<li><code>Microsoft.KeyVault/vaults/secrets/get/action</code></li>
+</ul>
+<h3 id="key-vault-secrets-officer">Key Vault Secrets Officer</h3>
+<ul>
+<li><code>Microsoft.KeyVault/vaults/secrets/write</code></li>
+<li><code>Microsoft.KeyVault/vaults/secrets/set/action</code></li>
+</ul>
 
 
 
