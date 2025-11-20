@@ -340,3 +340,165 @@ class TestAzureKeyVaultPlugin:
             plugin.execute()
 
         assert "Failed to get Azure credential" in str(exc_info.value)
+
+
+class TestAzureKeyVaultErrorHandling:
+    """
+    Additional test suite for Azure Key Vault error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    @patch("automax.plugins.azure_key_vault.SecretClient")
+    @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
+    def test_azure_key_vault_plugin_invalid_vault_url(
+        self, mock_credential, mock_client
+    ):
+        """
+        Test azure_key_vault plugin execution with invalid vault URL.
+        """
+        # Setup mock to raise exception for invalid URL
+        mock_credential.side_effect = Exception("Invalid vault URL")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://invalid-vault.url/",
+                "secret_name": "my-secret",
+                "action": "read",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Invalid vault URL" in str(exc_info.value)
+
+    @patch("automax.plugins.azure_key_vault.SecretClient")
+    @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
+    def test_azure_key_vault_plugin_secret_disabled(self, mock_credential, mock_client):
+        """
+        Test azure_key_vault plugin execution with disabled secret.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+        mock_credential.return_value = MagicMock()
+
+        mock_secret = MagicMock()
+        mock_secret.value = "my_secret"
+        mock_secret.properties.enabled = False  # Secret disabled
+        mock_secret.properties.expires_on = (
+            None  # Use None instead of string to avoid isoformat issue
+        )
+        mock_secret.properties.version = "v1"
+        mock_secret_client.get_secret.return_value = mock_secret
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "disabled-secret",
+                "action": "read",
+            }
+        )
+
+        result = plugin.execute()
+
+        # Should still return the secret but with disabled status
+        assert result["status"] == "success"
+        assert result["enabled"] is False
+
+    @patch("automax.plugins.azure_key_vault.SecretClient")
+    @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
+    def test_azure_key_vault_plugin_service_unavailable(
+        self, mock_credential, mock_client
+    ):
+        """
+        Test azure_key_vault plugin execution with service unavailable.
+        """
+        # Setup mock to raise service unavailable exception
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+        mock_credential.return_value = MagicMock()
+
+        mock_secret_client.get_secret.side_effect = Exception("Service unavailable")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "my-secret",
+                "action": "read",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Service unavailable" in str(exc_info.value)
+
+    @patch("automax.plugins.azure_key_vault.ClientSecretCredential")
+    def test_azure_key_vault_plugin_invalid_service_principal(
+        self, mock_credential_class
+    ):
+        """
+        Test azure_key_vault plugin with invalid service principal credentials.
+        """
+        # Setup mock to raise authentication exception
+        mock_credential_class.side_effect = Exception("Invalid client secret")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "my-secret",
+                "action": "read",
+                "tenant_id": "invalid-tenant",
+                "client_id": "invalid-client",
+                "client_secret": "invalid-secret",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Invalid client secret" in str(exc_info.value)
+
+    @patch("automax.plugins.azure_key_vault.SecretClient")
+    @patch("automax.plugins.azure_key_vault.DefaultAzureCredential")
+    def test_azure_key_vault_plugin_network_timeout(self, mock_credential, mock_client):
+        """
+        Test azure_key_vault plugin execution with network timeout.
+        """
+        # Setup mock to raise timeout exception
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+        mock_credential.return_value = MagicMock()
+
+        mock_secret_client.get_secret.side_effect = Exception("Request timeout")
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("azure_key_vault")
+        plugin = plugin_class(
+            {
+                "vault_url": "https://my-vault.vault.azure.net/",
+                "secret_name": "my-secret",
+                "action": "read",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Request timeout" in str(exc_info.value)

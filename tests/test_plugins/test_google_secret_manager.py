@@ -385,3 +385,194 @@ class TestGoogleSecretManagerPlugin:
             plugin.execute()
 
         assert "Google Secret Manager SDK not installed" in str(exc_info.value)
+
+
+class TestGoogleSecretManagerErrorHandling:
+    """
+    Additional test suite for Google Secret Manager error scenarios.
+
+    These tests complement the existing tests without modifying them.
+
+    """
+
+    @patch(
+        "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
+    )
+    def test_google_secret_manager_plugin_invalid_project_id(self, mock_client):
+        """
+        Test google_secret_manager plugin execution with invalid project ID.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+
+        from google.api_core.exceptions import InvalidArgument
+
+        mock_secret_client.access_secret_version.side_effect = InvalidArgument(
+            "Invalid project ID"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("google_secret_manager")
+        plugin = plugin_class(
+            {
+                "project_id": "invalid-project",
+                "secret_name": "my-secret",
+                "action": "read",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Invalid project ID" in str(exc_info.value)
+
+    @patch(
+        "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
+    )
+    def test_google_secret_manager_plugin_permission_denied(self, mock_client):
+        """
+        Test google_secret_manager plugin execution with permission denied.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+
+        from google.api_core.exceptions import PermissionDenied
+
+        mock_secret_client.access_secret_version.side_effect = PermissionDenied(
+            "Permission denied"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("google_secret_manager")
+        plugin = plugin_class(
+            {"project_id": "my-project", "secret_name": "my-secret", "action": "read"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Permission denied" in str(exc_info.value)
+
+    @patch(
+        "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
+    )
+    def test_google_secret_manager_plugin_secret_disabled(self, mock_client):
+        """
+        Test google_secret_manager plugin execution with disabled secret.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+
+        from google.api_core.exceptions import FailedPrecondition
+
+        mock_secret_client.access_secret_version.side_effect = FailedPrecondition(
+            "Secret is disabled"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("google_secret_manager")
+        plugin = plugin_class(
+            {
+                "project_id": "my-project",
+                "secret_name": "disabled-secret",
+                "action": "read",
+            }
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Secret is disabled" in str(exc_info.value)
+
+    @patch(
+        "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
+    )
+    def test_google_secret_manager_plugin_service_unavailable(self, mock_client):
+        """
+        Test google_secret_manager plugin execution with service unavailable.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+
+        from google.api_core.exceptions import ServiceUnavailable
+
+        mock_secret_client.access_secret_version.side_effect = ServiceUnavailable(
+            "Service unavailable"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("google_secret_manager")
+        plugin = plugin_class(
+            {"project_id": "my-project", "secret_name": "my-secret", "action": "read"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Service unavailable" in str(exc_info.value)
+
+    @patch(
+        "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
+    )
+    def test_google_secret_manager_plugin_network_error(self, mock_client):
+        """
+        Test google_secret_manager plugin execution with network error.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+
+        from google.api_core.exceptions import InternalServerError
+
+        mock_secret_client.access_secret_version.side_effect = InternalServerError(
+            "Internal server error"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("google_secret_manager")
+        plugin = plugin_class(
+            {"project_id": "my-project", "secret_name": "my-secret", "action": "read"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Internal server error" in str(exc_info.value)
+
+    @patch(
+        "automax.plugins.google_secret_manager.secretmanager.SecretManagerServiceClient"
+    )
+    def test_google_secret_manager_plugin_quota_exceeded(self, mock_client):
+        """
+        Test google_secret_manager plugin execution with quota exceeded.
+        """
+        # Setup mocks
+        mock_secret_client = MagicMock()
+        mock_client.return_value = mock_secret_client
+
+        from google.api_core.exceptions import ResourceExhausted
+
+        mock_secret_client.access_secret_version.side_effect = ResourceExhausted(
+            "Quota exceeded"
+        )
+
+        global_registry.load_all_plugins()
+
+        plugin_class = global_registry.get_plugin_class("google_secret_manager")
+        plugin = plugin_class(
+            {"project_id": "my-project", "secret_name": "my-secret", "action": "read"}
+        )
+
+        with pytest.raises(PluginExecutionError) as exc_info:
+            plugin.execute()
+
+        assert "Quota exceeded" in str(exc_info.value)
