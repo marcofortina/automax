@@ -1,0 +1,149 @@
+# Monitoring Alerts Example
+# Demonstrates monitoring system health and sending alerts
+
+name: "monitoring_alerts_workflow"
+description: "Monitor system health and send alerts on issues"
+
+steps:
+  # Check website availability
+  - name: "check_website_health"
+    plugin: "run_http_request"
+    parameters:
+      url: "https://www.company.com/health"
+      method: "GET"
+      timeout: 10
+      follow_redirects: true
+
+  # Check database connectivity
+  - name: "check_database_connectivity"
+    plugin: "check_tcp_connection"
+    parameters:
+      host: "${DB_HOST}"
+      port: 5432
+      timeout: 5
+      attempts: 3
+      retry_delay: 1
+
+  # Check internal service via SSH
+  - name: "check_internal_service"
+    plugin: "ssh_command"
+    parameters:
+      host: "internal-service.company.com"
+      username: "monitor"
+      private_key_path: "/etc/automax/keys/monitor_key"
+      command: "systemctl is-active important-service"
+      timeout: 10
+
+  # Check network latency to critical services
+  - name: "check_network_latency"
+    plugin: "check_icmp_connection"
+    parameters:
+      host: "api.company.com"
+      count: 5
+      timeout: 2
+      interval: 0.5
+
+  # Check disk space on critical server
+  - name: "check_disk_space"
+    plugin: "ssh_command"
+    parameters:
+      host: "storage-server.company.com"
+      username: "monitor"
+      private_key_path: "/etc/automax/keys/monitor_key"
+      command: "df -h / | awk 'NR==2 {print $5}' | sed 's/%//'"
+      timeout: 5
+
+  # Evaluate health checks and send alerts if needed
+  - name: "evaluate_health_checks"
+    plugin: "local_command"
+    parameters:
+      command: |
+        # Check website health
+        if [ "${steps.check_website_health.output.status_code}" != "200" ]; then
+          echo "WEBSITE_DOWN" > /tmp/alert_status
+        fi
+
+        # Check database connectivity
+        if [ "${steps.check_database_connectivity.output.connected}" != "true" ]; then
+          echo "DATABASE_DOWN" >> /tmp/alert_status
+        fi
+
+        # Check internal service
+        if [ "${steps.check_internal_service.output.stdout}" != "active" ]; then
+          echo "SERVICE_DOWN" >> /tmp/alert_status
+        fi
+
+        # Check network latency
+        if [ $(echo "${steps.check_network_latency.output.avg_latency} > 100" | bc) -eq 1 ]; then
+          echo "HIGH_LATENCY" >> /tmp/alert_status
+        fi
+
+        # Check disk space
+        if [ "${steps.check_disk_space.output.stdout}" -gt 90 ]; then
+          echo "DISK_SPACE_LOW" >> /tmp/alert_status
+        fi
+
+        # If no alerts, create OK status
+        if [ ! -f /tmp/alert_status ]; then
+          echo "ALL_SYSTEMS_GO" > /tmp/alert_status
+        fi
+      working_directory: "/tmp"
+
+  # Read alert status
+  - name: "read_alert_status"
+    plugin: "read_file_content"
+    parameters:
+      file_path: "/tmp/alert_status"
+
+  # Send critical alert if any issues detected
+  - name: "send_critical_alert"
+    plugin: "send_email"
+    parameters:
+      smtp_server: "smtp.gmail.com"
+      smtp_port: 587
+      from_address: "alerts@company.com"
+      to_addresses:
+        - "oncall-eng@company.com"
+        - "devops@company.com"
+      subject: "CRITICAL: System Health Alert"
+      body: |
+        Critical system health issues detected:
+
+        ${steps.read_alert_status.output.content}
+
+        Detailed Status:
+        - Website HTTP Status: ${steps.check_website_health.output.status_code}
+        - Database Connected: ${steps.check_database_connectivity.output.connected}
+        - Internal Service: ${steps.check_internal_service.output.stdout}
+        - Network Latency: ${steps.check_network_latency.output.avg_latency}ms
+        - Disk Usage: ${steps.check_disk_space.output.stdout}%
+
+        Please investigate immediately.
+      username: "${ALERT_EMAIL_USER}"
+      password: "${ALERT_EMAIL_PASSWORD}"
+    when: "${steps.read_alert_status.output.content != 'ALL_SYSTEMS_GO'}"
+
+  # Send weekly health report
+  - name: "send_weekly_health_report"
+    plugin: "send_email"
+    parameters:
+      smtp_server: "smtp.gmail.com"
+      smtp_port: 587
+      from_address: "reports@company.com"
+      to_addresses:
+        - "management@company.com"
+        - "engineering@company.com"
+      subject: "Weekly System Health Report"
+      body: |
+        Weekly System Health Report:
+
+        - Website Availability: ${steps.check_website_health.output.status_code}
+        - Database Connectivity: ${steps.check_database_connectivity.output.connected}
+        - Internal Service Status: ${steps.check_internal_service.output.stdout}
+        - Average Network Latency: ${steps.check_network_latency.output.avg_latency}ms
+        - Disk Usage: ${steps.check_disk_space.output.stdout}%
+
+        Overall System Status: ${steps.read_alert_status.output.content}
+      username: "${REPORT_EMAIL_USER}"
+      password: "${REPORT_EMAIL_PASSWORD}"
+    when: "${steps.read_alert_status.output.content == 'ALL_SYSTEMS_GO'}"
