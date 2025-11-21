@@ -135,7 +135,6 @@ class PluginRegistry:
                     and issubclass(obj, BasePlugin)
                     and obj is not BasePlugin
                 ):
-
                     self.register(obj)
                     self.logger.debug(f"Discovered plugin: {obj.METADATA.name}")
 

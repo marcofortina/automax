@@ -128,7 +128,9 @@ class TemplateManager:
                     (
                         self.render_dict(item)
                         if isinstance(item, dict)
-                        else self.render(item) if isinstance(item, str) else item
+                        else self.render(item)
+                        if isinstance(item, str)
+                        else item
                     )
                     for item in value
                 ]
