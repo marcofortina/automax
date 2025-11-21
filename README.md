@@ -259,12 +259,26 @@ See the [development utilities guide](docs/guides/development-utils.md) for more
 
 ---
 
-## 💝 Donations
+## 💝 Support & Donations
 
-If you find Automax useful and would like to support its development, consider making a donation. Your contribution helps maintain the project and develop new features.
+If you find Automax useful and would like to support its ongoing development — including new features, security updates, long-term maintenance and documentation — you can support the project in several ways:
+
+### ☕ GitHub Sponsors
+Ideal for recurring monthly support.
+
+### ₿ Bitcoin Donations (one-time)
+If you prefer crypto donations, you can support the project via Bitcoin:
 
 **Bitcoin Address:**
 `36jDV57roGb4o59TwK1CB7viPrXToQHGiP`
+
+To maintain full transparency:
+* This address is dedicated exclusively to Automax project donations.
+* A ledger of received BTC donations may be published in future releases (optional).
+
+### 💬 Commercial Support / Custom Integrations
+If your organization needs custom features, support SLAs, or dedicated development,
+please contact the maintainer for commercial licensing options.
 
 ---
 
