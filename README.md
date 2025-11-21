@@ -284,7 +284,7 @@ please contact the maintainer for commercial licensing options.
 
 ## 🧾 License
 
-This project is distributed under a Modified MIT License (Non-Commercial Use).
+This project is distributed under a Modified License: MIT License (with Commercial Use Clause).
 
 You are free to use, copy, modify, and distribute the software for non-commercial purposes under the terms of the MIT License.
 
