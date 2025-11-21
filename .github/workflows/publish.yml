@@ -31,20 +31,12 @@ jobs:
       - name: Build distribution
         run: python -m build
 
-      - name: Publish to GitHub Packages
+      - name: Publish to PyPI
         env:
-          TWINE_USERNAME: ${{ github.actor }}
-          TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
-          python -m twine upload \
-            --repository-url https://upload.pypi.org/legacy/ \
-            --non-interactive dist/*
+          python -m twine upload dist/*
 
-      - name: Publish to GitHub Packages Registry
-        env:
-          TWINE_USERNAME: ${{ github.actor }}
-          TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python -m twine upload \
-            --repository-url https://upload.github.com/owner/marcofortina/packages/pypi/ \
-            --non-interactive dist/*
+      # NOTE: If you require GitHub Packages as a target, add a separate workflow
+      # with the correct repository URL and permissions for GitHub Packages.
