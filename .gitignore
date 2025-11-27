@@ -10,6 +10,8 @@ build/
 
 # SSH keys
 examples/.ssh/
+examples/.ssh/id_ed25519
+examples/.ssh/id_ed25519.pub
 
 # MkDocs build output
 site/
