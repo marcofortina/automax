@@ -272,10 +272,6 @@ If you prefer crypto donations, you can support the project via Bitcoin:
 **Bitcoin Address:**
 `36jDV57roGb4o59TwK1CB7viPrXToQHGiP`
 
-To maintain full transparency:
-* This address is dedicated exclusively to Automax project donations.
-* A ledger of received BTC donations may be published in future releases (optional).
-
 ### 💬 Commercial Support / Custom Integrations
 If your organization needs custom features, support SLAs, or dedicated development,
 please contact the maintainer for commercial licensing options.
