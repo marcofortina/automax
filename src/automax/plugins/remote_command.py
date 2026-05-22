@@ -30,7 +30,7 @@ class RemoteCommandPlugin(BasePlugin):
             return PluginResult.failure(message="remote.command requires an SSH session")
 
         command = apply_cwd(str(params["command"]), context, params.get("cwd"))
-        timeout = params.get("timeout")
+        timeout = params.get("timeout", context.command_timeout)
         stdin, stdout, stderr = context.ssh_client.exec_command(
             command,
             timeout=timeout,

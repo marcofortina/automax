@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from copy import deepcopy
+from dataclasses import replace
 from datetime import datetime, timezone
 import logging
 from pathlib import Path
@@ -228,6 +229,7 @@ class AutomaxEngine:
             raise AutomaxError("job kind must be 'Job'")
         self._validate_strategy(job.get("strategy"), "job")
         self._validate_failure_policy(job.get("failurePolicy"), "job")
+        self._validate_timeouts(job.get("timeouts"), "job")
         tasks = job.get("tasks")
         if not isinstance(tasks, list) or not tasks:
             raise AutomaxError("job requires non-empty tasks list")
@@ -237,6 +239,7 @@ class AutomaxEngine:
             task_id = self._require_id(task, "task")
             self._validate_strategy(task.get("strategy"), f"task '{task_id}'")
             self._validate_failure_policy(task.get("failurePolicy"), f"task '{task_id}'")
+            self._validate_timeouts(task.get("timeouts"), f"task '{task_id}'")
             self._validate_tags(task.get("tags"), f"task '{task_id}'")
             if task_id in seen_tasks:
                 raise AutomaxError(f"duplicate task id: {task_id}")
@@ -249,6 +252,7 @@ class AutomaxEngine:
                 step_id = self._require_id(step, "step")
                 self._validate_strategy(step.get("strategy"), f"step '{task_id}:{step_id}'")
                 self._validate_failure_policy(step.get("failurePolicy"), f"step '{task_id}:{step_id}'")
+                self._validate_timeouts(step.get("timeouts"), f"step '{task_id}:{step_id}'")
                 self._validate_tags(step.get("tags"), f"step '{task_id}:{step_id}'")
                 if step_id in seen_steps:
                     raise AutomaxError(f"duplicate step id in task '{task_id}': {step_id}")
@@ -263,6 +267,9 @@ class AutomaxEngine:
                     substep_id = self._require_id(substep, "substep")
                     self._validate_tags(
                         substep.get("tags"), f"substep '{task_id}:{step_id}:{substep_id}'"
+                    )
+                    self._validate_timeouts(
+                        substep.get("timeouts"), f"substep '{task_id}:{step_id}:{substep_id}'"
                     )
                     if substep_id in seen_substeps:
                         raise AutomaxError(
@@ -604,7 +611,8 @@ class AutomaxEngine:
         first = group[0]
         task = first["task"]
         step = first["step"]
-        target = first["target"]
+        target = self._target_with_step_timeouts(first["target"], job, task, step)
+        group = [dict(item, target=target) for item in group]
         needs_ssh = any(self._substep_needs_ssh(item["substep"]) for item in group)
         try:
             if needs_ssh:
@@ -774,6 +782,7 @@ class AutomaxEngine:
             secrets=secrets,
             ssh_client=ssh_client,
             logger=self.logger,
+            command_timeout=self._resolve_command_timeout(job, task, step, substep),
             step_state=step_state,
         )
         if dry_run:
@@ -859,6 +868,44 @@ class AutomaxEngine:
             if len(secret_text) >= 4:
                 masked = masked.replace(secret_text, "***")
         return masked
+
+    def _target_with_step_timeouts(
+        self, target: Target, job: Dict[str, Any], task: Dict[str, Any], step: Dict[str, Any]
+    ) -> Target:
+        """Merge job/task/step SSH timeout controls into the target."""
+        timeouts = self._merged_timeouts(job, task, step)
+        if not timeouts:
+            return target
+        ssh = dict(target.ssh)
+        mapping = {
+            "ssh_connect": "connect_timeout",
+            "connect": "connect_timeout",
+            "ssh_banner": "banner_timeout",
+            "banner": "banner_timeout",
+            "ssh_auth": "auth_timeout",
+            "auth": "auth_timeout",
+        }
+        for source, dest in mapping.items():
+            if source in timeouts:
+                ssh[dest] = int(timeouts[source])
+        return replace(target, ssh=ssh)
+
+    def _resolve_command_timeout(
+        self, job: Dict[str, Any], task: Dict[str, Any], step: Dict[str, Any], substep: Dict[str, Any]
+    ) -> int | None:
+        """Resolve the inherited default command timeout for a substep."""
+        timeouts = self._merged_timeouts(job, task, step, substep)
+        value = timeouts.get("command") or timeouts.get("command_timeout")
+        return int(value) if value is not None else None
+
+    @staticmethod
+    def _merged_timeouts(*nodes: Dict[str, Any]) -> Dict[str, Any]:
+        merged: Dict[str, Any] = {}
+        for node in nodes:
+            raw = node.get("timeouts") or {}
+            if raw:
+                merged.update(raw)
+        return merged
 
     def _substep_needs_ssh(self, substep: Dict[str, Any]) -> bool:
         plugin_name = substep.get("use") or substep.get("plugin")
@@ -1006,6 +1053,31 @@ class AutomaxEngine:
                 raise AutomaxError(f"{label} strategy {key} must be >= 1")
         if "pause_between_batches" in strategy and float(strategy["pause_between_batches"]) < 0:
             raise AutomaxError(f"{label} strategy pause_between_batches must be >= 0")
+
+    @staticmethod
+    def _validate_timeouts(timeouts: Any, label: str) -> None:
+        """Validate inherited timeout mappings."""
+        if timeouts is None:
+            return
+        if not isinstance(timeouts, dict):
+            raise AutomaxError(f"{label} timeouts must be a mapping")
+        allowed = {
+            "command",
+            "command_timeout",
+            "ssh_connect",
+            "connect",
+            "ssh_banner",
+            "banner",
+            "ssh_auth",
+            "auth",
+        }
+        for key, value in timeouts.items():
+            if key not in allowed:
+                raise AutomaxError(
+                    f"{label} timeouts unsupported key '{key}'. Allowed: {', '.join(sorted(allowed))}"
+                )
+            if int(value) <= 0:
+                raise AutomaxError(f"{label} timeout {key} must be a positive integer")
 
     def _resolve_failure_policy(
         self, job: Dict[str, Any], task: Dict[str, Any], step: Dict[str, Any]

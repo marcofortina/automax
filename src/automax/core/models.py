@@ -113,4 +113,5 @@ class ExecutionContext:
     secrets: Dict[str, Any]
     ssh_client: Any = None
     logger: Any = None
+    command_timeout: int | None = None
     step_state: Dict[str, Any] = field(default_factory=dict)

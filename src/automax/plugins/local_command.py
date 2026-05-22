@@ -30,7 +30,7 @@ class LocalCommandPlugin(BasePlugin):
         cwd = params.get("cwd")
         env = params.get("env")
         shell = bool(params.get("shell", isinstance(command, str)))
-        timeout = params.get("timeout")
+        timeout = params.get("timeout", context.command_timeout)
 
         completed = subprocess.run(
             command,

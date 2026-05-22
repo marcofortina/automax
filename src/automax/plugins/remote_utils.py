@@ -42,7 +42,7 @@ def exec_remote(
         raise RuntimeError("remote plugin requires an SSH session")
     _, stdout, stderr = context.ssh_client.exec_command(
         command,
-        timeout=timeout,
+        timeout=timeout if timeout is not None else context.command_timeout,
         get_pty=get_pty,
     )
     rc = stdout.channel.recv_exit_status()

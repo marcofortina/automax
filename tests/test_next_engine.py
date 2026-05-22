@@ -954,3 +954,144 @@ tasks:
     assert good_marker.read_text(encoding="utf-8") == "x"
     assert bad_marker.read_text(encoding="utf-8") == "xx"
     assert after_marker.read_text(encoding="utf-8") == "x"
+
+
+def test_inherited_command_timeout_reaches_execution_context(tmp_path: Path, monkeypatch):
+    seen: list[int | None] = []
+
+    def fake_run(*args, **kwargs):
+        seen.append(kwargs.get("timeout"))
+
+        class Completed:
+            returncode = 0
+            stdout = "ok"
+            stderr = ""
+
+        return Completed()
+
+    import automax.plugins.local_command as local_command
+
+    monkeypatch.setattr(local_command.subprocess, "run", fake_run)
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: timeout-context
+timeouts:
+  command: 17
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: cmd
+            use: local.command
+            with:
+              command: "true"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(tmp_path / "runs")],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert seen == [17]
+
+
+def test_substep_timeout_overrides_inherited_command_timeout(tmp_path: Path, monkeypatch):
+    seen: list[int | None] = []
+
+    def fake_run(*args, **kwargs):
+        seen.append(kwargs.get("timeout"))
+
+        class Completed:
+            returncode = 0
+            stdout = "ok"
+            stderr = ""
+
+        return Completed()
+
+    import automax.plugins.local_command as local_command
+
+    monkeypatch.setattr(local_command.subprocess, "run", fake_run)
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: timeout-context
+timeouts:
+  command: 17
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: cmd
+            use: local.command
+            with:
+              command: "true"
+              timeout: 3
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(tmp_path / "runs")],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert seen == [3]
+
+
+def test_ssh_timeouts_are_merged_from_job_task_and_step():
+    engine = AutomaxEngine()
+    target = Target(name="web01", host="127.0.0.1", ssh={"connect_timeout": 99})
+    resolved = engine._target_with_step_timeouts(
+        target,
+        {"timeouts": {"ssh_connect": 10, "ssh_banner": 11}},
+        {"timeouts": {"ssh_connect": 20}},
+        {"timeouts": {"ssh_auth": 30}},
+    )
+
+    assert resolved.ssh["connect_timeout"] == 20
+    assert resolved.ssh["banner_timeout"] == 11
+    assert resolved.ssh["auth_timeout"] == 30
+    assert target.ssh["connect_timeout"] == 99
+
+
+def test_invalid_timeout_key_is_rejected(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: bad-timeout
+timeouts:
+  socket: 10
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: cmd
+            use: local.command
+            with:
+              command: "true"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    with pytest.raises(ValueError, match="unsupported key"):
+        AutomaxEngine().validate(job_path=str(job), inventory_path=str(inventory))
