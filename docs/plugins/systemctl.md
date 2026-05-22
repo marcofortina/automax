@@ -1,3 +1,8 @@
+<!--
+Copyright (C) 2026 Marco Fortina
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # Systemctl plugins
 
 Systemctl plugins manage systemd units on the remote target. Use `sudo: true` for system services. Use `user: true` for `systemctl --user` operations.

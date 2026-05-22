@@ -1,3 +1,8 @@
+<!--
+Copyright (C) 2026 Marco Fortina
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # Automax
 
 Automax is a Python, YAML-driven SSH automation engine for external job files,

@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Marco Fortina
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 click>=8.1,<9.0
 Jinja2>=3.1,<4.0
 paramiko>=3.4,<4.0

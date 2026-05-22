@@ -1,3 +1,8 @@
+<!--
+Copyright (C) 2026 Marco Fortina
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # Builtin plugins
 
 Only canonical plugin names are part of the public DSL. Compatibility aliases are

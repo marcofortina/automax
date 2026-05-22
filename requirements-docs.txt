@@ -1,3 +1,6 @@
+# Copyright (C) 2026 Marco Fortina
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # Documentation
 mkdocs>=1.4.0
 mkdocs-material>=8.0.0

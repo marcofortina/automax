@@ -1,3 +1,8 @@
+<!--
+Copyright (C) 2026 Marco Fortina
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # Security Policy
 
 Automax is pre-release software. Security-sensitive defaults must be explicit and

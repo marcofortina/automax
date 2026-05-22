@@ -1,3 +1,8 @@
+<!--
+Copyright (C) 2026 Marco Fortina
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # Wait and assert plugins
 
 `wait.*` plugins poll until a condition becomes true or a timeout expires.

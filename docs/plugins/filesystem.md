@@ -1,3 +1,8 @@
+<!--
+Copyright (C) 2026 Marco Fortina
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # Filesystem plugins
 
 Filesystem plugins operate on the current remote target through SSH unless noted

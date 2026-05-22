@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright (C) 2026 Marco Fortina
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 set -euo pipefail
 
 if [[ -z "${AUTOMAX_SSH_HOST:-}" || -z "${AUTOMAX_SSH_USER:-}" ]]; then
