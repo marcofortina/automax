@@ -55,17 +55,11 @@ class PluginRegistry:
 
     def describe(self, name: str) -> dict[str, object]:
         """Return user-facing metadata for one plugin."""
-        plugin = self.get(name)
-        return {
-            "name": plugin.name,
-            "description": plugin.description,
-            "required_params": list(plugin.required_params),
-            "optional_params": list(plugin.optional_params),
-            "aliases": list(plugin.aliases),
-            "opens_remote_session": plugin.opens_remote_session,
-            "supports_dry_run": plugin.supports_dry_run,
-            "supports_check_mode": plugin.supports_check_mode,
-        }
+        return self.get(name).metadata()
+
+    def describe_all(self) -> list[dict[str, object]]:
+        """Return metadata for all canonical plugins."""
+        return [self.get(name).metadata() for name in self.names()]
 
     def load_from_paths(self, paths: Iterable[str]) -> None:
         """Load plugin classes from external .py files or directories."""

@@ -134,6 +134,20 @@ class FsTemplatePlugin(BasePlugin):
     description = "Render a local Jinja2 template to a remote file."
     required_params = ("src", "dest")
     optional_params = ("mode", "owner", "group", "sudo", "encoding", "values")
+    parameter_schema = {
+        "src": {"type": "path", "description": "Local Jinja2 template path on the controller."},
+        "dest": {"type": "path", "description": "Remote destination file path."},
+        "mode": {"type": "string", "description": "Optional remote file mode, for example 0644."},
+        "owner": {"type": "string", "description": "Optional remote file owner."},
+        "group": {"type": "string", "description": "Optional remote file group."},
+        "sudo": {"type": "boolean", "default": False, "description": "Install the rendered file with sudo."},
+        "encoding": {"type": "string", "default": "utf-8", "description": "Template and upload encoding."},
+        "values": {"type": "mapping", "description": "Additional values exposed to the template as values.*."},
+    }
+    examples = (
+        "use: fs.template\nwith:\n  src: ./templates/app.conf.j2\n  dest: /etc/myapp/app.conf\n  mode: '0644'\n  sudo: true",
+    )
+    result_fields = {"data.src": "Rendered template path", "data.dest": "Remote destination path"}
     opens_remote_session = True
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:

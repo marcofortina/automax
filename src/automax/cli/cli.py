@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import sys
 from typing import Dict, Iterable
+import json
 
 import click
 
@@ -255,14 +256,20 @@ def list_plugins(plugin_path: tuple[str, ...], include_aliases: bool) -> None:
 @plugins.command("describe")
 @click.argument("name")
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
-def describe_plugin(name: str, plugin_path: tuple[str, ...]) -> None:
+@click.option("--json", "as_json", is_flag=True, help="Print structured JSON metadata.")
+def describe_plugin(name: str, plugin_path: tuple[str, ...], as_json: bool) -> None:
     """Describe one registered plugin and its parameters."""
     try:
         description = build_builtin_registry(plugin_path).describe(name)
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
+    if as_json:
+        click.echo(json.dumps(description, indent=2, sort_keys=True))
+        return
+
     click.echo(f"Name: {description['name']}")
+    click.echo(f"Category: {description['category']}")
     click.echo(f"Description: {description['description'] or '-'}")
     click.echo(f"Remote session: {str(description['opens_remote_session']).lower()}")
     click.echo(f"Dry-run support: {str(description['supports_dry_run']).lower()}")
@@ -282,6 +289,31 @@ def describe_plugin(name: str, plugin_path: tuple[str, ...]) -> None:
         click.echo(f"  - {item}")
     if not optional:
         click.echo("  - none")
+
+    parameters = description.get("parameters") or []
+    if parameters:
+        click.echo("Parameters:")
+        for parameter in parameters:
+            marker = "required" if parameter.get("required") else "optional"
+            default = parameter.get("default")
+            default_text = f", default={default}" if default is not None else ""
+            desc = parameter.get("description") or "-"
+            click.echo(
+                f"  - {parameter['name']} ({marker}, {parameter.get('type', 'any')}{default_text}): {desc}"
+            )
+
+    result_fields = description.get("result_fields") or {}
+    if result_fields:
+        click.echo("Result fields:")
+        for key, value in result_fields.items():
+            click.echo(f"  - {key}: {value}")
+
+    examples = description.get("examples") or []
+    if examples:
+        click.echo("Examples:")
+        for item in examples:
+            click.echo("---")
+            click.echo(item)
 
     if aliases:
         click.echo("Aliases:")

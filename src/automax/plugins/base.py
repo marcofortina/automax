@@ -23,11 +23,45 @@ class BasePlugin(ABC):
     name = "base"
     aliases: tuple[str, ...] = ()
     description = ""
+    category = ""
     required_params: tuple[str, ...] = ()
     optional_params: tuple[str, ...] = ()
+    parameter_schema: Dict[str, Dict[str, Any]] = {}
+    examples: tuple[str, ...] = ()
+    result_fields: Dict[str, str] = {}
     opens_remote_session = False
     supports_dry_run = True
     supports_check_mode = False
+
+
+    def metadata(self) -> Dict[str, Any]:
+        """Return structured metadata used by CLI and documentation generators."""
+        parameters = []
+        for name in (*self.required_params, *self.optional_params):
+            details = dict(self.parameter_schema.get(name, {}))
+            parameters.append(
+                {
+                    "name": name,
+                    "required": name in self.required_params,
+                    "type": details.get("type", "any"),
+                    "default": details.get("default"),
+                    "description": details.get("description", ""),
+                }
+            )
+        return {
+            "name": self.name,
+            "category": self.category or self.name.split(".", 1)[0],
+            "description": self.description,
+            "required_params": list(self.required_params),
+            "optional_params": list(self.optional_params),
+            "parameters": parameters,
+            "examples": list(self.examples),
+            "result_fields": dict(self.result_fields),
+            "aliases": list(self.aliases),
+            "opens_remote_session": self.opens_remote_session,
+            "supports_dry_run": self.supports_dry_run,
+            "supports_check_mode": self.supports_check_mode,
+        }
 
     def validate(self, params: Dict[str, Any]) -> None:
         """Validate common required parameters."""

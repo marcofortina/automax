@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 
@@ -1153,3 +1154,33 @@ tasks:
         row = conn.execute("SELECT message FROM nodes WHERE run_id = ?", (run_id,)).fetchone()
     assert row is not None
     assert row["message"] == "cannot connect with ***"
+
+
+def test_plugin_metadata_contains_structured_parameters_and_examples():
+    metadata = AutomaxEngine().plugin_registry.describe("fs.template")
+
+    assert metadata["category"] == "fs"
+    assert any(item["name"] == "src" and item["required"] for item in metadata["parameters"])
+    assert any(item["name"] == "sudo" and item["default"] is False for item in metadata["parameters"])
+    assert metadata["examples"]
+    assert metadata["result_fields"]["data.dest"] == "Remote destination path"
+
+
+def test_plugins_describe_json_outputs_structured_metadata():
+    result = CliRunner().invoke(cli, ["plugins", "describe", "fs.template", "--json"])
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["name"] == "fs.template"
+    assert payload["category"] == "fs"
+    assert any(item["name"] == "dest" for item in payload["parameters"])
+
+
+def test_plugin_describe_human_output_includes_rich_metadata():
+    result = CliRunner().invoke(cli, ["plugins", "describe", "fs.template"])
+
+    assert result.exit_code == 0, result.output
+    assert "Category: fs" in result.output
+    assert "Parameters:" in result.output
+    assert "src (required, path)" in result.output
+    assert "Examples:" in result.output
