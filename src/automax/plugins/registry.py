@@ -114,6 +114,15 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PackageUpgradePlugin,
     )
     from automax.plugins.remote_command import RemoteCommandPlugin
+    from automax.plugins.user_group_process import (
+        GroupCreatePlugin,
+        GroupRemovePlugin,
+        ProcessKillPlugin,
+        ProcessWaitPlugin,
+        UserCreatePlugin,
+        UserModifyPlugin,
+        UserRemovePlugin,
+    )
     from automax.plugins.systemctl import (
         SystemctlDaemonReloadPlugin,
         SystemctlDisablePlugin,
@@ -138,6 +147,13 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PackageUpdateCachePlugin(),
         PackageUpgradePlugin(),
         PackageQueryPlugin(),
+        UserCreatePlugin(),
+        UserModifyPlugin(),
+        UserRemovePlugin(),
+        GroupCreatePlugin(),
+        GroupRemovePlugin(),
+        ProcessKillPlugin(),
+        ProcessWaitPlugin(),
         FsCdPlugin(),
         FsMkdirPlugin(),
         FsCopyPlugin(),

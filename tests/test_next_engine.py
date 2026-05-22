@@ -425,6 +425,8 @@ def test_builtin_macro_plugins_are_registered_with_canonical_names_only():
         "pkg.remove",
         "pkg.update_cache",
         "pkg.upgrade",
+        "process.kill",
+        "process.wait",
         "remote.command",
         "systemctl.daemon_reload",
         "systemctl.disable",
@@ -438,6 +440,11 @@ def test_builtin_macro_plugins_are_registered_with_canonical_names_only():
         "systemctl.status",
         "systemctl.stop",
         "systemctl.unmask",
+        "user.create",
+        "user.modify",
+        "user.remove",
+        "group.create",
+        "group.remove",
     }
     assert output_names == expected_names
     assert "local_command" not in output_names
@@ -490,7 +497,30 @@ def test_extended_systemctl_plugins_are_registered():
         "systemctl.is_enabled",
         "systemctl.mask",
         "systemctl.unmask",
+        "user.create",
+        "user.modify",
+        "user.remove",
+        "group.create",
+        "group.remove",
     ):
         assert name in names
 
     assert "service.enable" not in names
+
+
+def test_user_group_process_plugins_are_registered():
+    names = AutomaxEngine().plugin_registry.names()
+
+    for name in (
+        "user.create",
+        "user.modify",
+        "user.remove",
+        "group.create",
+        "group.remove",
+        "process.kill",
+        "process.wait",
+    ):
+        assert name in names
+
+    assert "useradd" not in names
+    assert "groupadd" not in names

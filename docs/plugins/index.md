@@ -32,6 +32,8 @@ pkg.query
 pkg.remove
 pkg.update_cache
 pkg.upgrade
+process.kill
+process.wait
 remote.command
 systemctl.daemon_reload
 systemctl.disable
@@ -45,6 +47,11 @@ systemctl.start
 systemctl.status
 systemctl.stop
 systemctl.unmask
+user.create
+user.modify
+user.remove
+group.create
+group.remove
 ```
 
 Use the CLI to inspect the installed plugin registry:
