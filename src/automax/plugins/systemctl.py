@@ -126,3 +126,146 @@ class SystemctlDaemonReloadPlugin(BasePlugin):
             message="systemctl.daemon_reload failed",
             data={"action": "daemon-reload"},
         )
+
+
+class SystemctlReloadPlugin(_SystemctlServicePlugin):
+    """Reload a service and mark the substep as changed."""
+
+    name = "systemctl.reload"
+    description = "Reload a remote systemd service."
+    action = "reload"
+
+
+class SystemctlEnablePlugin(_SystemctlServicePlugin):
+    """Enable a service only when it is not already enabled."""
+
+    name = "systemctl.enable"
+    description = "Enable a remote systemd service."
+    action = "enable"
+
+    def _build_command(self, params: Dict[str, Any]) -> str:
+        systemctl = _systemctl_prefix(params)
+        service = quote(params["service"])
+        return (
+            f"{systemctl} is-enabled --quiet {service} "
+            f"|| {{ {systemctl} enable {service} && echo {CHANGE_MARKER}; }}"
+        )
+
+
+class SystemctlDisablePlugin(_SystemctlServicePlugin):
+    """Disable a service only when it is enabled."""
+
+    name = "systemctl.disable"
+    description = "Disable a remote systemd service."
+    action = "disable"
+
+    def _build_command(self, params: Dict[str, Any]) -> str:
+        systemctl = _systemctl_prefix(params)
+        service = quote(params["service"])
+        return (
+            f"! {systemctl} is-enabled --quiet {service} "
+            f"|| {{ {systemctl} disable {service} && echo {CHANGE_MARKER}; }}"
+        )
+
+
+class SystemctlStatusPlugin(_SystemctlServicePlugin):
+    """Return systemctl status output without changing the target."""
+
+    name = "systemctl.status"
+    description = "Read remote systemd service status."
+    action = "status"
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        if context.ssh_client is None:
+            return PluginResult.failure(message="systemctl.status requires an SSH session")
+        systemctl = _systemctl_prefix(params)
+        service = quote(params["service"])
+        rc, out, err = exec_remote(context, f"{systemctl} status --no-pager {service} || true")
+        return PluginResult.success(
+            changed=False,
+            rc=0,
+            stdout=out,
+            stderr=err,
+            data={"service": params["service"], "raw_rc": rc},
+        )
+
+
+class SystemctlIsActivePlugin(_SystemctlServicePlugin):
+    """Check whether a service is active without changing the target."""
+
+    name = "systemctl.is_active"
+    description = "Check remote systemd active state."
+    action = "is-active"
+    optional_params = (*_SystemctlServicePlugin.optional_params, "fail_on_inactive")
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        systemctl = _systemctl_prefix(params)
+        service = quote(params["service"])
+        rc, out, err = exec_remote(context, f"{systemctl} is-active {service}")
+        active = rc == 0 and out.strip() == "active"
+        if not active and bool(params.get("fail_on_inactive", False)):
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="service is not active")
+        return PluginResult.success(
+            changed=False,
+            stdout=out,
+            stderr=err,
+            data={"service": params["service"], "active": active, "state": out.strip()},
+        )
+
+
+class SystemctlIsEnabledPlugin(_SystemctlServicePlugin):
+    """Check whether a service is enabled without changing the target."""
+
+    name = "systemctl.is_enabled"
+    description = "Check remote systemd enabled state."
+    action = "is-enabled"
+    optional_params = (*_SystemctlServicePlugin.optional_params, "fail_on_disabled")
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        systemctl = _systemctl_prefix(params)
+        service = quote(params["service"])
+        rc, out, err = exec_remote(context, f"{systemctl} is-enabled {service}")
+        enabled = rc == 0 and out.strip() == "enabled"
+        if not enabled and bool(params.get("fail_on_disabled", False)):
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="service is not enabled")
+        return PluginResult.success(
+            changed=False,
+            stdout=out,
+            stderr=err,
+            data={"service": params["service"], "enabled": enabled, "state": out.strip()},
+        )
+
+
+class SystemctlMaskPlugin(_SystemctlServicePlugin):
+    """Mask a service only when it is not already masked."""
+
+    name = "systemctl.mask"
+    description = "Mask a remote systemd service."
+    action = "mask"
+
+    def _build_command(self, params: Dict[str, Any]) -> str:
+        systemctl = _systemctl_prefix(params)
+        service = quote(params["service"])
+        return (
+            f"{systemctl} is-enabled {service} 2>/dev/null | grep -qx masked "
+            f"|| {{ {systemctl} mask {service} && echo {CHANGE_MARKER}; }}"
+        )
+
+
+class SystemctlUnmaskPlugin(_SystemctlServicePlugin):
+    """Unmask a service only when it is currently masked."""
+
+    name = "systemctl.unmask"
+    description = "Unmask a remote systemd service."
+    action = "unmask"
+
+    def _build_command(self, params: Dict[str, Any]) -> str:
+        systemctl = _systemctl_prefix(params)
+        service = quote(params["service"])
+        return (
+            f"{systemctl} is-enabled {service} 2>/dev/null | grep -qx masked "
+            f"&& {{ {systemctl} unmask {service} && echo {CHANGE_MARKER}; }} || true"
+        )

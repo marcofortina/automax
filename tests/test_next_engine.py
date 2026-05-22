@@ -427,9 +427,17 @@ def test_builtin_macro_plugins_are_registered_with_canonical_names_only():
         "pkg.upgrade",
         "remote.command",
         "systemctl.daemon_reload",
-        "systemctl.start",
-        "systemctl.stop",
+        "systemctl.disable",
+        "systemctl.enable",
+        "systemctl.is_active",
+        "systemctl.is_enabled",
+        "systemctl.mask",
+        "systemctl.reload",
         "systemctl.restart",
+        "systemctl.start",
+        "systemctl.status",
+        "systemctl.stop",
+        "systemctl.unmask",
     }
     assert output_names == expected_names
     assert "local_command" not in output_names
@@ -468,3 +476,21 @@ def test_package_manager_plugins_are_registered():
     assert "pkg.upgrade" in names
     assert "pkg.query" in names
     assert "apt.install" not in names
+
+
+def test_extended_systemctl_plugins_are_registered():
+    names = AutomaxEngine().plugin_registry.names()
+
+    for name in (
+        "systemctl.reload",
+        "systemctl.enable",
+        "systemctl.disable",
+        "systemctl.status",
+        "systemctl.is_active",
+        "systemctl.is_enabled",
+        "systemctl.mask",
+        "systemctl.unmask",
+    ):
+        assert name in names
+
+    assert "service.enable" not in names

@@ -34,9 +34,17 @@ pkg.update_cache
 pkg.upgrade
 remote.command
 systemctl.daemon_reload
+systemctl.disable
+systemctl.enable
+systemctl.is_active
+systemctl.is_enabled
+systemctl.mask
+systemctl.reload
 systemctl.restart
 systemctl.start
+systemctl.status
 systemctl.stop
+systemctl.unmask
 ```
 
 Use the CLI to inspect the installed plugin registry:

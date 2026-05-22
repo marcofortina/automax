@@ -116,9 +116,17 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     from automax.plugins.remote_command import RemoteCommandPlugin
     from automax.plugins.systemctl import (
         SystemctlDaemonReloadPlugin,
+        SystemctlDisablePlugin,
+        SystemctlEnablePlugin,
+        SystemctlIsActivePlugin,
+        SystemctlIsEnabledPlugin,
+        SystemctlMaskPlugin,
+        SystemctlReloadPlugin,
         SystemctlRestartPlugin,
         SystemctlStartPlugin,
+        SystemctlStatusPlugin,
         SystemctlStopPlugin,
+        SystemctlUnmaskPlugin,
     )
 
     registry = PluginRegistry()
@@ -153,6 +161,14 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SystemctlStartPlugin(),
         SystemctlStopPlugin(),
         SystemctlRestartPlugin(),
+        SystemctlReloadPlugin(),
+        SystemctlEnablePlugin(),
+        SystemctlDisablePlugin(),
+        SystemctlStatusPlugin(),
+        SystemctlIsActivePlugin(),
+        SystemctlIsEnabledPlugin(),
+        SystemctlMaskPlugin(),
+        SystemctlUnmaskPlugin(),
         SystemctlDaemonReloadPlugin(),
     ):
         registry.register(plugin)
