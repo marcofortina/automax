@@ -145,7 +145,7 @@ class AutomaxEngine:
             return rc
         except Exception as exc:
             store.update_run_status(NodeStatus.FAILED)
-            store.record_event("job_failed", payload={"error": str(exc)})
+            store.record_event("job_failed", payload={"error": self._mask_text(str(exc), secrets)})
             raise
 
     def resume(
@@ -655,7 +655,7 @@ class AutomaxEngine:
                     target=target.name,
                     status=NodeStatus.FAILED,
                     rc=1,
-                    message=str(exc),
+                    message=self._mask_text(str(exc), secrets),
                 )
             return group, 1, True
 
@@ -860,14 +860,30 @@ class AutomaxEngine:
             return self._mask_text(value, secrets)
         return value
 
-    @staticmethod
-    def _mask_text(value: str, secrets: Dict[str, Any]) -> str:
+    @classmethod
+    def _mask_text(cls, value: str, secrets: Dict[str, Any]) -> str:
+        """Mask every printable secret value before logs/state/artifacts persist it."""
         masked = str(value)
-        for secret in secrets.values():
-            secret_text = str(secret)
-            if len(secret_text) >= 4:
-                masked = masked.replace(secret_text, "***")
+        for secret_text in cls._iter_secret_texts(secrets):
+            masked = masked.replace(secret_text, "***")
         return masked
+
+    @classmethod
+    def _iter_secret_texts(cls, value: Any) -> Iterable[str]:
+        """Yield nested secret strings, ignoring tiny values that would over-mask logs."""
+        if isinstance(value, dict):
+            for item in value.values():
+                yield from cls._iter_secret_texts(item)
+            return
+        if isinstance(value, (list, tuple, set)):
+            for item in value:
+                yield from cls._iter_secret_texts(item)
+            return
+        if value is None:
+            return
+        secret_text = str(value)
+        if len(secret_text) >= 4:
+            yield secret_text
 
     def _target_with_step_timeouts(
         self, target: Target, job: Dict[str, Any], task: Dict[str, Any], step: Dict[str, Any]

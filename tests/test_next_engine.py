@@ -1095,3 +1095,61 @@ tasks:
 
     with pytest.raises(ValueError, match="unsupported key"):
         AutomaxEngine().validate(job_path=str(job), inventory_path=str(inventory))
+
+
+def test_nested_secret_values_are_masked_recursively():
+    engine = AutomaxEngine()
+
+    assert engine._mask_text(
+        "token alpha-secret and password beta-secret",
+        {"nested": {"token": "alpha-secret"}, "items": ["beta-secret"]},
+    ) == "token *** and password ***"
+
+
+def test_remote_connection_errors_are_masked_in_state(tmp_path: Path):
+    from contextlib import contextmanager
+
+    class FailingSshManager:
+        @contextmanager
+        def connect(self, target):
+            raise RuntimeError("cannot connect with alpha-secret")
+            yield  # pragma: no cover
+
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: masked-connect-error
+tasks:
+  - id: remote
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: cmd
+            use: remote.command
+            with:
+              command: "true"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  host:\n    host: 127.0.0.1\n")
+    secrets = write(tmp_path / "secrets.yaml", "secrets:\n  token:\n    provider: env\n    name: AUTOMAX_MASK_TEST\n")
+    os.environ["AUTOMAX_MASK_TEST"] = "alpha-secret"
+    state_dir = tmp_path / "runs"
+
+    rc = AutomaxEngine(ssh_manager=FailingSshManager()).run(
+        job_path=str(job),
+        inventory_path=str(inventory),
+        secrets_path=str(secrets),
+        state_dir=str(state_dir),
+    )
+
+    assert rc == 1
+    run_id = next(state_dir.iterdir()).name
+    store = StateStore(state_dir, run_id)
+    with store.connect() as conn:
+        row = conn.execute("SELECT message FROM nodes WHERE run_id = ?", (run_id,)).fetchone()
+    assert row is not None
+    assert row["message"] == "cannot connect with ***"
