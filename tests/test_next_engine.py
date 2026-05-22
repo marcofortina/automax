@@ -448,6 +448,9 @@ def test_builtin_macro_plugins_are_registered_with_canonical_names_only():
         "user.remove",
         "group.create",
         "group.remove",
+        "http.assert",
+        "http.request",
+        "http.wait",
     }
     assert output_names == expected_names
     assert "local_command" not in output_names
@@ -539,3 +542,12 @@ def test_transfer_plugins_are_registered():
     assert "transfer.download" in names
     assert "transfer.sync" in names
     assert "upload" not in names
+
+
+def test_http_plugins_are_registered():
+    names = AutomaxEngine().plugin_registry.names()
+
+    assert "http.request" in names
+    assert "http.assert" in names
+    assert "http.wait" in names
+    assert "run_http_request" not in names
