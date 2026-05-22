@@ -1,0 +1,57 @@
+# Copyright (C) 2026 Marco Fortina
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            requirements.txt
+            requirements-docs.txt
+
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+          python -m pip install -r requirements-docs.txt
+
+      - name: Compile Python sources
+        run: python -m compileall -q src tests scripts
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Check shell scripts
+        run: bash -n scripts/ssh-smoke.sh
+
+      - name: Smoke CLI plugin registry
+        run: automax plugins list
+
+      - name: Build documentation strictly
+        run: mkdocs build --strict
