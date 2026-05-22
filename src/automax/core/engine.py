@@ -654,8 +654,8 @@ class AutomaxEngine:
                 status=NodeStatus.SUCCESS if result.ok else NodeStatus.FAILED,
                 changed=result.changed,
                 rc=result.rc,
-                message=result.message,
-                output=self._result_to_mapping(result),
+                message=self._mask_text(result.message, secrets),
+                output=self._result_to_mapping(result, secrets=secrets),
             )
             store.record_event(
                 "substep_finished",
@@ -666,7 +666,7 @@ class AutomaxEngine:
             status = "OK" if result.ok else "FAILED"
             with self._print_lock:
                 print(
-                    f"[{status}] {target.name} {node_id} rc={result.rc} {result.message}".rstrip()
+                    f"[{status}] {target.name} {node_id} rc={result.rc} {self._mask_text(result.message, secrets)}".rstrip()
                 )
             if not result.ok:
                 return 1
@@ -776,18 +776,39 @@ class AutomaxEngine:
                 return None
         return current
 
-    @staticmethod
-    def _result_to_mapping(result: PluginResult) -> Dict[str, Any]:
+    def _result_to_mapping(
+        self, result: PluginResult, *, secrets: Dict[str, Any] | None = None
+    ) -> Dict[str, Any]:
         return {
             "ok": result.ok,
             "changed": result.changed,
             "skipped": result.skipped,
             "rc": result.rc,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-            "message": result.message,
-            "data": result.data,
+            "stdout": self._mask_text(result.stdout, secrets or {}),
+            "stderr": self._mask_text(result.stderr, secrets or {}),
+            "message": self._mask_text(result.message, secrets or {}),
+            "data": self._mask_mapping(result.data, secrets or {}),
         }
+
+    def _mask_mapping(self, value: Any, secrets: Dict[str, Any]) -> Any:
+        if isinstance(value, dict):
+            return {key: self._mask_mapping(item, secrets) for key, item in value.items()}
+        if isinstance(value, list):
+            return [self._mask_mapping(item, secrets) for item in value]
+        if isinstance(value, tuple):
+            return tuple(self._mask_mapping(item, secrets) for item in value)
+        if isinstance(value, str):
+            return self._mask_text(value, secrets)
+        return value
+
+    @staticmethod
+    def _mask_text(value: str, secrets: Dict[str, Any]) -> str:
+        masked = str(value)
+        for secret in secrets.values():
+            secret_text = str(secret)
+            if len(secret_text) >= 4:
+                masked = masked.replace(secret_text, "***")
+        return masked
 
     def _substep_needs_ssh(self, substep: Dict[str, Any]) -> bool:
         plugin_name = substep.get("use") or substep.get("plugin")

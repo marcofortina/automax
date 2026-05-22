@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import re
 
+import pytest
 from click.testing import CliRunner
 
 from automax.cli.cli import cli
@@ -364,3 +365,33 @@ tasks:
     assert result.exit_code == 1, result.output
     assert not skipped_marker.exists()
     assert next_task_marker.read_text(encoding="utf-8") == "ok"
+
+
+def test_ssh_boolean_options_are_parsed_strictly():
+    from automax.core.ssh import SshError, SshSessionManager
+
+    assert SshSessionManager._coerce_bool("false", True) is False
+    assert SshSessionManager._coerce_bool("true", False) is True
+    assert SshSessionManager._coerce_bool(None, False) is False
+    with pytest.raises(SshError):
+        SshSessionManager._coerce_bool("maybe", False)
+
+
+def test_secret_values_are_masked_in_persisted_result_mapping():
+    from automax.core.engine import AutomaxEngine
+    from automax.core.models import PluginResult
+
+    engine = AutomaxEngine()
+    result = PluginResult.success(
+        stdout="token=s3cr3t-value",
+        stderr="bad s3cr3t-value",
+        message="message s3cr3t-value",
+        data={"nested": ["s3cr3t-value"]},
+    )
+
+    mapped = engine._result_to_mapping(result, secrets={"token": "s3cr3t-value"})
+
+    assert mapped["stdout"] == "token=***"
+    assert mapped["stderr"] == "bad ***"
+    assert mapped["message"] == "message ***"
+    assert mapped["data"] == {"nested": ["***"]}

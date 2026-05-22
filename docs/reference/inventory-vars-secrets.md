@@ -119,3 +119,31 @@ job
 
 `fs.template` adds one extra namespace: `values`, taken from
 `fs.template.with.values`.
+
+## SSH security options
+
+Automax defaults to conservative SSH behavior:
+
+```yaml
+servers:
+  app01:
+    host: app01.example.com
+    ssh:
+      user: deploy
+      key_file: ~/.ssh/id_ed25519
+      known_hosts: ~/.ssh/known_hosts
+      missing_host_key_policy: reject
+      allow_agent: false
+      look_for_keys: false
+      strict_key_permissions: true
+```
+
+`missing_host_key_policy: auto_add` is intentionally blocked unless the inventory
+also sets `allow_insecure_host_key_policy: true`. Use that only for disposable lab
+hosts, never for production.
+
+Private key files are checked by default and must not be accessible by group or
+other users. Use `chmod 600` on private keys instead of disabling the check.
+
+Secrets resolved from `env` or `file` are masked before stdout, stderr, messages
+and plugin result data are persisted to the SQLite run state.
