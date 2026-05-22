@@ -187,6 +187,8 @@ def validate(
 @click.option("--tags", multiple=True, help="Resume only substeps matching one of these tags.")
 @click.option("--skip-tags", multiple=True, help="Skip substeps matching one of these tags.")
 @click.option("--var", "cli_vars", multiple=True, help="Override variable, format KEY=VALUE.")
+@click.option("--skip-successful", is_flag=True, help="Do not rerun nodes already marked successful in this run.")
+@click.option("--only-failed", is_flag=True, help="Rerun only nodes currently marked failed in this run.")
 @click.option("--dry-run", is_flag=True, help="Validate and simulate actions without changing targets.")
 def resume(
     run_id: str,
@@ -197,6 +199,8 @@ def resume(
     tags: tuple[str, ...],
     skip_tags: tuple[str, ...],
     cli_vars: tuple[str, ...],
+    skip_successful: bool,
+    only_failed: bool,
     dry_run: bool,
 ) -> None:
     """Resume an existing run from failed or explicit checkpoint."""
@@ -211,6 +215,8 @@ def resume(
             tags=_split_selectors(tags),
             skip_tags=_split_selectors(skip_tags),
             cli_vars=_parse_vars(cli_vars),
+            skip_successful=skip_successful,
+            only_failed=only_failed,
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc

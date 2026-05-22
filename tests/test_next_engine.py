@@ -830,3 +830,127 @@ tasks:
     inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
 
     AutomaxEngine().validate(job_path=str(job), inventory_path=str(inventory))
+
+
+def _extract_run_id(output: str) -> str:
+    for line in output.splitlines():
+        if line.startswith("Run ID:"):
+            return line.split(":", 1)[1].strip()
+    raise AssertionError(f"Run ID not found in output: {output}")
+
+
+def test_resume_skip_successful_does_not_rerun_completed_nodes(tmp_path: Path):
+    good_marker = tmp_path / "good-count"
+    trigger = tmp_path / "trigger"
+    after_marker = tmp_path / "after-count"
+    job = write(
+        tmp_path / "job.yaml",
+        f"""
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: resume-skip-successful
+failurePolicy:
+  onFailure: stop_job
+tasks:
+  - id: deploy
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: good
+            use: local.command
+            with:
+              command: "printf x >> {good_marker}"
+          - id: flaky
+            use: local.command
+            with:
+              command: "test -f {trigger}"
+          - id: after
+            use: local.command
+            with:
+              command: "printf x >> {after_marker}"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+    state_dir = tmp_path / "runs"
+
+    first = CliRunner().invoke(
+        cli,
+        ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(state_dir)],
+    )
+    assert first.exit_code == 1, first.output
+    run_id = _extract_run_id(first.output)
+    assert good_marker.read_text(encoding="utf-8") == "x"
+    assert not after_marker.exists()
+
+    trigger.write_text("ready", encoding="utf-8")
+    second = CliRunner().invoke(
+        cli,
+        ["resume", run_id, "--state-dir", str(state_dir), "--skip-successful"],
+    )
+
+    assert second.exit_code == 0, second.output
+    assert good_marker.read_text(encoding="utf-8") == "x"
+    assert after_marker.read_text(encoding="utf-8") == "x"
+
+
+def test_resume_only_failed_reruns_failed_nodes_only(tmp_path: Path):
+    good_marker = tmp_path / "good-count"
+    bad_marker = tmp_path / "bad-count"
+    after_marker = tmp_path / "after-count"
+    trigger = tmp_path / "trigger"
+    job = write(
+        tmp_path / "job.yaml",
+        f"""
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: resume-only-failed
+failurePolicy:
+  onFailure: continue
+tasks:
+  - id: deploy
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: good
+            use: local.command
+            with:
+              command: "printf x >> {good_marker}"
+          - id: flaky
+            use: local.command
+            with:
+              command: "printf x >> {bad_marker}; test -f {trigger}"
+      - id: after
+        substeps:
+          - id: after
+            use: local.command
+            with:
+              command: "printf x >> {after_marker}"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+    state_dir = tmp_path / "runs"
+
+    first = CliRunner().invoke(
+        cli,
+        ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(state_dir)],
+    )
+    assert first.exit_code == 1, first.output
+    run_id = _extract_run_id(first.output)
+    assert good_marker.read_text(encoding="utf-8") == "x"
+    assert bad_marker.read_text(encoding="utf-8") == "x"
+    assert after_marker.read_text(encoding="utf-8") == "x"
+
+    trigger.write_text("ready", encoding="utf-8")
+    second = CliRunner().invoke(
+        cli,
+        ["resume", run_id, "--state-dir", str(state_dir), "--only-failed"],
+    )
+
+    assert second.exit_code == 0, second.output
+    assert good_marker.read_text(encoding="utf-8") == "x"
+    assert bad_marker.read_text(encoding="utf-8") == "xx"
+    assert after_marker.read_text(encoding="utf-8") == "x"

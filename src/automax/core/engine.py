@@ -68,6 +68,8 @@ class AutomaxEngine:
         skip_tags: Iterable[str] = (),
         cli_vars: Optional[Dict[str, Any]] = None,
         extra_plugin_paths: Iterable[str] = (),
+        skip_successful: bool = False,
+        only_failed: bool = False,
     ) -> int:
         """Execute a new run from external YAML files."""
         registry = self.plugin_registry
@@ -102,6 +104,8 @@ class AutomaxEngine:
                 "limit": list(limit),
                 "tags": list(tags),
                 "skip_tags": list(skip_tags),
+                "skip_successful": skip_successful,
+                "only_failed": only_failed,
             },
         )
         store.record_event("job_started", payload={"job": self._job_name(job)})
@@ -129,6 +133,8 @@ class AutomaxEngine:
                 variables=variables,
                 secrets=secrets,
                 from_node=from_node,
+                skip_successful=skip_successful,
+                only_failed=only_failed,
             )
             store.update_run_status(NodeStatus.SUCCESS if rc == 0 else NodeStatus.FAILED)
             store.record_event("job_finished", payload={"rc": rc})
@@ -153,15 +159,22 @@ class AutomaxEngine:
         tags: Iterable[str] = (),
         skip_tags: Iterable[str] = (),
         cli_vars: Optional[Dict[str, Any]] = None,
+        skip_successful: bool = False,
+        only_failed: bool = False,
     ) -> int:
         """Resume a previous run using paths stored in the run state."""
         store = StateStore(state_dir, run_id)
         run = store.get_run()
         if not run:
             raise AutomaxError(f"run not found: {run_id}")
-        from_node = from_node or store.first_failed_node_id()
-        if not from_node:
-            raise AutomaxError(f"run has no failed checkpoint: {run_id}")
+        if only_failed:
+            failed = store.node_keys_by_status({NodeStatus.FAILED.value})
+            if not failed:
+                raise AutomaxError(f"run has no failed nodes: {run_id}")
+        else:
+            from_node = from_node or store.first_failed_node_id()
+            if not from_node:
+                raise AutomaxError(f"run has no failed checkpoint: {run_id}")
         return self.run(
             job_path=run["job_path"],
             inventory_path=run["inventory_path"],
@@ -176,6 +189,8 @@ class AutomaxEngine:
             tags=tags,
             skip_tags=skip_tags,
             cli_vars=cli_vars,
+            skip_successful=skip_successful,
+            only_failed=only_failed,
         )
 
     def validate(
@@ -364,17 +379,28 @@ class AutomaxEngine:
         variables: Dict[str, Any],
         secrets: Dict[str, Any],
         from_node: str | None,
+        skip_successful: bool = False,
+        only_failed: bool = False,
     ) -> int:
         outputs: Dict[str, Any] = {}
         started = from_node is None
         failed_hosts: set[str] = set()
         stopped_tasks: set[str] = set()
         rc = 0
+        previous_statuses = store.node_status_map() if (skip_successful or only_failed) else {}
 
         stages = self._group_by_stage(plan)
         for stage in stages:
             stage_groups: List[List[Dict[str, Any]]] = []
-            for group in stage:
+            for original_group in stage:
+                group = self._filter_group_by_resume_status(
+                    original_group,
+                    previous_statuses=previous_statuses,
+                    skip_successful=skip_successful,
+                    only_failed=only_failed,
+                )
+                if not group:
+                    continue
                 task = group[0]["task"]
                 target = group[0]["target"]
                 if task["id"] in stopped_tasks:
@@ -439,6 +465,30 @@ class AutomaxEngine:
                     continue
                 return 1
         return rc
+
+    @staticmethod
+    def _filter_group_by_resume_status(
+        group: List[Dict[str, Any]],
+        *,
+        previous_statuses: Dict[tuple[str, str], str],
+        skip_successful: bool,
+        only_failed: bool,
+    ) -> List[Dict[str, Any]]:
+        """Filter a step group for resume modes without rewriting existing rows."""
+        if not previous_statuses or not (skip_successful or only_failed):
+            return group
+        filtered: List[Dict[str, Any]] = []
+        for item in group:
+            key = (item["node_id"], item["target"].name)
+            status = previous_statuses.get(key)
+            if only_failed:
+                if status == NodeStatus.FAILED.value:
+                    filtered.append(item)
+                continue
+            if skip_successful and status == NodeStatus.SUCCESS.value:
+                continue
+            filtered.append(item)
+        return filtered
 
     def _execute_stage(
         self,

@@ -271,6 +271,32 @@ class StateStore:
             ).fetchone()
         return str(row["node_id"]) if row else None
 
+
+    def node_status_map(self) -> dict[tuple[str, str], str]:
+        """Return current node statuses keyed by (node_id, target)."""
+        with self.connect() as conn:
+            rows = conn.execute(
+                "SELECT node_id, target, status FROM nodes WHERE run_id = ?",
+                (self.run_id,),
+            ).fetchall()
+        return {(str(row["node_id"]), str(row["target"])): str(row["status"]) for row in rows}
+
+    def node_keys_by_status(self, statuses: set[str]) -> set[tuple[str, str]]:
+        """Return node keys whose status is in the supplied set."""
+        if not statuses:
+            return set()
+        placeholders = ",".join("?" for _ in statuses)
+        with self.connect() as conn:
+            rows = conn.execute(
+                f"""
+                SELECT node_id, target
+                  FROM nodes
+                 WHERE run_id = ? AND status IN ({placeholders})
+                """,
+                (self.run_id, *sorted(statuses)),
+            ).fetchall()
+        return {(str(row["node_id"]), str(row["target"])) for row in rows}
+
     def list_runs(self) -> list[Dict[str, Any]]:
         with self.connect() as conn:
             rows = conn.execute(
