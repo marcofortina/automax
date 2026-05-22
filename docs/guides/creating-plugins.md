@@ -56,3 +56,15 @@ Avoid legacy, shortened or ambiguous names. Do not expose aliases as public DSL 
 - never hide unsafe behavior behind defaults;
 - return machine-readable outputs for `register:` mappings;
 - keep aliases internal unless there is a strong migration reason.
+
+## Inspecting plugin metadata
+
+Use `automax plugins describe` to inspect a builtin or externally loaded plugin:
+
+```bash
+automax plugins describe fs.template
+```
+
+The command prints the canonical name, description, required parameters, optional
+parameters and whether the plugin opens a remote SSH session. External plugins loaded
+with `--plugin-path` are described through the same registry contract.

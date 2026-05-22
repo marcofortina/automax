@@ -245,6 +245,43 @@ def list_plugins(plugin_path: tuple[str, ...], include_aliases: bool) -> None:
         click.echo(name)
 
 
+
+@plugins.command("describe")
+@click.argument("name")
+@click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+def describe_plugin(name: str, plugin_path: tuple[str, ...]) -> None:
+    """Describe one registered plugin and its parameters."""
+    try:
+        description = build_builtin_registry(plugin_path).describe(name)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    click.echo(f"Name: {description['name']}")
+    click.echo(f"Description: {description['description'] or '-'}")
+    click.echo(f"Remote session: {str(description['opens_remote_session']).lower()}")
+    click.echo(f"Dry-run support: {str(description['supports_dry_run']).lower()}")
+    click.echo(f"Check mode support: {str(description['supports_check_mode']).lower()}")
+
+    required = description['required_params'] or []
+    optional = description['optional_params'] or []
+    aliases = description['aliases'] or []
+    click.echo("Required params:")
+    for item in required:
+        click.echo(f"  - {item}")
+    if not required:
+        click.echo("  - none")
+
+    click.echo("Optional params:")
+    for item in optional:
+        click.echo(f"  - {item}")
+    if not optional:
+        click.echo("  - none")
+
+    if aliases:
+        click.echo("Aliases:")
+        for item in aliases:
+            click.echo(f"  - {item}")
+
 def cli_main() -> None:
     """Console-script entry point."""
     cli()

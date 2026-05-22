@@ -395,3 +395,14 @@ def test_secret_values_are_masked_in_persisted_result_mapping():
     assert mapped["stderr"] == "bad ***"
     assert mapped["message"] == "message ***"
     assert mapped["data"] == {"nested": ["***"]}
+
+
+def test_plugins_describe_outputs_parameter_metadata():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["plugins", "describe", "fs.template"])
+
+    assert result.exit_code == 0, result.output
+    assert "Name: fs.template" in result.output
+    assert "src" in result.output
+    assert "dest" in result.output
+    assert "Remote session: true" in result.output
