@@ -1,0 +1,34 @@
+# Builtin plugins
+
+Only canonical plugin names are part of the public DSL. Compatibility aliases are
+not exposed as public plugin names.
+
+Current builtin plugins:
+
+```text
+archive.tar
+archive.untar
+archive.unzip
+archive.zip
+fs.cd
+fs.chmod
+fs.chown
+fs.copy
+fs.mkdir
+fs.remove
+local.command
+remote.command
+systemctl.daemon_reload
+systemctl.restart
+systemctl.start
+systemctl.stop
+```
+
+Use the CLI to inspect the installed plugin registry:
+
+```bash
+automax plugins list
+```
+
+External plugin modules can be added later through the registry mechanism without
+changing the core execution engine.

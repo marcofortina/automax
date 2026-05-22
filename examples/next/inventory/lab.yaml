@@ -1,0 +1,12 @@
+servers:
+  controller:
+    host: 127.0.0.1
+
+  lab01:
+    host: 192.0.2.10
+    groups: [ssh]
+    ssh:
+      user: "{{ secrets.ssh_user }}"
+      key_file: "{{ secrets.ssh_key_file }}"
+      known_hosts: "{{ vars.known_hosts }}"
+      missing_host_key_policy: reject

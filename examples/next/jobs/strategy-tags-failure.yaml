@@ -1,0 +1,42 @@
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: strategy-tags-failure-example
+strategy:
+  mode: rolling
+  batch_size: 2
+  pause_between_batches: 0
+failurePolicy:
+  onFailure: stop_host
+  onUnreachable: stop_host
+  maxFailedHosts: 1
+tasks:
+  - id: prepare
+    targets: all
+    tags: [prepare]
+    steps:
+      - id: workspace
+        tags: [filesystem]
+        substeps:
+          - id: mkdir
+            tags: [safe]
+            use: fs.mkdir
+            with:
+              path: /tmp/automax-example
+              mode: "0755"
+          - id: cd
+            tags: [safe]
+            use: fs.cd
+            with:
+              path: /tmp/automax-example
+          - id: chmod
+            tags: [safe]
+            use: fs.chmod
+            with:
+              path: /tmp/automax-example
+              mode: "0755"
+          - id: write_marker
+            tags: [command]
+            use: remote.command
+            with:
+              command: "printf '{{ server.name }}' > marker.txt"

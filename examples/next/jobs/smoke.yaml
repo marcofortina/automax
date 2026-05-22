@@ -1,0 +1,40 @@
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: smoke
+vars:
+  greeting: hello
+tasks:
+  - id: local_smoke
+    description: Local controller smoke task.
+    targets: all
+    steps:
+      - id: local_context
+        description: Run local substeps without SSH.
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: "printf '{{ vars.greeting }} {{ server.name }}'"
+            register:
+              local_output: stdout.trim
+
+  - id: remote_smoke
+    description: Remote SSH task.
+    targets: group:ssh
+    steps:
+      - id: remote_context
+        description: One SSH connection is opened for this step and reused by substeps.
+        substeps:
+          - id: whoami
+            use: remote.command
+            with:
+              command: "whoami"
+            register:
+              remote_user: stdout.trim
+
+          - id: mkdir
+            use: fs.mkdir
+            with:
+              path: "/tmp/automax-{{ outputs.remote_user }}"
+              mode: "0755"

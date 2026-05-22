@@ -1,0 +1,61 @@
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: macro-plugins-example
+tasks:
+  - id: filesystem
+    targets: group:ssh
+    tags: [filesystem]
+    steps:
+      - id: workspace
+        substeps:
+          - id: mkdir
+            use: fs.mkdir
+            with:
+              path: /tmp/automax-macros
+              mode: "0755"
+
+          - id: copy
+            use: fs.copy
+            with:
+              src: /etc/hosts
+              dest: /tmp/automax-macros/hosts.copy
+              overwrite: true
+
+          - id: chmod
+            use: fs.chmod
+            with:
+              path: /tmp/automax-macros/hosts.copy
+              mode: "0644"
+
+          - id: tar
+            use: archive.tar
+            with:
+              source: /tmp/automax-macros
+              dest: /tmp/automax-macros.tar.gz
+              compression: gzip
+
+          - id: untar
+            use: archive.untar
+            with:
+              archive: /tmp/automax-macros.tar.gz
+              dest: /tmp/automax-macros-extracted
+              creates: /tmp/automax-macros-extracted/automax-macros/hosts.copy
+
+          - id: remove
+            use: fs.remove
+            with:
+              path: /tmp/automax-macros-extracted
+              recursive: true
+              force: true
+
+  - id: services
+    targets: group:ssh
+    tags: [systemd]
+    steps:
+      - id: systemd
+        substeps:
+          - id: daemon_reload
+            use: systemctl.daemon_reload
+            with:
+              sudo: true

@@ -1,0 +1,20 @@
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: local-smoke
+vars:
+  greeting: hello
+tasks:
+  - id: local_smoke
+    description: Local controller smoke task.
+    targets: all
+    steps:
+      - id: local_context
+        description: Run local substeps without SSH.
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: "printf '{{ vars.greeting }} {{ server.name }}'"
+            register:
+              local_output: stdout.trim
