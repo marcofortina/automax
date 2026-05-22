@@ -302,16 +302,18 @@ class AutomaxEngine:
         skipped_tags = {str(tag) for tag in skip_tags}
         plan = []
         for task in job["tasks"]:
+            task_selector = task.get("targets", job.get("targets", "all"))
             task_targets = inventory.select(
-                task.get("targets", job.get("targets", "all")),
+                task_selector,
                 limit=list(limit),
                 exclude=list(exclude),
             )
             if not task_targets:
                 raise AutomaxError(f"task '{task['id']}' resolved no targets")
             for step in task["steps"]:
+                step_selector = step.get("targets", task_selector)
                 step_targets = inventory.select(
-                    step.get("targets", task.get("targets", job.get("targets", "all"))),
+                    step_selector,
                     limit=list(limit),
                     exclude=list(exclude),
                 )
@@ -319,11 +321,21 @@ class AutomaxEngine:
                     raise AutomaxError(
                         f"step '{task['id']}:{step['id']}' resolved no targets"
                     )
-                for target in step_targets:
-                    for substep in step["substeps"]:
-                        effective_tags = self._effective_tags(job, task, step, substep)
-                        if not self._tag_selected(effective_tags, selected_tags, skipped_tags):
-                            continue
+                for substep in step["substeps"]:
+                    effective_tags = self._effective_tags(job, task, step, substep)
+                    if not self._tag_selected(effective_tags, selected_tags, skipped_tags):
+                        continue
+                    substep_selector = substep.get("targets", step_selector)
+                    substep_targets = inventory.select(
+                        substep_selector,
+                        limit=list(limit),
+                        exclude=list(exclude),
+                    )
+                    if not substep_targets:
+                        raise AutomaxError(
+                            f"substep '{task['id']}:{step['id']}:{substep['id']}' resolved no targets"
+                        )
+                    for target in substep_targets:
                         plan.append(
                             {
                                 "node_id": self._node_id(task, step, substep),

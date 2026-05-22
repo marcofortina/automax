@@ -38,6 +38,7 @@ class DbSqliteQueryPlugin(DatabaseQueryPlugin):
         rowcount = 0
         rows: list[dict[str, Any]] = []
         try:
+            conn.execute("BEGIN")
             cursor = conn.cursor()
             for index, statement in enumerate(statements):
                 params_for_statement = query_params if index == len(statements) - 1 else ()
