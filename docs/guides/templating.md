@@ -1,17 +1,28 @@
 # Templating
 
-Automax uses Jinja2 to render job, inventory, variable and secret references.
+Automax uses Jinja2 with `StrictUndefined` to render job structures and plugin
+parameters. Undefined variables fail fast instead of silently becoming empty
+strings.
 
-Typical values available to templates are:
+## Context available during substep execution
 
 ```text
-vars      external and job-level variables
-secrets   resolved secret values
-server    current target server
-outputs   values registered by previous substeps
+job          current job document
+task         current task mapping
+step         current step mapping
+substep      current substep mapping
+server       current target server
+target       same object as server
+vars         merged variables for this target
+secrets      resolved env/file secret values
+outputs      values registered by previous substeps
+step_state   values shared by plugins in the same step
 ```
 
-Example:
+`fs.template` also exposes `values`, the explicit mapping passed through
+`fs.template.with.values`.
+
+## Variables
 
 ```yaml
 - id: make_release_dir
@@ -21,6 +32,8 @@ Example:
     owner: "{{ server.vars.owner }}"
     mode: "0755"
 ```
+
+## Registered outputs
 
 Registered outputs can be reused later in the same run:
 
@@ -39,5 +52,14 @@ Registered outputs can be reused later in the same run:
     owner: "{{ outputs.remote_user }}"
 ```
 
-Undefined variables should fail fast during validation or execution. Do not rely
-on implicit empty strings for infrastructure automation.
+`register` can also store the full plugin result by using a string:
+
+```yaml
+- id: stat_app
+  use: fs.stat
+  with:
+    path: /opt/app
+  register: app_stat
+```
+
+The full result then becomes available as `outputs.app_stat`.

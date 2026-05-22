@@ -20,7 +20,7 @@ Creates a tar archive from a remote source path.
     creates: /tmp/myapp-logs.tar.gz
 ```
 
-`compression` can be `none`, `gzip`, `bzip2` or `xz`.
+`compression` can be `auto`, `none`, `gzip`, `bzip2` or `xz`. `auto` is the default and derives the tar mode from the archive suffix when possible.
 
 ## `archive.untar`
 
@@ -31,10 +31,9 @@ Extracts a tar archive on the remote target.
   use: archive.untar
   with:
     archive: /tmp/myapp.tar.gz
-    dest: /opt/myapp/releases/{{ run_id | default('manual') }}
+    dest: /opt/myapp/releases/{{ vars.release_id }}
     strip_components: 1
-    creates: /opt/myapp/releases/current/bin/myapp
-    sudo: true
+    creates: /opt/myapp/releases/{{ vars.release_id }}/bin/myapp
 ```
 
 ## `archive.zip`
@@ -64,3 +63,6 @@ Extracts a zip archive on the remote target.
     overwrite: false
     creates: /opt/package/bin/app
 ```
+
+
+Archive plugins do not add `sudo` themselves. Run them as a user with the required remote permissions, or wrap exceptional privileged archive operations with an explicit `remote.command` until privileged archive support is added.

@@ -33,6 +33,11 @@ nav:
     - Creating Plugins: guides/creating-plugins.md
     - Templating: guides/templating.md
     - Template Workflows: guides/template-workflows.md
+  - Reference:
+    - Job DSL: reference/job-dsl.md
+    - Inventory, Vars and Secrets: reference/inventory-vars-secrets.md
+    - State and Resume: reference/state-and-resume.md
+    - Python API: reference/api.md
   - Plugins:
     - Builtin Plugins: plugins/index.md
     - Commands: plugins/commands.md
@@ -45,7 +50,6 @@ nav:
     - HTTP/API: plugins/http-api.md
     - Wait and Assert: plugins/wait-assert.md
     - Database: plugins/database.md
-  - API Reference: reference/api.md
 
 markdown_extensions:
   - admonition

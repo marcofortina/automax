@@ -1,12 +1,9 @@
 # Automax
 
-Automax is a Python, YAML-driven SSH job automation engine.
+Automax is a Python, YAML-driven SSH automation engine for external job files,
+external inventories and resumable infrastructure workflows.
 
-It runs external job definitions against external inventories using a strict
-`Job -> Task -> Step -> Substep` model. Source code and operational job files are
-kept separate by design.
-
-## Core model
+It uses a strict execution model:
 
 ```text
 Job
@@ -15,9 +12,27 @@ Job
       Substep[]
 ```
 
-Each step opens a fresh SSH connection per target host and reuses that connection
-for all substeps in the step. Runtime state is carried by Automax through context,
-registered outputs and the run state store, not by relying on a persistent shell.
+Each step opens one fresh SSH connection per target host and reuses that
+connection for all substeps in the step. Runtime context is carried by Automax
+through variables, registered outputs, step-local state and the SQLite run state
+store, not by relying on a persistent shell session.
+
+## Install
+
+Runtime dependencies are intentionally small:
+
+```bash
+pip install -e .
+```
+
+Database drivers are optional except SQLite, which is built into Python:
+
+```bash
+pip install -e '.[postgres]'
+pip install -e '.[mysql]'
+pip install -e '.[oracle]'
+pip install -e '.[database]'
+```
 
 ## Quick start
 
@@ -75,6 +90,30 @@ this repository. They are passed explicitly to the CLI:
 --state-dir  /path/to/run-state
 ```
 
-## Builtin plugins
+See the reference pages for the exact formats:
 
-See [Builtin plugins](plugins/index.md) for the current canonical plugin list.
+- [Job DSL](reference/job-dsl.md)
+- [Inventory, variables and secrets](reference/inventory-vars-secrets.md)
+- [State store and resume](reference/state-and-resume.md)
+
+## Plugin manuals
+
+Builtin plugin names are canonical only. The current builtins are documented by
+category under [Builtin plugins](plugins/index.md):
+
+- commands
+- filesystem
+- archive
+- package manager
+- systemctl
+- users, groups and processes
+- transfer
+- HTTP/API
+- wait/assert
+- database
+
+Use the CLI to inspect the registry installed in the current environment:
+
+```bash
+automax plugins list
+```

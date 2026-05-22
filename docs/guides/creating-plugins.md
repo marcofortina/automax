@@ -42,14 +42,7 @@ systemctl.enable
 transfer.upload
 ```
 
-Avoid legacy or ambiguous names:
-
-```text
-ssh_command
-local_command
-mkdir
-copy
-```
+Avoid legacy, shortened or ambiguous names. Do not expose aliases as public DSL names unless there is a strong migration reason.
 
 ## Design rules
 

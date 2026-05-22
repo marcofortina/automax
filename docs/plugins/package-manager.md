@@ -2,7 +2,7 @@
 
 Package plugins run on the remote target and support `apt`, `apt-get`, `dnf`,
 `yum`, `zypper` and `pacman`. Use `manager: auto` unless you need to force a
-specific backend.
+specific backend. Package plugins default to `sudo: true` because package managers normally require privilege escalation.
 
 ## `pkg.update_cache`
 

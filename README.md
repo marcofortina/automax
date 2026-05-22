@@ -1,8 +1,9 @@
 # Automax
 
-Automax is a Python, YAML-driven automation engine for running job/task/step/substep workflows against remote systems over SSH.
+Automax is a Python, YAML-driven SSH automation engine for running resumable
+job/task/step/substep workflows against remote systems.
 
-This branch is the clean next implementation. Operational definitions are external to the Python sources:
+Operational definitions are external to the Python sources:
 
 - job YAML
 - inventory YAML
@@ -19,7 +20,24 @@ Job
       Substep[]
 ```
 
-A step opens one fresh SSH connection per target and reuses it for all its substeps. Runtime context is not kept in a shell session: values are passed through the Automax context, outputs and state store.
+A step opens one fresh SSH connection per target and reuses it for all its
+substeps. Runtime context is not kept in a shell session: values are passed
+through the Automax context, registered outputs and state store.
+
+## Install
+
+```bash
+pip install -e .
+```
+
+Optional database drivers:
+
+```bash
+pip install -e '.[postgres]'
+pip install -e '.[mysql]'
+pip install -e '.[oracle]'
+pip install -e '.[database]'
+```
 
 ## Quick smoke
 
@@ -69,69 +87,44 @@ automax run --job job.yaml --inventory inventory.yaml --from task.install
 automax run --job job.yaml --inventory inventory.yaml --from task.install:step.packages
 ```
 
-## Job YAML
+## External files
 
-```yaml
-apiVersion: automax.io/v1
-kind: Job
-metadata:
-  name: deploy-app
-vars:
-  app_name: demo
-strategy:
-  mode: rolling
-  batch_size: 2
-failurePolicy:
-  onFailure: stop_job
-  onUnreachable: stop_host
-tasks:
-  - id: install
-    targets: group:web
-    tags: [install]
-    steps:
-      - id: packages
-        tags: [packages]
-        substeps:
-          - id: check_user
-            use: remote.command
-            with:
-              command: whoami
-            register:
-              remote_user: stdout.trim
-
-          - id: make_dir
-            use: fs.mkdir
-            with:
-              path: "/opt/{{ vars.app_name }}"
-              owner: "{{ outputs.remote_user }}"
-              mode: "0755"
-```
-
-## Inventory YAML
-
-```yaml
-servers:
-  web01:
-    host: 10.0.0.11
-    groups: [web, production]
-    vars:
-      role: frontend
-    ssh:
-      user: "{{ secrets.ssh_user }}"
-      key_file: "{{ secrets.ssh_key_file }}"
-      known_hosts: ~/.ssh/known_hosts
-      missing_host_key_policy: reject
-```
-
-Selectors accepted by `targets`, `--limit` and `--exclude`:
+Job, inventory, variable and secret files can live anywhere. They do not need to
+be inside this repository.
 
 ```text
-all
-server:web01
-web01
-group:web
-web
+--job        /path/to/job.yaml
+--inventory  /path/to/inventory.yaml
+--vars       /path/to/vars.yaml
+--secrets    /path/to/secrets.yaml
+--state-dir  /path/to/run-state
 ```
+
+## Builtin plugins
+
+The public DSL exposes canonical plugin names only. Run:
+
+```bash
+automax plugins list
+```
+
+Current categories:
+
+```text
+commands:      local.command, remote.command
+filesystem:    fs.*
+archive:       archive.*
+packages:      pkg.*
+systemd:       systemctl.*
+users/groups:  user.*, group.*
+processes:     process.*
+transfer:      transfer.*
+http/api:      http.*
+wait/assert:   wait.*, assert.*
+database:      db.sqlite.query, db.postgres.query, db.mysql.query, db.oracle.query
+```
+
+See `docs/plugins/` for detailed examples of every builtin macro.
 
 ## Variables and secrets
 
@@ -141,7 +134,8 @@ Variables are external and can be overridden by CLI:
 automax run --job job.yaml --inventory inventory.yaml --vars vars.yaml --var app_version=2.1.0
 ```
 
-Secrets currently support only `env` and `file`, but the provider interface is pluggable.
+Secrets currently support only `env` and `file`, but the provider interface is
+pluggable.
 
 ```yaml
 secrets:
@@ -186,30 +180,18 @@ failurePolicy:
   maxFailedHosts: 1
 ```
 
-## Builtin plugins
+## State store
 
-Current implementation includes:
+Each run gets a generated `run-id`. The state store is local SQLite by default:
 
 ```text
-local.command
-remote.command
-fs.cd
-fs.mkdir
-fs.copy
-fs.remove
-fs.chown
-fs.chmod
-archive.tar
-archive.untar
-archive.zip
-archive.unzip
-systemctl.start
-systemctl.stop
-systemctl.restart
-systemctl.daemon_reload
+.automax/runs/<run-id>/state.sqlite
 ```
 
-Builtin plugin names are intentionally canonical only. The YAML DSL should use the names listed above; legacy names and short aliases are not registered by default.
+It records run paths, checkpoints, target statuses, outputs and events. This is
+required for audit and restart from task/step/substep.
+
+## SSH smoke
 
 Run the real SSH smoke against an operator-provided host:
 
@@ -225,54 +207,4 @@ External plugins can be loaded with:
 
 ```bash
 automax run --job job.yaml --inventory inventory.yaml --plugin-path /opt/automax/plugins
-```
-
-## State store
-
-Each run gets a generated `run-id`. The state store is local SQLite by default:
-
-```text
-.automax/runs/<run-id>/state.sqlite
-```
-
-It records run paths, checkpoints, target statuses, outputs and events. This is required for audit and restart from task/step/substep.
-
-### Archive and systemd examples
-
-Archive plugins are remote SSH macros around standard `tar`, `zip` and `unzip`
-commands. Use `creates` when extraction or packaging should be idempotent.
-
-```yaml
-- id: pack_release
-  use: archive.tar
-  with:
-    source: /opt/myapp
-    dest: /tmp/myapp.tar.gz
-    compression: gzip
-    excludes:
-      - "*.tmp"
-
-- id: unpack_release
-  use: archive.untar
-  with:
-    archive: /tmp/myapp.tar.gz
-    dest: /opt/myapp
-    strip_components: 1
-    creates: /opt/myapp/bin/myapp
-```
-
-Systemd plugins run remotely through SSH. Set `sudo: true` when the remote user
-has passwordless sudo for service management.
-
-```yaml
-- id: reload_systemd
-  use: systemctl.daemon_reload
-  with:
-    sudo: true
-
-- id: restart_service
-  use: systemctl.restart
-  with:
-    service: myapp.service
-    sudo: true
 ```

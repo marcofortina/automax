@@ -34,3 +34,8 @@ Runs a command on the current target through the step-scoped SSH connection.
 
 `remote.command` is intentionally raw. For filesystem, package, service, archive,
 transfer, database or HTTP operations, prefer the dedicated plugin names.
+
+
+`local.command` uses the controller shell for string commands, matching Python `subprocess.run(..., shell=True)`. Keep it for trusted operator-authored jobs and prefer list-style commands in future extensions when shell parsing is not desired.
+
+`remote.command` accepts `cwd`, `timeout`, `stdin`, `pty`, `encoding`, `success_rc` and `changed`. `fs.cd` sets step-local `cwd` for later remote plugins without keeping an interactive shell open.

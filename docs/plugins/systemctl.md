@@ -1,7 +1,6 @@
 # Systemctl plugins
 
-Systemctl plugins manage systemd units on the remote target. Use `sudo: true`
-for system services.
+Systemctl plugins manage systemd units on the remote target. Use `sudo: true` for system services. Use `user: true` for `systemctl --user` operations.
 
 ## Lifecycle
 
@@ -91,3 +90,6 @@ for system services.
   with:
     sudo: true
 ```
+
+
+`systemctl.is_active` accepts `fail_on_inactive: true` when the check should fail instead of returning `data.active=false`. `systemctl.is_enabled` accepts `fail_on_disabled: true` for the same pattern.
