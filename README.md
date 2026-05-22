@@ -213,3 +213,15 @@ External plugins can be loaded with:
 ```bash
 automax run --job job.yaml --inventory inventory.yaml --plugin-path /opt/automax/plugins
 ```
+
+## Documentation site
+
+Build the documentation locally:
+
+```bash
+pip install -e '.[docs]'
+mkdocs build --strict
+```
+
+GitHub Pages publishing is handled by `.github/workflows/docs.yml`. Configure the
+repository Pages source as **GitHub Actions**.

@@ -406,3 +406,13 @@ def test_plugins_describe_outputs_parameter_metadata():
     assert "src" in result.output
     assert "dest" in result.output
     assert "Remote session: true" in result.output
+
+
+def test_documentation_publish_workflow_and_nav_are_present():
+    workflow = Path(".github/workflows/docs.yml").read_text(encoding="utf-8")
+    mkdocs = Path("mkdocs.yml").read_text(encoding="utf-8")
+
+    assert "actions/deploy-pages" in workflow
+    assert "mkdocs build --strict" in workflow
+    assert "site_url: https://marcofortina.github.io/automax/" in mkdocs
+    assert "guides/publishing-docs.md" in mkdocs

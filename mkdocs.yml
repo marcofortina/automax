@@ -3,6 +3,11 @@
 
 site_name: Automax Documentation
 site_description: YAML-driven SSH job automation engine
+site_author: Marco Fortina
+site_url: https://marcofortina.github.io/automax/
+edit_uri: edit/master/docs/
+use_directory_urls: true
+copyright: Copyright (C) 2026 Marco Fortina
 repo_url: https://github.com/marcofortina/automax
 repo_name: marcofortina/automax
 
@@ -36,6 +41,7 @@ nav:
     - Creating Plugins: guides/creating-plugins.md
     - Templating: guides/templating.md
     - Template Workflows: guides/template-workflows.md
+    - Publishing Documentation: guides/publishing-docs.md
   - Reference:
     - Job DSL: reference/job-dsl.md
     - Inventory, Vars and Secrets: reference/inventory-vars-secrets.md
