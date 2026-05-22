@@ -223,5 +223,13 @@ pip install -e '.[docs]'
 mkdocs build --strict
 ```
 
+Alternatively, when the package is not installed in editable mode, install the
+documentation requirements explicitly before running MkDocs:
+
+```bash
+pip install -r requirements-docs.txt
+mkdocs build --strict
+```
+
 GitHub Pages publishing is handled by `.github/workflows/docs.yml`. Configure the
 repository Pages source as **GitHub Actions**.

@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Documentation
-mkdocs>=1.4.0
-mkdocs-material>=8.0.0
-mkdocstrings>=0.20.0
-mkdocstrings-python>=0.8.0
+mkdocs>=1.6,<2.0
+mkdocs-material>=9.5,<10.0
+mkdocstrings>=0.25,<1.0
+mkdocstrings-python>=1.10,<2.0
+pymdown-extensions>=10.0,<11.0

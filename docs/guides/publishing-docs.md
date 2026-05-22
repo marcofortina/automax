@@ -16,6 +16,12 @@ Install documentation dependencies:
 pip install -e '.[docs]'
 ```
 
+Or install only the documentation toolchain:
+
+```bash
+pip install -r requirements-docs.txt
+```
+
 Serve locally:
 
 ```bash

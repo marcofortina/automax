@@ -408,6 +408,28 @@ def test_plugins_describe_outputs_parameter_metadata():
     assert "Remote session: true" in result.output
 
 
+def test_documentation_dependency_files_match_mkdocs_configuration():
+    pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
+    requirements = Path("requirements-docs.txt").read_text(encoding="utf-8")
+    mkdocs = Path("mkdocs.yml").read_text(encoding="utf-8")
+
+    required_packages = [
+        "mkdocs",
+        "mkdocs-material",
+        "mkdocstrings",
+        "mkdocstrings-python",
+        "pymdown-extensions",
+    ]
+    for package in required_packages:
+        assert package in pyproject
+        assert package in requirements
+
+    assert "theme:" in mkdocs
+    assert "name: material" in mkdocs
+    assert "pymdownx.superfences" in mkdocs
+    assert "mkdocstrings" in mkdocs
+
+
 def test_documentation_publish_workflow_and_nav_are_present():
     workflow = Path(".github/workflows/docs.yml").read_text(encoding="utf-8")
     mkdocs = Path("mkdocs.yml").read_text(encoding="utf-8")
