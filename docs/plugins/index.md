@@ -3,6 +3,12 @@
 Only canonical plugin names are part of the public DSL. Compatibility aliases are
 not exposed as public plugin names.
 
+Use the CLI to inspect the installed plugin registry:
+
+```bash
+automax plugins list
+```
+
 Current builtin plugins:
 
 ```text
@@ -10,6 +16,15 @@ archive.tar
 archive.untar
 archive.unzip
 archive.zip
+assert.command
+assert.disk
+assert.file
+assert.path
+assert.tcp
+db.mysql.query
+db.oracle.query
+db.postgres.query
+db.sqlite.query
 fs.cd
 fs.chmod
 fs.chown
@@ -26,6 +41,11 @@ fs.stat
 fs.symlink
 fs.template
 fs.write
+group.create
+group.remove
+http.assert
+http.request
+http.wait
 local.command
 pkg.install
 pkg.query
@@ -53,15 +73,25 @@ transfer.upload
 user.create
 user.modify
 user.remove
-group.create
-group.remove
+wait.command
+wait.file
+wait.path
+wait.process
+wait.tcp
 ```
 
-Use the CLI to inspect the installed plugin registry:
+## Manuals by category
 
-```bash
-automax plugins list
-```
+- [Commands](commands.md)
+- [Filesystem](filesystem.md)
+- [Archive](archive.md)
+- [Package manager](package-manager.md)
+- [Systemctl](systemctl.md)
+- [Users, groups and processes](users-groups-processes.md)
+- [Transfer](transfer.md)
+- [HTTP/API](http-api.md)
+- [Wait and assert](wait-assert.md)
+- [Database](database.md)
 
-External plugin modules can be added later through the registry mechanism without
+External plugin modules can be added through the registry mechanism without
 changing the core execution engine.

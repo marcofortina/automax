@@ -35,6 +35,16 @@ nav:
     - Template Workflows: guides/template-workflows.md
   - Plugins:
     - Builtin Plugins: plugins/index.md
+    - Commands: plugins/commands.md
+    - Filesystem: plugins/filesystem.md
+    - Archive: plugins/archive.md
+    - Package Manager: plugins/package-manager.md
+    - Systemctl: plugins/systemctl.md
+    - Users, Groups and Processes: plugins/users-groups-processes.md
+    - Transfer: plugins/transfer.md
+    - HTTP/API: plugins/http-api.md
+    - Wait and Assert: plugins/wait-assert.md
+    - Database: plugins/database.md
   - API Reference: reference/api.md
 
 markdown_extensions:
