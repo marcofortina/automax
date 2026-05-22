@@ -461,6 +461,10 @@ def test_builtin_macro_plugins_are_registered_with_canonical_names_only():
         "assert.file",
         "assert.path",
         "assert.disk",
+        "db.sqlite.query",
+        "db.postgres.query",
+        "db.mysql.query",
+        "db.oracle.query",
     }
     assert output_names == expected_names
     assert "local_command" not in output_names
@@ -652,3 +656,122 @@ def test_fs_template_supports_explicit_values():
             "values": {"app_name": "demo", "port": 8080},
         }
     )
+
+
+
+def test_database_plugins_are_registered():
+    names = AutomaxEngine().plugin_registry.names()
+
+    for name in (
+        "db.sqlite.query",
+        "db.postgres.query",
+        "db.mysql.query",
+        "db.oracle.query",
+    ):
+        assert name in names
+
+    assert "database_operations" not in names
+    assert "db.query" not in names
+
+
+def test_sqlite_database_plugin_executes_transactional_statements(tmp_path: Path):
+    from automax.core.models import ExecutionContext, Target
+
+    plugin = AutomaxEngine().plugin_registry.get("db.sqlite.query")
+    context = ExecutionContext(
+        run_id="test-run",
+        dry_run=False,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="controller", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+    database = tmp_path / "demo.sqlite"
+
+    create = plugin.execute(
+        {
+            "connection": {"path": str(database)},
+            "statements": [
+                "CREATE TABLE demo (id INTEGER PRIMARY KEY, name TEXT NOT NULL)",
+                "INSERT INTO demo(name) VALUES ('automax')",
+            ],
+            "output": "none",
+        },
+        context,
+    )
+    assert create.ok, create.stderr
+
+    select = plugin.execute(
+        {
+            "connection": {"path": str(database)},
+            "query": "SELECT name FROM demo WHERE id = ?",
+            "query_params": [1],
+            "output": "scalar",
+            "fetch": "one",
+        },
+        context,
+    )
+
+    assert select.ok, select.stderr
+    assert select.data["scalar"] == "automax"
+    assert select.stdout == "automax"
+
+
+def test_database_plugins_validate_job_yaml(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: db-validate
+tasks:
+  - id: database
+    targets: all
+    steps:
+      - id: sqlite
+        substeps:
+          - id: sqlite_query
+            use: db.sqlite.query
+            with:
+              connection:
+                path: /tmp/automax.sqlite
+              query: "SELECT 1 AS value"
+              output: scalar
+      - id: optional_drivers
+        substeps:
+          - id: postgres_query
+            use: db.postgres.query
+            with:
+              connection:
+                database: app
+                host: localhost
+                user: app
+                password: "{{ secrets.db_password | default('example') }}"
+              query: "SELECT 1"
+          - id: mysql_query
+            use: db.mysql.query
+            with:
+              connection:
+                database: app
+                host: localhost
+                user: app
+                password: "{{ secrets.db_password | default('example') }}"
+              query: "SELECT 1"
+          - id: oracle_query
+            use: db.oracle.query
+            with:
+              connection:
+                dsn: localhost/FREEPDB1
+                user: app
+                password: "{{ secrets.db_password | default('example') }}"
+              query: "SELECT 1 FROM dual"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    AutomaxEngine().validate(job_path=str(job), inventory_path=str(inventory))

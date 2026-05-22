@@ -105,6 +105,12 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsTemplatePlugin,
         FsWritePlugin,
     )
+    from automax.plugins.db import (
+        DbMysqlQueryPlugin,
+        DbOracleQueryPlugin,
+        DbPostgresQueryPlugin,
+        DbSqliteQueryPlugin,
+    )
     from automax.plugins.http import HttpAssertPlugin, HttpRequestPlugin, HttpWaitPlugin
     from automax.plugins.wait_assert import (
         AssertCommandPlugin,
@@ -162,6 +168,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         HttpRequestPlugin(),
         HttpAssertPlugin(),
         HttpWaitPlugin(),
+        DbSqliteQueryPlugin(),
+        DbPostgresQueryPlugin(),
+        DbMysqlQueryPlugin(),
+        DbOracleQueryPlugin(),
         WaitTcpPlugin(),
         WaitCommandPlugin(),
         WaitFilePlugin(),

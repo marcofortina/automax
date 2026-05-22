@@ -35,6 +35,14 @@ dev = [
     "coverage>=6.5,<7.0",
     "docformatter>=1.6,<2.0",
 ]
+postgres = ["psycopg[binary]>=3.1,<4.0"]
+mysql = ["PyMySQL>=1.1,<2.0"]
+oracle = ["oracledb>=2.0,<4.0"]
+database = [
+    "psycopg[binary]>=3.1,<4.0",
+    "PyMySQL>=1.1,<2.0",
+    "oracledb>=2.0,<4.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/marcofortina/automax"

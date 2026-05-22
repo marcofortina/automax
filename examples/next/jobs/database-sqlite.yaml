@@ -1,0 +1,30 @@
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: sqlite-database-example
+vars:
+  sqlite_path: /tmp/automax-demo.sqlite
+tasks:
+  - id: sqlite_demo
+    targets: all
+    steps:
+      - id: query
+        substeps:
+          - id: create_table
+            use: db.sqlite.query
+            with:
+              connection:
+                path: "{{ vars.sqlite_path }}"
+              statements:
+                - "CREATE TABLE IF NOT EXISTS demo (id INTEGER PRIMARY KEY, name TEXT NOT NULL)"
+                - "INSERT INTO demo(name) VALUES ('automax')"
+              output: none
+          - id: read_rows
+            use: db.sqlite.query
+            with:
+              connection:
+                path: "{{ vars.sqlite_path }}"
+              query: "SELECT id, name FROM demo ORDER BY id"
+              output: json
+            register:
+              demo_rows: data.rows
