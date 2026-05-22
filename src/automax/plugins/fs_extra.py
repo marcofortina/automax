@@ -5,7 +5,6 @@ Additional remote filesystem plugins.
 from __future__ import annotations
 
 from pathlib import Path
-import shlex
 from typing import Any, Dict
 
 from jinja2 import StrictUndefined, Template
@@ -287,25 +286,129 @@ class FsMovePlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="fs.move failed")
 
 
-class FsSymlinkPlugin(BasePlugin):
-    """Ensure a remote symbolic link points to the requested target."""
+class FsSymlinkCreatePlugin(BasePlugin):
+    """Create or update a remote symbolic link with conservative replacement rules."""
 
-    name = "fs.symlink"
-    description = "Ensure a remote symbolic link exists."
-    required_params = ("path", "target")
-    optional_params = ("force", "sudo")
+    name = "fs.symlink.create"
+    description = "Create or update a remote symbolic link."
+    required_params = ("src", "dest")
+    optional_params = ("force", "allow_replace_non_symlink", "sudo")
     opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        dest = str(params["dest"])
+        if not dest or dest == "/":
+            raise PluginValidationError("fs.symlink.create dest must not be empty or /")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
-        sudo = "sudo -n " if bool(params.get("sudo", False)) else ""
-        force = "-sfn" if bool(params.get("force", False)) else "-sn"
+        script = f"""
+set -eu
+src=$1
+dest=$2
+force=$3
+allow_replace_non_symlink=$4
+use_sudo=$5
+run() {{
+    if [ \"$use_sudo\" = \"true\" ]; then
+        sudo -n \"$@\"
+    else
+        \"$@\"
+    fi
+}}
+if [ -L \"$dest\" ]; then
+    current=$(readlink \"$dest\")
+    if [ \"$current\" = \"$src\" ]; then
+        exit 0
+    fi
+    if [ \"$force\" != \"true\" ]; then
+        echo \"refusing to replace existing symlink without force: $dest -> $current\" >&2
+        exit 1
+    fi
+    run rm -f \"$dest\"
+    run ln -s \"$src\" \"$dest\"
+    echo {CHANGE_MARKER}
+elif [ -e \"$dest\" ]; then
+    if [ \"$force\" = \"true\" ] && [ \"$allow_replace_non_symlink\" = \"true\" ]; then
+        run rm -rf \"$dest\"
+        run ln -s \"$src\" \"$dest\"
+        echo {CHANGE_MARKER}
+    else
+        echo \"refusing to replace non-symlink path: $dest\" >&2
+        exit 1
+    fi
+else
+    run ln -s \"$src\" \"$dest\"
+    echo {CHANGE_MARKER}
+fi
+"""
         command = (
-            f"if test \"$(readlink {quote(params['path'])} 2>/dev/null || true)\" = {shlex.quote(str(params['target']))}; then :; "
-            f"else {sudo}ln {force} {quote(params['target'])} {quote(params['path'])} && echo {CHANGE_MARKER}; fi"
+            f"sh -s -- {quote(params['src'])} {quote(params['dest'])} "
+            f"{quote(str(bool(params.get('force', False))).lower())} "
+            f"{quote(str(bool(params.get('allow_replace_non_symlink', False))).lower())} "
+            f"{quote(str(bool(params.get('sudo', False))).lower())} <<'SH'\n{script}\nSH"
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="fs.symlink failed")
+        return result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="fs.symlink.create failed",
+            data={"src": params["src"], "dest": params["dest"]},
+        )
+
+
+class FsSymlinkRemovePlugin(BasePlugin):
+    """Remove a remote symbolic link without deleting regular files or directories."""
+
+    name = "fs.symlink.remove"
+    description = "Remove a remote symbolic link safely."
+    required_params = ("path",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        path = str(params["path"])
+        if not path or path == "/":
+            raise PluginValidationError("fs.symlink.remove path must not be empty or /")
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        script = f"""
+set -eu
+path=$1
+use_sudo=$2
+run() {{
+    if [ \"$use_sudo\" = \"true\" ]; then
+        sudo -n \"$@\"
+    else
+        \"$@\"
+    fi
+}}
+if [ -L \"$path\" ]; then
+    run rm -f \"$path\"
+    echo {CHANGE_MARKER}
+elif [ ! -e \"$path\" ]; then
+    exit 0
+else
+    echo \"refusing to remove non-symlink path: $path\" >&2
+    exit 1
+fi
+"""
+        command = (
+            f"sh -s -- {quote(params['path'])} "
+            f"{quote(str(bool(params.get('sudo', False))).lower())} <<'SH'\n{script}\nSH"
+        )
+        rc, out, err = exec_remote(context, command)
+        return result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="fs.symlink.remove failed",
+            data={"path": params["path"]},
+        )
 
 
 class FsFindPlugin(BasePlugin):

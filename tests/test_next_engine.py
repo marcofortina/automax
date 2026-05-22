@@ -3,11 +3,15 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
 from automax.cli.cli import cli
 from automax.core.engine import AutomaxEngine
+from automax.core.models import ExecutionContext, Target
 from automax.core.state import StateStore
+from automax.plugins.base import PluginValidationError
+from automax.plugins.fs_extra import FsSymlinkCreatePlugin, FsSymlinkRemovePlugin
 
 
 def write(path: Path, content: str) -> Path:
@@ -416,7 +420,8 @@ def test_builtin_macro_plugins_are_registered_with_canonical_names_only():
         "fs.remove",
         "fs.replace",
         "fs.stat",
-        "fs.symlink",
+        "fs.symlink.create",
+        "fs.symlink.remove",
         "fs.template",
         "fs.write",
         "local.command",
@@ -485,13 +490,60 @@ def test_filesystem_plugin_names_are_canonical():
         "fs.line",
         "fs.replace",
         "fs.move",
-        "fs.symlink",
+        "fs.symlink.create",
+        "fs.symlink.remove",
         "fs.find",
     ):
         assert name in names
 
     assert "exists" not in names
     assert "template" not in names
+    assert "fs.symlink" not in names
+
+
+def test_symlink_plugins_are_conservative_and_canonical(monkeypatch):
+    commands = []
+
+    def fake_exec_remote(context, command, **kwargs):
+        commands.append(command)
+        return 0, "__AUTOMAX_CHANGED__\n", ""
+
+    import automax.plugins.fs_extra as fs_extra
+
+    monkeypatch.setattr(fs_extra, "exec_remote", fake_exec_remote)
+    context = ExecutionContext(
+        run_id="run-1",
+        dry_run=False,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="host", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+
+    create_result = FsSymlinkCreatePlugin().execute(
+        {"src": "/opt/app/releases/1", "dest": "/opt/app/current", "force": True},
+        context,
+    )
+    remove_result = FsSymlinkRemovePlugin().execute(
+        {"path": "/opt/app/current"},
+        context,
+    )
+
+    assert create_result.ok and create_result.changed
+    assert create_result.data == {"src": "/opt/app/releases/1", "dest": "/opt/app/current"}
+    assert remove_result.ok and remove_result.changed
+    assert remove_result.data == {"path": "/opt/app/current"}
+    assert "allow_replace_non_symlink" in commands[0]
+    assert "refusing to remove non-symlink path" in commands[1]
+
+    with pytest.raises(PluginValidationError):
+        FsSymlinkCreatePlugin().validate({"src": "/tmp/source", "dest": "/"})
+    with pytest.raises(PluginValidationError):
+        FsSymlinkRemovePlugin().validate({"path": "/"})
 
 
 def test_package_manager_plugins_are_registered():

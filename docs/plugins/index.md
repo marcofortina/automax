@@ -38,7 +38,8 @@ fs.read
 fs.remove
 fs.replace
 fs.stat
-fs.symlink
+fs.symlink.create
+fs.symlink.remove
 fs.template
 fs.write
 group.create

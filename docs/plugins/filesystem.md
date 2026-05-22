@@ -160,17 +160,50 @@ Moves or renames a remote path.
     sudo: true
 ```
 
-## `fs.symlink`
+## `fs.symlink.create`
 
-Ensures a symlink points to the requested target.
+Creates a symbolic link or updates an existing symlink to point at the requested source.
+
+The default behavior is conservative: Automax refuses to replace an existing symlink
+that points somewhere else unless `force: true` is set, and it refuses to replace a
+regular file or directory unless both `force: true` and
+`allow_replace_non_symlink: true` are set. This avoids accidentally deleting real
+paths when a link path is wrong.
 
 ```yaml
 - id: switch_current
-  use: fs.symlink
+  use: fs.symlink.create
   with:
     src: /opt/myapp/releases/2026-05-22
     dest: /opt/myapp/current
     force: true
+    sudo: true
+```
+
+To intentionally replace a non-symlink path, be explicit:
+
+```yaml
+- id: replace_wrong_current_path
+  use: fs.symlink.create
+  with:
+    src: /opt/myapp/releases/2026-05-22
+    dest: /opt/myapp/current
+    force: true
+    allow_replace_non_symlink: true
+    sudo: true
+```
+
+## `fs.symlink.remove`
+
+Removes a symbolic link without deleting regular files or directories. Missing
+links are treated as already absent. If the path exists but is not a symlink, the
+plugin fails.
+
+```yaml
+- id: remove_current_link
+  use: fs.symlink.remove
+  with:
+    path: /opt/myapp/current
     sudo: true
 ```
 
