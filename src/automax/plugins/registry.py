@@ -114,6 +114,11 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PackageUpgradePlugin,
     )
     from automax.plugins.remote_command import RemoteCommandPlugin
+    from automax.plugins.transfer import (
+        TransferDownloadPlugin,
+        TransferSyncPlugin,
+        TransferUploadPlugin,
+    )
     from automax.plugins.user_group_process import (
         GroupCreatePlugin,
         GroupRemovePlugin,
@@ -154,6 +159,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         GroupRemovePlugin(),
         ProcessKillPlugin(),
         ProcessWaitPlugin(),
+        TransferUploadPlugin(),
+        TransferDownloadPlugin(),
+        TransferSyncPlugin(),
         FsCdPlugin(),
         FsMkdirPlugin(),
         FsCopyPlugin(),

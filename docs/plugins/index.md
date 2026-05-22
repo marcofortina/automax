@@ -47,6 +47,9 @@ systemctl.start
 systemctl.status
 systemctl.stop
 systemctl.unmask
+transfer.download
+transfer.sync
+transfer.upload
 user.create
 user.modify
 user.remove

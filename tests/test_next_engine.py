@@ -440,6 +440,9 @@ def test_builtin_macro_plugins_are_registered_with_canonical_names_only():
         "systemctl.status",
         "systemctl.stop",
         "systemctl.unmask",
+        "transfer.download",
+        "transfer.sync",
+        "transfer.upload",
         "user.create",
         "user.modify",
         "user.remove",
@@ -497,6 +500,9 @@ def test_extended_systemctl_plugins_are_registered():
         "systemctl.is_enabled",
         "systemctl.mask",
         "systemctl.unmask",
+        "transfer.download",
+        "transfer.sync",
+        "transfer.upload",
         "user.create",
         "user.modify",
         "user.remove",
@@ -524,3 +530,12 @@ def test_user_group_process_plugins_are_registered():
 
     assert "useradd" not in names
     assert "groupadd" not in names
+
+
+def test_transfer_plugins_are_registered():
+    names = AutomaxEngine().plugin_registry.names()
+
+    assert "transfer.upload" in names
+    assert "transfer.download" in names
+    assert "transfer.sync" in names
+    assert "upload" not in names
