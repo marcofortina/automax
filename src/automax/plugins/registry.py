@@ -106,6 +106,18 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsWritePlugin,
     )
     from automax.plugins.http import HttpAssertPlugin, HttpRequestPlugin, HttpWaitPlugin
+    from automax.plugins.wait_assert import (
+        AssertCommandPlugin,
+        AssertDiskPlugin,
+        AssertFilePlugin,
+        AssertPathPlugin,
+        AssertTcpPlugin,
+        WaitCommandPlugin,
+        WaitFilePlugin,
+        WaitPathPlugin,
+        WaitProcessPlugin,
+        WaitTcpPlugin,
+    )
     from automax.plugins.local_command import LocalCommandPlugin
     from automax.plugins.pkg import (
         PackageInstallPlugin,
@@ -150,6 +162,16 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         HttpRequestPlugin(),
         HttpAssertPlugin(),
         HttpWaitPlugin(),
+        WaitTcpPlugin(),
+        WaitCommandPlugin(),
+        WaitFilePlugin(),
+        WaitPathPlugin(),
+        WaitProcessPlugin(),
+        AssertTcpPlugin(),
+        AssertCommandPlugin(),
+        AssertFilePlugin(),
+        AssertPathPlugin(),
+        AssertDiskPlugin(),
         RemoteCommandPlugin(),
         PackageInstallPlugin(),
         PackageRemovePlugin(),

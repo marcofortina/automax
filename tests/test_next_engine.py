@@ -451,6 +451,16 @@ def test_builtin_macro_plugins_are_registered_with_canonical_names_only():
         "http.assert",
         "http.request",
         "http.wait",
+        "wait.tcp",
+        "wait.command",
+        "wait.file",
+        "wait.path",
+        "wait.process",
+        "assert.tcp",
+        "assert.command",
+        "assert.file",
+        "assert.path",
+        "assert.disk",
     }
     assert output_names == expected_names
     assert "local_command" not in output_names
@@ -551,3 +561,81 @@ def test_http_plugins_are_registered():
     assert "http.assert" in names
     assert "http.wait" in names
     assert "run_http_request" not in names
+
+
+
+def test_wait_and_assert_plugins_are_registered():
+    names = AutomaxEngine().plugin_registry.names()
+
+    for name in (
+        "wait.tcp",
+        "wait.command",
+        "wait.file",
+        "wait.path",
+        "wait.process",
+        "assert.tcp",
+        "assert.command",
+        "assert.file",
+        "assert.path",
+        "assert.disk",
+    ):
+        assert name in names
+
+    assert "check.tcp" not in names
+    assert "check.disk" not in names
+
+
+def test_wait_assert_plugins_validate_in_job_yaml(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: wait-assert-validate
+tasks:
+  - id: checks
+    targets: all
+    steps:
+      - id: remote_checks
+        substeps:
+          - id: wait_file
+            use: wait.file
+            with:
+              path: /tmp/automax-ready
+              state: absent
+              timeout: 1
+              interval: 1
+          - id: assert_path
+            use: assert.path
+            with:
+              path: /tmp
+              type: directory
+          - id: assert_command
+            use: assert.command
+            with:
+              command: "printf ok"
+              equals: ok
+          - id: assert_disk
+            use: assert.disk
+            with:
+              path: /
+              min_free_mb: 1
+      - id: controller_checks
+        substeps:
+          - id: wait_tcp
+            use: wait.tcp
+            with:
+              host: 127.0.0.1
+              port: 22
+              timeout: 1
+          - id: assert_tcp
+            use: assert.tcp
+            with:
+              host: 127.0.0.1
+              port: 22
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    AutomaxEngine().validate(job_path=str(job), inventory_path=str(inventory))
