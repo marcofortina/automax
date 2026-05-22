@@ -8,6 +8,7 @@ Automax next execution engine.
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import json
 from copy import deepcopy
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -706,6 +707,17 @@ class AutomaxEngine:
 
             with self._output_lock:
                 self._register_outputs(outputs, node_id, target.name, substep, result)
+            artifact_error = self._capture_declared_artifacts(
+                store=store,
+                job=job,
+                item=item,
+                result=result,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+            )
+            if artifact_error:
+                result = PluginResult.failure(message=artifact_error)
             store.finish_node(
                 node_id=node_id,
                 target=target.name,
@@ -796,6 +808,65 @@ class AutomaxEngine:
             return condition
         rendered = render_value(str(condition), context).strip().lower()
         return rendered not in ("", "0", "false", "no", "none")
+
+    def _capture_declared_artifacts(
+        self,
+        *,
+        store: StateStore,
+        job: Dict[str, Any],
+        item: Dict[str, Any],
+        result: PluginResult,
+        variables: Dict[str, Any],
+        secrets: Dict[str, Any],
+        outputs: Dict[str, Any],
+    ) -> str | None:
+        """Persist stdout/stderr/data artifacts declared by a substep."""
+        substep = item["substep"]
+        declaration = substep.get("artifacts", substep.get("artifact"))
+        if not declaration:
+            return None
+        target = item["target"]
+        source_values = {
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "data": json.dumps(self._mask_mapping(result.data, secrets), indent=2, sort_keys=True),
+        }
+        if declaration is True:
+            declaration = {"stdout": "stdout.txt", "stderr": "stderr.txt"}
+        if not isinstance(declaration, dict):
+            return "artifacts declaration must be a mapping or true"
+        template_context = {
+            "job": job,
+            "task": item["task"],
+            "step": item["step"],
+            "substep": substep,
+            "server": target,
+            "target": target,
+            "vars": variables,
+            "outputs": outputs,
+            "secrets": secrets,
+            "run": {"id": store.run_id},
+            "result": self._result_to_mapping(result, secrets=secrets),
+        }
+        try:
+            for source, raw_name in declaration.items():
+                source_name = str(source)
+                if source_name not in source_values:
+                    return f"unsupported artifact source: {source_name}"
+                if raw_name in (False, None):
+                    continue
+                name = f"{source_name}.txt" if raw_name is True else str(raw_name)
+                rendered_name = render_value(name, template_context)
+                store.write_artifact(
+                    node_id=item["node_id"],
+                    target=target.name,
+                    name=rendered_name,
+                    kind=source_name,
+                    content=self._mask_text(source_values[source_name], secrets),
+                )
+        except Exception as exc:
+            return f"artifact capture failed: {self._mask_text(str(exc), secrets)}"
+        return None
 
     def _register_outputs(
         self,

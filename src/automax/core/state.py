@@ -8,6 +8,7 @@ SQLite state store used for checkpoints, audit and resume.
 from __future__ import annotations
 
 from contextlib import contextmanager
+import hashlib
 import json
 from pathlib import Path
 import sqlite3
@@ -89,6 +90,19 @@ class StateStore:
                     node_id TEXT,
                     target TEXT,
                     payload_json TEXT NOT NULL DEFAULT '{}',
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+
+                CREATE TABLE IF NOT EXISTS artifacts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    run_id TEXT NOT NULL,
+                    node_id TEXT NOT NULL,
+                    target TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    kind TEXT NOT NULL,
+                    path TEXT NOT NULL,
+                    size INTEGER NOT NULL,
+                    sha256 TEXT NOT NULL,
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
                 """
@@ -256,6 +270,91 @@ class StateStore:
             status=NodeStatus.SKIPPED,
             message=message,
         )
+
+
+    @property
+    def artifacts_dir(self) -> Path:
+        """Directory containing files captured for this run."""
+        path = self.run_dir / "artifacts"
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    def write_artifact(
+        self,
+        *,
+        node_id: str,
+        target: str,
+        name: str,
+        kind: str,
+        content: str,
+    ) -> Dict[str, Any]:
+        """Write one textual artifact and register it in the state database."""
+        relative = self._safe_relative_artifact_path(name)
+        node_dir = self.artifacts_dir / self._safe_path_part(target) / self._safe_path_part(node_id)
+        path = node_dir / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        encoded = content.encode("utf-8")
+        path.write_bytes(encoded)
+        digest = hashlib.sha256(encoded).hexdigest()
+        artifact = {
+            "node_id": node_id,
+            "target": target,
+            "name": str(relative),
+            "kind": kind,
+            "path": str(path),
+            "size": len(encoded),
+            "sha256": digest,
+        }
+        self.record_artifact(**artifact)
+        return artifact
+
+    def record_artifact(
+        self,
+        *,
+        node_id: str,
+        target: str,
+        name: str,
+        kind: str,
+        path: str,
+        size: int,
+        sha256: str,
+    ) -> None:
+        """Record one already-written artifact."""
+        with self.connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO artifacts(run_id, node_id, target, name, kind, path, size, sha256)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (self.run_id, node_id, target, name, kind, path, int(size), sha256),
+            )
+
+    def list_artifacts(self) -> list[Dict[str, Any]]:
+        """List artifacts captured for this run."""
+        with self.connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT *
+                  FROM artifacts
+                 WHERE run_id = ?
+                 ORDER BY created_at ASC, target ASC, node_id ASC, name ASC
+                """,
+                (self.run_id,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    @staticmethod
+    def _safe_path_part(value: str) -> str:
+        return "".join(char if char.isalnum() or char in "._-" else "_" for char in value)
+
+    @staticmethod
+    def _safe_relative_artifact_path(name: str) -> Path:
+        relative = Path(str(name))
+        if relative.is_absolute() or ".." in relative.parts:
+            raise StateStoreError(f"unsafe artifact name: {name}")
+        if not str(relative).strip() or str(relative) == ".":
+            raise StateStoreError("artifact name cannot be empty")
+        return relative
 
     def first_failed_node_id(self) -> Optional[str]:
         with self.connect() as conn:

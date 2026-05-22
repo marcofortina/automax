@@ -430,3 +430,11 @@ def test_generated_plugin_reference_is_in_sync(tmp_path: Path):
     assert actual == expected
     assert "### `fs.template`" in actual
     assert "| `src` | yes | `path`" in actual
+
+
+def test_artifacts_reference_is_documented_in_nav():
+    mkdocs = Path("mkdocs.yml").read_text(encoding="utf-8")
+    docs = Path("docs/reference/artifacts.md").read_text(encoding="utf-8")
+
+    assert "reference/artifacts.md" in mkdocs
+    assert "automax artifacts list <run-id>" in docs

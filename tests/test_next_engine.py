@@ -1184,3 +1184,100 @@ def test_plugin_describe_human_output_includes_rich_metadata():
     assert "Parameters:" in result.output
     assert "src (required, path)" in result.output
     assert "Examples:" in result.output
+
+
+def test_substep_artifacts_capture_masked_stdout_and_data(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("AUTOMAX_ARTIFACT_SECRET", "artifact-secret")
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: artifact-capture
+tasks:
+  - id: collect
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: command
+            use: local.command
+            with:
+              command: "printf artifact-secret"
+            artifacts:
+              stdout: "{{ target.name }}/stdout.txt"
+              data: data.json
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+    secrets = write(
+        tmp_path / "secrets.yaml",
+        "secrets:\n  token:\n    provider: env\n    name: AUTOMAX_ARTIFACT_SECRET\n",
+    )
+    state_dir = tmp_path / "runs"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--secrets",
+            str(secrets),
+            "--state-dir",
+            str(state_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    run_id = _extract_run_id(result.output)
+    store = StateStore(state_dir, run_id)
+    artifacts = store.list_artifacts()
+    assert {item["kind"] for item in artifacts} == {"stdout", "data"}
+    stdout_artifact = next(item for item in artifacts if item["kind"] == "stdout")
+    assert Path(stdout_artifact["path"]).read_text(encoding="utf-8") == "***"
+    assert stdout_artifact["name"] == "controller/stdout.txt"
+
+    listed = CliRunner().invoke(cli, ["artifacts", "list", run_id, "--state-dir", str(state_dir)])
+    assert listed.exit_code == 0, listed.output
+    assert "controller/stdout.txt" in listed.output
+
+    path_result = CliRunner().invoke(cli, ["artifacts", "path", run_id, "--state-dir", str(state_dir)])
+    assert path_result.exit_code == 0, path_result.output
+    assert Path(path_result.output.strip()).is_dir()
+
+
+def test_artifact_path_traversal_fails_the_substep(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: artifact-path-traversal
+tasks:
+  - id: collect
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: command
+            use: local.command
+            with:
+              command: "printf ok"
+            artifacts:
+              stdout: ../unsafe.txt
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(tmp_path / "runs")],
+    )
+
+    assert result.exit_code == 1, result.output
+    assert "artifact capture failed" in result.output

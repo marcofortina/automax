@@ -324,6 +324,35 @@ def describe_plugin(name: str, plugin_path: tuple[str, ...], as_json: bool) -> N
 
 
 
+
+
+@cli.group()
+def artifacts() -> None:
+    """Inspect files captured during a run."""
+
+
+@artifacts.command("path")
+@click.argument("run_id")
+@click.option("--state-dir", default=".automax/runs", show_default=True, help="Run state directory.")
+def artifacts_path(run_id: str, state_dir: str) -> None:
+    """Print the artifact directory for one run."""
+    store = StateStore.open_existing(state_dir, run_id)
+    click.echo(str(store.artifacts_dir))
+
+
+@artifacts.command("list")
+@click.argument("run_id")
+@click.option("--state-dir", default=".automax/runs", show_default=True, help="Run state directory.")
+def artifacts_list(run_id: str, state_dir: str) -> None:
+    """List artifacts captured for one run."""
+    store = StateStore.open_existing(state_dir, run_id)
+    for item in store.list_artifacts():
+        click.echo(
+            f"{item['target']} {item['node_id']} {item['kind']} {item['name']} "
+            f"{item['size']}B {item['path']}"
+        )
+
+
 @cli.group()
 def docs() -> None:
     """Generate documentation from runtime metadata."""

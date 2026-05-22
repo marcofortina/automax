@@ -46,6 +46,7 @@ nav:
     - Job DSL: reference/job-dsl.md
     - Inventory, Vars and Secrets: reference/inventory-vars-secrets.md
     - State and Resume: reference/state-and-resume.md
+    - Artifacts: reference/artifacts.md
     - Python API: reference/api.md
   - Plugins:
     - Builtin Plugins: plugins/index.md
