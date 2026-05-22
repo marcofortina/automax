@@ -32,6 +32,7 @@ nav:
   - Guides:
     - Creating Plugins: guides/creating-plugins.md
     - Templating: guides/templating.md
+    - Template Workflows: guides/template-workflows.md
   - Plugins:
     - Builtin Plugins: plugins/index.md
   - API Reference: reference/api.md

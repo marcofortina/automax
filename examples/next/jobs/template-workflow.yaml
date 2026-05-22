@@ -1,0 +1,21 @@
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: template-workflow-example
+vars:
+  environment: lab
+tasks:
+  - id: render_config
+    targets: all
+    steps:
+      - id: write_template
+        substeps:
+          - id: render_app_config
+            use: fs.template
+            with:
+              src: examples/next/templates/app.conf.j2
+              dest: /tmp/automax-app.conf
+              mode: "0644"
+              values:
+                app_name: automax-demo
+                port: 8080

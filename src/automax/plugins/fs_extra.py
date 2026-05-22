@@ -131,7 +131,7 @@ class FsTemplatePlugin(BasePlugin):
     name = "fs.template"
     description = "Render a local Jinja2 template to a remote file."
     required_params = ("src", "dest")
-    optional_params = ("mode", "owner", "group", "sudo", "encoding")
+    optional_params = ("mode", "owner", "group", "sudo", "encoding", "values")
     opens_remote_session = True
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -141,6 +141,9 @@ class FsTemplatePlugin(BasePlugin):
         if not template_path.is_file():
             return PluginResult.failure(message=f"template not found: {template_path}")
         template = Template(template_path.read_text(encoding=encoding), undefined=StrictUndefined)
+        values = params.get("values", {}) or {}
+        if not isinstance(values, dict):
+            raise PluginValidationError("fs.template values must be a mapping")
         rendered = template.render(
             job=context.job,
             task=context.task,
@@ -152,6 +155,7 @@ class FsTemplatePlugin(BasePlugin):
             outputs=context.outputs,
             secrets=context.secrets,
             step_state=context.step_state,
+            values=values,
         )
         temp_path = upload_text_to_temp(context, rendered, encoding=encoding)
         rc, out, err = install_uploaded_file(

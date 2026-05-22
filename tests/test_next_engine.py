@@ -639,3 +639,16 @@ tasks:
     inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
 
     AutomaxEngine().validate(job_path=str(job), inventory_path=str(inventory))
+
+
+
+def test_fs_template_supports_explicit_values():
+    plugin = AutomaxEngine().plugin_registry.get("fs.template")
+
+    plugin.validate(
+        {
+            "src": "examples/next/templates/app.conf.j2",
+            "dest": "/tmp/automax-app.conf",
+            "values": {"app_name": "demo", "port": 8080},
+        }
+    )
