@@ -49,6 +49,7 @@ nav:
     - Python API: reference/api.md
   - Plugins:
     - Builtin Plugins: plugins/index.md
+    - Generated Reference: plugins/generated.md
     - Commands: plugins/commands.md
     - Filesystem: plugins/filesystem.md
     - Archive: plugins/archive.md

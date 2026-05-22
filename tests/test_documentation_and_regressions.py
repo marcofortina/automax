@@ -416,3 +416,17 @@ def test_documentation_publish_workflow_and_nav_are_present():
     assert "mkdocs build --strict" in workflow
     assert "site_url: https://marcofortina.github.io/automax/" in mkdocs
     assert "guides/publishing-docs.md" in mkdocs
+
+
+def test_generated_plugin_reference_is_in_sync(tmp_path: Path):
+    result = CliRunner().invoke(
+        cli,
+        ["docs", "generate-plugins", "--output", str(tmp_path / "generated.md")],
+    )
+
+    assert result.exit_code == 0, result.output
+    expected = Path("docs/plugins/generated.md").read_text(encoding="utf-8")
+    actual = (tmp_path / "generated.md").read_text(encoding="utf-8")
+    assert actual == expected
+    assert "### `fs.template`" in actual
+    assert "| `src` | yes | `path`" in actual

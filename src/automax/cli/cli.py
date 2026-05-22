@@ -9,12 +9,14 @@ from __future__ import annotations
 
 import sys
 from typing import Dict, Iterable
+from pathlib import Path
 import json
 
 import click
 
 from automax import __version__
 from automax.core.engine import AutomaxEngine, AutomaxError
+from automax.core.plugin_docs import render_plugin_reference
 from automax.core.state import StateStore
 from automax.plugins.registry import build_builtin_registry
 
@@ -319,6 +321,25 @@ def describe_plugin(name: str, plugin_path: tuple[str, ...], as_json: bool) -> N
         click.echo("Aliases:")
         for item in aliases:
             click.echo(f"  - {item}")
+
+
+
+@cli.group()
+def docs() -> None:
+    """Generate documentation from runtime metadata."""
+
+
+@docs.command("generate-plugins")
+@click.option("--output", "output_path", required=True, type=click.Path(dir_okay=False), help="Markdown output path.")
+@click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+def generate_plugin_docs(output_path: str, plugin_path: tuple[str, ...]) -> None:
+    """Generate Markdown plugin reference from structured metadata."""
+    registry = build_builtin_registry(plugin_path)
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(render_plugin_reference(registry.describe_all()), encoding="utf-8")
+    click.echo(f"Wrote {output}")
+
 
 def cli_main() -> None:
     """Console-script entry point."""

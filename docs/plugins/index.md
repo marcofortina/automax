@@ -88,6 +88,7 @@ wait.tcp
 
 ## Manuals by category
 
+- [Generated plugin reference](generated.md)
 - [Commands](commands.md)
 - [Filesystem](filesystem.md)
 - [Archive](archive.md)
