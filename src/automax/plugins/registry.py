@@ -106,6 +106,13 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsWritePlugin,
     )
     from automax.plugins.local_command import LocalCommandPlugin
+    from automax.plugins.pkg import (
+        PackageInstallPlugin,
+        PackageQueryPlugin,
+        PackageRemovePlugin,
+        PackageUpdateCachePlugin,
+        PackageUpgradePlugin,
+    )
     from automax.plugins.remote_command import RemoteCommandPlugin
     from automax.plugins.systemctl import (
         SystemctlDaemonReloadPlugin,
@@ -118,6 +125,11 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     for plugin in (
         LocalCommandPlugin(),
         RemoteCommandPlugin(),
+        PackageInstallPlugin(),
+        PackageRemovePlugin(),
+        PackageUpdateCachePlugin(),
+        PackageUpgradePlugin(),
+        PackageQueryPlugin(),
         FsCdPlugin(),
         FsMkdirPlugin(),
         FsCopyPlugin(),

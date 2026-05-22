@@ -420,6 +420,11 @@ def test_builtin_macro_plugins_are_registered_with_canonical_names_only():
         "fs.template",
         "fs.write",
         "local.command",
+        "pkg.install",
+        "pkg.query",
+        "pkg.remove",
+        "pkg.update_cache",
+        "pkg.upgrade",
         "remote.command",
         "systemctl.daemon_reload",
         "systemctl.start",
@@ -452,3 +457,14 @@ def test_filesystem_plugin_names_are_canonical():
 
     assert "exists" not in names
     assert "template" not in names
+
+
+def test_package_manager_plugins_are_registered():
+    names = AutomaxEngine().plugin_registry.names()
+
+    assert "pkg.install" in names
+    assert "pkg.remove" in names
+    assert "pkg.update_cache" in names
+    assert "pkg.upgrade" in names
+    assert "pkg.query" in names
+    assert "apt.install" not in names

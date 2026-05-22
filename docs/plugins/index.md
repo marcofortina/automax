@@ -27,6 +27,11 @@ fs.symlink
 fs.template
 fs.write
 local.command
+pkg.install
+pkg.query
+pkg.remove
+pkg.update_cache
+pkg.upgrade
 remote.command
 systemctl.daemon_reload
 systemctl.restart
