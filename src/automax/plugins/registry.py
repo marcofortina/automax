@@ -93,6 +93,18 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     from automax.plugins.fs_copy import FsCopyPlugin
     from automax.plugins.fs_mkdir import FsMkdirPlugin
     from automax.plugins.fs_remove import FsRemovePlugin
+    from automax.plugins.fs_extra import (
+        FsExistsPlugin,
+        FsFindPlugin,
+        FsLinePlugin,
+        FsMovePlugin,
+        FsReadPlugin,
+        FsReplacePlugin,
+        FsStatPlugin,
+        FsSymlinkPlugin,
+        FsTemplatePlugin,
+        FsWritePlugin,
+    )
     from automax.plugins.local_command import LocalCommandPlugin
     from automax.plugins.remote_command import RemoteCommandPlugin
     from automax.plugins.systemctl import (
@@ -110,6 +122,16 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsMkdirPlugin(),
         FsCopyPlugin(),
         FsRemovePlugin(),
+        FsExistsPlugin(),
+        FsStatPlugin(),
+        FsReadPlugin(),
+        FsWritePlugin(),
+        FsTemplatePlugin(),
+        FsLinePlugin(),
+        FsReplacePlugin(),
+        FsMovePlugin(),
+        FsSymlinkPlugin(),
+        FsFindPlugin(),
         FsChownPlugin(),
         FsChmodPlugin(),
         ArchiveTarPlugin(),

@@ -407,8 +407,18 @@ def test_builtin_macro_plugins_are_registered_with_canonical_names_only():
         "fs.chmod",
         "fs.chown",
         "fs.copy",
+        "fs.exists",
+        "fs.find",
+        "fs.line",
         "fs.mkdir",
+        "fs.move",
+        "fs.read",
         "fs.remove",
+        "fs.replace",
+        "fs.stat",
+        "fs.symlink",
+        "fs.template",
+        "fs.write",
         "local.command",
         "remote.command",
         "systemctl.daemon_reload",
@@ -421,3 +431,24 @@ def test_builtin_macro_plugins_are_registered_with_canonical_names_only():
     assert "ssh_command" not in output_names
     assert "tar" not in output_names
     assert "systemctl daemon reload" not in output_names
+
+
+def test_filesystem_plugin_names_are_canonical():
+    names = AutomaxEngine().plugin_registry.names()
+
+    for name in (
+        "fs.exists",
+        "fs.stat",
+        "fs.read",
+        "fs.write",
+        "fs.template",
+        "fs.line",
+        "fs.replace",
+        "fs.move",
+        "fs.symlink",
+        "fs.find",
+    ):
+        assert name in names
+
+    assert "exists" not in names
+    assert "template" not in names
