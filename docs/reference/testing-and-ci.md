@@ -46,6 +46,10 @@ Privileged package, systemd, user and group checks are opt-in. See
 
 ## GitHub Actions
 
-The CI workflow runs Python tests across the supported Python matrix and builds
-MkDocs strictly. The documentation workflow publishes the MkDocs site to GitHub
-Pages.
+The CI workflow runs Python tests across the supported Python matrix, runs Ruff,
+checks Python 3.9 compatibility and builds MkDocs strictly. The documentation
+workflow publishes the MkDocs site to GitHub Pages.
+
+The CodeQL workflow runs GitHub code scanning for Python on pushes, pull requests
+and a weekly schedule. It uses `github/codeql-action/*@v4`, which runs on the
+Node.js 24 action runtime.

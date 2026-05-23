@@ -548,3 +548,11 @@ def test_dynamic_inventory_removed_from_future_work():
     assert "Dynamic inventory providers" not in future_work
     assert "inventory.command" not in future_work
     assert "secret providers" in future_work.lower()
+
+
+def test_codeql_workflow_uses_node24_action_generation():
+    workflow = Path(".github/workflows/codeql.yml").read_text(encoding="utf-8")
+    assert "github/codeql-action/init@v4" in workflow
+    assert "github/codeql-action/analyze@v4" in workflow
+    assert "security-events: write" in workflow
+    assert "security-extended,security-and-quality" in workflow
