@@ -113,6 +113,17 @@ automax inventory show --job job.yaml --inventory inventory.yaml --limit web
 automax inventory show --job job.yaml --inventory inventory.yaml --format=json
 ```
 
+## Vars render
+
+Render the final target-specific variable context for the selected job while
+masking all secret values:
+
+```bash
+automax vars render --job job.yaml --inventory inventory.yaml --vars vars.yaml --secrets secrets.yaml
+automax vars render --job job.yaml --inventory inventory.yaml --limit web01
+automax vars render --job job.yaml --inventory inventory.yaml --format=json
+```
+
 ## Secrets check
 
 Check secret providers referenced by the selected job without printing values:

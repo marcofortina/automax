@@ -84,6 +84,37 @@ def _echo_check_payload(payload: Dict[str, Any], output_format: str) -> None:
         click.echo("  - no selected nodes")
 
 
+def _echo_vars_payload(payload: Dict[str, Any], output_format: str) -> None:
+    if output_format == "json":
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    click.echo(f"Job: {payload['job']}")
+    click.echo(f"Vars: {payload['vars_path'] or '-'}")
+    click.echo(f"Secrets: {payload['secrets_path'] or '-'}")
+    click.echo(
+        f"Targets: {payload['target_count']} selected, "
+        f"{payload['node_count']} planned node(s)"
+    )
+    for target in payload["targets"]:
+        groups = ",".join(target["groups"]) if target["groups"] else "-"
+        click.echo(f"Target {target['name']} {target['host']}:{target['port']} groups={groups}")
+        click.echo("  vars:")
+        if target["vars"]:
+            for key in sorted(target["vars"]):
+                click.echo(f"    {key}: {json.dumps(target['vars'][key], sort_keys=True)}")
+        else:
+            click.echo("    - none")
+        click.echo("  secrets:")
+        if target["secrets"]:
+            for key in sorted(target["secrets"]):
+                click.echo(f"    {key}: ***")
+        else:
+            click.echo("    - none")
+        click.echo("  nodes:")
+        for node in target["nodes"]:
+            click.echo(f"    {node['node_id']} {node['plugin']}")
+
+
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(version=__version__, prog_name="Automax")
 def cli() -> None:
@@ -758,6 +789,58 @@ def check_secrets(
             click.echo("No secrets referenced by selected job plan")
     if not payload["ok"]:
         raise click.ClickException("one or more secrets failed checks")
+
+
+
+@cli.group()
+def vars() -> None:
+    """Inspect job-scoped rendered variables."""
+
+
+@vars.command("render")
+@_apply_common_options
+@click.option("--limit", multiple=True, help="Limit targets. Accepts server, group or group:name.")
+@click.option("--exclude", multiple=True, help="Exclude targets. Accepts server, group or group:name.")
+@click.option("--tags", multiple=True, help="Render context for substeps matching one of these tags.")
+@click.option("--skip-tags", multiple=True, help="Skip substeps matching one of these tags.")
+@click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    show_default=True,
+    help="Output format.",
+)
+def render_vars(
+    job_path: str,
+    inventory_path: str,
+    vars_path: str | None,
+    secrets_path: str | None,
+    cli_vars: tuple[str, ...],
+    limit: tuple[str, ...],
+    exclude: tuple[str, ...],
+    tags: tuple[str, ...],
+    skip_tags: tuple[str, ...],
+    plugin_path: tuple[str, ...],
+    output_format: str,
+) -> None:
+    """Render final vars, masked secrets and selected nodes for a job."""
+    try:
+        payload = _engine(plugin_path).render_vars_job(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=_split_selectors(limit),
+            exclude=_split_selectors(exclude),
+            tags=_split_selectors(tags),
+            skip_tags=_split_selectors(skip_tags),
+            cli_vars=_parse_vars(cli_vars),
+        )
+    except (AutomaxError, ValueError, RuntimeError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _echo_vars_payload(payload, output_format)
 
 
 @cli.group()

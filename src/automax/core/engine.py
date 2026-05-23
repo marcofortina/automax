@@ -385,6 +385,65 @@ class AutomaxEngine:
                 "rendered_substep": rendered_substep,
             }
 
+
+    def render_vars_job(
+        self,
+        *,
+        job_path: str,
+        inventory_path: str,
+        vars_path: str | None = None,
+        secrets_path: str | None = None,
+        limit: Iterable[str] = (),
+        exclude: Iterable[str] = (),
+        tags: Iterable[str] = (),
+        skip_tags: Iterable[str] = (),
+        cli_vars: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Render the final job-scoped variable context without exposing secrets."""
+        resolved = self.resolve_job_context(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=limit,
+            exclude=exclude,
+            tags=tags,
+            skip_tags=skip_tags,
+            cli_vars=cli_vars,
+        )
+        targets: Dict[str, Dict[str, Any]] = {}
+        for item in self.iter_rendered_plan_items(resolved, dry_run=True):
+            target: Target = item["target"]
+            entry = targets.setdefault(
+                target.name,
+                {
+                    "name": target.name,
+                    "host": target.host,
+                    "port": target.port,
+                    "groups": list(target.groups),
+                    "vars": self._mask_mapping(item["context"].vars, resolved.secrets),
+                    "secrets": {key: "***" for key in sorted(resolved.secrets)},
+                    "nodes": [],
+                },
+            )
+            entry["nodes"].append(
+                {
+                    "node_id": item["node_id"],
+                    "task_id": str(item["task"]["id"]),
+                    "step_id": str(item["step"]["id"]),
+                    "substep_id": str(item["substep"]["id"]),
+                    "plugin": item["plugin_name"],
+                }
+            )
+        return {
+            "job": self._job_name(resolved.job),
+            "vars_path": resolved.vars_path,
+            "secrets_path": resolved.secrets_path,
+            "targets": [targets[name] for name in sorted(targets)],
+            "target_count": len(targets),
+            "node_count": sum(len(target["nodes"]) for target in targets.values()),
+        }
+
     def inspect_inventory(
         self,
         *,

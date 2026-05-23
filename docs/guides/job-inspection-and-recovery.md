@@ -31,6 +31,24 @@ automax inventory show \
 The command prints only targets selected by the job after applying `--limit`,
 `--exclude`, `--tags` and `--skip-tags`.
 
+## Render final variable context
+
+Use `automax vars render` to see the final target-specific variable context,
+masked secret names and selected nodes before a run:
+
+```bash
+automax vars render \
+  --job jobs/deploy.yaml \
+  --inventory inventory/prod.yaml \
+  --vars vars/prod.yaml \
+  --secrets secrets/prod.yaml \
+  --limit web01
+```
+
+Secrets are listed by name only and rendered as `***`. This keeps the command
+safe for CI logs and issue attachments while still showing which secret keys are
+available to templates.
+
 ## Check only secrets used by the selected job
 
 Use `automax secrets check` to verify that required secret providers can be read
@@ -114,5 +132,6 @@ All inspection commands support JSON output for CI or operator tooling:
 ```bash
 automax inventory show --job job.yaml --inventory inventory.yaml --format=json
 automax secrets check --job job.yaml --inventory inventory.yaml --secrets secrets.yaml --format=json
+automax vars render --job job.yaml --inventory inventory.yaml --format=json
 automax commands render --job job.yaml --inventory inventory.yaml --format=json
 ```

@@ -145,6 +145,7 @@ and render recovery helpers for the job under review:
 ```bash
 automax inventory show --job job.yaml --inventory inventory.yaml --limit web
 automax secrets check --job job.yaml --inventory inventory.yaml --secrets secrets.yaml
+automax vars render --job job.yaml --inventory inventory.yaml --secrets secrets.yaml
 automax plan --check --job job.yaml --inventory inventory.yaml
 automax plan --diff --job job.yaml --inventory inventory.yaml
 automax commands render --job job.yaml --inventory inventory.yaml --limit web01

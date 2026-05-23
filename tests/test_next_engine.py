@@ -2705,3 +2705,109 @@ tasks:
     payload = json.loads(result.output)
     assert payload["nodes"][0]["available"] is False
     assert payload["nodes"][0]["commands"] == []
+
+
+def test_vars_render_prints_target_context_and_masks_secrets(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: vars-render
+vars:
+  app_port: 8080
+tasks:
+  - id: deploy
+    targets: web
+    steps:
+      - id: render
+        substeps:
+          - id: command
+            use: local.command
+            with:
+              command: "printf {{ vars.app_port }} {{ vars.role }} {{ secrets.token }}"
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        """
+servers:
+  web01:
+    host: 127.0.0.1
+    groups: [web]
+    vars:
+      role: frontend
+""",
+    )
+    secrets_file = write(tmp_path / "secrets.yaml", "secrets:\n  token: super-secret\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "vars",
+            "render",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--secrets",
+            str(secrets_file),
+            "--var",
+            "app_port=9090",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Job: vars-render" in result.output
+    assert "Target web01 127.0.0.1:22 groups=web" in result.output
+    assert "app_port: \"9090\"" in result.output
+    assert "role: \"frontend\"" in result.output
+    assert "token: ***" in result.output
+    assert "task.deploy:step.render:substep.command local.command" in result.output
+    assert "super-secret" not in result.output
+
+
+def test_vars_render_json_masks_secret_values(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: vars-render-json
+tasks:
+  - id: deploy
+    targets: all
+    steps:
+      - id: render
+        substeps:
+          - id: command
+            use: local.command
+            with:
+              command: "printf {{ secrets.token }}"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+    secrets_file = write(tmp_path / "secrets.yaml", "secrets:\n  token: super-secret\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "vars",
+            "render",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--secrets",
+            str(secrets_file),
+            "--format",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["targets"][0]["secrets"] == {"token": "***"}
+    assert "super-secret" not in result.output

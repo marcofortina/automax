@@ -170,3 +170,14 @@ other users. Use `chmod 600` on private keys instead of disabling the check.
 
 Secrets resolved from `env` or `file` are masked before stdout, stderr, messages
 and plugin result data are persisted to the SQLite run state.
+
+## Job-scoped variable rendering
+
+Use `automax vars render` to inspect the final target-specific variable context
+used by a selected job plan. The command applies the same `--limit`, `--exclude`,
+`--tags`, `--skip-tags`, `--vars`, `--secrets` and `--var` inputs as
+`automax run`, and masks secret values before printing text or JSON output.
+
+```bash
+automax vars render --job jobs/deploy.yaml --inventory inventory/prod.yaml --vars vars/prod.yaml --secrets secrets/prod.yaml --limit web01
+```
