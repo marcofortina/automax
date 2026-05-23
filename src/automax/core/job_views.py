@@ -227,3 +227,37 @@ def _graph_id(value: str) -> str:
 
 def _mermaid_label(value: str) -> str:
     return str(value).replace('"', "'").replace("[", "(").replace("]", ")")
+
+
+def render_runbook_markdown(view: Dict[str, Any]) -> str:
+    """Render a Markdown runbook from a resolved plan."""
+    lines = [f"# {view['job']['name']} runbook", ""]
+    if view["job"].get("description"):
+        lines.extend([view["job"]["description"], ""])
+    lines.extend(["## Targets", ""])
+    lines.extend(_markdown_bullets(f"`{target['name']}` ({target['host']})" for target in view["targets"]))
+    lines.extend(["", "## Execution flow", ""])
+    for task in view["tasks"]:
+        lines.extend([f"### Task `{task['id']}`", "", f"Targets: {_target_names(task['targets'])}", ""])
+        if task.get("description"):
+            lines.extend([task["description"], ""])
+        for step in task["steps"]:
+            ssh_text = "opens a new SSH connection per target" if step["opens_ssh"] else "runs on the controller"
+            lines.extend([f"#### Step `{step['id']}`", "", f"This step {ssh_text}.", ""])
+            if step.get("description"):
+                lines.extend([step["description"], ""])
+            for index, substep in enumerate(step["substeps"], start=1):
+                lines.append(
+                    f"{index}. `{substep['id']}` uses `{substep['plugin']}` "
+                    f"on {_target_names(substep['targets'])}. Resume checkpoint: `{substep['checkpoint']}`."
+                )
+            lines.append("")
+    lines.extend(["## Resume checkpoints", ""])
+    lines.extend(_markdown_bullets(f"`{point}`" for point in view["resume_points"]))
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _markdown_bullets(items: Iterable[str]) -> List[str]:
+    values = list(items)
+    return [f"- {item}" for item in values] if values else ["- none"]

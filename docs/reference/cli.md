@@ -131,3 +131,11 @@ automax graph --job jobs/deploy.yaml --inventory inventory/prod.yaml --format=me
 automax graph --job jobs/deploy.yaml --inventory inventory/prod.yaml --format=svg --output /tmp/job.svg
 automax graph --job jobs/deploy.yaml --inventory inventory/prod.yaml --format=png --output /tmp/job.png
 ```
+
+## Runbook export
+
+Export a Markdown runbook from a resolved job:
+
+```bash
+automax runbook export --job jobs/deploy.yaml --inventory inventory/prod.yaml --output /tmp/runbook.md
+```

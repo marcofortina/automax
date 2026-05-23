@@ -1936,3 +1936,37 @@ tasks:
     )
     assert svg.exit_code == 0, svg.output
     assert svg_path.read_text(encoding="utf-8").startswith("<svg")
+
+
+def test_cli_runbook_export_writes_markdown(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: runbook-smoke
+tasks:
+  - id: deploy
+    targets: all
+    steps:
+      - id: prepare
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: "true"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+    runbook_path = tmp_path / "runbook.md"
+
+    result = CliRunner().invoke(
+        cli,
+        ["runbook", "export", "--job", str(job), "--inventory", str(inventory), "--output", str(runbook_path)],
+    )
+
+    assert result.exit_code == 0, result.output
+    content = runbook_path.read_text(encoding="utf-8")
+    assert "# runbook-smoke runbook" in content
+    assert "Resume checkpoint: `task.deploy:step.prepare:substep.echo`" in content
