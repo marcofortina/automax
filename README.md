@@ -16,6 +16,22 @@ Operational definitions are external to the Python sources:
 - secrets YAML
 - optional external plugins
 
+
+## Documentation site
+
+The GitHub Pages site is the full public manual, not just a README mirror. It
+includes quickstarts, concepts, guides, CLI reference, security notes, state and
+resume documentation, artifacts and the generated builtin plugin reference.
+
+Build it locally with:
+
+```bash
+NO_MKDOCS_2_WARNING=1 mkdocs build --strict
+```
+
+Start from `docs/index.md` or browse the published site configured in
+`mkdocs.yml`.
+
 ## Core model
 
 ```text

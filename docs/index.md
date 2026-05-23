@@ -5,10 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Automax
 
-Automax is a Python, YAML-driven SSH automation engine for external job files,
-external inventories and resumable infrastructure workflows.
+Automax is a Python, YAML-driven SSH automation engine for operators who need
+repeatable infrastructure jobs without embedding operational data inside the
+application source tree.
 
-It uses a strict execution model:
+It runs external job definitions against external inventories, stores every run
+in a resumable state directory, and exposes automation through small builtin or
+external plugins.
 
 ```text
 Job
@@ -17,108 +20,73 @@ Job
       Substep[]
 ```
 
-Each step opens one fresh SSH connection per target host and reuses that
-connection for all substeps in the step. Runtime context is carried by Automax
-through variables, registered outputs, step-local state and the SQLite run state
-store, not by relying on a persistent shell session.
+## Why Automax
 
-## Install
+Automax is built around a few strict choices:
 
-Runtime dependencies are intentionally small:
+- **External operations**: jobs, inventories, variables and secrets are passed by
+  path from the CLI.
+- **SSH-first execution**: a step opens one fresh SSH connection per target and
+  runs all matching substeps through that connection.
+- **Resumable runs**: every execution gets a run id, SQLite state, failed-node
+  tracking, artifacts and ready-to-copy resume commands.
+- **Explicit plugins**: builtin plugin names are canonical and inspectable with
+  `automax plugins list` and `automax plugins describe`.
+- **Security-conscious defaults**: SSH host keys are rejected by default unless a
+  lab inventory explicitly opts into insecure behavior.
 
-```bash
-pip install -e .
-```
+## Start here
 
-Database drivers are optional except SQLite, which is built into Python:
+For a complete first run, use the [Quickstart](quickstart.md).
 
-```bash
-pip install -e '.[postgres]'
-pip install -e '.[mysql]'
-pip install -e '.[oracle]'
-pip install -e '.[database]'
-```
+For installation and local development setup, use
+[Installation](guides/installation.md).
 
-## Quick start
+For a first real SSH job against a remote host, use
+[First SSH job](guides/first-ssh-job.md).
 
-Validate a job:
+## What the public documentation covers
+
+| Area | Page |
+|---|---|
+| Install and validate the tool | [Installation](guides/installation.md) |
+| Run the first local smoke job | [Quickstart](quickstart.md) |
+| Write job YAML | [Writing jobs](guides/writing-jobs.md) |
+| Understand task/step/substep execution | [Execution model](concepts/execution-model.md) |
+| Configure inventory, vars and secrets | [Inventory, variables and secrets](reference/inventory-vars-secrets.md) |
+| Resume failed jobs | [State store and resume](reference/state-and-resume.md) |
+| Inspect captured files and outputs | [Artifacts](reference/artifacts.md) |
+| Inspect every CLI command | [CLI reference](reference/cli.md) |
+| Review SSH and secret handling | [Security reference](reference/security.md) |
+| Browse builtin macros | [Builtin plugins](plugins/index.md) |
+| Validate a real SSH runtime | [Extended SSH smoke](guides/ssh-smoke.md) |
+
+## Minimal local smoke
 
 ```bash
 python -m automax validate \
   --job examples/next/jobs/local-smoke.yaml \
   --inventory examples/next/inventory/local.yaml
-```
 
-Show the execution plan:
-
-```bash
-python -m automax plan \
+python -m automax run \
   --job examples/next/jobs/local-smoke.yaml \
   --inventory examples/next/inventory/local.yaml
 ```
 
-Run a job:
+Inspect the run:
 
 ```bash
-automax run \
-  --job /srv/automax/jobs/deploy.yaml \
-  --inventory /srv/automax/inventory/prod.yaml \
-  --vars /srv/automax/vars/prod.yaml \
-  --secrets /srv/automax/secrets/prod.yaml \
-  --state-dir /var/lib/automax/runs
+automax runs list
+automax runs show <run-id>
 ```
 
-Resume a failed run:
-
-```bash
-automax resume <run-id> --state-dir /var/lib/automax/runs
-```
-
-Resume from a specific checkpoint:
-
-```bash
-automax resume <run-id> \
-  --state-dir /var/lib/automax/runs \
-  --from task.install:step.packages:substep.install_nginx
-```
-
-## External operational files
-
-Automax does not require jobs, inventories, variables or secrets to live inside
-this repository. They are passed explicitly to the CLI:
-
-```text
---job        /path/to/job.yaml
---inventory  /path/to/inventory.yaml
---vars       /path/to/vars.yaml
---secrets    /path/to/secrets.yaml
---state-dir  /path/to/run-state
-```
-
-See the reference pages for the exact formats:
-
-- [Job DSL](reference/job-dsl.md)
-- [Inventory, variables and secrets](reference/inventory-vars-secrets.md)
-- [State store and resume](reference/state-and-resume.md)
-
-## Plugin manuals
-
-Builtin plugin names are canonical only. The current builtins are documented by
-category under [Builtin plugins](plugins/index.md):
-
-- commands
-- filesystem
-- archive
-- package manager
-- systemctl
-- users, groups and processes
-- transfer
-- HTTP/API
-- wait/assert
-- database
-
-Use the CLI to inspect the registry installed in the current environment:
+## Plugin discovery
 
 ```bash
 automax plugins list
+automax plugins describe fs.template
+automax docs generate-plugins --output docs/plugins/generated.md
 ```
+
+The generated reference is published under
+[Generated plugin reference](plugins/generated.md).

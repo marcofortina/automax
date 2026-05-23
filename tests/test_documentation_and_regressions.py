@@ -460,3 +460,35 @@ def test_artifacts_reference_is_documented_in_nav():
 
     assert "reference/artifacts.md" in mkdocs
     assert "automax artifacts list <run-id>" in docs
+
+
+
+def test_publishable_pages_include_operator_manuals():
+    mkdocs = Path("mkdocs.yml").read_text(encoding="utf-8")
+    required_pages = [
+        "quickstart.md",
+        "concepts/architecture.md",
+        "concepts/execution-model.md",
+        "concepts/plugin-system.md",
+        "guides/installation.md",
+        "guides/first-local-job.md",
+        "guides/first-ssh-job.md",
+        "guides/writing-jobs.md",
+        "reference/cli.md",
+        "reference/security.md",
+        "reference/testing-and-ci.md",
+        "plugins/generated.md",
+    ]
+    for page in required_pages:
+        assert page in mkdocs
+        assert Path("docs", page).exists()
+
+
+def test_documentation_home_is_a_landing_page_not_readme_clone():
+    home = Path("docs/index.md").read_text(encoding="utf-8")
+
+    assert "## Why Automax" in home
+    assert "## Start here" in home
+    assert "## What the public documentation covers" in home
+    assert "[Quickstart](quickstart.md)" in home
+    assert "[Builtin plugins](plugins/index.md)" in home

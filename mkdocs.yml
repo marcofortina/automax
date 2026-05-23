@@ -15,6 +15,8 @@ theme:
   name: material
   features:
     - navigation.sections
+    - navigation.expand
+    - navigation.top
     - search.suggest
     - search.highlight
   palette:
@@ -22,6 +24,7 @@ theme:
     accent: blue
 
 plugins:
+  - search
   - mkdocstrings:
       default_handler: python
       handlers:
@@ -34,23 +37,32 @@ plugins:
 
 nav:
   - Home: index.md
-  - Design: NEXT_DESIGN.md
-  - Contributing: CONTRIBUTING.md
-  - Developer Notes: DEVELOPER-NOTES.md
+  - Quickstart: quickstart.md
+  - Concepts:
+    - Architecture: concepts/architecture.md
+    - Execution Model: concepts/execution-model.md
+    - Plugin System: concepts/plugin-system.md
   - Guides:
-    - Creating Plugins: guides/creating-plugins.md
+    - Installation: guides/installation.md
+    - First Local Job: guides/first-local-job.md
+    - First SSH Job: guides/first-ssh-job.md
+    - Writing Jobs: guides/writing-jobs.md
     - Templating: guides/templating.md
     - Template Workflows: guides/template-workflows.md
+    - Creating Plugins: guides/creating-plugins.md
+    - Extended SSH Smoke: guides/ssh-smoke.md
     - Publishing Documentation: guides/publishing-docs.md
-    - SSH Smoke: guides/ssh-smoke.md
   - Reference:
+    - CLI: reference/cli.md
     - Job DSL: reference/job-dsl.md
     - Inventory, Vars and Secrets: reference/inventory-vars-secrets.md
     - State and Resume: reference/state-and-resume.md
     - Artifacts: reference/artifacts.md
+    - Security: reference/security.md
+    - Testing and CI: reference/testing-and-ci.md
     - Python API: reference/api.md
   - Plugins:
-    - Builtin Plugins: plugins/index.md
+    - Overview: plugins/index.md
     - Generated Reference: plugins/generated.md
     - Commands: plugins/commands.md
     - Filesystem: plugins/filesystem.md
@@ -62,6 +74,10 @@ nav:
     - HTTP/API: plugins/http-api.md
     - Wait and Assert: plugins/wait-assert.md
     - Database: plugins/database.md
+  - Project:
+    - Design: NEXT_DESIGN.md
+    - Developer Notes: DEVELOPER-NOTES.md
+    - Contributing: CONTRIBUTING.md
 
 markdown_extensions:
   - admonition
