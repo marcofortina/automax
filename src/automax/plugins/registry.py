@@ -93,6 +93,15 @@ class PluginRegistry:
 
 def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegistry:
     """Create a registry with builtin plugins and optional external plugins."""
+    from automax.plugins.block import (
+        BlockFactsPlugin,
+        BlockIdentityPlugin,
+        BlockMkfsPlugin,
+        BlockPartitionPlugin,
+        BlockPartitionRescanPlugin,
+        BlockRescanPlugin,
+        BlockWipeSignaturesPlugin,
+    )
     from automax.plugins.archive import (
         ArchiveCompressPlugin,
         ArchiveDecompressPlugin,
@@ -333,6 +342,13 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsFindPlugin(),
         FsChownPlugin(),
         FsChmodPlugin(),
+        BlockFactsPlugin(),
+        BlockIdentityPlugin(),
+        BlockRescanPlugin(),
+        BlockPartitionRescanPlugin(),
+        BlockPartitionPlugin(),
+        BlockWipeSignaturesPlugin(),
+        BlockMkfsPlugin(),
         ArchiveTarPlugin(),
         ArchiveUntarPlugin(),
         ArchiveCompressPlugin(),
