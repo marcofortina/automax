@@ -1421,3 +1421,41 @@ tasks:
     assert payload["targets_total"] == 1
     assert payload["status_counts"]["success"] == 1
     assert payload["nodes"][0]["target"] == "controller"
+
+
+def test_builtin_plugin_metadata_is_complete():
+    from automax.plugins.registry import build_builtin_registry
+
+    registry = build_builtin_registry()
+    assert registry.names()
+    for plugin in registry.describe_all():
+        assert plugin["description"].strip(), plugin["name"]
+        assert plugin["examples"], plugin["name"]
+        assert plugin["result_fields"], plugin["name"]
+        parameter_names = [parameter["name"] for parameter in plugin["parameters"]]
+        assert parameter_names == list(plugin["required_params"]) + list(plugin["optional_params"])
+        for parameter in plugin["parameters"]:
+            assert parameter["type"] != "any", (plugin["name"], parameter)
+            assert parameter["description"].strip(), (plugin["name"], parameter)
+            assert parameter["description"].strip() != "-", (plugin["name"], parameter)
+
+
+def test_generated_plugin_reference_is_in_sync():
+    from automax.core.plugin_docs import render_plugin_reference
+    from automax.plugins.registry import build_builtin_registry
+
+    expected = render_plugin_reference(build_builtin_registry().describe_all())
+    generated = Path("docs/plugins/generated.md").read_text(encoding="utf-8")
+
+    assert generated == expected
+    assert "`any`" not in generated
+    assert "| - |" not in generated
+
+
+def test_plugins_describe_uses_complete_metadata():
+    result = CliRunner().invoke(cli, ["plugins", "describe", "archive.tar"])
+
+    assert result.exit_code == 0, result.output
+    assert "source (required, path): Remote source path to archive." in result.output
+    assert "Result fields:" in result.output
+    assert "Examples:" in result.output

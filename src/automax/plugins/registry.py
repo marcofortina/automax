@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Dict, Iterable
 
 from automax.plugins.base import BasePlugin
+from automax.plugins.metadata import apply_builtin_metadata
 
 
 class PluginRegistryError(ValueError):
@@ -244,6 +245,6 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SystemctlUnmaskPlugin(),
         SystemctlDaemonReloadPlugin(),
     ):
-        registry.register(plugin)
+        registry.register(apply_builtin_metadata(plugin))
     registry.load_from_paths(extra_plugin_paths)
     return registry
