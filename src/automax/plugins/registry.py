@@ -149,6 +149,15 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         WaitProcessPlugin,
         WaitTcpPlugin,
     )
+    from automax.plugins.kernel import (
+        KernelModuleLoadPlugin,
+        KernelModulePersistPlugin,
+        KernelModuleUnloadPlugin,
+        SysctlGetPlugin,
+        SysctlPersistPlugin,
+        SysctlReloadPlugin,
+        SysctlSetPlugin,
+    )
     from automax.plugins.local_command import LocalCommandPlugin
     from automax.plugins.pkg import (
         PackageInstallPlugin,
@@ -226,6 +235,13 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         UfwDisablePlugin(),
         NftablesValidatePlugin(),
         NftablesApplyPlugin(),
+        SysctlGetPlugin(),
+        SysctlSetPlugin(),
+        SysctlPersistPlugin(),
+        SysctlReloadPlugin(),
+        KernelModuleLoadPlugin(),
+        KernelModuleUnloadPlugin(),
+        KernelModulePersistPlugin(),
         RemoteCommandPlugin(),
         PackageInstallPlugin(),
         PackageRemovePlugin(),

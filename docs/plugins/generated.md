@@ -1413,6 +1413,106 @@ with:
   url: https://example.invalid/health
 ```
 
+## kernel
+
+### `kernel.module.load`
+
+Load a Linux kernel module and optionally persist it.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: kernel.module.load
+with:
+  name: br_netfilter
+  persist: true
+  sudo: true
+```
+
+### `kernel.module.persist`
+
+Persist a Linux kernel module for loading at boot.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: kernel.module.persist
+with:
+  name: nginx
+```
+
+### `kernel.module.unload`
+
+Unload a Linux kernel module and optionally remove persisted entries.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: kernel.module.unload
+with:
+  name: nginx
+```
+
 ## local
 
 ### `local.command`
@@ -1874,6 +1974,145 @@ with:
   name: deploy-myapp
   content: 'deploy ALL=(root) NOPASSWD: /bin/systemctl restart myapp'
   validate: true
+  sudo: true
+```
+
+## sysctl
+
+### `sysctl.get`
+
+Read a Linux sysctl value.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.name`: sysctl name.
+- `data.value`: Current sysctl value.
+
+Example:
+
+```yaml
+use: sysctl.get
+with:
+  name: nginx
+```
+
+### `sysctl.persist`
+
+Persist a Linux sysctl value without applying it immediately.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `value` | yes | `string` |  | Desired parameter value. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: sysctl.persist
+with:
+  name: nginx
+  value: 1
+```
+
+### `sysctl.reload`
+
+Reload Linux sysctl settings from a file or all configured files.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `file` | no | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: sysctl.reload
+with:
+  file: /etc/sysctl.d/99-automax.conf
+  sudo: true
+```
+
+### `sysctl.set`
+
+Set a Linux sysctl value at runtime and/or persistently.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `value` | yes | `string` |  | Desired parameter value. |
+| `runtime` | no | `boolean` | `True` | Apply the change to the running system. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.name`: sysctl name.
+- `data.value`: Desired sysctl value.
+
+Example:
+
+```yaml
+use: sysctl.set
+with:
+  name: net.ipv4.ip_forward
+  value: '1'
+  runtime: true
+  persist: true
+  file: /etc/sysctl.d/99-automax.conf
   sudo: true
 ```
 

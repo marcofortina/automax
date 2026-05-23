@@ -57,6 +57,9 @@ group.remove
 http.assert
 http.request
 http.wait
+kernel.module.load
+kernel.module.persist
+kernel.module.unload
 local.command
 nftables.apply
 nftables.validate
@@ -70,6 +73,10 @@ process.wait
 remote.command
 ssh.authorized_key
 sudoers.dropin
+sysctl.get
+sysctl.persist
+sysctl.reload
+sysctl.set
 systemctl.daemon_reload
 systemctl.disable
 systemctl.enable
