@@ -139,6 +139,10 @@ job shape.
 ```
 
 The backup is created only when the replacement actually changes the file.
+`automax plan --diff` cannot read the remote file during planning, so
+`fs.replace` emits a deterministic replacement plan showing path, regex,
+replacement, count and backup target instead of pretending to know the final
+remote diff.
 
 ## Render manual recovery commands
 

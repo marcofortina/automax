@@ -103,6 +103,9 @@ class UdevReloadPlugin(BasePlugin):
     optional_params = ("sudo",)
     opens_remote_session = True
 
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "udev.reload reloads runtime udev rules and has no file diff preview"
+
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return [f"{_sudo(params)}udevadm control --reload-rules"]
 
@@ -117,6 +120,9 @@ class UdevTriggerPlugin(BasePlugin):
     required_params: tuple[str, ...] = ()
     optional_params = ("subsystem", "action", "udev_settle", "sudo")
     opens_remote_session = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "udev.trigger changes runtime udev device state and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         command = f"{_sudo(params)}udevadm trigger"
@@ -140,6 +146,9 @@ class UdevSettlePlugin(BasePlugin):
     required_params: tuple[str, ...] = ()
     optional_params = ("timeout",)
     opens_remote_session = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "udev.settle waits for runtime udev state and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         command = "udevadm settle"

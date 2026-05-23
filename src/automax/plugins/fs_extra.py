@@ -311,6 +311,32 @@ class FsReplacePlugin(BasePlugin):
             if not suffix:
                 raise PluginValidationError("fs.replace backup_suffix must not be empty")
 
+    def diff_preview(
+        self, params: Dict[str, Any], context: ExecutionContext
+    ) -> list[Dict[str, Any]]:
+        self.validate(params)
+        backup_target = params.get("backup_path") or (
+            str(params["path"]) + str(params.get("backup_suffix", ".bak"))
+            if bool(params.get("backup", False))
+            else "-"
+        )
+        desired = [
+            f"pattern: {params['pattern']}\n",
+            f"replacement: {params['replacement']}\n",
+            f"count: {params.get('count', 0)}\n",
+            f"backup: {bool(params.get('backup', False))}\n",
+            f"backup_target: {backup_target}\n",
+        ]
+        diff = "".join(
+            unified_diff(
+                ["remote file content\n"],
+                desired,
+                fromfile=f"{params['path']} (current)",
+                tofile=f"{params['path']} (replace plan)",
+            )
+        )
+        return [{"path": str(params["path"]), "diff": diff, "kind": "replace-plan"}]
+
     def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
         script = r'''
 import pathlib

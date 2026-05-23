@@ -40,6 +40,9 @@ class BlockFactsPlugin(BasePlugin):
     optional_params = ("devices", "multipath", "udev", "sudo")
     opens_remote_session = True
 
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "block.facts is a read-only facts collector and does not change files"
+
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         devices = _as_list(params.get("devices"))
         device_args = " ".join(quote(item) for item in devices)
@@ -72,6 +75,9 @@ class BlockIdentityPlugin(BasePlugin):
     optional_params = ("scsi_id_path", "sudo")
     opens_remote_session = True
 
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "block.identity is a read-only identity query and does not change files"
+
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         scsi_id = str(params.get("scsi_id_path", "/usr/lib/udev/scsi_id"))
@@ -96,6 +102,9 @@ class BlockRescanPlugin(BasePlugin):
     required_params: tuple[str, ...] = ()
     optional_params = ("device", "udev_settle", "multipath_reload", "sudo")
     opens_remote_session = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "block.rescan changes kernel device discovery state and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         sudo = _sudo(params)
@@ -128,6 +137,9 @@ class BlockPartitionRescanPlugin(BasePlugin):
     required_params = ("device",)
     optional_params = ("udev_settle", "sudo")
     opens_remote_session = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "block.partition_rescan asks the kernel to reread partition state and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)

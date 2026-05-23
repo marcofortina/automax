@@ -103,3 +103,10 @@ automax plan --check --job jobs/linux-preflight.yaml --inventory inventory/prod.
 automax plan --diff --job jobs/linux-preflight.yaml --inventory inventory/prod.yaml
 automax commands render --job jobs/linux-preflight.yaml --inventory inventory/prod.yaml --limit app1
 ```
+
+`plan --diff` now represents the whole selected job shape for these macros:
+file-backed operations emit deterministic unified diffs or structured state
+plans, while runtime-only/read-only operations emit explicit reasons. Examples
+include fstab plans for `swap.present` / `swap.absent`, PAM append plans for
+`pam.limits`, hostname and download plans, and runtime explanations for
+`block.rescan`, `udev.reload`, `multipath.reload` and `system.reboot`.

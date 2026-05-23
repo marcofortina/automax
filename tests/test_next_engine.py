@@ -3157,3 +3157,69 @@ def test_linux_ops_manual_commands_cover_resolver_env_download_and_sysctl():
     assert "curl -fL" in download[0]
     assert "wget -O" in download[0]
     assert SysctlReloadPlugin().manual_commands({"file": "/etc/sysctl.conf", "sudo": True}, context) == ["sudo -n sysctl -p /etc/sysctl.conf"]
+
+
+def test_linux_ops_diff_previews_cover_persistent_and_runtime_operations():
+    from automax.plugins.block import BlockFactsPlugin
+    from automax.plugins.fs_extra import FsReplacePlugin
+    from automax.plugins.linux_ops import (
+        DownloadFilePlugin,
+        HostnameSetPlugin,
+        PamLimitsPlugin,
+        SwapAbsentPlugin,
+        SwapPresentPlugin,
+    )
+    from automax.plugins.udev import UdevReloadPlugin
+
+    context = ExecutionContext(
+        run_id="test-run",
+        dry_run=True,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="node1", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+
+    swap_present = SwapPresentPlugin().diff_preview(
+        {"path": "/swapfile", "persist": True, "opts": "defaults"}, context
+    )[0]
+    assert swap_present["kind"] == "fstab-plan"
+    assert "+/swapfile none swap defaults 0 0" in swap_present["diff"]
+
+    swap_absent = SwapAbsentPlugin().diff_preview({"path": "/swapfile", "persist": True}, context)[0]
+    assert swap_absent["kind"] == "fstab-plan"
+    assert "entries with first field /swapfile removed" in swap_absent["diff"]
+
+    pam = PamLimitsPlugin().diff_preview({"files": ["/etc/pam.d/login"]}, context)[0]
+    assert pam["kind"] == "pam-plan"
+    assert "+session required pam_limits.so" in pam["diff"]
+
+    hostname = HostnameSetPlugin().diff_preview({"name": "app01.example.com"}, context)[0]
+    assert hostname["kind"] == "hostname-plan"
+    assert "+app01.example.com" in hostname["diff"]
+
+    download = DownloadFilePlugin().diff_preview(
+        {"url": "https://example.invalid/app.rpm", "dest": "/tmp/app.rpm"}, context
+    )[0]
+    assert download["kind"] == "download-plan"
+    assert "+url: https://example.invalid/app.rpm" in download["diff"]
+
+    replace = FsReplacePlugin().diff_preview(
+        {
+            "path": "/etc/app.conf",
+            "pattern": "^port=.*$",
+            "replacement": "port=8080",
+            "backup": True,
+        },
+        context,
+    )[0]
+    assert replace["kind"] == "replace-plan"
+    assert "+pattern: ^port=.*$" in replace["diff"]
+    assert "+backup_target: /etc/app.conf.bak" in replace["diff"]
+
+    assert "read-only facts collector" in BlockFactsPlugin().diff_preview_reason({}, context)
+    assert "runtime udev rules" in UdevReloadPlugin().diff_preview_reason({}, context)

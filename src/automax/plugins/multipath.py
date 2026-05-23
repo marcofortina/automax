@@ -23,6 +23,9 @@ class MultipathStatusPlugin(BasePlugin):
     optional_params = ("name", "expect_paths", "sudo")
     opens_remote_session = True
 
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "multipath.status is a read-only status/assertion plugin and does not change files"
+
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         name = f" {quote(params['name'])}" if params.get("name") else ""
         return [f"{_sudo(params)}multipath -ll{name}".rstrip()]
@@ -46,6 +49,9 @@ class MultipathReloadPlugin(BasePlugin):
     optional_params = ("sudo",)
     opens_remote_session = True
 
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "multipath.reload refreshes runtime multipath maps and has no file diff preview"
+
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return [f"{_sudo(params)}multipath -r"]
 
@@ -60,6 +66,9 @@ class MultipathFlushPlugin(BasePlugin):
     required_params = ("name",)
     optional_params = ("sudo",)
     opens_remote_session = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "multipath.flush changes runtime multipath maps and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)

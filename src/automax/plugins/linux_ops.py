@@ -26,6 +26,18 @@ def _lines_diff(path: str, desired: list[str], kind: str = "unified") -> list[Di
     return [{"path": path, "diff": diff, "kind": kind}]
 
 
+def _state_diff(path: str, current: str, desired: str, kind: str) -> list[Dict[str, Any]]:
+    diff = "".join(
+        unified_diff(
+            [current if current.endswith("\n") else current + "\n"],
+            [desired if desired.endswith("\n") else desired + "\n"],
+            fromfile=f"{path} (current)",
+            tofile=f"{path} (desired)",
+        )
+    )
+    return [{"path": path, "diff": diff, "kind": kind}]
+
+
 def _mapping(params: Dict[str, Any], key: str) -> dict[str, str]:
     raw = params.get(key, {}) or {}
     if not isinstance(raw, dict) or not raw:
@@ -39,6 +51,18 @@ class SwapPresentPlugin(BasePlugin):
     required_params = ("path",)
     optional_params = ("size", "persist", "opts", "backup", "backup_suffix", "sudo")
     opens_remote_session = True
+
+    def _fstab_line(self, params: Dict[str, Any]) -> str:
+        return f"{params['path']} none swap {params.get('opts', 'defaults')} 0 0"
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        self.validate(params)
+        if not bool(params.get("persist", False)):
+            return []
+        return _lines_diff("/etc/fstab", [self._fstab_line(params) + "\n"], "fstab-plan")
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "swap.present only changes runtime swap state unless persist=true"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -71,6 +95,20 @@ class SwapAbsentPlugin(BasePlugin):
     required_params = ("path",)
     optional_params = ("persist", "backup", "backup_suffix", "sudo")
     opens_remote_session = True
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        self.validate(params)
+        if not bool(params.get("persist", False)):
+            return []
+        return _state_diff(
+            "/etc/fstab",
+            f"entries with first field {params['path']}",
+            f"entries with first field {params['path']} removed",
+            "fstab-plan",
+        )
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "swap.absent only changes runtime swap state unless persist=true"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -134,10 +172,18 @@ class PamLimitsPlugin(BasePlugin):
     optional_params = ("files", "backup", "backup_suffix", "sudo")
     opens_remote_session = True
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+    def _files(self, params: Dict[str, Any]) -> list[str]:
         files = params.get("files") or ["/etc/pam.d/login", "/etc/pam.d/sshd", "/etc/pam.d/su"]
         if isinstance(files, str):
-            files = [files]
+            return [files]
+        return [str(path) for path in files]
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        line = "session required pam_limits.so\n"
+        return [_lines_diff(path, [line], "pam-plan")[0] for path in self._files(params)]
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        files = self._files(params)
         sudo = _sudo(params)
         commands = []
         line = "session required pam_limits.so"
@@ -197,6 +243,10 @@ class HostnameSetPlugin(BasePlugin):
     required_params = ("name",)
     optional_params = ("sudo",)
     opens_remote_session = True
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        self.validate(params)
+        return _state_diff("hostname", "current hostname", str(params["name"]), "hostname-plan")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -297,6 +347,9 @@ class ChronySourcesAssertPlugin(BasePlugin):
     optional_params = ("sudo",)
     opens_remote_session = True
 
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "chrony.sources_assert is a read-only assertion and does not change files"
+
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return ["chronyc tracking && chronyc sources -v"]
 
@@ -378,6 +431,9 @@ class SystemRebootPlugin(BasePlugin):
     optional_params = ("wait", "delay", "timeout", "connect_timeout", "sudo")
     opens_remote_session = True
 
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "system.reboot changes remote runtime state and has no file diff preview"
+
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         delay = int(params.get("delay", 3))
         return [f"({_sudo(params)}shutdown -r +0 'Automax requested reboot' >/dev/null 2>&1 &) && sleep {delay}"]
@@ -396,6 +452,17 @@ class DownloadFilePlugin(BasePlugin):
     required_params = ("url", "dest")
     optional_params = ("checksum", "force", "backup", "backup_suffix", "mode", "owner", "group", "sudo")
     opens_remote_session = True
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        self.validate(params)
+        desired = [
+            f"url: {params['url']}\n",
+            f"dest: {params['dest']}\n",
+            f"checksum: {params.get('checksum', '-')}\n",
+            f"backup: {bool(params.get('backup', True))}\n",
+            f"force: {bool(params.get('force', False))}\n",
+        ]
+        return _lines_diff(str(params["dest"]), desired, "download-plan")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
