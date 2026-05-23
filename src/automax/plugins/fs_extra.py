@@ -11,9 +11,8 @@ from difflib import unified_diff
 from pathlib import Path
 from typing import Any, Dict
 
-from jinja2 import StrictUndefined, Template
-
 from automax.core.models import ExecutionContext, PluginResult
+from automax.core.templating import render_template_string
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.file_utils import install_uploaded_file, upload_text_to_temp
 from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, quote, result_from_remote
@@ -36,22 +35,25 @@ def _render_template_content(params: Dict[str, Any], context: ExecutionContext) 
     template_path = Path(str(params["src"])).expanduser()
     if not template_path.is_file():
         raise FileNotFoundError(f"template not found: {template_path}")
-    template = Template(template_path.read_text(encoding=encoding), undefined=StrictUndefined)
+    template_source = template_path.read_text(encoding=encoding)
     values = params.get("values", {}) or {}
     if not isinstance(values, dict):
         raise PluginValidationError("fs.template values must be a mapping")
-    rendered = template.render(
-        job=context.job,
-        task=context.task,
-        step=context.step,
-        substep=context.substep,
-        target=context.target,
-        server=context.target,
-        vars=context.vars,
-        outputs=context.outputs,
-        secrets=context.secrets,
-        step_state=context.step_state,
-        values=values,
+    rendered = render_template_string(
+        template_source,
+        {
+            "job": context.job,
+            "task": context.task,
+            "step": context.step,
+            "substep": context.substep,
+            "target": context.target,
+            "server": context.target,
+            "vars": context.vars,
+            "outputs": context.outputs,
+            "secrets": context.secrets,
+            "step_state": context.step_state,
+            "values": values,
+        },
     )
     return str(template_path), rendered
 

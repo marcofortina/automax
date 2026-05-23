@@ -16,7 +16,7 @@ from automax.core.engine import AutomaxEngine
 from automax.core.models import ExecutionContext, Target
 from automax.core.state import StateStore
 from automax.plugins.base import PluginValidationError
-from automax.plugins.fs_extra import FsSymlinkCreatePlugin, FsSymlinkRemovePlugin
+import automax.plugins.fs_extra as fs_extra
 
 
 def write(path: Path, content: str) -> Path:
@@ -445,8 +445,6 @@ def test_symlink_plugins_are_conservative_and_canonical(monkeypatch):
         commands.append(command)
         return 0, "__AUTOMAX_CHANGED__\n", ""
 
-    import automax.plugins.fs_extra as fs_extra
-
     monkeypatch.setattr(fs_extra, "exec_remote", fake_exec_remote)
     context = ExecutionContext(
         run_id="run-1",
@@ -461,11 +459,11 @@ def test_symlink_plugins_are_conservative_and_canonical(monkeypatch):
         secrets={},
     )
 
-    create_result = FsSymlinkCreatePlugin().execute(
+    create_result = fs_extra.FsSymlinkCreatePlugin().execute(
         {"src": "/opt/app/releases/1", "dest": "/opt/app/current", "force": True},
         context,
     )
-    remove_result = FsSymlinkRemovePlugin().execute(
+    remove_result = fs_extra.FsSymlinkRemovePlugin().execute(
         {"path": "/opt/app/current"},
         context,
     )
@@ -478,9 +476,9 @@ def test_symlink_plugins_are_conservative_and_canonical(monkeypatch):
     assert "refusing to remove non-symlink path" in commands[1]
 
     with pytest.raises(PluginValidationError):
-        FsSymlinkCreatePlugin().validate({"src": "/tmp/source", "dest": "/"})
+        fs_extra.FsSymlinkCreatePlugin().validate({"src": "/tmp/source", "dest": "/"})
     with pytest.raises(PluginValidationError):
-        FsSymlinkRemovePlugin().validate({"path": "/"})
+        fs_extra.FsSymlinkRemovePlugin().validate({"path": "/"})
 
 
 def test_package_manager_plugins_are_registered():

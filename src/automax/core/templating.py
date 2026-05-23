@@ -10,22 +10,38 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, Dict
 
+from jinja2 import Environment
 from jinja2 import StrictUndefined
-from jinja2 import Template
 from jinja2 import UndefinedError
+from jinja2 import select_autoescape
 
 
 class TemplateRenderError(ValueError):
     """Raised when a template cannot be rendered."""
 
 
+_TEXT_TEMPLATE_ENV = Environment(
+    autoescape=select_autoescape(
+        enabled_extensions=("html", "htm", "xml"),
+        default_for_string=False,
+        default=False,
+    ),
+    undefined=StrictUndefined,
+)
+
+
+def render_template_string(template_source: str, context: Dict[str, Any]) -> str:
+    """Render a trusted text/config template with strict undefined variables."""
+    try:
+        return _TEXT_TEMPLATE_ENV.from_string(template_source).render(**context)
+    except UndefinedError as exc:
+        raise TemplateRenderError(str(exc)) from exc
+
+
 def render_value(value: Any, context: Dict[str, Any]) -> Any:
     """Render strings recursively while preserving non-string values."""
     if isinstance(value, str):
-        try:
-            return Template(value, undefined=StrictUndefined).render(**context)
-        except UndefinedError as exc:
-            raise TemplateRenderError(str(exc)) from exc
+        return render_template_string(value, context)
     if isinstance(value, list):
         return [render_value(item, context) for item in value]
     if isinstance(value, dict):

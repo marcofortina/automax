@@ -161,9 +161,9 @@ servers:
       strict_key_permissions: true
 ```
 
-`missing_host_key_policy: auto_add` is intentionally blocked unless the inventory
-also sets `allow_insecure_host_key_policy: true`. Use that only for disposable lab
-hosts, never for production.
+Unknown host keys are always rejected. Bootstrap lab hosts by collecting their
+host key into a dedicated `known_hosts` file first, then keep
+`missing_host_key_policy: reject`.
 
 Private key files are checked by default and must not be accessible by group or
 other users. Use `chmod 600` on private keys instead of disabling the check.

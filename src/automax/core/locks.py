@@ -83,7 +83,12 @@ class LockManager:
         try:
             lock.path.unlink()
         except FileNotFoundError:
-            pass
+            # Lock release is idempotent; the lock file may already be gone.
+            self._forget(lock)
+            return
+        self._forget(lock)
+
+    def _forget(self, lock: AcquiredLock) -> None:
         self._held = [item for item in self._held if item.path != lock.path]
 
     def release_all(self) -> None:

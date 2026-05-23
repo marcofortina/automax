@@ -45,7 +45,8 @@ def remote_remove_tmp(context: ExecutionContext, path: str) -> None:
     try:
         exec_remote(context, f"rm -f {quote(path)}")
     except Exception:
-        pass
+        # Cleanup must not hide the primary plugin result.
+        return
 
 
 def install_uploaded_file(

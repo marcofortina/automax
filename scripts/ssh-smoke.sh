@@ -13,6 +13,10 @@ STATE_DIR="${AUTOMAX_STATE_DIR:-/tmp/automax-ssh-smoke-runs}"
 WORK_DIR="${AUTOMAX_SMOKE_WORKDIR:-/tmp/automax-ssh-smoke}"
 PORT="${AUTOMAX_SSH_PORT:-22}"
 POLICY="${AUTOMAX_SSH_HOST_KEY_POLICY:-reject}"
+if [[ "${POLICY}" != "reject" ]]; then
+  echo "ERROR: AUTOMAX_SSH_HOST_KEY_POLICY must be reject; pre-populate known_hosts instead" >&2
+  exit 2
+fi
 KNOWN_HOSTS="${AUTOMAX_SSH_KNOWN_HOSTS:-}"
 KEY_FILE="${AUTOMAX_SSH_KEY_FILE:-}"
 PASSWORD="${AUTOMAX_SSH_PASSWORD:-}"

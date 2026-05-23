@@ -1086,14 +1086,16 @@ def export_schema_command(kind: str, output_format: str, output_path: str | None
     """Export the Automax YAML contract as JSON Schema."""
     if output_format != "json":
         raise click.ClickException(f"unsupported schema format: {output_format}")
-    payload = json.dumps(export_schema(kind), indent=2, sort_keys=True) + "\n"
+    schema_document = export_schema(kind)
     if output_path:
         output = Path(output_path)
         output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(payload, encoding="utf-8")
+        with output.open("w", encoding="utf-8") as handle:
+            json.dump(schema_document, handle, indent=2, sort_keys=True)
+            handle.write("\n")
         click.echo(f"Wrote {output}")
         return
-    click.echo(payload, nl=False)
+    click.echo(json.dumps(schema_document, indent=2, sort_keys=True) + "\n", nl=False)
 
 
 def cli_main() -> None:

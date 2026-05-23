@@ -79,22 +79,12 @@ class SshSessionManager:
 
     def _configure_host_key_policy(self, client: Any, target: Target, paramiko: Any) -> None:
         policy = str(target.ssh.get("missing_host_key_policy", "reject")).lower()
-        if policy not in {"reject", "warning", "auto_add"}:
+        if policy != "reject":
             raise SshError(
-                "missing_host_key_policy must be one of: reject, warning, auto_add"
+                "missing_host_key_policy must be 'reject'; configure known_hosts "
+                "or system host keys before connecting"
             )
-        if policy == "auto_add" and not self._coerce_bool(
-            target.ssh.get("allow_insecure_host_key_policy"), False
-        ):
-            raise SshError(
-                "auto_add host key policy requires allow_insecure_host_key_policy: true"
-            )
-        if policy == "auto_add":
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        elif policy == "warning":
-            client.set_missing_host_key_policy(paramiko.WarningPolicy())
-        else:
-            client.set_missing_host_key_policy(paramiko.RejectPolicy())
+        client.set_missing_host_key_policy(paramiko.RejectPolicy())
 
         known_hosts = target.ssh.get("known_hosts")
         if known_hosts:

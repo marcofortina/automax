@@ -15,15 +15,18 @@ ssh:
   missing_host_key_policy: reject
 ```
 
-Lab-only auto-add behavior must be explicit:
+Unknown host keys are rejected. For lab hosts, add the host key to a dedicated
+known-hosts file before running Automax:
+
+```bash
+ssh-keyscan -H lab01.example.com >> ~/.ssh/automax_known_hosts
+```
 
 ```yaml
 ssh:
-  missing_host_key_policy: auto_add
-  allow_insecure_host_key_policy: true
+  known_hosts: ~/.ssh/automax_known_hosts
+  missing_host_key_policy: reject
 ```
-
-Do not use that pattern for production inventories.
 
 ## Private key permissions
 
