@@ -13,7 +13,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.file_utils import install_uploaded_file, write_local_file
+from automax.plugins.file_utils import install_uploaded_file
 from automax.plugins.remote_utils import exec_remote, quote
 
 

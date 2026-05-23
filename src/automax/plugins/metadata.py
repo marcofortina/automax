@@ -11,7 +11,7 @@ that every builtin plugin exposes a complete, deterministic contract.
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from automax.plugins.base import BasePlugin
 

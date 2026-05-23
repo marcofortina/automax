@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, Iterable, List, Sequence
 
-from automax.core.models import ExecutionContext, PluginResult
+from automax.core.models import PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
 
 
