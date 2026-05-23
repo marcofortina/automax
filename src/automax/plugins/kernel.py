@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import posixpath
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
@@ -23,9 +24,12 @@ class SysctlGetPlugin(BasePlugin):
     optional_params = ("sudo",)
     opens_remote_session = True
 
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        rc, out, err = exec_remote(context, f"sysctl -n {quote(params['name'])}")
+        return [f"sysctl -n {quote(params['name'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="sysctl.get failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"name": params["name"], "value": out.strip()})
@@ -37,6 +41,29 @@ class SysctlSetPlugin(BasePlugin):
     required_params = ("name", "value")
     optional_params = ("runtime", "persist", "file", "sudo")
     opens_remote_session = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        runtime = bool(params.get("runtime", True))
+        persist = bool(params.get("persist", False))
+        if not runtime and not persist:
+            raise PluginValidationError("sysctl.set requires runtime=true and/or persist=true")
+        name = str(params["name"])
+        value = str(params["value"])
+        file_path = str(params.get("file", "/etc/sysctl.d/99-automax.conf"))
+        commands = []
+        if runtime:
+            commands.append(f"{_sudo(params)}sysctl -w {quote(name + '=' + value)}")
+        if persist:
+            pattern = "^" + name.replace(".", "\\.") + "[[:space:]]*="
+            replacement = name + " = " + value
+            commands.append(f"{_sudo(params)}mkdir -p {quote(posixpath.dirname(file_path))}")
+            commands.append(
+                f"if grep -Eq {quote(pattern)} {quote(file_path)} 2>/dev/null; then "
+                f"{_sudo(params)}sed -i {quote('s#' + pattern + '.*#' + replacement + '#')} {quote(file_path)}; "
+                f"else printf '%s\\n' {quote(replacement)} | {_sudo(params)}tee -a {quote(file_path)} >/dev/null; fi"
+            )
+        return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -90,6 +117,12 @@ class SysctlPersistPlugin(BasePlugin):
     optional_params = ("file", "sudo")
     opens_remote_session = True
 
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        rendered = dict(params)
+        rendered["runtime"] = False
+        rendered["persist"] = True
+        return SysctlSetPlugin().manual_commands(rendered, context)
+
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         params = dict(params)
         params["runtime"] = False
@@ -103,11 +136,13 @@ class SysctlReloadPlugin(BasePlugin):
     optional_params = ("file", "sudo")
     opens_remote_session = True
 
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         if params.get("file"):
-            command = f"{_sudo(params)}sysctl -p {quote(params['file'])} && echo {CHANGE_MARKER}"
-        else:
-            command = f"{_sudo(params)}sysctl --system && echo {CHANGE_MARKER}"
+            return [f"{_sudo(params)}sysctl -p {quote(params['file'])}"]
+        return [f"{_sudo(params)}sysctl --system"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        command = self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="sysctl.reload failed")
 
@@ -118,6 +153,15 @@ class KernelModuleLoadPlugin(BasePlugin):
     required_params = ("name",)
     optional_params = ("persist", "file", "sudo")
     opens_remote_session = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        module = str(params["name"])
+        commands = [f"{_sudo(params)}modprobe {quote(module)}"]
+        if bool(params.get("persist", False)):
+            file_path = str(params.get("file", f"/etc/modules-load.d/{module}.conf"))
+            commands.append(f"grep -Fx -- {quote(module)} {quote(file_path)} >/dev/null 2>&1 || printf '%s\\n' {quote(module)} | {_sudo(params)}tee -a {quote(file_path)} >/dev/null")
+        return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -156,6 +200,15 @@ class KernelModuleUnloadPlugin(BasePlugin):
     optional_params = ("persist", "file", "sudo")
     opens_remote_session = True
 
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        module = str(params["name"])
+        commands = [f"{_sudo(params)}modprobe -r {quote(module)}"]
+        if bool(params.get("persist", False)):
+            file_path = str(params.get("file", f"/etc/modules-load.d/{module}.conf"))
+            commands.append(f"test ! -e {quote(file_path)} || sed -i {quote('/^' + module + '$/d')} {quote(file_path)}")
+        return commands
+
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         module = str(params["name"])
@@ -193,6 +246,15 @@ class KernelModulePersistPlugin(BasePlugin):
     required_params = ("name",)
     optional_params = ("state", "file", "sudo")
     opens_remote_session = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        state = str(params.get("state", "present"))
+        module = str(params["name"])
+        file_path = str(params.get("file", f"/etc/modules-load.d/{module}.conf"))
+        if state == "present":
+            return [f"{_sudo(params)}mkdir -p {quote('/etc/modules-load.d')} && grep -Fx -- {quote(module)} {quote(file_path)} >/dev/null 2>&1 || printf '%s\\n' {quote(module)} | {_sudo(params)}tee -a {quote(file_path)} >/dev/null"]
+        return [f"test ! -e {quote(file_path)} || sed -i {quote('/^' + module + '$/d')} {quote(file_path)}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)

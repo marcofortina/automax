@@ -16,6 +16,7 @@ from urllib.request import Request, urlopen
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
+from automax.plugins.remote_utils import quote
 
 
 def _headers(params: Dict[str, Any]) -> Dict[str, str]:
@@ -115,6 +116,19 @@ class HttpRequestPlugin(BasePlugin):
         "status",
     )
     opens_remote_session = False
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        method = str(params.get("method", "GET" if "body" not in params and "json" not in params else "POST")).upper()
+        command = ["curl", "-i", "-X", quote(method)]
+        for key, value in _headers(params).items():
+            command.extend(["-H", quote(f"{key}: {value}")])
+        if "json" in params:
+            command.extend(["-H", quote("Content-Type: application/json"), "--data", quote(jsonlib.dumps(params["json"]))])
+        elif params.get("body") is not None:
+            command.extend(["--data", quote(params["body"])])
+        command.append(quote(params["url"]))
+        return [" ".join(command)]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
