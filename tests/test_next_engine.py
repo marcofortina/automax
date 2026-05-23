@@ -1900,3 +1900,39 @@ tasks:
     assert "Job: explain-smoke" in result.output
     assert "Task deploy" in result.output
     assert "task.deploy:step.prepare:substep.echo" in result.output
+
+
+def test_cli_graph_outputs_mermaid_and_svg(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: graph-smoke
+tasks:
+  - id: deploy
+    targets: all
+    steps:
+      - id: prepare
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: "true"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    mermaid = CliRunner().invoke(cli, ["graph", "--job", str(job), "--inventory", str(inventory)])
+    assert mermaid.exit_code == 0, mermaid.output
+    assert "flowchart TD" in mermaid.output
+    assert "local.command" in mermaid.output
+
+    svg_path = tmp_path / "job.svg"
+    svg = CliRunner().invoke(
+        cli,
+        ["graph", "--job", str(job), "--inventory", str(inventory), "--format", "svg", "--output", str(svg_path)],
+    )
+    assert svg.exit_code == 0, svg.output
+    assert svg_path.read_text(encoding="utf-8").startswith("<svg")

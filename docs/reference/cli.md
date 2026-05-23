@@ -121,3 +121,13 @@ Inspect a resolved job without creating run state:
 automax explain --job jobs/deploy.yaml --inventory inventory/prod.yaml
 automax explain --job jobs/deploy.yaml --inventory inventory/prod.yaml --format=json
 ```
+
+## Graph
+
+Render a resolved job graph:
+
+```bash
+automax graph --job jobs/deploy.yaml --inventory inventory/prod.yaml --format=mermaid
+automax graph --job jobs/deploy.yaml --inventory inventory/prod.yaml --format=svg --output /tmp/job.svg
+automax graph --job jobs/deploy.yaml --inventory inventory/prod.yaml --format=png --output /tmp/job.png
+```

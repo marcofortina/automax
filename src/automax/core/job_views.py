@@ -141,3 +141,89 @@ def _normalize_substep(substep: Dict[str, Any]) -> Dict[str, Any]:
 
 def _target_names(targets: Iterable[Dict[str, str]]) -> str:
     return ", ".join(target["name"] for target in targets) or "-"
+
+
+def render_mermaid(view: Dict[str, Any]) -> str:
+    """Render a Mermaid flowchart for a planned job."""
+    lines = ["flowchart TD"]
+    job_id = _graph_id("job")
+    lines.append(f"  {job_id}[{_mermaid_label(view['job']['name'])}]")
+    for task in view["tasks"]:
+        task_id = _graph_id(f"task_{task['id']}")
+        lines.append(f"  {job_id} --> {task_id}[Task: {_mermaid_label(task['id'])}]")
+        for step in task["steps"]:
+            step_id = _graph_id(f"step_{task['id']}_{step['id']}")
+            lines.append(f"  {task_id} --> {step_id}[Step: {_mermaid_label(step['id'])}]")
+            for substep in step["substeps"]:
+                substep_id = _graph_id(f"substep_{task['id']}_{step['id']}_{substep['id']}")
+                label = f"{_mermaid_label(substep['id'])}<br/>{_mermaid_label(substep['plugin'])}"
+                lines.append(f"  {step_id} --> {substep_id}[{label}]")
+    return "\n".join(lines) + "\n"
+
+
+def render_dot(view: Dict[str, Any]) -> str:
+    """Render a Graphviz DOT graph for a planned job."""
+    import json
+    lines = ["digraph automax_job {", "  rankdir=TB;", "  node [shape=box, style=rounded];"]
+    job_id = _graph_id("job")
+    lines.append(f"  {job_id} [label={json.dumps(view['job']['name'])}];")
+    for task in view["tasks"]:
+        task_id = _graph_id(f"task_{task['id']}")
+        lines.append(f"  {task_id} [label={json.dumps('Task: ' + task['id'])}];")
+        lines.append(f"  {job_id} -> {task_id};")
+        for step in task["steps"]:
+            step_id = _graph_id(f"step_{task['id']}_{step['id']}")
+            lines.append(f"  {step_id} [label={json.dumps('Step: ' + step['id'])}];")
+            lines.append(f"  {task_id} -> {step_id};")
+            for substep in step["substeps"]:
+                substep_id = _graph_id(f"substep_{task['id']}_{step['id']}_{substep['id']}")
+                label = f"{substep['id']}\n{substep['plugin']}"
+                lines.append(f"  {substep_id} [label={json.dumps(label)}];")
+                lines.append(f"  {step_id} -> {substep_id};")
+    lines.append("}")
+    return "\n".join(lines) + "\n"
+
+
+def render_svg(view: Dict[str, Any]) -> str:
+    """Render a dependency-free SVG graph."""
+    from html import escape
+    rows: List[tuple[int, str]] = [(0, view["job"]["name"])]
+    for task in view["tasks"]:
+        rows.append((1, f"Task: {task['id']}"))
+        for step in task["steps"]:
+            rows.append((2, f"Step: {step['id']}"))
+            for substep in step["substeps"]:
+                rows.append((3, f"{substep['id']} ({substep['plugin']})"))
+    width = 960
+    row_h = 58
+    height = max(120, 40 + row_h * len(rows))
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        '<style>text{font-family:Arial,sans-serif;font-size:14px}.box{fill:#eef7f7;stroke:#278080;stroke-width:1.5}.line{stroke:#777;stroke-width:1.2}</style>',
+    ]
+    prev_center: tuple[int, int] | None = None
+    for index, (level, label) in enumerate(rows):
+        x = 30 + level * 170
+        y = 25 + index * row_h
+        w = 250
+        h = 36
+        center = (x + w // 2, y + h // 2)
+        if prev_center is not None:
+            parts.append(f'<line class="line" x1="{prev_center[0]}" y1="{prev_center[1]}" x2="{center[0]}" y2="{center[1]}"/>')
+        parts.append(f'<rect class="box" x="{x}" y="{y}" rx="8" ry="8" width="{w}" height="{h}"/>')
+        parts.append(f'<text x="{x + 12}" y="{y + 23}">{escape(label[:42])}</text>')
+        prev_center = center
+    parts.append("</svg>\n")
+    return "\n".join(parts)
+
+
+def _graph_id(value: str) -> str:
+    import re
+    cleaned = re.sub(r"[^A-Za-z0-9_]", "_", value)
+    if not cleaned or cleaned[0].isdigit():
+        cleaned = f"n_{cleaned}"
+    return cleaned
+
+
+def _mermaid_label(value: str) -> str:
+    return str(value).replace('"', "'").replace("[", "(").replace("]", ")")

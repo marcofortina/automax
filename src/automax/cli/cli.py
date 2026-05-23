@@ -10,6 +10,7 @@ from __future__ import annotations
 import importlib.util
 import platform
 import shutil
+import subprocess
 import sys
 from typing import Any, Dict, Iterable
 from pathlib import Path
@@ -21,7 +22,7 @@ from automax import __version__
 from automax.core.engine import AutomaxEngine, AutomaxError
 from automax.core.plugin_docs import render_plugin_reference
 from automax.core.schema import export_schema
-from automax.core.job_views import render_explain_text
+from automax.core.job_views import render_dot, render_explain_text, render_mermaid, render_svg
 from automax.core.models import NodeStatus
 from automax.core.state import StateStore
 from automax.plugins.registry import build_builtin_registry
@@ -203,6 +204,69 @@ def explain(
         click.echo(json.dumps(view, indent=2, sort_keys=True))
         return
     click.echo(render_explain_text(view), nl=False)
+
+
+
+@cli.command()
+@_apply_common_options
+@click.option("--limit", multiple=True, help="Limit targets. Accepts server, group or group:name.")
+@click.option("--exclude", multiple=True, help="Exclude targets. Accepts server, group or group:name.")
+@click.option("--tags", multiple=True, help="Graph only substeps matching one of these tags.")
+@click.option("--skip-tags", multiple=True, help="Hide substeps matching one of these tags.")
+@click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option("--format", "output_format", type=click.Choice(["mermaid", "dot", "svg", "png"]), default="mermaid", show_default=True, help="Graph output format.")
+@click.option("--output", "output_path", type=click.Path(dir_okay=False), help="Output path. Defaults to stdout for text formats.")
+def graph(
+    job_path: str,
+    inventory_path: str,
+    vars_path: str | None,
+    secrets_path: str | None,
+    cli_vars: tuple[str, ...],
+    limit: tuple[str, ...],
+    exclude: tuple[str, ...],
+    tags: tuple[str, ...],
+    skip_tags: tuple[str, ...],
+    plugin_path: tuple[str, ...],
+    output_format: str,
+    output_path: str | None,
+) -> None:
+    """Render the resolved job flow as Mermaid, DOT, SVG or PNG."""
+    try:
+        view = _engine(plugin_path).inspect_job(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=_split_selectors(limit),
+            exclude=_split_selectors(exclude),
+            tags=_split_selectors(tags),
+            skip_tags=_split_selectors(skip_tags),
+            cli_vars=_parse_vars(cli_vars),
+        )
+    except (AutomaxError, ValueError, RuntimeError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    if output_format == "mermaid":
+        rendered = render_mermaid(view)
+    elif output_format == "dot":
+        rendered = render_dot(view)
+    elif output_format == "svg":
+        rendered = render_svg(view)
+    else:
+        dot = shutil.which("dot")
+        if not dot:
+            raise click.ClickException("PNG graph output requires Graphviz 'dot' in PATH")
+        if not output_path:
+            raise click.ClickException("--output is required for PNG graph output")
+        subprocess.run([dot, "-Tpng", "-o", output_path], input=render_dot(view), text=True, check=True)
+        click.echo(f"Wrote {output_path}")
+        return
+    if output_path:
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(rendered, encoding="utf-8")
+        click.echo(f"Wrote {output}")
+        return
+    click.echo(rendered, nl=False)
 
 
 @cli.command()

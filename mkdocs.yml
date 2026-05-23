@@ -51,6 +51,7 @@ nav:
     - Development Tooling: guides/development-tooling.md
     - Dynamic Inventory: guides/dynamic-inventory.md
     - Explain Jobs: guides/explain.md
+    - Graph Jobs: guides/graph.md
     - Command Secrets: guides/command-secrets.md
     - Writing Jobs: guides/writing-jobs.md
     - Templating: guides/templating.md
