@@ -2008,3 +2008,81 @@ tasks:
 
     assert result.exit_code != 0
     assert "lock already held" in result.output
+
+def test_retry_policy_retries_until_success_and_records_attempts(tmp_path: Path):
+    counter = tmp_path / "retry-count"
+    job = write(
+        tmp_path / "job.yaml",
+        f"""
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: retry-smoke
+tasks:
+  - id: retry
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: flaky
+            use: local.command
+            retry:
+              attempts: 3
+              delay: 0
+            with:
+              command: "python -c \\\"from pathlib import Path; p=Path(r'{counter}'); n=int(p.read_text() or '0') if p.exists() else 0; p.write_text(str(n+1)); raise SystemExit(0 if n >= 1 else 1)\\\""
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+    state_dir = tmp_path / "runs"
+
+    result = CliRunner().invoke(
+        cli,
+        ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(state_dir)],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "[RETRY] controller task.retry:step.local:substep.flaky attempt=1/3" in result.output
+    assert counter.read_text(encoding="utf-8") == "2"
+    run_id = _extract_run_id(result.output)
+    store = StateStore(state_dir, run_id)
+    nodes = store.list_nodes()
+    assert nodes[0]["output"]["data"]["attempt"] == 2
+    assert len(nodes[0]["output"]["data"]["attempts"]) == 2
+
+
+def test_retry_policy_respects_retry_on_rc(tmp_path: Path):
+    counter = tmp_path / "retry-count"
+    job = write(
+        tmp_path / "job.yaml",
+        f"""
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: retry-on-rc
+tasks:
+  - id: retry
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: no_retry
+            use: local.command
+            retry:
+              attempts: 3
+              delay: 0
+              retry_on_rc: [2]
+            with:
+              command: "python -c \\\"from pathlib import Path; p=Path(r'{counter}'); n=int(p.read_text() or '0') if p.exists() else 0; p.write_text(str(n+1)); raise SystemExit(1)\\\""
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(tmp_path / "runs")],
+    )
+
+    assert result.exit_code == 1, result.output
+    assert "[RETRY]" not in result.output
+    assert counter.read_text(encoding="utf-8") == "1"

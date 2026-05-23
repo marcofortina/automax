@@ -327,6 +327,7 @@ class AutomaxEngine:
                     "strategy",
                     "failurePolicy",
                     "timeouts",
+                    "retry",
                     "tags",
                     "tasks",
                 },
@@ -334,6 +335,7 @@ class AutomaxEngine:
         self._validate_strategy(job.get("strategy"), "job")
         self._validate_failure_policy(job.get("failurePolicy"), "job")
         self._validate_timeouts(job.get("timeouts"), "job")
+        self._validate_retry_policy(job.get("retry"), "job")
         tasks = job.get("tasks")
         if not isinstance(tasks, list) or not tasks:
             raise AutomaxError("job requires non-empty tasks list")
@@ -354,6 +356,7 @@ class AutomaxEngine:
                         "strategy",
                         "failurePolicy",
                         "timeouts",
+                        "retry",
                         "tags",
                         "steps",
                     },
@@ -361,6 +364,7 @@ class AutomaxEngine:
             self._validate_strategy(task.get("strategy"), f"task '{task_id}'")
             self._validate_failure_policy(task.get("failurePolicy"), f"task '{task_id}'")
             self._validate_timeouts(task.get("timeouts"), f"task '{task_id}'")
+            self._validate_retry_policy(task.get("retry"), f"task '{task_id}'")
             self._validate_tags(task.get("tags"), f"task '{task_id}'")
             if task_id in seen_tasks:
                 raise AutomaxError(f"duplicate task id: {task_id}")
@@ -384,6 +388,7 @@ class AutomaxEngine:
                             "strategy",
                             "failurePolicy",
                             "timeouts",
+                            "retry",
                             "tags",
                             "substeps",
                         },
@@ -391,6 +396,7 @@ class AutomaxEngine:
                 self._validate_strategy(step.get("strategy"), f"step '{task_id}:{step_id}'")
                 self._validate_failure_policy(step.get("failurePolicy"), f"step '{task_id}:{step_id}'")
                 self._validate_timeouts(step.get("timeouts"), f"step '{task_id}:{step_id}'")
+                self._validate_retry_policy(step.get("retry"), f"step '{task_id}:{step_id}'")
                 self._validate_tags(step.get("tags"), f"step '{task_id}:{step_id}'")
                 if step_id in seen_steps:
                     raise AutomaxError(f"duplicate step id in task '{task_id}': {step_id}")
@@ -414,6 +420,7 @@ class AutomaxEngine:
                                 "targets",
                                 "tags",
                                 "timeouts",
+                                "retry",
                                 "when",
                                 "use",
                                 "plugin",
@@ -429,6 +436,9 @@ class AutomaxEngine:
                     )
                     self._validate_timeouts(
                         substep.get("timeouts"), f"substep '{task_id}:{step_id}:{substep_id}'"
+                    )
+                    self._validate_retry_policy(
+                        substep.get("retry"), f"substep '{task_id}:{step_id}:{substep_id}'"
                     )
                     if substep_id in seen_substeps:
                         raise AutomaxError(
@@ -882,23 +892,23 @@ class AutomaxEngine:
                 step_id=step["id"],
                 substep_id=substep["id"],
             )
-            try:
-                result = self._execute_substep(
-                    job=job,
-                    task=task,
-                    step=step,
-                    substep=substep,
-                    target=target,
-                    run_id=run_id,
-                    dry_run=dry_run,
-                    variables=variables,
-                    secrets=secrets,
-                    outputs=outputs,
-                    ssh_client=ssh_client,
-                    step_state=step_state,
-                )
-            except Exception as exc:
-                result = PluginResult.failure(message=str(exc))
+            result = self._execute_substep_with_retry(
+                job=job,
+                task=task,
+                step=step,
+                substep=substep,
+                target=target,
+                node_id=node_id,
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+            )
 
             with self._output_lock:
                 self._register_outputs(outputs, node_id, target.name, substep, result)
@@ -937,6 +947,83 @@ class AutomaxEngine:
             if not result.ok:
                 return 1
         return 0
+
+    def _execute_substep_with_retry(
+        self,
+        *,
+        job: Dict[str, Any],
+        task: Dict[str, Any],
+        step: Dict[str, Any],
+        substep: Dict[str, Any],
+        target: Target,
+        node_id: str,
+        store: StateStore,
+        run_id: str,
+        dry_run: bool,
+        variables: Dict[str, Any],
+        secrets: Dict[str, Any],
+        outputs: Dict[str, Any],
+        ssh_client: Any,
+        step_state: Dict[str, Any],
+        output_format: str,
+    ) -> PluginResult:
+        """Execute one substep with inherited retry policy and visible retry events."""
+        policy = self._resolve_retry_policy(job, task, step, substep)
+        attempts = int(policy["attempts"])
+        attempt_records: list[Dict[str, Any]] = []
+        result = PluginResult.failure(message="substep did not execute")
+        for attempt in range(1, attempts + 1):
+            try:
+                result = self._execute_substep(
+                    job=job,
+                    task=task,
+                    step=step,
+                    substep=substep,
+                    target=target,
+                    run_id=run_id,
+                    dry_run=dry_run,
+                    variables=variables,
+                    secrets=secrets,
+                    outputs=outputs,
+                    ssh_client=ssh_client,
+                    step_state=step_state,
+                )
+            except Exception as exc:
+                result = PluginResult.failure(message=str(exc))
+            attempt_records.append(
+                {
+                    "attempt": attempt,
+                    "ok": result.ok,
+                    "rc": result.rc,
+                    "message": self._mask_text(result.message, secrets),
+                }
+            )
+            if result.ok or attempt >= attempts or not self._should_retry_result(result, policy):
+                break
+            delay = self._retry_delay(policy, attempt)
+            retry_payload = {
+                "attempt": attempt,
+                "next_attempt": attempt + 1,
+                "attempts": attempts,
+                "rc": result.rc,
+                "delay": delay,
+                "message": self._mask_text(result.message, secrets),
+            }
+            store.record_event("substep_retry", node_id=node_id, target=target.name, payload=retry_payload)
+            if output_format == "text":
+                with self._print_lock:
+                    print(
+                        f"[RETRY] {target.name} {node_id} attempt={attempt}/{attempts} "
+                        f"rc={result.rc} next={attempt + 1} delay={delay:g}s "
+                        f"{self._mask_text(result.message, secrets)}".rstrip()
+                    )
+            if delay > 0:
+                time.sleep(delay)
+        if attempt_records:
+            result.data = dict(result.data)
+            result.data["attempts"] = attempt_records
+            result.data["attempt"] = attempt_records[-1]["attempt"]
+        return result
 
     def _execute_substep(
         self,
@@ -1151,6 +1238,84 @@ class AutomaxEngine:
         secret_text = str(value)
         if len(secret_text) >= 4:
             yield secret_text
+
+    def _resolve_retry_policy(
+        self, job: Dict[str, Any], task: Dict[str, Any], step: Dict[str, Any], substep: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Resolve inherited retry policy for one substep."""
+        policy: Dict[str, Any] = {"attempts": 1, "delay": 0.0, "backoff": "fixed"}
+        for node in (job, task, step, substep):
+            raw = node.get("retry") or {}
+            if raw:
+                policy.update(raw)
+        self._validate_retry_policy(policy, "resolved retry")
+        policy["attempts"] = int(policy.get("attempts", 1) or 1)
+        policy["delay"] = float(policy.get("delay", 0) or 0)
+        if "max_delay" in policy:
+            policy["max_delay"] = float(policy["max_delay"])
+        if "maxDelay" in policy:
+            policy["maxDelay"] = float(policy["maxDelay"])
+        return policy
+
+    @staticmethod
+    def _should_retry_result(result: PluginResult, policy: Dict[str, Any]) -> bool:
+        """Return whether a failed result is eligible for another attempt."""
+        if result.ok:
+            return False
+        retry_on_rc = policy.get("retry_on_rc", policy.get("retryOnRc"))
+        if retry_on_rc is None:
+            return True
+        if isinstance(retry_on_rc, int):
+            allowed = {retry_on_rc}
+        else:
+            allowed = {int(value) for value in retry_on_rc}
+        return int(result.rc) in allowed
+
+    @staticmethod
+    def _retry_delay(policy: Dict[str, Any], attempt: int) -> float:
+        """Return delay before the next retry attempt."""
+        base = float(policy.get("delay", 0) or 0)
+        backoff = str(policy.get("backoff", "fixed"))
+        if backoff == "exponential" and base > 0:
+            delay = base * (2 ** max(0, attempt - 1))
+        else:
+            delay = base
+        max_delay = policy.get("max_delay", policy.get("maxDelay"))
+        if max_delay is not None:
+            delay = min(delay, float(max_delay))
+        return delay
+
+    @staticmethod
+    def _validate_retry_policy(retry: Any, label: str) -> None:
+        """Validate inherited retry policy mappings."""
+        if retry is None:
+            return
+        if not isinstance(retry, dict):
+            raise AutomaxError(f"{label} retry must be a mapping")
+        allowed = {"attempts", "delay", "backoff", "max_delay", "maxDelay", "retry_on_rc", "retryOnRc"}
+        unknown = sorted(set(retry) - allowed)
+        if unknown:
+            raise AutomaxError(
+                f"{label} retry unsupported keys: {', '.join(unknown)}. "
+                f"Allowed keys: {', '.join(sorted(allowed))}"
+            )
+        if int(retry.get("attempts", 1) or 1) < 1:
+            raise AutomaxError(f"{label} retry attempts must be >= 1")
+        if float(retry.get("delay", 0) or 0) < 0:
+            raise AutomaxError(f"{label} retry delay must be >= 0")
+        backoff = str(retry.get("backoff", "fixed"))
+        if backoff not in {"fixed", "exponential"}:
+            raise AutomaxError(f"{label} retry backoff must be fixed or exponential")
+        max_delay = retry.get("max_delay", retry.get("maxDelay"))
+        if max_delay is not None and float(max_delay) < 0:
+            raise AutomaxError(f"{label} retry max_delay must be >= 0")
+        retry_on_rc = retry.get("retry_on_rc", retry.get("retryOnRc"))
+        if retry_on_rc is not None:
+            values = [retry_on_rc] if isinstance(retry_on_rc, int) else retry_on_rc
+            if not isinstance(values, list) or not values:
+                raise AutomaxError(f"{label} retry retry_on_rc must be a non-empty list of integers")
+            for value in values:
+                int(value)
 
     def _target_with_step_timeouts(
         self, target: Target, job: Dict[str, Any], task: Dict[str, Any], step: Dict[str, Any]

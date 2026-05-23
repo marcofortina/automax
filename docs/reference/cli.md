@@ -148,3 +148,19 @@ Protect job and target concurrency with file-based locks:
 automax run --job jobs/deploy.yaml --inventory inventory/prod.yaml --lock
 automax resume <run-id> --lock --skip-successful
 ```
+
+## Retry policies
+
+Retry policies are declared in job YAML, not as CLI flags. They can be inherited
+from job, task or step level and overridden on a substep:
+
+```yaml
+retry:
+  attempts: 3
+  delay: 2
+  backoff: exponential
+  max_delay: 10
+```
+
+Text output prints `[RETRY]` lines for visible retry attempts before the final
+node result.
