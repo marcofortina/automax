@@ -13,28 +13,33 @@ Automax documentation is built with MkDocs and published to GitHub Pages from th
 Install documentation dependencies:
 
 ```bash
-pip install -e '.[docs]'
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e '.[docs]'
 ```
 
 Or install only the documentation toolchain:
 
 ```bash
-pip install -r requirements-docs.txt
+python -m pip install -r requirements-docs.txt
 ```
 
 Serve locally:
 
 ```bash
-mkdocs serve
+NO_MKDOCS_2_WARNING=1 mkdocs serve
 ```
 
 Strict build:
 
 ```bash
-mkdocs build --strict
+NO_MKDOCS_2_WARNING=1 mkdocs build --strict
 ```
 
 The strict build is the same validation used by CI and the GitHub Pages workflow.
+`NO_MKDOCS_2_WARNING=1` suppresses the informational Material for MkDocs
+MkDocs 2.0 warning so local and CI logs stay focused on actionable failures.
 
 ## GitHub Pages workflow
 

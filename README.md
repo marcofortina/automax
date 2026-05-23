@@ -219,16 +219,19 @@ automax run --job job.yaml --inventory inventory.yaml --plugin-path /opt/automax
 Build the documentation locally:
 
 ```bash
-pip install -e '.[docs]'
-mkdocs build --strict
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e '.[docs]'
+NO_MKDOCS_2_WARNING=1 mkdocs build --strict
 ```
 
 Alternatively, when the package is not installed in editable mode, install the
 documentation requirements explicitly before running MkDocs:
 
 ```bash
-pip install -r requirements-docs.txt
-mkdocs build --strict
+python -m pip install -r requirements-docs.txt
+NO_MKDOCS_2_WARNING=1 mkdocs build --strict
 ```
 
 GitHub Pages publishing is handled by `.github/workflows/docs.yml`. Configure the
