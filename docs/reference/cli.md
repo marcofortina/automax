@@ -39,6 +39,7 @@ File diff preview for supported file-oriented plugins:
 
 ```bash
 automax plan --diff --job job.yaml --inventory inventory.yaml
+automax plan --diff --job job.yaml --inventory inventory.yaml --format=json
 ```
 
 Machine-readable output:
@@ -143,6 +144,7 @@ be reproduced manually before restarting from a checkpoint:
 automax commands render --job job.yaml --inventory inventory.yaml
 automax commands render --job job.yaml --inventory inventory.yaml --limit web01 --tags install
 automax commands render --job job.yaml --inventory inventory.yaml --format=json
+# unavailable plugins are listed with an explicit reason instead of omitted
 ```
 
 ## SSH known_hosts scan

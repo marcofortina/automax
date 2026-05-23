@@ -686,8 +686,24 @@ class AutomaxEngine:
         )
         rows = []
         for item in self.iter_rendered_plan_items(resolved, dry_run=True):
-            previews = item["plugin"].diff_preview(item["params"], item["context"])
+            plugin = item["plugin"]
+            try:
+                previews = plugin.diff_preview(item["params"], item["context"])
+            except Exception as exc:  # pragma: no cover - defensive plugin boundary
+                previews = []
+                reason = str(exc)
+            else:
+                reason = plugin.diff_preview_reason(item["params"], item["context"])
             if not previews:
+                rows.append(
+                    {
+                        "target": item["target"].name,
+                        "node_id": item["node_id"],
+                        "plugin": item["plugin_name"],
+                        "available": False,
+                        "reason": self._mask_text(reason, resolved.secrets),
+                    }
+                )
                 continue
             for preview in previews:
                 row = dict(preview)
@@ -696,6 +712,7 @@ class AutomaxEngine:
                         "target": item["target"].name,
                         "node_id": item["node_id"],
                         "plugin": item["plugin_name"],
+                        "available": True,
                     }
                 )
                 if "diff" in row:
@@ -743,6 +760,10 @@ class AutomaxEngine:
                     "plugin": item["plugin_name"],
                     "commands": [self._mask_text(command, resolved.secrets) for command in commands],
                     "available": bool(commands),
+                    "reason": "" if commands else self._mask_text(
+                        item["plugin"].manual_commands_reason(item["params"], item["context"]),
+                        resolved.secrets,
+                    ),
                 }
             )
         return {

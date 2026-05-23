@@ -34,10 +34,7 @@ class FsChownPlugin(BasePlugin):
             data={"params": params},
         )
 
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        self.validate(params)
-        if context.dry_run:
-            return self.dry_run(params, context)
+    def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
         path = quote(params["path"])
         owner = params.get("owner")
         group = params.get("group")
@@ -54,7 +51,17 @@ class FsChownPlugin(BasePlugin):
             if group:
                 checks.append(f"test \"$(stat -c %G {path})\" = {quote(group)}")
             command = " && ".join(checks) + f" || {{ {chown_cmd} && echo {CHANGE_MARKER}; }}"
-        rc, out, err = exec_remote(context, apply_cwd(command, context, params.get("cwd")))
+        return apply_cwd(command, context, params.get("cwd"))
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [self._command(params, context)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        if context.dry_run:
+            return self.dry_run(params, context)
+        rc, out, err = exec_remote(context, self._command(params, context))
         return result_from_remote(
             rc=rc,
             stdout=out,

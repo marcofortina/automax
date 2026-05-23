@@ -2997,3 +2997,70 @@ def test_archive_compress_rejects_unknown_auto_suffix():
 
     with pytest.raises(PluginValidationError, match="compression auto"):
         ArchiveCompressPlugin().validate({"source": "/tmp/app.log", "dest": "/tmp/app.log.raw"})
+
+
+def test_plan_diff_json_lists_unavailable_plugins_with_reason(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: diff-all-nodes
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: stat
+            use: fs.stat
+            with:
+              path: /tmp/demo
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        ["plan", "--diff", "--job", str(job), "--inventory", str(inventory), "--format", "json"],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["diffs"][0]["available"] is False
+    assert payload["diffs"][0]["plugin"] == "fs.stat"
+    assert "deterministic file diff" in payload["diffs"][0]["reason"]
+
+
+def test_commands_render_json_includes_unavailable_reason(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: commands-reason
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: stat
+            use: fs.stat
+            with:
+              path: /tmp/demo
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        ["commands", "render", "--job", str(job), "--inventory", str(inventory), "--format", "json"],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["nodes"][0]["available"] is False
+    assert "manual command" in payload["nodes"][0]["reason"]

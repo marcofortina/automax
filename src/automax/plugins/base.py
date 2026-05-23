@@ -85,11 +85,19 @@ class BasePlugin(ABC):
         """Return safe unified diff previews for file-oriented plugins."""
         return []
 
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        """Explain why a deterministic diff preview is not available."""
+        return "plugin does not provide a deterministic file diff preview"
+
     def manual_commands(
         self, params: Dict[str, Any], context: ExecutionContext
     ) -> list[str]:
         """Return copy/pasteable shell commands for manual recovery."""
         return []
+
+    def manual_commands_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        """Explain why a copy/pasteable manual command is not available."""
+        return "plugin does not provide a deterministic manual command renderer"
 
     @abstractmethod
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:

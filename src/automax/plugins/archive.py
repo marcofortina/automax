@@ -118,20 +118,24 @@ class ArchiveTarPlugin(BasePlugin):
             data={"params": params},
         )
 
+    def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        flag = _tar_create_flag(str(params["dest"]), str(params.get("compression", "auto")))
+        excludes = " ".join(f"--exclude={quote(item)}" for item in _as_list(params.get("excludes")))
+        sources = _quote_many(_as_list(params["source"]))
+        command = " ".join(part for part in ("tar", flag, quote(params["dest"]), excludes, sources) if part)
+        return apply_cwd(_guarded(command, params.get("creates")), context, params.get("cwd"))
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [self._command(params, context)]
+
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         if context.dry_run:
             return self.dry_run(params, context)
         if context.ssh_client is None:
             return PluginResult.failure(message="archive.tar requires an SSH session")
-        flag = _tar_create_flag(str(params["dest"]), str(params.get("compression", "auto")))
-        excludes = " ".join(f"--exclude={quote(item)}" for item in _as_list(params.get("excludes")))
-        sources = _quote_many(_as_list(params["source"]))
-        command = " ".join(part for part in ("tar", flag, quote(params["dest"]), excludes, sources) if part)
-        rc, out, err = exec_remote(
-            context,
-            apply_cwd(_guarded(command, params.get("creates")), context, params.get("cwd")),
-        )
+        rc, out, err = exec_remote(context, self._command(params, context))
         return result_from_remote(
             rc=rc,
             stdout=out,
@@ -163,12 +167,7 @@ class ArchiveUntarPlugin(BasePlugin):
             data={"params": params},
         )
 
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        self.validate(params)
-        if context.dry_run:
-            return self.dry_run(params, context)
-        if context.ssh_client is None:
-            return PluginResult.failure(message="archive.untar requires an SSH session")
+    def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
         flag = _tar_extract_flag(str(params["archive"]), str(params.get("compression", "auto")))
         strip = ""
         if "strip_components" in params:
@@ -185,10 +184,19 @@ class ArchiveUntarPlugin(BasePlugin):
             )
             if part
         )
-        rc, out, err = exec_remote(
-            context,
-            apply_cwd(_guarded(command, params.get("creates")), context, params.get("cwd")),
-        )
+        return apply_cwd(_guarded(command, params.get("creates")), context, params.get("cwd"))
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [self._command(params, context)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        if context.dry_run:
+            return self.dry_run(params, context)
+        if context.ssh_client is None:
+            return PluginResult.failure(message="archive.untar requires an SSH session")
+        rc, out, err = exec_remote(context, self._command(params, context))
         return result_from_remote(
             rc=rc,
             stdout=out,
@@ -320,12 +328,7 @@ class ArchiveZipPlugin(BasePlugin):
             data={"params": params},
         )
 
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        self.validate(params)
-        if context.dry_run:
-            return self.dry_run(params, context)
-        if context.ssh_client is None:
-            return PluginResult.failure(message="archive.zip requires an SSH session")
+    def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
         recursive = "-r" if bool(params.get("recursive", True)) else ""
         sources = _quote_many(_as_list(params["source"]))
         excludes = ""
@@ -334,10 +337,19 @@ class ArchiveZipPlugin(BasePlugin):
         command = " ".join(
             part for part in ("zip", recursive, quote(params["dest"]), sources, excludes) if part
         )
-        rc, out, err = exec_remote(
-            context,
-            apply_cwd(_guarded(command, params.get("creates")), context, params.get("cwd")),
-        )
+        return apply_cwd(_guarded(command, params.get("creates")), context, params.get("cwd"))
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [self._command(params, context)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        if context.dry_run:
+            return self.dry_run(params, context)
+        if context.ssh_client is None:
+            return PluginResult.failure(message="archive.zip requires an SSH session")
+        rc, out, err = exec_remote(context, self._command(params, context))
         return result_from_remote(
             rc=rc,
             stdout=out,
@@ -363,21 +375,25 @@ class ArchiveUnzipPlugin(BasePlugin):
             data={"params": params},
         )
 
+    def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        mode = "-o" if bool(params.get("overwrite", False)) else "-n"
+        command = (
+            f"mkdir -p {quote(params['dest'])} && "
+            f"unzip {mode} {quote(params['archive'])} -d {quote(params['dest'])}"
+        )
+        return apply_cwd(_guarded(command, params.get("creates")), context, params.get("cwd"))
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [self._command(params, context)]
+
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         if context.dry_run:
             return self.dry_run(params, context)
         if context.ssh_client is None:
             return PluginResult.failure(message="archive.unzip requires an SSH session")
-        mode = "-o" if bool(params.get("overwrite", False)) else "-n"
-        command = (
-            f"mkdir -p {quote(params['dest'])} && "
-            f"unzip {mode} {quote(params['archive'])} -d {quote(params['dest'])}"
-        )
-        rc, out, err = exec_remote(
-            context,
-            apply_cwd(_guarded(command, params.get("creates")), context, params.get("cwd")),
-        )
+        rc, out, err = exec_remote(context, self._command(params, context))
         return result_from_remote(
             rc=rc,
             stdout=out,

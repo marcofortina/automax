@@ -62,10 +62,13 @@ def _echo_diff_payload(payload: Dict[str, Any], output_format: str) -> None:
     click.echo(f"Job: {payload['job']}")
     click.echo("Diff preview:")
     for item in payload["diffs"]:
-        click.echo(f"# {item['target']} {item['node_id']} {item['plugin']} {item['path']}")
-        click.echo(item["diff"], nl=False)
+        if item.get("available", True):
+            click.echo(f"# {item['target']} {item['node_id']} {item['plugin']} {item['path']}")
+            click.echo(item["diff"], nl=False)
+        else:
+            click.echo(f"# {item['target']} {item['node_id']} {item['plugin']} no deterministic diff: {item['reason']}")
     if not payload["diffs"]:
-        click.echo("  - no diff-capable selected nodes")
+        click.echo("  - no selected nodes")
 
 
 def _echo_check_payload(payload: Dict[str, Any], output_format: str) -> None:
@@ -779,7 +782,7 @@ def _echo_manual_commands_payload(payload: Dict[str, Any], output_format: str) -
             for command in node["commands"]:
                 click.echo(command)
         else:
-            click.echo("# manual rendering not available for this plugin")
+            click.echo(f"# manual rendering not available: {node.get('reason', 'unknown reason')}")
         click.echo("")
 
 

@@ -100,8 +100,10 @@ state directory.
 
 ## Preview file diffs
 
-For file-oriented plugins that support deterministic previews, use
-`automax plan --diff`:
+Use `automax plan --diff` to list every selected substep. File-oriented
+plugins that support deterministic previews include a unified diff; other
+plugins are shown with a reason explaining why no deterministic diff is
+available:
 
 ```bash
 automax plan --diff \
@@ -111,7 +113,9 @@ automax plan --diff \
   --secrets secrets/prod.yaml
 ```
 
-Secret values rendered into previews are masked before output.
+Secret values rendered into previews are masked before output. Non-file or
+state-dependent plugins are still listed so operators can see the full selected
+job shape.
 
 ## Compress or decompress standalone files
 
@@ -151,8 +155,8 @@ automax commands render \
 ```
 
 The output includes the target, host, checkpoint and plugin name before each
-command. Plugins that cannot safely render a manual command are reported as not
-available instead of inventing shell snippets.
+command. Every selected substep is listed. Plugins that cannot safely render a
+manual command are reported with a reason instead of inventing shell snippets.
 
 A typical recovery loop is:
 
