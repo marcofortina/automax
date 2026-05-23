@@ -65,6 +65,7 @@ nav:
     - Job DSL: reference/job-dsl.md
     - Inventory, Vars and Secrets: reference/inventory-vars-secrets.md
     - State and Resume: reference/state-and-resume.md
+    - Run Locking: reference/locking.md
     - Artifacts: reference/artifacts.md
     - Output Formats: reference/output-formats.md
     - Exported Schemas: reference/schemas.md

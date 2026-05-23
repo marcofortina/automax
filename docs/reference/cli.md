@@ -139,3 +139,12 @@ Export a Markdown runbook from a resolved job:
 ```bash
 automax runbook export --job jobs/deploy.yaml --inventory inventory/prod.yaml --output /tmp/runbook.md
 ```
+
+## Run locking
+
+Protect job and target concurrency with file-based locks:
+
+```bash
+automax run --job jobs/deploy.yaml --inventory inventory/prod.yaml --lock
+automax resume <run-id> --lock --skip-successful
+```

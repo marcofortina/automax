@@ -1970,3 +1970,41 @@ tasks:
     content = runbook_path.read_text(encoding="utf-8")
     assert "# runbook-smoke runbook" in content
     assert "Resume checkpoint: `task.deploy:step.prepare:substep.echo`" in content
+
+
+def test_cli_run_lock_rejects_concurrent_target_lock(tmp_path: Path):
+    from automax.core.locks import LockManager
+
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: lock-smoke
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: "true"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+    state_dir = tmp_path / "runs"
+    manager = LockManager.for_state_dir(state_dir)
+    held = manager.acquire_many(["target:controller"])
+    try:
+        result = CliRunner().invoke(
+            cli,
+            ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(state_dir), "--lock", "--lock-scope", "target"],
+        )
+    finally:
+        manager.release_many(held)
+
+    assert result.exit_code != 0
+    assert "lock already held" in result.output

@@ -22,6 +22,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from automax.core.inventory import Inventory, load_inventory_document
 from automax.core.job_views import build_job_view
+from automax.core.locks import LockManager
 from automax.core.models import ExecutionContext, NodeStatus, PluginResult, Target
 from automax.core.secrets import SecretManager
 from automax.core.ssh import SshSessionManager
@@ -74,6 +75,9 @@ class AutomaxEngine:
         skip_successful: bool = False,
         only_failed: bool = False,
         output_format: str = "text",
+        lock: bool = False,
+        lock_scope: str = "both",
+        lock_timeout: float = 0,
     ) -> int:
         """Execute a new run from external YAML files."""
         self._validate_output_format(output_format)
@@ -115,6 +119,9 @@ class AutomaxEngine:
                 "skip_tags": list(skip_tags),
                 "skip_successful": skip_successful,
                 "only_failed": only_failed,
+                "lock": lock,
+                "lock_scope": lock_scope,
+                "lock_timeout": lock_timeout,
             },
         )
         store.record_event("job_started", payload={"job": self._job_name(job)})
@@ -133,19 +140,33 @@ class AutomaxEngine:
                 self._print_plan(run_id, plan, output_format=output_format)
                 return 0
 
-            rc = self._execute_plan(
-                job=job,
-                plan=plan,
-                store=store,
-                run_id=run_id,
-                dry_run=dry_run,
-                variables=variables,
-                secrets=secrets,
-                from_node=from_node,
-                skip_successful=skip_successful,
-                only_failed=only_failed,
-                output_format=output_format,
-            )
+            lock_manager = LockManager.for_state_dir(state_dir) if lock else None
+            acquired_locks = []
+            try:
+                if lock_manager:
+                    acquired_locks = lock_manager.acquire_many(
+                        self._lock_names(job, plan, scope=lock_scope), timeout=lock_timeout
+                    )
+                    store.record_event(
+                        "locks_acquired",
+                        payload={"locks": [item.name for item in acquired_locks]},
+                    )
+                rc = self._execute_plan(
+                    job=job,
+                    plan=plan,
+                    store=store,
+                    run_id=run_id,
+                    dry_run=dry_run,
+                    variables=variables,
+                    secrets=secrets,
+                    from_node=from_node,
+                    skip_successful=skip_successful,
+                    only_failed=only_failed,
+                    output_format=output_format,
+                )
+            finally:
+                if lock_manager:
+                    lock_manager.release_many(acquired_locks)
             store.update_run_status(NodeStatus.SUCCESS if rc == 0 else NodeStatus.FAILED)
             store.record_event("job_finished", payload={"rc": rc})
             self._print_run_summary(store, rc=rc, state_dir=state_dir, output_format=output_format)
@@ -170,6 +191,9 @@ class AutomaxEngine:
         skip_successful: bool = False,
         only_failed: bool = False,
         output_format: str = "text",
+        lock: bool = False,
+        lock_scope: str = "both",
+        lock_timeout: float = 0,
     ) -> int:
         """Resume a previous run using paths stored in the run state."""
         self._validate_output_format(output_format)
@@ -202,6 +226,9 @@ class AutomaxEngine:
             skip_successful=skip_successful,
             only_failed=only_failed,
             output_format=output_format,
+            lock=lock,
+            lock_scope=lock_scope,
+            lock_timeout=lock_timeout,
         )
 
     def inspect_job(
@@ -1221,6 +1248,20 @@ class AutomaxEngine:
         task_node = f"task.{task_id}"
         step_node = f"{task_node}:step.{step_id}"
         return from_node in (task_node, step_node, item["node_id"])
+
+    @classmethod
+    def _lock_names(cls, job: Dict[str, Any], plan: List[Dict[str, Any]], *, scope: str) -> list[str]:
+        """Return lock names for a planned run."""
+        if scope not in {"job", "target", "both"}:
+            raise AutomaxError("lock scope must be one of: job, target, both")
+        job_name = cls._job_name(job)
+        names: list[str] = []
+        if scope in {"job", "both"}:
+            names.append(f"job:{job_name}")
+        if scope in {"target", "both"}:
+            for target_name in sorted({item["target"].name for item in plan}):
+                names.append(f"target:{target_name}")
+        return names
 
     @staticmethod
     def _node_id(task: Dict[str, Any], step: Dict[str, Any], substep: Dict[str, Any]) -> str:

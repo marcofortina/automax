@@ -83,6 +83,9 @@ def _apply_common_options(function):
 @click.option("--skip-tags", multiple=True, help="Skip substeps matching one of these tags.")
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
 @click.option("--dry-run", is_flag=True, help="Validate and simulate actions without changing targets.")
+@click.option("--lock", is_flag=True, help="Acquire job/target locks before executing.")
+@click.option("--lock-scope", type=click.Choice(["job", "target", "both"]), default="both", show_default=True, help="Lock job, targets or both.")
+@click.option("--lock-timeout", type=float, default=0.0, show_default=True, help="Seconds to wait for locks.")
 @click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", show_default=True, help="Output format for the final run summary.")
 def run(
     job_path: str,
@@ -98,6 +101,9 @@ def run(
     skip_tags: tuple[str, ...],
     plugin_path: tuple[str, ...],
     dry_run: bool,
+    lock: bool,
+    lock_scope: str,
+    lock_timeout: float,
     output_format: str,
 ) -> None:
     """Run a job from external YAML definitions."""
@@ -116,6 +122,9 @@ def run(
             skip_tags=_split_selectors(skip_tags),
             cli_vars=_parse_vars(cli_vars),
             output_format=output_format,
+            lock=lock,
+            lock_scope=lock_scope,
+            lock_timeout=lock_timeout,
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc
@@ -483,6 +492,9 @@ def doctor(state_dir: str, as_json: bool) -> None:
 @click.option("--skip-successful", is_flag=True, help="Do not rerun nodes already marked successful in this run.")
 @click.option("--only-failed", is_flag=True, help="Rerun only nodes currently marked failed in this run.")
 @click.option("--dry-run", is_flag=True, help="Validate and simulate actions without changing targets.")
+@click.option("--lock", is_flag=True, help="Acquire job/target locks before executing.")
+@click.option("--lock-scope", type=click.Choice(["job", "target", "both"]), default="both", show_default=True, help="Lock job, targets or both.")
+@click.option("--lock-timeout", type=float, default=0.0, show_default=True, help="Seconds to wait for locks.")
 @click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", show_default=True, help="Output format for the final resume summary.")
 def resume(
     run_id: str,
@@ -496,6 +508,9 @@ def resume(
     skip_successful: bool,
     only_failed: bool,
     dry_run: bool,
+    lock: bool,
+    lock_scope: str,
+    lock_timeout: float,
     output_format: str,
 ) -> None:
     """Resume an existing run from failed or explicit checkpoint."""
