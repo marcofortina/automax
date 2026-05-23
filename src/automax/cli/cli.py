@@ -20,11 +20,14 @@ import click
 
 from automax import __version__
 from automax.core.engine import AutomaxEngine, AutomaxError
+from automax.core.inventory import Inventory, InventoryError, load_inventory_document
+from automax.core.known_hosts import KnownHostsError, scan_known_hosts, write_known_hosts
 from automax.core.plugin_docs import render_plugin_reference
 from automax.core.schema import export_schema
 from automax.core.job_views import render_dot, render_explain_text, render_mermaid, render_runbook_markdown, render_svg
-from automax.core.models import NodeStatus
+from automax.core.models import NodeStatus, Target
 from automax.core.state import StateStore
+from automax.core.yaml_loader import load_yaml_file
 from automax.plugins.registry import build_builtin_registry
 
 
@@ -397,6 +400,115 @@ def graph(
     click.echo(rendered, nl=False)
 
 
+
+
+@cli.group()
+def ssh() -> None:
+    """SSH helper commands."""
+
+
+@ssh.group("known-hosts")
+def known_hosts() -> None:
+    """Collect known_hosts entries without trusting them automatically."""
+
+
+@known_hosts.command("scan")
+@click.option("--host", "hosts", multiple=True, help="Host to scan without an inventory file.")
+@click.option("--inventory", "inventory_path", type=click.Path(exists=True), help="Inventory YAML path to scan.")
+@click.option("--vars", "vars_path", type=click.Path(exists=True), help="External variables YAML path.")
+@click.option("--secrets", "secrets_path", type=click.Path(exists=True), help="External secrets YAML path.")
+@click.option("--var", "cli_vars", multiple=True, help="Override variable, format KEY=VALUE.")
+@click.option("--limit", multiple=True, help="Limit inventory targets. Accepts server, group or group:name.")
+@click.option("--exclude", multiple=True, help="Exclude inventory targets. Accepts server, group or group:name.")
+@click.option("--port", default=22, show_default=True, type=int, help="SSH port for --host entries.")
+@click.option("--timeout", default=5, show_default=True, type=int, help="ssh-keyscan timeout in seconds.")
+@click.option("--key-type", "key_types", multiple=True, help="Restrict key type, e.g. ed25519 or rsa.")
+@click.option("--output", "output_path", type=click.Path(dir_okay=False), help="Write scanned known_hosts lines to this file.")
+@click.option("--append", is_flag=True, help="Append to --output instead of overwriting it.")
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    show_default=True,
+    help="Output format.",
+)
+def scan_known_hosts_command(
+    hosts: tuple[str, ...],
+    inventory_path: str | None,
+    vars_path: str | None,
+    secrets_path: str | None,
+    cli_vars: tuple[str, ...],
+    limit: tuple[str, ...],
+    exclude: tuple[str, ...],
+    port: int,
+    timeout: int,
+    key_types: tuple[str, ...],
+    output_path: str | None,
+    append: bool,
+    output_format: str,
+) -> None:
+    """Scan SSH host keys and print fingerprints for operator verification."""
+    try:
+        targets = _known_host_targets(
+            hosts=hosts,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            cli_vars=_parse_vars(cli_vars),
+            limit=_split_selectors(limit),
+            exclude=_split_selectors(exclude),
+            port=port,
+        )
+        entries = scan_known_hosts(targets, timeout=timeout, key_types=key_types)
+        written = write_known_hosts(entries, output_path, append=append) if output_path else None
+    except (AutomaxError, KnownHostsError, InventoryError, ValueError, RuntimeError) as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    payload = {
+        "entries": [entry.__dict__ for entry in entries],
+        "output": str(written) if written else None,
+        "warning": "Verify fingerprints over a trusted channel before using these host keys.",
+    }
+    if output_format == "json":
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    click.echo("Verify these fingerprints over a trusted channel before using the scanned keys:")
+    for entry in entries:
+        click.echo(f"{entry.host}:{entry.port}  {entry.key_type}  {entry.fingerprint}")
+    if written:
+        click.echo(f"Wrote {written}")
+
+
+def _known_host_targets(
+    *,
+    hosts: tuple[str, ...],
+    inventory_path: str | None,
+    vars_path: str | None,
+    secrets_path: str | None,
+    cli_vars: Dict[str, Any],
+    limit: list[str],
+    exclude: list[str],
+    port: int,
+) -> list[Target]:
+    if port <= 0:
+        raise AutomaxError("known-hosts scan --port must be positive")
+    if hosts and inventory_path:
+        raise AutomaxError("use either --host or --inventory, not both")
+    if not hosts and not inventory_path:
+        raise AutomaxError("known-hosts scan requires --host or --inventory")
+    if hosts:
+        return [Target(name=host, host=host, port=port) for host in hosts]
+
+    engine = _engine(())
+    vars_document = load_yaml_file(vars_path, required=False) if vars_path else {}
+    secrets_document = load_yaml_file(secrets_path, required=False) if secrets_path else {}
+    secrets = engine.secret_manager.resolve_all(secrets_document, base_dir=engine._path_parent(secrets_path))
+    variables = engine._merge_variables(vars_document, cli_vars)
+    context = {"vars": variables, "secrets": secrets}
+    inventory_document = load_inventory_document(inventory_path, context)
+    inventory = Inventory(inventory_document, context)
+    return inventory.select("all", limit=limit, exclude=exclude)
 
 @cli.group()
 def runbook() -> None:

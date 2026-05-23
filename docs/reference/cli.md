@@ -145,6 +145,19 @@ automax commands render --job job.yaml --inventory inventory.yaml --limit web01 
 automax commands render --job job.yaml --inventory inventory.yaml --format=json
 ```
 
+## SSH known_hosts scan
+
+Scan SSH host keys for direct hosts or inventory-selected targets. The command
+prints fingerprints so operators can verify them over a trusted channel before
+using the generated known_hosts file:
+
+```bash
+automax ssh known-hosts scan --host web01.example.com
+automax ssh known-hosts scan --inventory inventory/prod.yaml --limit web
+automax ssh known-hosts scan --inventory inventory/prod.yaml --limit web --output ~/.ssh/automax_known_hosts
+automax ssh known-hosts scan --host web01.example.com --format=json
+```
+
 ## Artifacts
 
 ```bash

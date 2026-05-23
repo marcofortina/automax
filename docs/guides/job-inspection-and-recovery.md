@@ -31,6 +31,21 @@ automax inventory show \
 The command prints only targets selected by the job after applying `--limit`,
 `--exclude`, `--tags` and `--skip-tags`.
 
+## Prepare SSH known_hosts entries
+
+Use `automax ssh known-hosts scan` before the first SSH run when targets are not
+yet present in the configured known_hosts file:
+
+```bash
+automax ssh known-hosts scan \
+  --inventory inventory/prod.yaml \
+  --limit web \
+  --output ~/.ssh/automax_known_hosts
+```
+
+Verify the printed fingerprints out-of-band before relying on the written file.
+Automax still uses strict host-key rejection during real SSH runs.
+
 ## Render final variable context
 
 Use `automax vars render` to see the final target-specific variable context,

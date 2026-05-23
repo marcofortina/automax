@@ -15,11 +15,21 @@ ssh:
   missing_host_key_policy: reject
 ```
 
-Unknown host keys are rejected. For lab hosts, add the host key to a dedicated
+Unknown host keys are rejected. For lab hosts, scan the host key to a dedicated
 known-hosts file before running Automax:
 
 ```bash
-ssh-keyscan -H lab01.example.com >> ~/.ssh/automax_known_hosts
+automax ssh known-hosts scan --host lab01.example.com --output ~/.ssh/automax_known_hosts
+```
+
+The scanner prints SHA256 fingerprints for verification over a trusted channel.
+For inventories, scan the selected targets without running a job:
+
+```bash
+automax ssh known-hosts scan \
+  --inventory inventory/prod.yaml \
+  --limit web \
+  --output ~/.ssh/automax_known_hosts
 ```
 
 ```yaml

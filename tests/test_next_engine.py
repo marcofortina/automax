@@ -2811,3 +2811,89 @@ tasks:
     payload = json.loads(result.output)
     assert payload["targets"][0]["secrets"] == {"token": "***"}
     assert "super-secret" not in result.output
+
+
+def test_ssh_known_hosts_scan_prints_fingerprints_and_writes_output(tmp_path: Path, monkeypatch):
+    from automax.core import known_hosts as known_hosts_core
+
+    def fake_run(command, **kwargs):
+        assert command[:6] == ["ssh-keyscan", "-T", "5", "-p", "22", "example.com"]
+
+        class Completed:
+            returncode = 0
+            stdout = "example.com ssh-ed25519 QUJDREVGR0g=\n"
+            stderr = ""
+
+        return Completed()
+
+    monkeypatch.setattr(known_hosts_core.subprocess, "run", fake_run)
+    output = tmp_path / "known_hosts"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "ssh",
+            "known-hosts",
+            "scan",
+            "--host",
+            "example.com",
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Verify these fingerprints" in result.output
+    assert "example.com:22  ssh-ed25519  SHA256:" in result.output
+    assert output.read_text(encoding="utf-8") == "example.com ssh-ed25519 QUJDREVGR0g=\n"
+
+
+def test_ssh_known_hosts_scan_uses_inventory_selection(tmp_path: Path, monkeypatch):
+    from automax.core import known_hosts as known_hosts_core
+
+    seen_hosts = []
+
+    def fake_run(command, **kwargs):
+        seen_hosts.append(command[-1])
+
+        class Completed:
+            returncode = 0
+            stdout = f"{command[-1]} ssh-rsa QUJDREVGR0g=\n"
+            stderr = ""
+
+        return Completed()
+
+    monkeypatch.setattr(known_hosts_core.subprocess, "run", fake_run)
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        """
+servers:
+  web01:
+    host: 192.0.2.11
+    groups: [web]
+  db01:
+    host: 192.0.2.21
+    groups: [db]
+""",
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "ssh",
+            "known-hosts",
+            "scan",
+            "--inventory",
+            str(inventory),
+            "--limit",
+            "web",
+            "--format",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert seen_hosts == ["192.0.2.11"]
+    assert payload["entries"][0]["host"] == "192.0.2.11"
+    assert payload["entries"][0]["fingerprint"].startswith("SHA256:")
