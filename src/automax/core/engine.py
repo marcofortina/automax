@@ -10,7 +10,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 from copy import deepcopy
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 import logging
 from pathlib import Path
@@ -34,6 +34,22 @@ from automax.plugins.registry import PluginRegistry, build_builtin_registry
 
 class AutomaxError(ValueError):
     """Raised for user-facing Automax errors."""
+
+
+@dataclass(frozen=True)
+class ResolvedJobContext:
+    """Resolved job inputs shared by operator-facing inspection commands."""
+
+    job_path: str
+    inventory_path: str
+    vars_path: str | None
+    secrets_path: str | None
+    documents: Dict[str, Dict[str, Any]]
+    job: Dict[str, Any]
+    inventory: Inventory
+    variables: Dict[str, Any]
+    secrets: Dict[str, Any]
+    plan: List[Dict[str, Any]]
 
 
 class AutomaxEngine:
@@ -245,6 +261,33 @@ class AutomaxEngine:
         cli_vars: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Return a resolved, serializable view of a job without creating run state."""
+        resolved = self.resolve_job_context(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=limit,
+            exclude=exclude,
+            tags=tags,
+            skip_tags=skip_tags,
+            cli_vars=cli_vars,
+        )
+        return build_job_view(resolved.job, resolved.plan)
+
+    def resolve_job_context(
+        self,
+        *,
+        job_path: str,
+        inventory_path: str,
+        vars_path: str | None = None,
+        secrets_path: str | None = None,
+        limit: Iterable[str] = (),
+        exclude: Iterable[str] = (),
+        tags: Iterable[str] = (),
+        skip_tags: Iterable[str] = (),
+        cli_vars: Optional[Dict[str, Any]] = None,
+    ) -> ResolvedJobContext:
+        """Resolve job, inventory, vars, secrets and selected plan once."""
         documents = self._load_documents(
             job_path=job_path,
             inventory_path=inventory_path,
@@ -253,7 +296,7 @@ class AutomaxEngine:
         )
         secrets = self.secret_manager.resolve_all(
             documents["secrets"],
-            base_dir=Path(secrets_path).expanduser().resolve().parent if secrets_path else None,
+            base_dir=self._path_parent(secrets_path),
         )
         variables = self._merge_variables(
             documents["vars"], documents["job"].get("vars", {}), cli_vars or {}
@@ -271,7 +314,76 @@ class AutomaxEngine:
             tags=tags,
             skip_tags=skip_tags,
         )
-        return build_job_view(job, plan)
+        return ResolvedJobContext(
+            job_path=str(Path(job_path).expanduser()),
+            inventory_path=str(Path(inventory_path).expanduser()),
+            vars_path=str(Path(vars_path).expanduser()) if vars_path else None,
+            secrets_path=str(Path(secrets_path).expanduser()) if secrets_path else None,
+            documents=documents,
+            job=job,
+            inventory=inventory,
+            variables=variables,
+            secrets=secrets,
+            plan=plan,
+        )
+
+    def iter_rendered_plan_items(
+        self, resolved: ResolvedJobContext, *, dry_run: bool = True
+    ) -> Iterable[Dict[str, Any]]:
+        """Yield rendered plan items for safe operator inspections."""
+        outputs: Dict[str, Any] = {}
+        step_states: Dict[tuple[str, str], Dict[str, Any]] = {}
+        for item in resolved.plan:
+            target: Target = item["target"]
+            effective_vars = deepcopy(resolved.variables)
+            effective_vars.update(target.vars)
+            step_key = (str(item["target"].name), str(item["step"]["id"]))
+            step_state = step_states.setdefault(step_key, {})
+            template_context = {
+                "job": resolved.job,
+                "task": item["task"],
+                "step": item["step"],
+                "substep": item["substep"],
+                "server": target,
+                "target": target,
+                "vars": effective_vars,
+                "outputs": outputs,
+                "secrets": resolved.secrets,
+                "step_state": step_state,
+            }
+            if not self._is_condition_true(item["substep"].get("when"), template_context):
+                continue
+            rendered_substep = render_mapping(item["substep"], template_context)
+            plugin_name = rendered_substep.get("use") or rendered_substep.get("plugin")
+            params = rendered_substep.get("with", rendered_substep.get("params", {})) or {}
+            plugin = self.plugin_registry.get(str(plugin_name))
+            plugin.validate(params)
+            context = ExecutionContext(
+                run_id="operator-preview",
+                dry_run=dry_run,
+                job=resolved.job,
+                task=item["task"],
+                step=item["step"],
+                substep=rendered_substep,
+                target=target,
+                vars=effective_vars,
+                outputs=outputs,
+                secrets=resolved.secrets,
+                ssh_client=None,
+                logger=self.logger,
+                command_timeout=self._resolve_command_timeout(
+                    resolved.job, item["task"], item["step"], item["substep"]
+                ),
+                step_state=step_state,
+            )
+            yield {
+                **item,
+                "plugin": plugin,
+                "plugin_name": str(plugin_name),
+                "params": params,
+                "context": context,
+                "rendered_substep": rendered_substep,
+            }
 
     def validate(
         self,
@@ -504,6 +616,12 @@ class AutomaxEngine:
             if paths.get("secrets_path")
             else {},
         }
+
+    @staticmethod
+    def _path_parent(path: str | None) -> Path | None:
+        if not path:
+            return None
+        return Path(path).expanduser().resolve().parent
 
     @staticmethod
     def _merge_variables(*sources: Dict[str, Any]) -> Dict[str, Any]:

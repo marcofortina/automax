@@ -2159,3 +2159,50 @@ tasks:
     inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
 
     AutomaxEngine().validate(job_path=str(job), inventory_path=str(inventory), strict=True)
+
+
+def test_operator_view_helpers_resolve_and_render_selected_job(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: operator-helpers
+vars:
+  message: hello
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: keep
+            tags: [deploy]
+            use: local.command
+            with:
+              command: "printf {{ vars.message }}"
+          - id: skip
+            tags: [skipme]
+            use: local.command
+            with:
+              command: "false"
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        "servers:\n  controller:\n    host: 127.0.0.1\n",
+    )
+    engine = AutomaxEngine()
+
+    resolved = engine.resolve_job_context(
+        job_path=str(job),
+        inventory_path=str(inventory),
+        tags=["deploy"],
+    )
+    rendered = list(engine.iter_rendered_plan_items(resolved))
+
+    assert resolved.job["metadata"]["name"] == "operator-helpers"
+    assert [item["node_id"] for item in resolved.plan] == ["task.t1:step.s1:substep.keep"]
+    assert rendered[0]["plugin_name"] == "local.command"
+    assert rendered[0]["params"]["command"] == "printf hello"
