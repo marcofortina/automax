@@ -5,8 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Contributing to Automax
 
-Automax is being rebuilt around a clean SSH job automation engine. Keep changes
-small, explicit and covered by tests.
+Automax is a clean SSH job automation engine. Keep changes small, explicit and
+covered by tests.
 
 ## Setup
 
@@ -30,4 +30,4 @@ bash -n scripts/ssh-smoke.sh
 - expose only canonical plugin names in public docs and CLI output;
 - add tests for every new plugin or engine behavior;
 - prefer idempotent remote operations;
-- do not reintroduce legacy plugin names, legacy managers or legacy utilities.
+- do not add ambiguous plugin aliases, duplicate manager layers or undocumented utilities.

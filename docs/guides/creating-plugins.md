@@ -47,7 +47,7 @@ systemctl.enable
 transfer.upload
 ```
 
-Avoid legacy, shortened or ambiguous names. Do not expose aliases as public DSL names unless there is a strong migration reason.
+Avoid shortened or ambiguous names. Public DSL names should stay canonical, explicit and stable.
 
 ## Design rules
 
@@ -55,7 +55,7 @@ Avoid legacy, shortened or ambiguous names. Do not expose aliases as public DSL 
 - prefer idempotent behavior when possible;
 - never hide unsafe behavior behind defaults;
 - return machine-readable outputs for `register:` mappings;
-- keep aliases internal unless there is a strong migration reason.
+- keep compatibility aliases out of public docs and CLI output unless they are explicitly part of a documented extension contract.
 
 ## Inspecting plugin metadata
 

@@ -26,7 +26,8 @@ add filesystem plugins
 add package manager plugins
 ```
 
-## Cleanup policy
+## Public DSL policy
 
-The old Automax DSL, old plugin names and old validation utilities must not come
-back unless they are intentionally redesigned for the new engine.
+Automax exposes one canonical YAML DSL and one canonical builtin plugin namespace.
+Compatibility aliases, ambiguous short names and ad-hoc validation utilities should
+not be added to the public interface.

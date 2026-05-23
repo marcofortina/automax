@@ -75,7 +75,7 @@ nav:
     - Wait and Assert: plugins/wait-assert.md
     - Database: plugins/database.md
   - Project:
-    - Design: NEXT_DESIGN.md
+    - Technical design: TECHNICAL_DESIGN.md
     - Developer Notes: DEVELOPER-NOTES.md
     - Contributing: CONTRIBUTING.md
 

@@ -3,7 +3,7 @@ Copyright (C) 2026 Marco Fortina
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-# Automax Next Design
+# Automax Technical Design
 
 ## Goals
 
@@ -17,7 +17,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 - Serial, parallel and rolling execution strategies.
 - Tag-based selection and skip filters.
 - Declarative failure policy.
-- Canonical builtin plugin names with no public legacy aliases.
+- Canonical builtin plugin names with no public compatibility aliases.
 
 ## Execution model
 
@@ -121,9 +121,10 @@ wait/assert:   wait.*, assert.*
 database:      db.*.query
 ```
 
-Builtin plugin names are canonical only: no legacy or short aliases are exposed
-by default. External plugins can still define aliases, but `automax plugins list`
-shows canonical names unless `--include-aliases` is requested.
+Builtin plugin names are canonical only: no short or ambiguous compatibility aliases
+are exposed by default. External plugins can still define aliases, but
+`automax plugins list` shows canonical names unless `--include-aliases` is
+requested.
 
 External plugins can be loaded with `--plugin-path`.
 
