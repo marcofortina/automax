@@ -99,6 +99,13 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         ArchiveUnzipPlugin,
         ArchiveZipPlugin,
     )
+    from automax.plugins.facts import (
+        FactsGatherPlugin,
+        FactsNetworkPlugin,
+        FactsOsPlugin,
+        FactsPackagesPlugin,
+        FactsServicesPlugin,
+    )
     from automax.plugins.firewall import (
         FirewalldPortPlugin,
         FirewalldReloadPlugin,
@@ -238,6 +245,11 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         DbOracleQueryPlugin(),
         CronEntryPlugin(),
         CronFilePlugin(),
+        FactsGatherPlugin(),
+        FactsOsPlugin(),
+        FactsNetworkPlugin(),
+        FactsPackagesPlugin(),
+        FactsServicesPlugin(),
         WaitTcpPlugin(),
         WaitCommandPlugin(),
         WaitFilePlugin(),

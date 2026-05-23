@@ -35,6 +35,11 @@ db.mysql.query
 db.oracle.query
 db.postgres.query
 db.sqlite.query
+facts.gather
+facts.network
+facts.os
+facts.packages
+facts.services
 firewalld.port
 firewalld.reload
 firewalld.rich_rule
