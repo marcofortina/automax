@@ -78,22 +78,6 @@ Automax may support explicit operator approval points in interactive sessions:
 CI and unattended runs would need a non-interactive approval policy such as
 `--approve` or a signed approval file.
 
-## Diff plan
-
-For checkable plugins, Automax may render a diff before changing targets:
-
-```bash
-automax plan --diff --job jobs/deploy.yaml --inventory inventory/prod.yaml
-```
-
-Initial candidates:
-
-```text
-fs.template
-fs.write
-fs.line
-fs.replace
-```
 
 ## Event stream contract
 

@@ -55,6 +55,7 @@ For a first real SSH job against a remote host, use
 | Understand task/step/substep execution | [Execution model](concepts/execution-model.md) |
 | Configure inventory, vars and secrets | [Inventory, variables and secrets](reference/inventory-vars-secrets.md) |
 | Resume failed jobs | [State store and resume](reference/state-and-resume.md) |
+| Inspect job scope, secrets, check-mode, diffs and manual recovery commands | [Job Inspection and Recovery](guides/job-inspection-and-recovery.md) |
 | Inspect captured files and outputs | [Artifacts](reference/artifacts.md) |
 | Inspect every CLI command | [CLI reference](reference/cli.md) |
 | Review SSH and secret handling | [Security reference](reference/security.md) |
