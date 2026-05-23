@@ -385,6 +385,56 @@ class AutomaxEngine:
                 "rendered_substep": rendered_substep,
             }
 
+    def inspect_inventory(
+        self,
+        *,
+        job_path: str,
+        inventory_path: str,
+        vars_path: str | None = None,
+        secrets_path: str | None = None,
+        limit: Iterable[str] = (),
+        exclude: Iterable[str] = (),
+        tags: Iterable[str] = (),
+        skip_tags: Iterable[str] = (),
+        cli_vars: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Return inventory targets selected by one resolved job."""
+        resolved = self.resolve_job_context(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=limit,
+            exclude=exclude,
+            tags=tags,
+            skip_tags=skip_tags,
+            cli_vars=cli_vars,
+        )
+        selected: Dict[str, Dict[str, Any]] = {}
+        for item in resolved.plan:
+            target: Target = item["target"]
+            entry = selected.setdefault(
+                target.name,
+                {
+                    "name": target.name,
+                    "host": target.host,
+                    "port": target.port,
+                    "user": target.user,
+                    "groups": list(target.groups),
+                    "vars": sorted(target.vars),
+                    "nodes": 0,
+                },
+            )
+            entry["nodes"] += 1
+
+        return {
+            "job": self._job_name(resolved.job),
+            "inventory_path": resolved.inventory_path,
+            "targets": [selected[name] for name in sorted(selected)],
+            "target_count": len(selected),
+            "node_count": len(resolved.plan),
+        }
+
     def validate(
         self,
         *,

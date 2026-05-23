@@ -535,6 +535,74 @@ def resume(
 
 
 @cli.group()
+def inventory() -> None:
+    """Inspect job-scoped inventory resolution."""
+
+
+@inventory.command("show")
+@_apply_common_options
+@click.option("--limit", multiple=True, help="Limit targets. Accepts server, group or group:name.")
+@click.option("--exclude", multiple=True, help="Exclude targets. Accepts server, group or group:name.")
+@click.option("--tags", multiple=True, help="Show targets for substeps matching one of these tags.")
+@click.option("--skip-tags", multiple=True, help="Hide substeps matching one of these tags.")
+@click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    show_default=True,
+    help="Output format.",
+)
+def show_inventory(
+    job_path: str,
+    inventory_path: str,
+    vars_path: str | None,
+    secrets_path: str | None,
+    cli_vars: tuple[str, ...],
+    limit: tuple[str, ...],
+    exclude: tuple[str, ...],
+    tags: tuple[str, ...],
+    skip_tags: tuple[str, ...],
+    plugin_path: tuple[str, ...],
+    output_format: str,
+) -> None:
+    """Show inventory targets selected by the resolved job."""
+    try:
+        payload = _engine(plugin_path).inspect_inventory(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=_split_selectors(limit),
+            exclude=_split_selectors(exclude),
+            tags=_split_selectors(tags),
+            skip_tags=_split_selectors(skip_tags),
+            cli_vars=_parse_vars(cli_vars),
+        )
+    except (AutomaxError, ValueError, RuntimeError) as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    if output_format == "json":
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+
+    click.echo(f"Job: {payload['job']}")
+    click.echo(f"Inventory: {payload['inventory_path']}")
+    click.echo(
+        f"Targets: {payload['target_count']} selected, "
+        f"{payload['node_count']} planned node(s)"
+    )
+    for target in payload["targets"]:
+        groups = ",".join(target["groups"]) if target["groups"] else "-"
+        user = target["user"] or "-"
+        click.echo(
+            f"{target['name']}  {target['host']}:{target['port']}  "
+            f"user={user} groups={groups} nodes={target['nodes']}"
+        )
+
+
+@cli.group()
 def runs() -> None:
     """Inspect stored run states."""
 

@@ -2206,3 +2206,108 @@ tasks:
     assert [item["node_id"] for item in resolved.plan] == ["task.t1:step.s1:substep.keep"]
     assert rendered[0]["plugin_name"] == "local.command"
     assert rendered[0]["params"]["command"] == "printf hello"
+
+
+def test_inventory_show_is_scoped_to_resolved_job(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: inventory-show
+tasks:
+  - id: t1
+    targets: group:web
+    steps:
+      - id: s1
+        substeps:
+          - id: keep
+            tags: [deploy]
+            use: local.command
+            with:
+              command: "true"
+          - id: skip
+            tags: [skipme]
+            use: local.command
+            with:
+              command: "true"
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        """
+servers:
+  web01:
+    host: 10.0.0.11
+    user: deploy
+    groups: [web, production]
+  db01:
+    host: 10.0.0.21
+    groups: [db, production]
+""",
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "inventory",
+            "show",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--tags",
+            "deploy",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Job: inventory-show" in result.output
+    assert "web01  10.0.0.11:22  user=deploy groups=web,production nodes=1" in result.output
+    assert "db01" not in result.output
+
+
+def test_inventory_show_json(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: inventory-json
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: "true"
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        "servers:\n  controller:\n    host: 127.0.0.1\n",
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "inventory",
+            "show",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--format",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["target_count"] == 1
+    assert payload["targets"][0]["name"] == "controller"
