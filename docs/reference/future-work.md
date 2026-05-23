@@ -155,3 +155,20 @@ helm.upgrade
 
 They should be added only if they keep Automax focused on resumable operational
 workflows rather than turning it into a broad platform clone.
+
+## File ACL plugins
+
+POSIX ACL support is useful for shared application directories, service users and
+operator access, but it is not part of the current core plugin set. Future plugins
+may include:
+
+```text
+acl.get
+acl.set
+acl.remove
+acl.default_set
+acl.default_remove
+```
+
+The implementation should be explicit about `setfacl`/`getfacl` availability and
+should avoid silently emulating ACL behavior with broader `chmod` permissions.
