@@ -600,6 +600,54 @@ class AutomaxEngine:
             "nodes": rows,
         }
 
+    def diff_job(
+        self,
+        *,
+        job_path: str,
+        inventory_path: str,
+        vars_path: str | None = None,
+        secrets_path: str | None = None,
+        limit: Iterable[str] = (),
+        exclude: Iterable[str] = (),
+        tags: Iterable[str] = (),
+        skip_tags: Iterable[str] = (),
+        cli_vars: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Render safe diff previews for one resolved job."""
+        resolved = self.resolve_job_context(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=limit,
+            exclude=exclude,
+            tags=tags,
+            skip_tags=skip_tags,
+            cli_vars=cli_vars,
+        )
+        rows = []
+        for item in self.iter_rendered_plan_items(resolved, dry_run=True):
+            previews = item["plugin"].diff_preview(item["params"], item["context"])
+            if not previews:
+                continue
+            for preview in previews:
+                row = dict(preview)
+                row.update(
+                    {
+                        "target": item["target"].name,
+                        "node_id": item["node_id"],
+                        "plugin": item["plugin_name"],
+                    }
+                )
+                if "diff" in row:
+                    row["diff"] = self._mask_text(str(row["diff"]), resolved.secrets)
+                rows.append(row)
+        return {
+            "job": self._job_name(resolved.job),
+            "mode": "diff",
+            "diffs": rows,
+        }
+
     def validate(
         self,
         *,

@@ -2522,3 +2522,90 @@ tasks:
     assert result.exit_code == 0, result.output
     assert "Check mode preview" in result.output
     assert not state_dir.exists()
+
+
+def test_plan_diff_prints_fs_write_preview_with_masked_secrets(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: diff-preview
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: write
+            use: fs.write
+            with:
+              path: /etc/demo.conf
+              content: "token={{ secrets.token }}\n"
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        "servers:\n  controller:\n    host: 127.0.0.1\n",
+    )
+    secrets_file = write(tmp_path / "secrets.yaml", "secrets:\n  token: super-secret\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "plan",
+            "--diff",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--secrets",
+            str(secrets_file),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Job: diff-preview" in result.output
+    assert "# controller task.t1:step.s1:substep.write fs.write /etc/demo.conf" in result.output
+    assert "+++ /etc/demo.conf (desired)" in result.output
+    assert "+token=***" in result.output
+    assert "super-secret" not in result.output
+
+
+def test_plan_diff_renders_fs_template_preview(tmp_path: Path):
+    template = write(tmp_path / "template.conf.j2", "message={{ values.message }}\n")
+    job = write(
+        tmp_path / "job.yaml",
+        f"""
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: template-diff
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: template
+            use: fs.template
+            with:
+              src: {template}
+              dest: /etc/template.conf
+              values:
+                message: hello
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        "servers:\n  controller:\n    host: 127.0.0.1\n",
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        ["plan", "--diff", "--job", str(job), "--inventory", str(inventory)],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "+message=hello" in result.output

@@ -52,6 +52,19 @@ def _engine(extra_plugin_path: tuple[str, ...] = ()) -> AutomaxEngine:
     return AutomaxEngine(plugin_registry=build_builtin_registry(extra_plugin_path))
 
 
+def _echo_diff_payload(payload: Dict[str, Any], output_format: str) -> None:
+    if output_format == "json":
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    click.echo(f"Job: {payload['job']}")
+    click.echo("Diff preview:")
+    for item in payload["diffs"]:
+        click.echo(f"# {item['target']} {item['node_id']} {item['plugin']} {item['path']}")
+        click.echo(item["diff"], nl=False)
+    if not payload["diffs"]:
+        click.echo("  - no diff-capable selected nodes")
+
+
 def _echo_check_payload(payload: Dict[str, Any], output_format: str) -> None:
     if output_format == "json":
         click.echo(json.dumps(payload, indent=2, sort_keys=True))
@@ -177,6 +190,7 @@ def run(
 @click.option("--skip-tags", multiple=True, help="Hide substeps matching one of these tags.")
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
 @click.option("--check", "check_mode", is_flag=True, help="Render a check-mode preview instead of the execution plan.")
+@click.option("--diff", "diff_mode", is_flag=True, help="Render file-oriented diff previews instead of the execution plan.")
 @click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", show_default=True, help="Output format for the execution plan.")
 def plan(
     job_path: str,
@@ -190,11 +204,14 @@ def plan(
     skip_tags: tuple[str, ...],
     plugin_path: tuple[str, ...],
     check_mode: bool,
+    diff_mode: bool,
     output_format: str,
 ) -> None:
     """Print the execution plan without running the job."""
     try:
         engine = _engine(plugin_path)
+        if check_mode and diff_mode:
+            raise click.ClickException("--check and --diff are mutually exclusive")
         if check_mode:
             payload = engine.check_job(
                 job_path=job_path,
@@ -210,6 +227,20 @@ def plan(
             _echo_check_payload(payload, output_format)
             if not payload["ok"]:
                 raise click.ClickException("check-mode preview found errors")
+            return
+        if diff_mode:
+            payload = engine.diff_job(
+                job_path=job_path,
+                inventory_path=inventory_path,
+                vars_path=vars_path,
+                secrets_path=secrets_path,
+                limit=_split_selectors(limit),
+                exclude=_split_selectors(exclude),
+                tags=_split_selectors(tags),
+                skip_tags=_split_selectors(skip_tags),
+                cli_vars=_parse_vars(cli_vars),
+            )
+            _echo_diff_payload(payload, output_format)
             return
         rc = engine.run(
             job_path=job_path,

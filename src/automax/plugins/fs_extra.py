@@ -7,6 +7,7 @@ Additional remote filesystem plugins.
 
 from __future__ import annotations
 
+from difflib import unified_diff
 from pathlib import Path
 from typing import Any, Dict
 
@@ -16,6 +17,43 @@ from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.file_utils import install_uploaded_file, upload_text_to_temp
 from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, quote, result_from_remote
+
+
+def _content_diff(path: str, content: str) -> str:
+    """Return a create/update preview diff without reading the remote target."""
+    return "".join(
+        unified_diff(
+            [],
+            content.splitlines(keepends=True),
+            fromfile=f"{path} (current)",
+            tofile=f"{path} (desired)",
+        )
+    )
+
+
+def _render_template_content(params: Dict[str, Any], context: ExecutionContext) -> tuple[str, str]:
+    encoding = str(params.get("encoding", "utf-8"))
+    template_path = Path(str(params["src"])).expanduser()
+    if not template_path.is_file():
+        raise FileNotFoundError(f"template not found: {template_path}")
+    template = Template(template_path.read_text(encoding=encoding), undefined=StrictUndefined)
+    values = params.get("values", {}) or {}
+    if not isinstance(values, dict):
+        raise PluginValidationError("fs.template values must be a mapping")
+    rendered = template.render(
+        job=context.job,
+        task=context.task,
+        step=context.step,
+        substep=context.substep,
+        target=context.target,
+        server=context.target,
+        vars=context.vars,
+        outputs=context.outputs,
+        secrets=context.secrets,
+        step_state=context.step_state,
+        values=values,
+    )
+    return str(template_path), rendered
 
 
 class FsExistsPlugin(BasePlugin):
@@ -105,6 +143,14 @@ class FsWritePlugin(BasePlugin):
     optional_params = ("mode", "owner", "group", "sudo", "encoding")
     opens_remote_session = True
 
+    def diff_preview(
+        self, params: Dict[str, Any], context: ExecutionContext
+    ) -> list[Dict[str, Any]]:
+        self.validate(params)
+        content = str(params.get("content", ""))
+        path = str(params["path"])
+        return [{"path": path, "diff": _content_diff(path, content), "kind": "unified"}]
+
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         content = str(params.get("content", ""))
@@ -150,29 +196,28 @@ class FsTemplatePlugin(BasePlugin):
     result_fields = {"data.src": "Rendered template path", "data.dest": "Remote destination path"}
     opens_remote_session = True
 
+    def diff_preview(
+        self, params: Dict[str, Any], context: ExecutionContext
+    ) -> list[Dict[str, Any]]:
+        self.validate(params)
+        src, rendered = _render_template_content(params, context)
+        dest = str(params["dest"])
+        return [
+            {
+                "path": dest,
+                "source": src,
+                "diff": _content_diff(dest, rendered),
+                "kind": "unified",
+            }
+        ]
+
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         encoding = str(params.get("encoding", "utf-8"))
-        template_path = Path(str(params["src"])).expanduser()
-        if not template_path.is_file():
-            return PluginResult.failure(message=f"template not found: {template_path}")
-        template = Template(template_path.read_text(encoding=encoding), undefined=StrictUndefined)
-        values = params.get("values", {}) or {}
-        if not isinstance(values, dict):
-            raise PluginValidationError("fs.template values must be a mapping")
-        rendered = template.render(
-            job=context.job,
-            task=context.task,
-            step=context.step,
-            substep=context.substep,
-            target=context.target,
-            server=context.target,
-            vars=context.vars,
-            outputs=context.outputs,
-            secrets=context.secrets,
-            step_state=context.step_state,
-            values=values,
-        )
+        try:
+            template_path, rendered = _render_template_content(params, context)
+        except FileNotFoundError as exc:
+            return PluginResult.failure(message=str(exc))
         temp_path = upload_text_to_temp(context, rendered, encoding=encoding)
         rc, out, err = install_uploaded_file(
             context,
@@ -188,7 +233,7 @@ class FsTemplatePlugin(BasePlugin):
             stdout=out,
             stderr=err,
             message="fs.template failed",
-            data={"src": str(template_path), "dest": params["dest"]},
+            data={"src": template_path, "dest": params["dest"]},
         )
 
 

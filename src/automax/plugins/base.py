@@ -79,6 +79,12 @@ class BasePlugin(ABC):
             data={"params": params},
         )
 
+    def diff_preview(
+        self, params: Dict[str, Any], context: ExecutionContext
+    ) -> list[Dict[str, Any]]:
+        """Return safe unified diff previews for file-oriented plugins."""
+        return []
+
     @abstractmethod
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         """Execute a plugin action."""
