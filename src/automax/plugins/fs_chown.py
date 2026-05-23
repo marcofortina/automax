@@ -67,5 +67,9 @@ class FsChownPlugin(BasePlugin):
             stdout=out,
             stderr=err,
             message="fs.chown failed",
-            data={"path": params["path"], "owner": owner, "group": group},
+            data={
+                "path": params["path"],
+                "owner": params.get("owner"),
+                "group": params.get("group"),
+            },
         )

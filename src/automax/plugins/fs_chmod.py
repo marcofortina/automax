@@ -58,5 +58,5 @@ class FsChmodPlugin(BasePlugin):
             stdout=out,
             stderr=err,
             message="fs.chmod failed",
-            data={"path": params["path"], "mode": mode},
+            data={"path": params["path"], "mode": params["mode"]},
         )
