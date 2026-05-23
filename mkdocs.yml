@@ -50,6 +50,14 @@ nav:
     - Operator Diagnostics: guides/doctor.md
     - Development Tooling: guides/development-tooling.md
     - Dynamic Inventory: guides/dynamic-inventory.md
+    - Account Access: guides/account-access.md
+    - Firewall Management: guides/firewall.md
+    - Kernel Tuning: guides/kernel-tuning.md
+    - Mounts and fstab: guides/mounts.md
+    - Package Repositories: guides/package-repositories.md
+    - Linux Security Modules: guides/linux-security-modules.md
+    - Cron Management: guides/cron.md
+    - Facts Gathering: guides/facts.md
     - Explain Jobs: guides/explain.md
     - Graph Jobs: guides/graph.md
     - Export Runbooks: guides/runbook.md
