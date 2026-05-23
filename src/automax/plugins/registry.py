@@ -159,6 +159,11 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SysctlSetPlugin,
     )
     from automax.plugins.local_command import LocalCommandPlugin
+    from automax.plugins.mounts import (
+        FstabEntryPlugin,
+        MountAbsentPlugin,
+        MountPresentPlugin,
+    )
     from automax.plugins.pkg import (
         PackageInstallPlugin,
         PackageQueryPlugin,
@@ -242,6 +247,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         KernelModuleLoadPlugin(),
         KernelModuleUnloadPlugin(),
         KernelModulePersistPlugin(),
+        MountPresentPlugin(),
+        MountAbsentPlugin(),
+        FstabEntryPlugin(),
         RemoteCommandPlugin(),
         PackageInstallPlugin(),
         PackageRemovePlugin(),

@@ -51,6 +51,7 @@ fs.symlink.create
 fs.symlink.remove
 fs.template
 fs.write
+fstab.entry
 group.create
 group.exists
 group.remove
@@ -61,6 +62,8 @@ kernel.module.load
 kernel.module.persist
 kernel.module.unload
 local.command
+mount.absent
+mount.present
 nftables.apply
 nftables.validate
 pkg.install

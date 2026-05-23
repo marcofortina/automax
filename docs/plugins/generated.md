@@ -1191,6 +1191,49 @@ with:
 
 ```
 
+## fstab
+
+### `fstab.entry`
+
+Ensure an /etc/fstab entry is present or absent.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `opts` | no | `string` | `defaults` | Mount options. |
+| `dump` | no | `integer` | `0` | fstab dump field. |
+| `passno` | no | `integer` | `0` | fstab fsck pass number. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fstab.entry
+with:
+  src: /dev/vdb1
+  path: /data
+  fstype: xfs
+  opts: defaults,noatime
+  state: present
+  sudo: true
+```
+
 ## group
 
 ### `group.create`
@@ -1549,6 +1592,80 @@ use: local.command
 with:
   command: echo automax
   changed: false
+```
+
+## mount
+
+### `mount.absent`
+
+Ensure a mount point is unmounted and optionally removed from fstab.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: mount.absent
+with:
+  path: /tmp/automax-demo
+```
+
+### `mount.present`
+
+Ensure a filesystem is mounted and optionally persisted in fstab.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `opts` | no | `string` | `defaults` | Mount options. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `dump` | no | `integer` | `0` | fstab dump field. |
+| `passno` | no | `integer` | `0` | fstab fsck pass number. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: mount.present
+with:
+  src: /dev/vdb1
+  path: /data
+  fstype: xfs
+  opts: defaults,noatime
+  persist: true
+  sudo: true
 ```
 
 ## nftables
