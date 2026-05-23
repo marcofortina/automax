@@ -1326,6 +1326,9 @@ Replace text in a remote file using a regex pattern.
 | `replacement` | yes | `string` |  | Regex replacement text. |
 | `count` | no | `integer` | `0` | Maximum regex replacements; 0 means replace all matches. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `backup_path` | no | `path` |  | Explicit backup path for pre-change file content. |
 
 Result fields:
 

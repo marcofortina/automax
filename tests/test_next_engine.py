@@ -2897,3 +2897,54 @@ servers:
     assert seen_hosts == ["192.0.2.11"]
     assert payload["entries"][0]["host"] == "192.0.2.11"
     assert payload["entries"][0]["fingerprint"].startswith("SHA256:")
+
+
+def test_fs_replace_can_render_pre_change_backup_command(monkeypatch):
+    commands = []
+
+    def fake_exec_remote(context, command, **kwargs):
+        commands.append(command)
+        return 0, "__AUTOMAX_CHANGED__\n1\n", ""
+
+    monkeypatch.setattr(fs_extra, "exec_remote", fake_exec_remote)
+    context = ExecutionContext(
+        run_id="run-1",
+        dry_run=False,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="host", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+
+    result = fs_extra.FsReplacePlugin().execute(
+        {
+            "path": "/etc/app.conf",
+            "pattern": "^port=.*$",
+            "replacement": "port=8080",
+            "backup": True,
+            "backup_suffix": ".pre-automax",
+        },
+        context,
+    )
+
+    assert result.ok
+    assert "shutil.copy2(path, backup_path)" in commands[0]
+    assert "/etc/app.conf.pre-automax" not in commands[0]
+    assert " .pre-automax " in commands[0]
+
+
+def test_fs_replace_rejects_empty_backup_suffix():
+    with pytest.raises(PluginValidationError, match="backup_suffix"):
+        fs_extra.FsReplacePlugin().validate(
+            {
+                "path": "/etc/app.conf",
+                "pattern": "x",
+                "replacement": "y",
+                "backup": True,
+                "backup_suffix": "",
+            }
+        )

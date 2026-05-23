@@ -299,32 +299,60 @@ class FsReplacePlugin(BasePlugin):
     name = "fs.replace"
     description = "Replace text in a remote file using a regex pattern."
     required_params = ("path", "pattern", "replacement")
-    optional_params = ("count", "sudo")
+    optional_params = ("count", "sudo", "backup", "backup_suffix", "backup_path")
     opens_remote_session = True
 
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        self.validate(params)
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        if int(params.get("count", 0)) < 0:
+            raise PluginValidationError("fs.replace count must be >= 0")
+        if bool(params.get("backup", False)) and not params.get("backup_path"):
+            suffix = str(params.get("backup_suffix", ".bak"))
+            if not suffix:
+                raise PluginValidationError("fs.replace backup_suffix must not be empty")
+
+    def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
         script = r'''
 import pathlib
 import re
+import shutil
 import sys
 path = pathlib.Path(sys.argv[1])
 pattern = sys.argv[2]
 replacement = sys.argv[3]
 count = int(sys.argv[4])
+backup_enabled = sys.argv[5].lower() == "true"
+backup_suffix = sys.argv[6]
+backup_path_arg = sys.argv[7]
 text = path.read_text(encoding="utf-8")
 new_text, changed_count = re.subn(pattern, replacement, text, count=count)
 if changed_count:
+    if backup_enabled:
+        backup_path = pathlib.Path(backup_path_arg) if backup_path_arg else pathlib.Path(str(path) + backup_suffix)
+        backup_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, backup_path)
     path.write_text(new_text, encoding="utf-8")
     print("__AUTOMAX_CHANGED__")
 print(changed_count)
 '''
         python = "sudo -n python3" if bool(params.get("sudo", False)) else "python3"
-        command = (
+        return (
             f"{python} - {quote(params['path'])} {quote(params['pattern'])} "
-            f"{quote(params['replacement'])} {quote(params.get('count', 0))} <<'PY'\n{script}\nPY"
+            f"{quote(params['replacement'])} {quote(params.get('count', 0))} "
+            f"{quote(str(bool(params.get('backup', False))).lower())} "
+            f"{quote(params.get('backup_suffix', '.bak'))} "
+            f"{quote(params.get('backup_path', ''))} <<'PY'\n{script}\nPY"
         )
-        rc, out, err = exec_remote(context, command)
+
+    def manual_commands(
+        self, params: Dict[str, Any], context: ExecutionContext
+    ) -> list[str]:
+        self.validate(params)
+        return [self._command(params, context)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        rc, out, err = exec_remote(context, self._command(params, context))
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="fs.replace failed")
 
 

@@ -113,6 +113,23 @@ automax plan --diff \
 
 Secret values rendered into previews are masked before output.
 
+## Preserve file content before regex replacements
+
+`fs.replace` can create a pre-change backup before writing replacements:
+
+```yaml
+- id: update_config
+  use: fs.replace
+  with:
+    path: /etc/myapp/app.conf
+    pattern: "^port=.*$"
+    replacement: "port=8080"
+    backup: true
+    sudo: true
+```
+
+The backup is created only when the replacement actually changes the file.
+
 ## Render manual recovery commands
 
 When a job fails, render copy/pasteable commands for the same selected substeps:

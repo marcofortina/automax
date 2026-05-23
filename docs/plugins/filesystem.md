@@ -111,7 +111,10 @@ Ensures one exact line is present or absent.
 
 ## `fs.replace`
 
-Replaces text with a Python regular expression.
+Replaces text with a Python regular expression. Use `backup: true` when you
+want Automax to copy the pre-change file before writing replacements. By
+default the backup path is the original path plus `.bak`; use `backup_suffix` or
+`backup_path` to customize it.
 
 ```yaml
 - id: update_port
@@ -120,6 +123,8 @@ Replaces text with a Python regular expression.
     path: /etc/myapp/app.conf
     pattern: "^port=.*$"
     replacement: "port=8080"
+    backup: true
+    backup_suffix: ".pre-automax"
     sudo: true
 ```
 
