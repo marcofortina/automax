@@ -87,6 +87,7 @@ The final node output also records attempt metadata in the run state:
 
 ## Retry and failure policy
 
-Retry is evaluated before `failurePolicy`. A substep only reaches failure policy
-after all retry attempts are exhausted or after a return code that is not listed
-in `retry_on_rc`.
+`errorPolicy` is evaluated before retry. This means an accepted non-zero return
+code that becomes a warning is not retried. A substep only reaches
+`failurePolicy` after all retry attempts are exhausted or after a return code
+that is not listed in `retry_on_rc`.

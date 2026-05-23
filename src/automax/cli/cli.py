@@ -580,6 +580,7 @@ def show_run(run_id: str, state_dir: str, failed_only: bool, server_name: str | 
     click.echo(f"  targets: {summary['targets_total']}")
     click.echo(f"  nodes: {summary['nodes_total']}")
     click.echo(f"  success: {summary['status_counts'].get(NodeStatus.SUCCESS.value, 0)}")
+    click.echo(f"  warning: {summary['status_counts'].get(NodeStatus.WARNING.value, 0)}")
     click.echo(f"  failed: {summary['status_counts'].get(NodeStatus.FAILED.value, 0)}")
     click.echo(f"  skipped: {summary['status_counts'].get(NodeStatus.SKIPPED.value, 0)}")
     click.echo(f"  changed: {summary['changed_nodes']}")
@@ -594,9 +595,17 @@ def show_run(run_id: str, state_dir: str, failed_only: bool, server_name: str | 
                 f"{target['target']} {target['status']} "
                 f"changed={target['changed']} "
                 f"success={counts.get(NodeStatus.SUCCESS.value, 0)} "
+                f"warning={counts.get(NodeStatus.WARNING.value, 0)} "
                 f"failed={counts.get(NodeStatus.FAILED.value, 0)} "
                 f"skipped={counts.get(NodeStatus.SKIPPED.value, 0)}"
             )
+
+    warning_nodes = summary.get("warning_nodes", [])
+    if warning_nodes:
+        click.echo("Warning nodes:")
+        for node in warning_nodes:
+            message = f" {node['message']}" if node.get("message") else ""
+            click.echo(f"  {node['target']} {node['node_id']} rc={node['rc']}{message}".rstrip())
 
     failed_nodes = summary["failed_nodes"]
     if failed_nodes:

@@ -2086,3 +2086,144 @@ tasks:
     assert result.exit_code == 1, result.output
     assert "[RETRY]" not in result.output
     assert counter.read_text(encoding="utf-8") == "1"
+
+
+def test_error_policy_accepts_expected_nonzero_rc_as_warning_and_continues(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        f"""
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: accepted-error-policy
+tasks:
+  - id: verify
+    targets: all
+    steps:
+      - id: cluvfy
+        substeps:
+          - id: runcluvfy
+            use: local.command
+            with:
+              command:
+                - {sys.executable!r}
+                - -c
+                - "import sys; print('PRVF-5436 expected NTP diagnostic'); sys.exit(1)"
+            errorPolicy:
+              acceptedRc: [1, 2, 3]
+              expected:
+                - stream: combined
+                  pattern: "PRVF-5436.*NTP"
+                  reason: "chrony is managed externally"
+              unmatched: fail
+              acceptedStatus: warning
+          - id: after_warning
+            use: local.command
+            with:
+              command:
+                - {sys.executable!r}
+                - -c
+                - "print('continued')"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+    state_dir = tmp_path / "runs"
+
+    result = CliRunner().invoke(
+        cli,
+        ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(state_dir)],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "[WARN] controller task.verify:step.cluvfy:substep.runcluvfy rc=1" in result.output
+    assert "[OK] controller task.verify:step.cluvfy:substep.after_warning rc=0" in result.output
+    run_id = next(state_dir.iterdir()).name
+    summary = StateStore(state_dir, run_id).summarize()
+    assert summary["status_counts"].get("warning") == 1
+    assert summary["status_counts"].get("success") == 1
+    assert summary["run"]["status"] == "warning"
+    warning_node = summary["warning_nodes"][0]
+    assert warning_node["output"]["data"]["errorPolicy"]["accepted"] is True
+
+
+def test_error_policy_keeps_unexpected_output_failed(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        f"""
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: unexpected-error-policy
+tasks:
+  - id: verify
+    targets: all
+    steps:
+      - id: cluvfy
+        substeps:
+          - id: runcluvfy
+            use: local.command
+            with:
+              command:
+                - {sys.executable!r}
+                - -c
+                - "import sys; print('ORA-00600 unexpected'); sys.exit(1)"
+            errorPolicy:
+              acceptedRc: [1]
+              expected:
+                - pattern: "PRVF-5436.*NTP"
+              unmatched: fail
+          - id: should_not_run
+            use: local.command
+            with:
+              command:
+                - {sys.executable!r}
+                - -c
+                - "print('must not run')"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(tmp_path / "runs")],
+    )
+
+    assert result.exit_code == 1, result.output
+    assert "[FAILED] controller task.verify:step.cluvfy:substep.runcluvfy rc=1" in result.output
+    assert "should_not_run" not in result.output
+
+
+def test_error_policy_validate_strict_accepts_expected_fields(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: strict-error-policy
+errorPolicy:
+  acceptedRc: [1]
+  expected:
+    - stream: combined
+      pattern: "EXPECTED"
+      reason: "demo"
+  fail:
+    - stream: stderr
+      pattern: "FATAL"
+  unmatched: fail
+  acceptedStatus: warning
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: ss1
+            use: local.command
+            with:
+              command: "true"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    AutomaxEngine().validate(job_path=str(job), inventory_path=str(inventory), strict=True)

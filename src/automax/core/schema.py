@@ -100,6 +100,42 @@ def _timeouts_schema() -> Dict[str, Any]:
     }
 
 
+def _error_policy_schema() -> Dict[str, Any]:
+    rule = {
+        "oneOf": [
+            {"type": "string", "minLength": 1},
+            {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["pattern"],
+                "properties": {
+                    "stream": {
+                        "type": "string",
+                        "enum": ["stdout", "stderr", "combined", "message"],
+                    },
+                    "pattern": {"type": "string", "minLength": 1},
+                    "reason": {"type": "string"},
+                },
+            },
+        ]
+    }
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "properties": {
+            "acceptedRc": {
+                "type": "array",
+                "items": {"type": "integer"},
+                "uniqueItems": True,
+            },
+            "expected": {"type": "array", "items": rule},
+            "fail": {"type": "array", "items": rule},
+            "unmatched": {"type": "string", "enum": ["fail", "warn", "ignore"]},
+            "acceptedStatus": {"type": "string", "enum": ["warning", "success"]},
+        },
+    }
+
+
 def _substep_schema() -> Dict[str, Any]:
     return {
         "type": "object",
@@ -116,6 +152,7 @@ def _substep_schema() -> Dict[str, Any]:
             "targets": {"type": ["string", "array"], "items": {"type": "string"}},
             "tags": _tags_schema(),
             "timeouts": _timeouts_schema(),
+            "errorPolicy": _error_policy_schema(),
             "when": {},
             "use": {"type": "string", "minLength": 1},
             "plugin": {"type": "string", "minLength": 1},
@@ -141,6 +178,7 @@ def _step_schema() -> Dict[str, Any]:
             "targets": {"type": ["string", "array"], "items": {"type": "string"}},
             "strategy": _strategy_schema(),
             "failurePolicy": _failure_policy_schema(),
+            "errorPolicy": _error_policy_schema(),
             "timeouts": _timeouts_schema(),
             "tags": _tags_schema(),
             "substeps": {"type": "array", "minItems": 1, "items": _substep_schema()},
@@ -161,6 +199,7 @@ def _task_schema() -> Dict[str, Any]:
             "targets": {"type": ["string", "array"], "items": {"type": "string"}},
             "strategy": _strategy_schema(),
             "failurePolicy": _failure_policy_schema(),
+            "errorPolicy": _error_policy_schema(),
             "timeouts": _timeouts_schema(),
             "tags": _tags_schema(),
             "steps": {"type": "array", "minItems": 1, "items": _step_schema()},
@@ -185,6 +224,7 @@ def _job_schema() -> Dict[str, Any]:
             "targets": {"type": ["string", "array"], "items": {"type": "string"}},
             "strategy": _strategy_schema(),
             "failurePolicy": _failure_policy_schema(),
+            "errorPolicy": _error_policy_schema(),
             "timeouts": _timeouts_schema(),
             "tags": _tags_schema(),
             "tasks": {"type": "array", "minItems": 1, "items": _task_schema()},

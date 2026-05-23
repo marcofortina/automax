@@ -167,7 +167,7 @@ class AutomaxEngine:
             finally:
                 if lock_manager:
                     lock_manager.release_many(acquired_locks)
-            store.update_run_status(NodeStatus.SUCCESS if rc == 0 else NodeStatus.FAILED)
+            store.update_run_status(self._final_run_status(store, rc))
             store.record_event("job_finished", payload={"rc": rc})
             self._print_run_summary(store, rc=rc, state_dir=state_dir, output_format=output_format)
             return rc
@@ -326,6 +326,7 @@ class AutomaxEngine:
                     "targets",
                     "strategy",
                     "failurePolicy",
+                    "errorPolicy",
                     "timeouts",
                     "retry",
                     "tags",
@@ -334,6 +335,7 @@ class AutomaxEngine:
             )
         self._validate_strategy(job.get("strategy"), "job")
         self._validate_failure_policy(job.get("failurePolicy"), "job")
+        self._validate_error_policy(job.get("errorPolicy"), "job")
         self._validate_timeouts(job.get("timeouts"), "job")
         self._validate_retry_policy(job.get("retry"), "job")
         tasks = job.get("tasks")
@@ -355,6 +357,7 @@ class AutomaxEngine:
                         "targets",
                         "strategy",
                         "failurePolicy",
+                        "errorPolicy",
                         "timeouts",
                         "retry",
                         "tags",
@@ -363,6 +366,7 @@ class AutomaxEngine:
                 )
             self._validate_strategy(task.get("strategy"), f"task '{task_id}'")
             self._validate_failure_policy(task.get("failurePolicy"), f"task '{task_id}'")
+            self._validate_error_policy(task.get("errorPolicy"), f"task '{task_id}'")
             self._validate_timeouts(task.get("timeouts"), f"task '{task_id}'")
             self._validate_retry_policy(task.get("retry"), f"task '{task_id}'")
             self._validate_tags(task.get("tags"), f"task '{task_id}'")
@@ -387,6 +391,7 @@ class AutomaxEngine:
                             "targets",
                             "strategy",
                             "failurePolicy",
+                            "errorPolicy",
                             "timeouts",
                             "retry",
                             "tags",
@@ -395,6 +400,7 @@ class AutomaxEngine:
                     )
                 self._validate_strategy(step.get("strategy"), f"step '{task_id}:{step_id}'")
                 self._validate_failure_policy(step.get("failurePolicy"), f"step '{task_id}:{step_id}'")
+                self._validate_error_policy(step.get("errorPolicy"), f"step '{task_id}:{step_id}'")
                 self._validate_timeouts(step.get("timeouts"), f"step '{task_id}:{step_id}'")
                 self._validate_retry_policy(step.get("retry"), f"step '{task_id}:{step_id}'")
                 self._validate_tags(step.get("tags"), f"step '{task_id}:{step_id}'")
@@ -421,6 +427,7 @@ class AutomaxEngine:
                                 "tags",
                                 "timeouts",
                                 "retry",
+                                "errorPolicy",
                                 "when",
                                 "use",
                                 "plugin",
@@ -439,6 +446,9 @@ class AutomaxEngine:
                     )
                     self._validate_retry_policy(
                         substep.get("retry"), f"substep '{task_id}:{step_id}:{substep_id}'"
+                    )
+                    self._validate_error_policy(
+                        substep.get("errorPolicy"), f"substep '{task_id}:{step_id}:{substep_id}'"
                     )
                     if substep_id in seen_substeps:
                         raise AutomaxError(
@@ -688,7 +698,7 @@ class AutomaxEngine:
                 if status == NodeStatus.FAILED.value:
                     filtered.append(item)
                 continue
-            if skip_successful and status == NodeStatus.SUCCESS.value:
+            if skip_successful and status in {NodeStatus.SUCCESS.value, NodeStatus.WARNING.value}:
                 continue
             filtered.append(item)
         return filtered
@@ -926,7 +936,7 @@ class AutomaxEngine:
             store.finish_node(
                 node_id=node_id,
                 target=target.name,
-                status=NodeStatus.SUCCESS if result.ok else NodeStatus.FAILED,
+                status=self._node_status_for_result(result),
                 changed=result.changed,
                 rc=result.rc,
                 message=self._mask_text(result.message, secrets),
@@ -939,7 +949,7 @@ class AutomaxEngine:
                 payload={"ok": result.ok, "changed": result.changed, "rc": result.rc},
             )
             if output_format == "text":
-                status = "OK" if result.ok else "FAILED"
+                status = "WARN" if result.warning else ("OK" if result.ok else "FAILED")
                 with self._print_lock:
                     print(
                         f"[{status}] {target.name} {node_id} rc={result.rc} {self._mask_text(result.message, secrets)}".rstrip()
@@ -988,6 +998,7 @@ class AutomaxEngine:
                     ssh_client=ssh_client,
                     step_state=step_state,
                 )
+                result = self._apply_error_policy(job, task, step, substep, result, secrets)
             except Exception as exc:
                 result = PluginResult.failure(message=str(exc))
             attempt_records.append(
@@ -1196,6 +1207,7 @@ class AutomaxEngine:
             "ok": result.ok,
             "changed": result.changed,
             "skipped": result.skipped,
+            "warning": result.warning,
             "rc": result.rc,
             "stdout": self._mask_text(result.stdout, secrets or {}),
             "stderr": self._mask_text(result.stderr, secrets or {}),
@@ -1238,6 +1250,279 @@ class AutomaxEngine:
         secret_text = str(value)
         if len(secret_text) >= 4:
             yield secret_text
+
+    @staticmethod
+    def _node_status_for_result(result: PluginResult) -> NodeStatus:
+        if result.warning:
+            return NodeStatus.WARNING
+        return NodeStatus.SUCCESS if result.ok else NodeStatus.FAILED
+
+    @staticmethod
+    def _final_run_status(store: StateStore, rc: int) -> NodeStatus:
+        if rc != 0:
+            return NodeStatus.FAILED
+        summary = store.summarize()
+        if summary["status_counts"].get(NodeStatus.WARNING.value, 0):
+            return NodeStatus.WARNING
+        return NodeStatus.SUCCESS
+
+    def _resolve_error_policy(
+        self, job: Dict[str, Any], task: Dict[str, Any], step: Dict[str, Any], substep: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Resolve inherited error normalization policy for one substep."""
+        policy: Dict[str, Any] = {
+            "acceptedRc": [],
+            "expected": [],
+            "fail": [],
+            "unmatched": "fail",
+            "acceptedStatus": "warning",
+        }
+        for node in (job, task, step, substep):
+            raw = node.get("errorPolicy") or {}
+            if raw:
+                policy.update(raw)
+        self._validate_error_policy(policy, "resolved errorPolicy")
+        policy["acceptedRc"] = [int(value) for value in policy.get("acceptedRc", [])]
+        policy["expected"] = self._normalize_error_rules(policy.get("expected", []), "expected")
+        policy["fail"] = self._normalize_error_rules(policy.get("fail", []), "fail")
+        return policy
+
+    def _apply_error_policy(
+        self,
+        job: Dict[str, Any],
+        task: Dict[str, Any],
+        step: Dict[str, Any],
+        substep: Dict[str, Any],
+        result: PluginResult,
+        secrets: Dict[str, Any],
+    ) -> PluginResult:
+        """Normalize accepted non-zero return codes into warning/success when safe."""
+        if result.ok:
+            return result
+        policy = self._resolve_error_policy(job, task, step, substep)
+        accepted_rc = set(policy.get("acceptedRc") or [])
+        if int(result.rc) not in accepted_rc:
+            return result
+
+        fail_matches = self._match_error_rules(result, policy.get("fail", []))
+        expected_matches = self._match_error_rules(result, policy.get("expected", []))
+        unmatched_lines = self._unmatched_error_lines(result, expected_matches)
+        unmatched_mode = str(policy.get("unmatched", "fail"))
+        if fail_matches:
+            result.data = dict(result.data)
+            result.data["errorPolicy"] = self._error_policy_data(
+                accepted=False,
+                reason="fail pattern matched",
+                expected_matches=expected_matches,
+                fail_matches=fail_matches,
+                unmatched_lines=unmatched_lines,
+                policy=policy,
+                secrets=secrets,
+            )
+            return result
+        if unmatched_lines and unmatched_mode == "fail":
+            result.data = dict(result.data)
+            result.data["errorPolicy"] = self._error_policy_data(
+                accepted=False,
+                reason="unexpected output remained after expected diagnostics were removed",
+                expected_matches=expected_matches,
+                fail_matches=fail_matches,
+                unmatched_lines=unmatched_lines,
+                policy=policy,
+                secrets=secrets,
+            )
+            return result
+
+        status = str(policy.get("acceptedStatus", "warning"))
+        message = self._accepted_error_policy_message(
+            expected_matches=expected_matches,
+            unmatched_lines=unmatched_lines,
+            unmatched_mode=unmatched_mode,
+        )
+        data = dict(result.data)
+        data["errorPolicy"] = self._error_policy_data(
+            accepted=True,
+            reason="accepted return code normalized by errorPolicy",
+            expected_matches=expected_matches,
+            fail_matches=fail_matches,
+            unmatched_lines=unmatched_lines,
+            policy=policy,
+            secrets=secrets,
+        )
+        if status == "success" and unmatched_mode != "warn":
+            return PluginResult.success(
+                changed=result.changed,
+                rc=result.rc,
+                stdout=result.stdout,
+                stderr=result.stderr,
+                message=message,
+                data=data,
+            )
+        return PluginResult.warning_result(
+            changed=result.changed,
+            rc=result.rc,
+            stdout=result.stdout,
+            stderr=result.stderr,
+            message=message,
+            data=data,
+        )
+
+    @staticmethod
+    def _accepted_error_policy_message(
+        *, expected_matches: list[Dict[str, Any]], unmatched_lines: list[Dict[str, Any]], unmatched_mode: str
+    ) -> str:
+        suffix = ""
+        if unmatched_lines and unmatched_mode == "warn":
+            suffix = f", {len(unmatched_lines)} unexpected line(s) downgraded to warning"
+        return (
+            "accepted failure by errorPolicy: "
+            f"{len(expected_matches)} expected diagnostic(s), "
+            f"{len(unmatched_lines)} unexpected diagnostic(s){suffix}"
+        )
+
+    def _error_policy_data(
+        self,
+        *,
+        accepted: bool,
+        reason: str,
+        expected_matches: list[Dict[str, Any]],
+        fail_matches: list[Dict[str, Any]],
+        unmatched_lines: list[Dict[str, Any]],
+        policy: Dict[str, Any],
+        secrets: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        return self._mask_mapping(
+            {
+                "accepted": accepted,
+                "reason": reason,
+                "acceptedRc": policy.get("acceptedRc", []),
+                "acceptedStatus": policy.get("acceptedStatus", "warning"),
+                "unmatched": policy.get("unmatched", "fail"),
+                "expectedMatches": expected_matches,
+                "failMatches": fail_matches,
+                "unexpectedLines": unmatched_lines[:50],
+                "unexpectedLineCount": len(unmatched_lines),
+            },
+            secrets,
+        )
+
+    def _match_error_rules(
+        self, result: PluginResult, rules: list[Dict[str, Any]]
+    ) -> list[Dict[str, Any]]:
+        matches: list[Dict[str, Any]] = []
+        stream_lines = self._error_policy_stream_lines(result)
+        for rule in rules:
+            pattern = re.compile(str(rule["pattern"]))
+            stream = str(rule.get("stream", "combined"))
+            for line in stream_lines[stream]:
+                if pattern.search(line["text"]):
+                    matches.append(
+                        {
+                            "stream": line["source"],
+                            "line": line["text"],
+                            "pattern": str(rule["pattern"]),
+                            "reason": str(rule.get("reason", "")),
+                        }
+                    )
+        return matches
+
+    def _unmatched_error_lines(
+        self, result: PluginResult, expected_matches: list[Dict[str, Any]]
+    ) -> list[Dict[str, Any]]:
+        matched = {(item["stream"], item["line"]) for item in expected_matches}
+        lines = self._error_policy_stream_lines(result)["combined"]
+        return [
+            {"stream": line["source"], "line": line["text"]}
+            for line in lines
+            if (line["source"], line["text"]) not in matched
+        ]
+
+    @staticmethod
+    def _error_policy_stream_lines(result: PluginResult) -> Dict[str, list[Dict[str, str]]]:
+        stdout = [
+            {"source": "stdout", "text": line}
+            for line in str(result.stdout or "").splitlines()
+            if line.strip()
+        ]
+        stderr = [
+            {"source": "stderr", "text": line}
+            for line in str(result.stderr or "").splitlines()
+            if line.strip()
+        ]
+        message = [
+            {"source": "message", "text": line}
+            for line in str(result.message or "").splitlines()
+            if line.strip()
+        ]
+        return {
+            "stdout": stdout,
+            "stderr": stderr,
+            "message": message,
+            "combined": [*stdout, *stderr],
+        }
+
+    @staticmethod
+    def _normalize_error_rules(value: Any, label: str) -> list[Dict[str, Any]]:
+        if value is None:
+            return []
+        if isinstance(value, (str, dict)):
+            value = [value]
+        if not isinstance(value, list):
+            raise AutomaxError(f"{label} errorPolicy rules must be a list")
+        rules: list[Dict[str, Any]] = []
+        for item in value:
+            if isinstance(item, str):
+                rules.append({"stream": "combined", "pattern": item})
+                continue
+            if not isinstance(item, dict):
+                raise AutomaxError(f"{label} errorPolicy rule must be a mapping or string")
+            if not item.get("pattern"):
+                raise AutomaxError(f"{label} errorPolicy rule requires pattern")
+            stream = str(item.get("stream", "combined"))
+            if stream not in {"stdout", "stderr", "combined", "message"}:
+                raise AutomaxError(
+                    f"{label} errorPolicy rule stream must be stdout, stderr, combined or message"
+                )
+            re.compile(str(item["pattern"]))
+            rules.append(
+                {
+                    "stream": stream,
+                    "pattern": str(item["pattern"]),
+                    "reason": str(item.get("reason", "")),
+                }
+            )
+        return rules
+
+    @classmethod
+    def _validate_error_policy(cls, policy: Any, label: str) -> None:
+        if policy is None:
+            return
+        if not isinstance(policy, dict):
+            raise AutomaxError(f"{label} errorPolicy must be a mapping")
+        allowed = {"acceptedRc", "expected", "fail", "unmatched", "acceptedStatus"}
+        unknown = sorted(set(policy) - allowed)
+        if unknown:
+            raise AutomaxError(
+                f"{label} errorPolicy unsupported keys: {', '.join(unknown)}. "
+                f"Allowed keys: {', '.join(sorted(allowed))}"
+            )
+        accepted_rc = policy.get("acceptedRc", [])
+        if accepted_rc is None:
+            accepted_rc = []
+        if isinstance(accepted_rc, int):
+            raise AutomaxError(f"{label} errorPolicy acceptedRc must be a list of integers")
+        if not isinstance(accepted_rc, list):
+            raise AutomaxError(f"{label} errorPolicy acceptedRc must be a list of integers")
+        for value in accepted_rc:
+            int(value)
+        unmatched = str(policy.get("unmatched", "fail"))
+        if unmatched not in {"fail", "warn", "ignore"}:
+            raise AutomaxError(f"{label} errorPolicy unmatched must be fail, warn or ignore")
+        accepted_status = str(policy.get("acceptedStatus", "warning"))
+        if accepted_status not in {"warning", "success"}:
+            raise AutomaxError(f"{label} errorPolicy acceptedStatus must be warning or success")
+        cls._normalize_error_rules(policy.get("expected", []), f"{label} expected")
+        cls._normalize_error_rules(policy.get("fail", []), f"{label} fail")
 
     def _resolve_retry_policy(
         self, job: Dict[str, Any], task: Dict[str, Any], step: Dict[str, Any], substep: Dict[str, Any]
@@ -1482,6 +1767,7 @@ class AutomaxEngine:
                 "targets": summary["targets_total"],
                 "nodes": summary["nodes_total"],
                 "success": summary["status_counts"].get(NodeStatus.SUCCESS.value, 0),
+                "warning": summary["status_counts"].get(NodeStatus.WARNING.value, 0),
                 "failed": summary["status_counts"].get(NodeStatus.FAILED.value, 0),
                 "skipped": summary["status_counts"].get(NodeStatus.SKIPPED.value, 0),
                 "changed": summary["changed_nodes"],
@@ -1489,6 +1775,7 @@ class AutomaxEngine:
             },
             "targets": summary["targets"],
             "failed_nodes": summary["failed_nodes"],
+            "warning_nodes": summary.get("warning_nodes", []),
             "first_failed_node": summary["first_failed_node"],
             "resume": resume,
             "artifacts_command": f"automax artifacts list {store.run_id} --state-dir {state_dir}"
@@ -1513,6 +1800,7 @@ class AutomaxEngine:
 
         run = payload["run"]
         failed_nodes = payload["failed_nodes"]
+        warning_nodes = payload.get("warning_nodes", [])
         status_word = "succeeded" if rc == 0 else "failed"
         print("")
         print(f"Automax run {status_word}")
@@ -1521,7 +1809,7 @@ class AutomaxEngine:
         print(f"Job: {run['job_path']}")
         print(f"State: {payload['state_dir']}")
         print("Summary:")
-        for key in ("targets", "nodes", "success", "failed", "skipped", "changed", "artifacts"):
+        for key in ("targets", "nodes", "success", "warning", "failed", "skipped", "changed", "artifacts"):
             print(f"  {key}: {payload['summary'][key]}")
         if payload["targets"]:
             print("Targets:")
@@ -1532,9 +1820,18 @@ class AutomaxEngine:
                     f"{target['target']} {target['status']} "
                     f"changed={target['changed']} "
                     f"success={counts.get(NodeStatus.SUCCESS.value, 0)} "
+                    f"warning={counts.get(NodeStatus.WARNING.value, 0)} "
                     f"failed={counts.get(NodeStatus.FAILED.value, 0)} "
                     f"skipped={counts.get(NodeStatus.SKIPPED.value, 0)}"
                 )
+        if warning_nodes:
+            print("Warnings:")
+            for node in warning_nodes[:10]:
+                detail = f" rc={node['rc']}" if node.get("rc") is not None else ""
+                message = f" {node['message']}" if node.get("message") else ""
+                print(f"  {node['target']} {node['node_id']}{detail}{message}".rstrip())
+            if len(warning_nodes) > 10:
+                print(f"  ... {len(warning_nodes) - 10} more warning nodes")
         if failed_nodes:
             print("Failed:")
             for node in failed_nodes[:10]:

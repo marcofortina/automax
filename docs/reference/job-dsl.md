@@ -182,6 +182,29 @@ continue
 
 `maxFailedHosts` stops the job after too many target hosts have failed.
 
+## Error policy
+
+`errorPolicy` can be declared at job, task, step or substep level. It runs before
+retry and failure policy. Use it when a command returns a non-zero code but some
+diagnostics are expected and should not block the workflow.
+
+```yaml
+errorPolicy:
+  acceptedRc: [1, 2, 3]
+  expected:
+    - stream: combined
+      pattern: "PRVF-5436.*NTP"
+      reason: "Expected Oracle RAC precheck diagnostic"
+  fail:
+    - stream: combined
+      pattern: "ORA-[0-9]+"
+  unmatched: fail
+  acceptedStatus: warning
+```
+
+A result that remains failed after `errorPolicy` is then handled by retry and
+finally by `failurePolicy`. See [Error policy](error-policy.md).
+
 ## Conditions
 
 A substep can include a `when` expression. The expression is rendered with Jinja2

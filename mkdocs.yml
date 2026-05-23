@@ -67,6 +67,7 @@ nav:
     - State and Resume: reference/state-and-resume.md
     - Run Locking: reference/locking.md
     - Retry Policy: reference/retry.md
+    - Error Policy: reference/error-policy.md
     - Artifacts: reference/artifacts.md
     - Output Formats: reference/output-formats.md
     - Exported Schemas: reference/schemas.md

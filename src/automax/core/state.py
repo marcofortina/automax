@@ -451,6 +451,7 @@ class StateStore:
         status_counts = {status: 0 for status in statuses}
         targets: Dict[str, Dict[str, Any]] = {}
         failed_nodes = []
+        warning_nodes = []
         changed_nodes = 0
         for node in nodes:
             status = str(node.get("status") or "")
@@ -474,6 +475,8 @@ class StateStore:
                 target_summary["changed"] += 1
             if status == NodeStatus.FAILED.value:
                 failed_nodes.append(node)
+            if status == NodeStatus.WARNING.value:
+                warning_nodes.append(node)
 
         for target_summary in targets.values():
             target_summary["status"] = self._aggregate_status(target_summary["status_counts"])
@@ -486,6 +489,7 @@ class StateStore:
             "changed_nodes": changed_nodes,
             "targets": sorted(targets.values(), key=lambda item: item["target"]),
             "failed_nodes": failed_nodes,
+            "warning_nodes": warning_nodes,
             "first_failed_node": failed_nodes[0] if failed_nodes else None,
             "artifacts_count": self.count_artifacts(),
         }
@@ -496,6 +500,8 @@ class StateStore:
             return NodeStatus.FAILED.value
         if status_counts.get(NodeStatus.RUNNING.value, 0):
             return NodeStatus.RUNNING.value
+        if status_counts.get(NodeStatus.WARNING.value, 0):
+            return NodeStatus.WARNING.value
         if status_counts.get(NodeStatus.SUCCESS.value, 0):
             return NodeStatus.SUCCESS.value
         if status_counts.get(NodeStatus.SKIPPED.value, 0):

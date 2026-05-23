@@ -45,8 +45,8 @@ automax runs list --state-dir /var/lib/automax/runs
 automax runs show <run-id> --state-dir /var/lib/automax/runs
 ```
 
-The command prints run metadata, aggregate node counts, per-target status, failed
-checkpoints and ready-to-copy resume commands. Narrow the node table when needed:
+The command prints run metadata, aggregate node counts, per-target status, warning
+nodes, failed checkpoints and ready-to-copy resume commands. Narrow the node table when needed:
 
 ```bash
 automax runs show <run-id> --state-dir /var/lib/automax/runs --failed

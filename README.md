@@ -237,6 +237,23 @@ failurePolicy:
   maxFailedHosts: 1
 ```
 
+Advanced error policy can downgrade expected non-zero command results to
+warnings after stdout/stderr normalization:
+
+```yaml
+errorPolicy:
+  acceptedRc: [1, 2, 3]
+  expected:
+    - stream: combined
+      pattern: "PRVF-5436.*NTP"
+      reason: "Expected Oracle RAC precheck diagnostic"
+  fail:
+    - stream: combined
+      pattern: "ORA-[0-9]+"
+  unmatched: fail
+  acceptedStatus: warning
+```
+
 ## State store
 
 Each run gets a generated `run-id`. The state store is local SQLite by default:

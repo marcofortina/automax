@@ -18,6 +18,7 @@ class NodeStatus(str, Enum):
     PENDING = "pending"
     RUNNING = "running"
     SUCCESS = "success"
+    WARNING = "warning"
     FAILED = "failed"
     SKIPPED = "skipped"
 
@@ -45,6 +46,7 @@ class PluginResult:
     ok: bool
     changed: bool = False
     skipped: bool = False
+    warning: bool = False
     rc: int = 0
     stdout: str = ""
     stderr: str = ""
@@ -95,6 +97,29 @@ class PluginResult:
     @classmethod
     def skipped_result(cls, message: str = "") -> "PluginResult":
         return cls(ok=True, skipped=True, message=message)
+
+
+    @classmethod
+    def warning_result(
+        cls,
+        *,
+        changed: bool = False,
+        rc: int = 0,
+        stdout: str = "",
+        stderr: str = "",
+        message: str = "",
+        data: Optional[Dict[str, Any]] = None,
+    ) -> "PluginResult":
+        return cls(
+            ok=True,
+            changed=changed,
+            warning=True,
+            rc=rc,
+            stdout=stdout,
+            stderr=stderr,
+            message=message,
+            data=data or {},
+        )
 
 
 @dataclass
