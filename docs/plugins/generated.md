@@ -12,6 +12,102 @@ Do not edit plugin parameter lists here by hand; update plugin metadata and rege
 automax docs generate-plugins --output docs/plugins/generated.md
 ```
 
+## apparmor
+
+### `apparmor.profile`
+
+Set an AppArmor profile to enforce or complain mode.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile name or profile file path. |
+| `state` | yes | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: apparmor.profile
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+  state: enforce
+  sudo: true
+```
+
+### `apparmor.reload`
+
+Reload one AppArmor profile file or the AppArmor service.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | no | `string` |  | AppArmor profile name or profile file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: apparmor.reload
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+  sudo: true
+```
+
+### `apparmor.status`
+
+Read AppArmor status.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.status`: Raw AppArmor status output.
+
+Example:
+
+```yaml
+use: apparmor.status
+with:
+  sudo: true
+```
+
 ## archive
 
 ### `archive.tar`
@@ -2157,6 +2253,138 @@ use: remote.command
 with:
   command: systemctl is-active sshd
   success_rc: 0
+```
+
+## selinux
+
+### `selinux.boolean`
+
+Set an SELinux boolean.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `value` | yes | `string` |  | Desired parameter value. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: selinux.boolean
+with:
+  name: httpd_can_network_connect
+  value: true
+  persist: true
+  sudo: true
+```
+
+### `selinux.context`
+
+Manage an SELinux fcontext rule.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `selinux_type` | yes | `string` |  | SELinux file context type. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: selinux.context
+with:
+  path: /tmp/automax-demo
+  selinux_type: httpd_sys_content_t
+```
+
+### `selinux.mode`
+
+Set SELinux runtime and/or persistent mode.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `state` | yes | `string` |  | Desired state such as present, absent, started or stopped. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: selinux.mode
+with:
+  state: present
+```
+
+### `selinux.restorecon`
+
+Run restorecon on a remote path.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `recursive` | no | `boolean` | `False` | Recurse into directories. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: selinux.restorecon
+with:
+  path: /tmp/automax-demo
 ```
 
 ## ssh

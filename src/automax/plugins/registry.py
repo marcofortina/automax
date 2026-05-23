@@ -201,6 +201,15 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         UserModifyPlugin,
         UserRemovePlugin,
     )
+    from automax.plugins.security_modules import (
+        ApparmorProfilePlugin,
+        ApparmorReloadPlugin,
+        ApparmorStatusPlugin,
+        SelinuxBooleanPlugin,
+        SelinuxContextPlugin,
+        SelinuxModePlugin,
+        SelinuxRestoreconPlugin,
+    )
     from automax.plugins.systemctl import (
         SystemctlDaemonReloadPlugin,
         SystemctlDisablePlugin,
@@ -256,6 +265,13 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         MountPresentPlugin(),
         MountAbsentPlugin(),
         FstabEntryPlugin(),
+        SelinuxModePlugin(),
+        SelinuxBooleanPlugin(),
+        SelinuxContextPlugin(),
+        SelinuxRestoreconPlugin(),
+        ApparmorStatusPlugin(),
+        ApparmorProfilePlugin(),
+        ApparmorReloadPlugin(),
         RemoteCommandPlugin(),
         PackageInstallPlugin(),
         PackageRemovePlugin(),

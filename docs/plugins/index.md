@@ -17,6 +17,9 @@ automax plugins list
 Current builtin plugins:
 
 ```text
+apparmor.profile
+apparmor.reload
+apparmor.status
 archive.tar
 archive.untar
 archive.unzip
@@ -78,6 +81,10 @@ pkg.upgrade
 process.kill
 process.wait
 remote.command
+selinux.boolean
+selinux.context
+selinux.mode
+selinux.restorecon
 ssh.authorized_key
 sudoers.dropin
 sysctl.get
