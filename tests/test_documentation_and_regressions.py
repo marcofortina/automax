@@ -22,6 +22,12 @@ def write(path: Path, content: str) -> Path:
     return path
 
 
+def test_plugin_metadata_sample_formatter_is_python39_safe():
+    from automax.plugins.metadata import _format_sample_value
+
+    assert _format_sample_value("timeout", 3, indent="  ") == ["  timeout: 3"]
+    assert _format_sample_value("interval", 1.5, indent="  ") == ["  interval: 1.5"]
+
 def test_documented_builtin_plugin_list_matches_registry():
     documented = set()
     in_block = False

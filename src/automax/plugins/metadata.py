@@ -278,7 +278,7 @@ def _build_example(plugin: BasePlugin) -> str:
 def _format_sample_value(name: str, value: Any, *, indent: str) -> list[str]:
     if isinstance(value, bool):
         return [f"{indent}{name}: {str(value).lower()}"]
-    if isinstance(value, int | float):
+    if isinstance(value, (int, float)):
         return [f"{indent}{name}: {value}"]
     if isinstance(value, list):
         lines = [f"{indent}{name}:"]
