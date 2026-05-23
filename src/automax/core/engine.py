@@ -140,9 +140,7 @@ class AutomaxEngine:
             )
             store.update_run_status(NodeStatus.SUCCESS if rc == 0 else NodeStatus.FAILED)
             store.record_event("job_finished", payload={"rc": rc})
-            print(f"Run ID: {run_id}")
-            if rc != 0:
-                print(f"Resume: automax resume {run_id} --state-dir {state_dir}")
+            self._print_run_summary(store, rc=rc, state_dir=state_dir)
             return rc
         except Exception as exc:
             store.update_run_status(NodeStatus.FAILED)
@@ -1075,6 +1073,61 @@ class AutomaxEngine:
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
         name = re.sub(r"[^A-Za-z0-9_.-]+", "-", self._job_name(job)).strip("-") or "job"
         return f"{stamp}-{name}-{uuid.uuid4().hex[:8]}"
+
+
+    @staticmethod
+    def _print_run_summary(store: StateStore, *, rc: int, state_dir: str) -> None:
+        """Print a compact operator summary after each real run/resume."""
+        summary = store.summarize()
+        run = summary["run"]
+        state_path = store.run_dir
+        failed_nodes = summary["failed_nodes"]
+        status_word = "succeeded" if rc == 0 else "failed"
+        print("")
+        print(f"Automax run {status_word}")
+        print(f"Run ID: {store.run_id}")
+        print(f"Status: {run['status']}")
+        print(f"Job: {run['job_path']}")
+        print(f"State: {state_path}")
+        print("Summary:")
+        print(f"  targets: {summary['targets_total']}")
+        print(f"  nodes: {summary['nodes_total']}")
+        print(f"  success: {summary['status_counts'].get(NodeStatus.SUCCESS.value, 0)}")
+        print(f"  failed: {summary['status_counts'].get(NodeStatus.FAILED.value, 0)}")
+        print(f"  skipped: {summary['status_counts'].get(NodeStatus.SKIPPED.value, 0)}")
+        print(f"  changed: {summary['changed_nodes']}")
+        print(f"  artifacts: {summary['artifacts_count']}")
+        if summary["targets"]:
+            print("Targets:")
+            for target in summary["targets"]:
+                counts = target["status_counts"]
+                print(
+                    "  "
+                    f"{target['target']} {target['status']} "
+                    f"changed={target['changed']} "
+                    f"success={counts.get(NodeStatus.SUCCESS.value, 0)} "
+                    f"failed={counts.get(NodeStatus.FAILED.value, 0)} "
+                    f"skipped={counts.get(NodeStatus.SKIPPED.value, 0)}"
+                )
+        if failed_nodes:
+            print("Failed:")
+            for node in failed_nodes[:10]:
+                detail = f" rc={node['rc']}" if node.get("rc") is not None else ""
+                message = f" {node['message']}" if node.get("message") else ""
+                print(f"  {node['target']} {node['node_id']}{detail}{message}".rstrip())
+            if len(failed_nodes) > 10:
+                print(f"  ... {len(failed_nodes) - 10} more failed nodes")
+            first_failed = failed_nodes[0]["node_id"]
+            print("Resume options:")
+            print(f"  automax resume {store.run_id} --state-dir {state_dir} --skip-successful")
+            print(f"  automax resume {store.run_id} --state-dir {state_dir} --only-failed")
+            print(
+                f"  automax resume {store.run_id} --state-dir {state_dir} "
+                f"--from {first_failed}"
+            )
+        if summary["artifacts_count"]:
+            print("Artifacts:")
+            print(f"  automax artifacts list {store.run_id} --state-dir {state_dir}")
 
     @staticmethod
     def _print_plan(run_id: str, plan: List[Dict[str, Any]]) -> None:

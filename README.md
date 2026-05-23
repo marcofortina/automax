@@ -46,6 +46,15 @@ pip install -e '.[database]'
 
 ## Quick smoke
 
+Install development extras before running the test suite. Installing only
+`.[docs]` is enough for MkDocs, but it intentionally does not install `pytest`.
+
+```bash
+python -m pip install -e '.[dev]'
+python -m compileall -q src tests scripts
+python -m pytest -q
+```
+
 ```bash
 python -m automax validate \
   --job examples/next/jobs/local-smoke.yaml \
@@ -69,6 +78,14 @@ automax run \
   --vars /srv/automax/vars/prod.yaml \
   --secrets /srv/automax/secrets/prod.yaml \
   --state-dir /var/lib/automax/runs
+```
+
+Inspect an existing run:
+
+```bash
+automax runs show <run-id> --state-dir /var/lib/automax/runs
+automax runs show <run-id> --state-dir /var/lib/automax/runs --failed
+automax runs show <run-id> --state-dir /var/lib/automax/runs --server web01
 ```
 
 Resume a failed run:

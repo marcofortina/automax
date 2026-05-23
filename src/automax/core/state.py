@@ -396,6 +396,112 @@ class StateStore:
             ).fetchall()
         return {(str(row["node_id"]), str(row["target"])) for row in rows}
 
+
+    def list_nodes(
+        self,
+        *,
+        statuses: set[str] | None = None,
+        target: str | None = None,
+    ) -> list[Dict[str, Any]]:
+        """List nodes recorded for this run, optionally filtered by status/target."""
+        filters = ["run_id = ?"]
+        params: list[Any] = [self.run_id]
+        if statuses:
+            placeholders = ",".join("?" for _ in statuses)
+            filters.append(f"status IN ({placeholders})")
+            params.extend(sorted(statuses))
+        if target:
+            filters.append("target = ?")
+            params.append(target)
+        where = " AND ".join(filters)
+        with self.connect() as conn:
+            rows = conn.execute(
+                f"""
+                SELECT *
+                  FROM nodes
+                 WHERE {where}
+                 ORDER BY target ASC, task_id ASC, step_id ASC, substep_id ASC, node_id ASC
+                """,
+                params,
+            ).fetchall()
+        result = []
+        for row in rows:
+            data = dict(row)
+            data["changed"] = bool(data.get("changed"))
+            data["output"] = json.loads(data.pop("output_json") or "{}")
+            result.append(data)
+        return result
+
+    def count_artifacts(self) -> int:
+        """Return the number of artifacts captured for this run."""
+        with self.connect() as conn:
+            row = conn.execute(
+                "SELECT COUNT(*) AS total FROM artifacts WHERE run_id = ?",
+                (self.run_id,),
+            ).fetchone()
+        return int(row["total"] if row else 0)
+
+    def summarize(self) -> Dict[str, Any]:
+        """Build a user-facing summary for this run."""
+        run = self.get_run()
+        if not run:
+            raise StateStoreError(f"run state not found: {self.run_id}")
+        nodes = self.list_nodes()
+        statuses = [status.value for status in NodeStatus]
+        status_counts = {status: 0 for status in statuses}
+        targets: Dict[str, Dict[str, Any]] = {}
+        failed_nodes = []
+        changed_nodes = 0
+        for node in nodes:
+            status = str(node.get("status") or "")
+            status_counts[status] = status_counts.get(status, 0) + 1
+            if node.get("changed"):
+                changed_nodes += 1
+            target_name = str(node.get("target") or "")
+            target_summary = targets.setdefault(
+                target_name,
+                {
+                    "target": target_name,
+                    "status": NodeStatus.PENDING.value,
+                    "changed": 0,
+                    "status_counts": {item: 0 for item in statuses},
+                },
+            )
+            target_summary["status_counts"][status] = (
+                target_summary["status_counts"].get(status, 0) + 1
+            )
+            if node.get("changed"):
+                target_summary["changed"] += 1
+            if status == NodeStatus.FAILED.value:
+                failed_nodes.append(node)
+
+        for target_summary in targets.values():
+            target_summary["status"] = self._aggregate_status(target_summary["status_counts"])
+
+        return {
+            "run": run,
+            "nodes_total": len(nodes),
+            "targets_total": len(targets),
+            "status_counts": status_counts,
+            "changed_nodes": changed_nodes,
+            "targets": sorted(targets.values(), key=lambda item: item["target"]),
+            "failed_nodes": failed_nodes,
+            "first_failed_node": failed_nodes[0] if failed_nodes else None,
+            "artifacts_count": self.count_artifacts(),
+        }
+
+    @staticmethod
+    def _aggregate_status(status_counts: Dict[str, int]) -> str:
+        if status_counts.get(NodeStatus.FAILED.value, 0):
+            return NodeStatus.FAILED.value
+        if status_counts.get(NodeStatus.RUNNING.value, 0):
+            return NodeStatus.RUNNING.value
+        if status_counts.get(NodeStatus.SUCCESS.value, 0):
+            return NodeStatus.SUCCESS.value
+        if status_counts.get(NodeStatus.SKIPPED.value, 0):
+            return NodeStatus.SKIPPED.value
+        return NodeStatus.PENDING.value
+
     def list_runs(self) -> list[Dict[str, Any]]:
         with self.connect() as conn:
             rows = conn.execute(

@@ -8,7 +8,7 @@ Command-line interface for Automax next engine.
 from __future__ import annotations
 
 import sys
-from typing import Dict, Iterable
+from typing import Any, Dict, Iterable
 from pathlib import Path
 import json
 
@@ -17,6 +17,7 @@ import click
 from automax import __version__
 from automax.core.engine import AutomaxEngine, AutomaxError
 from automax.core.plugin_docs import render_plugin_reference
+from automax.core.models import NodeStatus
 from automax.core.state import StateStore
 from automax.plugins.registry import build_builtin_registry
 
@@ -237,6 +238,85 @@ def list_runs(state_dir: str) -> None:
     """List known runs from a state directory."""
     for run in StateStore.list_all_runs(state_dir):
         click.echo(f"{run['run_id']} {run['status']} {run['created_at']} {run['job_path']}")
+
+
+@runs.command("show")
+@click.argument("run_id")
+@click.option("--state-dir", default=".automax/runs", show_default=True, help="Run state directory.")
+@click.option("--failed", "failed_only", is_flag=True, help="Show only failed nodes in the node table.")
+@click.option("--server", "server_name", help="Show node details for one target/server.")
+@click.option("--json", "as_json", is_flag=True, help="Print structured JSON output.")
+def show_run(run_id: str, state_dir: str, failed_only: bool, server_name: str | None, as_json: bool) -> None:
+    """Show one run summary, failed checkpoints and optional node details."""
+    store = StateStore.open_existing(state_dir, run_id)
+    summary = store.summarize()
+    statuses = {NodeStatus.FAILED.value} if failed_only else None
+    nodes = store.list_nodes(statuses=statuses, target=server_name) if (failed_only or server_name) else []
+
+    if as_json:
+        payload: Dict[str, Any] = dict(summary)
+        payload["nodes"] = nodes
+        click.echo(json.dumps(payload, indent=2, sort_keys=True, default=str))
+        return
+
+    run = summary["run"]
+    click.echo(f"Run: {run_id}")
+    click.echo(f"Status: {run['status']}")
+    click.echo(f"Job: {run['job_path']}")
+    click.echo(f"Inventory: {run.get('inventory_path') or '-'}")
+    click.echo(f"Vars: {run.get('vars_path') or '-'}")
+    click.echo(f"Secrets: {run.get('secrets_path') or '-'}")
+    click.echo(f"Created: {run['created_at']}")
+    click.echo(f"Updated: {run['updated_at']}")
+    click.echo(f"State: {store.run_dir}")
+    click.echo("Summary:")
+    click.echo(f"  targets: {summary['targets_total']}")
+    click.echo(f"  nodes: {summary['nodes_total']}")
+    click.echo(f"  success: {summary['status_counts'].get(NodeStatus.SUCCESS.value, 0)}")
+    click.echo(f"  failed: {summary['status_counts'].get(NodeStatus.FAILED.value, 0)}")
+    click.echo(f"  skipped: {summary['status_counts'].get(NodeStatus.SKIPPED.value, 0)}")
+    click.echo(f"  changed: {summary['changed_nodes']}")
+    click.echo(f"  artifacts: {summary['artifacts_count']}")
+
+    if summary["targets"]:
+        click.echo("Targets:")
+        for target in summary["targets"]:
+            counts = target["status_counts"]
+            click.echo(
+                "  "
+                f"{target['target']} {target['status']} "
+                f"changed={target['changed']} "
+                f"success={counts.get(NodeStatus.SUCCESS.value, 0)} "
+                f"failed={counts.get(NodeStatus.FAILED.value, 0)} "
+                f"skipped={counts.get(NodeStatus.SKIPPED.value, 0)}"
+            )
+
+    failed_nodes = summary["failed_nodes"]
+    if failed_nodes:
+        click.echo("Failed nodes:")
+        for node in failed_nodes:
+            message = f" {node['message']}" if node.get("message") else ""
+            click.echo(f"  {node['target']} {node['node_id']} rc={node['rc']}{message}".rstrip())
+        first_failed = failed_nodes[0]["node_id"]
+        click.echo("Resume:")
+        click.echo(f"  automax resume {run_id} --state-dir {state_dir} --skip-successful")
+        click.echo(f"  automax resume {run_id} --state-dir {state_dir} --only-failed")
+        click.echo(f"  automax resume {run_id} --state-dir {state_dir} --from {first_failed}")
+
+    if failed_only or server_name:
+        click.echo("Nodes:")
+        if not nodes:
+            click.echo("  - none")
+        for node in nodes:
+            message = f" {node['message']}" if node.get("message") else ""
+            click.echo(
+                f"  {node['target']} {node['status']} {node['node_id']} "
+                f"changed={str(node['changed']).lower()} rc={node['rc']}{message}".rstrip()
+            )
+
+    if summary["artifacts_count"]:
+        click.echo("Artifacts:")
+        click.echo(f"  automax artifacts list {run_id} --state-dir {state_dir}")
 
 
 @cli.group()

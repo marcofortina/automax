@@ -1281,3 +1281,143 @@ tasks:
 
     assert result.exit_code == 1, result.output
     assert "artifact capture failed" in result.output
+
+
+def test_runs_show_displays_summary_and_target_status(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: runs-show-success
+failurePolicy:
+  onFailure: continue
+tasks:
+  - id: inspect
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: ok
+            use: local.command
+            with:
+              command: "printf ok"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+    state_dir = tmp_path / "runs"
+
+    run = CliRunner().invoke(
+        cli,
+        ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(state_dir)],
+    )
+    assert run.exit_code == 0, run.output
+    run_id = _extract_run_id(run.output)
+
+    shown = CliRunner().invoke(cli, ["runs", "show", run_id, "--state-dir", str(state_dir)])
+
+    assert shown.exit_code == 0, shown.output
+    assert f"Run: {run_id}" in shown.output
+    assert "Summary:" in shown.output
+    assert "targets: 1" in shown.output
+    assert "nodes: 1" in shown.output
+    assert "Targets:" in shown.output
+    assert "controller success" in shown.output
+
+
+def test_failed_run_summary_and_runs_show_failed_filter(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: runs-show-failed
+failurePolicy:
+  onFailure: continue
+tasks:
+  - id: inspect
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: good
+            use: local.command
+            with:
+              command: "true"
+          - id: bad
+            use: local.command
+            with:
+              command: "false"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+    state_dir = tmp_path / "runs"
+
+    run = CliRunner().invoke(
+        cli,
+        ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(state_dir)],
+    )
+
+    assert run.exit_code == 1, run.output
+    assert "Automax run failed" in run.output
+    assert "Summary:" in run.output
+    assert "Resume options:" in run.output
+    run_id = _extract_run_id(run.output)
+
+    shown = CliRunner().invoke(
+        cli,
+        ["runs", "show", run_id, "--state-dir", str(state_dir), "--failed"],
+    )
+
+    assert shown.exit_code == 0, shown.output
+    assert "Failed nodes:" in shown.output
+    assert "task.inspect:step.local:substep.bad" in shown.output
+    assert "Nodes:" in shown.output
+    assert "substep.good" not in shown.output
+
+
+def test_runs_show_json_includes_summary_and_filtered_nodes(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: runs-show-json
+failurePolicy:
+  onFailure: continue
+tasks:
+  - id: inspect
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: ok
+            use: local.command
+            with:
+              command: "true"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+    state_dir = tmp_path / "runs"
+
+    run = CliRunner().invoke(
+        cli,
+        ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(state_dir)],
+    )
+    assert run.exit_code == 0, run.output
+    run_id = _extract_run_id(run.output)
+
+    shown = CliRunner().invoke(
+        cli,
+        ["runs", "show", run_id, "--state-dir", str(state_dir), "--server", "controller", "--json"],
+    )
+
+    assert shown.exit_code == 0, shown.output
+    payload = json.loads(shown.output)
+    assert payload["run"]["run_id"] == run_id
+    assert payload["targets_total"] == 1
+    assert payload["status_counts"]["success"] == 1
+    assert payload["nodes"][0]["target"] == "controller"
