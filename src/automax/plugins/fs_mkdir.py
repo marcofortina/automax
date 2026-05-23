@@ -22,6 +22,41 @@ class FsMkdirPlugin(BasePlugin):
     required_params = ("path",)
     opens_remote_session = True
 
+    def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        path = quote(params["path"])
+        mode = params.get("mode")
+        owner = params.get("owner")
+        group = params.get("group")
+
+        checks = [f"test -d {path}"]
+        if mode:
+            checks.append(f'test "$(stat -c %a {path})" = {quote(mode)}')
+        if owner:
+            checks.append(f'test "$(stat -c %U {path})" = {quote(owner)}')
+        if group:
+            checks.append(f'test "$(stat -c %G {path})" = {quote(group)}')
+
+        commands = [f"mkdir -p {path}"]
+        if mode:
+            commands.append(f"chmod {quote(mode)} {path}")
+        if owner or group:
+            owner_group = f"{owner or ''}:{group or ''}"
+            commands.append(f"chown {quote(owner_group)} {path}")
+
+        command = (
+            " && ".join(checks)
+            + " || { "
+            + " && ".join(commands)
+            + f"; echo {CHANGE_MARKER}; }}"
+        )
+        return apply_cwd(command, context, params.get("cwd"))
+
+    def manual_commands(
+        self, params: Dict[str, Any], context: ExecutionContext
+    ) -> list[str]:
+        self.validate(params)
+        return [self._command(params, context)]
+
     def dry_run(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         return PluginResult.success(
             changed=False,
@@ -36,28 +71,7 @@ class FsMkdirPlugin(BasePlugin):
         if context.ssh_client is None:
             return PluginResult.failure(message="fs.mkdir requires an SSH session")
 
-        path = quote(params["path"])
-        mode = params.get("mode")
-        owner = params.get("owner")
-        group = params.get("group")
-
-        checks = [f"test -d {path}"]
-        if mode:
-            checks.append(f"test \"$(stat -c %a {path})\" = {quote(mode)}")
-        if owner:
-            checks.append(f"test \"$(stat -c %U {path})\" = {quote(owner)}")
-        if group:
-            checks.append(f"test \"$(stat -c %G {path})\" = {quote(group)}")
-
-        commands = [f"mkdir -p {path}"]
-        if mode:
-            commands.append(f"chmod {quote(mode)} {path}")
-        if owner or group:
-            owner_group = f"{owner or ''}:{group or ''}"
-            commands.append(f"chown {quote(owner_group)} {path}")
-
-        command = " && ".join(checks) + " || { " + " && ".join(commands) + f"; echo {CHANGE_MARKER}; }}"
-        rc, out, err = exec_remote(context, apply_cwd(command, context, params.get("cwd")))
+        rc, out, err = exec_remote(context, self._command(params, context))
         return result_from_remote(
             rc=rc,
             stdout=out,

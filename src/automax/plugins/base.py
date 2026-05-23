@@ -85,6 +85,12 @@ class BasePlugin(ABC):
         """Return safe unified diff previews for file-oriented plugins."""
         return []
 
+    def manual_commands(
+        self, params: Dict[str, Any], context: ExecutionContext
+    ) -> list[str]:
+        """Return copy/pasteable shell commands for manual recovery."""
+        return []
+
     @abstractmethod
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         """Execute a plugin action."""

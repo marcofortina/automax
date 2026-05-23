@@ -648,6 +648,50 @@ class AutomaxEngine:
             "diffs": rows,
         }
 
+    def manual_commands_job(
+        self,
+        *,
+        job_path: str,
+        inventory_path: str,
+        vars_path: str | None = None,
+        secrets_path: str | None = None,
+        limit: Iterable[str] = (),
+        exclude: Iterable[str] = (),
+        tags: Iterable[str] = (),
+        skip_tags: Iterable[str] = (),
+        cli_vars: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Render manual recovery commands for selected job substeps."""
+        resolved = self.resolve_job_context(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=limit,
+            exclude=exclude,
+            tags=tags,
+            skip_tags=skip_tags,
+            cli_vars=cli_vars,
+        )
+        rows = []
+        for item in self.iter_rendered_plan_items(resolved, dry_run=True):
+            commands = item["plugin"].manual_commands(item["params"], item["context"])
+            rows.append(
+                {
+                    "target": item["target"].name,
+                    "host": item["target"].host,
+                    "node_id": item["node_id"],
+                    "plugin": item["plugin_name"],
+                    "commands": [self._mask_text(command, resolved.secrets) for command in commands],
+                    "available": bool(commands),
+                }
+            )
+        return {
+            "job": self._job_name(resolved.job),
+            "mode": "manual-commands",
+            "nodes": rows,
+        }
+
     def validate(
         self,
         *,

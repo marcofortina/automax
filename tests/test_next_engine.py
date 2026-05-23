@@ -2609,3 +2609,101 @@ tasks:
 
     assert result.exit_code == 0, result.output
     assert "+message=hello" in result.output
+
+
+def test_commands_render_prints_manual_commands_and_masks_secrets(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: manual-commands
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: local
+            use: local.command
+            with:
+              command: "printf {{ secrets.token }}"
+          - id: cleanup
+            use: fs.remove
+            with:
+              path: /tmp/demo
+              recursive: true
+              force: true
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        "servers:\n  controller:\n    host: 127.0.0.1\n",
+    )
+    secrets_file = write(tmp_path / "secrets.yaml", "secrets:\n  token: super-secret\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "commands",
+            "render",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--secrets",
+            str(secrets_file),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "checkpoint=task.t1:step.s1:substep.local" in result.output
+    assert "printf ***" in result.output
+    assert "super-secret" not in result.output
+    assert "test ! -e /tmp/demo || { rm -rf /tmp/demo" in result.output
+
+
+def test_commands_render_json_marks_unavailable_plugins(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: manual-json
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: stat
+            use: fs.stat
+            with:
+              path: /tmp/demo
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        "servers:\n  controller:\n    host: 127.0.0.1\n",
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "commands",
+            "render",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--format",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["nodes"][0]["available"] is False
+    assert payload["nodes"][0]["commands"] == []

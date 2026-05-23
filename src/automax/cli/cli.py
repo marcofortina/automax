@@ -624,6 +624,73 @@ def resume(
     sys.exit(rc)
 
 
+def _echo_manual_commands_payload(payload: Dict[str, Any], output_format: str) -> None:
+    if output_format == "json":
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    click.echo(f"Job: {payload['job']}")
+    click.echo("Manual command rendering:")
+    for node in payload["nodes"]:
+        click.echo(f"# target={node['target']} host={node['host']} checkpoint={node['node_id']} plugin={node['plugin']}")
+        if node["commands"]:
+            for command in node["commands"]:
+                click.echo(command)
+        else:
+            click.echo("# manual rendering not available for this plugin")
+        click.echo("")
+
+
+@cli.group()
+def commands() -> None:
+    """Render manual commands for job recovery."""
+
+
+@commands.command("render")
+@_apply_common_options
+@click.option("--limit", multiple=True, help="Limit targets. Accepts server, group or group:name.")
+@click.option("--exclude", multiple=True, help="Exclude targets. Accepts server, group or group:name.")
+@click.option("--tags", multiple=True, help="Render commands for substeps matching one of these tags.")
+@click.option("--skip-tags", multiple=True, help="Skip substeps matching one of these tags.")
+@click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    show_default=True,
+    help="Output format.",
+)
+def render_commands(
+    job_path: str,
+    inventory_path: str,
+    vars_path: str | None,
+    secrets_path: str | None,
+    cli_vars: tuple[str, ...],
+    limit: tuple[str, ...],
+    exclude: tuple[str, ...],
+    tags: tuple[str, ...],
+    skip_tags: tuple[str, ...],
+    plugin_path: tuple[str, ...],
+    output_format: str,
+) -> None:
+    """Render copy/pasteable commands for selected job substeps."""
+    try:
+        payload = _engine(plugin_path).manual_commands_job(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=_split_selectors(limit),
+            exclude=_split_selectors(exclude),
+            tags=_split_selectors(tags),
+            skip_tags=_split_selectors(skip_tags),
+            cli_vars=_parse_vars(cli_vars),
+        )
+    except (AutomaxError, ValueError, RuntimeError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _echo_manual_commands_payload(payload, output_format)
+
+
 @cli.group()
 def secrets() -> None:
     """Inspect job-scoped secret definitions."""

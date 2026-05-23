@@ -23,6 +23,24 @@ class FsRemovePlugin(BasePlugin):
     optional_params = ("recursive", "force", "cwd")
     opens_remote_session = True
 
+    def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        path = quote(params["path"])
+        flags = []
+        if bool(params.get("recursive", False)):
+            flags.append("r")
+        if bool(params.get("force", False)):
+            flags.append("f")
+        flag_text = f"-{''.join(flags)}" if flags else ""
+        remove_cmd = f"rm {flag_text} {path}" if flag_text else f"rm {path}"
+        command = f"test ! -e {path} || {{ {remove_cmd} && echo {CHANGE_MARKER}; }}"
+        return apply_cwd(command, context, params.get("cwd"))
+
+    def manual_commands(
+        self, params: Dict[str, Any], context: ExecutionContext
+    ) -> list[str]:
+        self.validate(params)
+        return [self._command(params, context)]
+
     def dry_run(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         return PluginResult.success(
             changed=False,
@@ -37,16 +55,7 @@ class FsRemovePlugin(BasePlugin):
         if context.ssh_client is None:
             return PluginResult.failure(message="fs.remove requires an SSH session")
 
-        path = quote(params["path"])
-        flags = []
-        if bool(params.get("recursive", False)):
-            flags.append("-r")
-        if bool(params.get("force", False)):
-            flags.append("-f")
-        flag_text = "".join(flags)
-        remove_cmd = f"rm {flag_text} {path}" if flag_text else f"rm {path}"
-        command = f"test ! -e {path} || {{ {remove_cmd} && echo {CHANGE_MARKER}; }}"
-        rc, out, err = exec_remote(context, apply_cwd(command, context, params.get("cwd")))
+        rc, out, err = exec_remote(context, self._command(params, context))
         return result_from_remote(
             rc=rc,
             stdout=out,

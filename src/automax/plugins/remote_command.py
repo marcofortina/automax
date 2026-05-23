@@ -22,6 +22,12 @@ class RemoteCommandPlugin(BasePlugin):
     required_params = ("command",)
     opens_remote_session = True
 
+    def manual_commands(
+        self, params: Dict[str, Any], context: ExecutionContext
+    ) -> list[str]:
+        self.validate(params)
+        return [apply_cwd(str(params["command"]), context, params.get("cwd"))]
+
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         if context.dry_run:
