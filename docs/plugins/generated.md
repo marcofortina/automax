@@ -483,6 +483,146 @@ with:
   output: rows
 ```
 
+## firewalld
+
+### `firewalld.port`
+
+Manage a firewalld port rule.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `port` | yes | `integer` |  | TCP port number. |
+| `protocol` | no | `string` | `tcp` | Network protocol such as tcp or udp. |
+| `zone` | no | `string` |  | firewalld zone name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: firewalld.port
+with:
+  port: 443
+  protocol: tcp
+  zone: public
+  state: present
+  permanent: true
+  reload: true
+  sudo: true
+```
+
+### `firewalld.reload`
+
+Reload firewalld configuration.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: firewalld.reload
+with:
+  sudo: true
+```
+
+### `firewalld.rich_rule`
+
+Manage a firewalld rich rule.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `rich_rule` | yes | `string` |  | firewalld rich rule expression. |
+| `zone` | no | `string` |  | firewalld zone name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: firewalld.rich_rule
+with:
+  rich_rule: rule family=ipv4 source address=10.0.0.0/8 service name=ssh accept
+```
+
+### `firewalld.service`
+
+Manage a firewalld service rule.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | systemd service unit name. |
+| `zone` | no | `string` |  | firewalld zone name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: firewalld.service
+with:
+  service: sshd
+```
+
 ## fs
 
 ### `fs.cd`
@@ -1309,6 +1449,73 @@ use: local.command
 with:
   command: echo automax
   changed: false
+```
+
+## nftables
+
+### `nftables.apply`
+
+Validate and apply nftables rules from inline content or a controller file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `content` | no | `string` |  | Text content to write. |
+| `src` | no | `path` |  | Source path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: nftables.apply
+with:
+  src: ./firewall/prod.nft
+  sudo: true
+```
+
+### `nftables.validate`
+
+Validate nftables rules from inline content or a controller file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `content` | no | `string` |  | Text content to write. |
+| `src` | no | `path` |  | Source path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: nftables.validate
+with:
+  content: managed by automax
+
+  src: /tmp/source
 ```
 
 ## pkg
@@ -2151,6 +2358,136 @@ use: transfer.upload
 with:
   src: /tmp/source
   dest: /tmp/dest
+```
+
+## ufw
+
+### `ufw.disable`
+
+Disable UFW when active.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: ufw.disable
+with:
+  sudo: true
+```
+
+### `ufw.enable`
+
+Enable UFW when inactive.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: ufw.enable
+with:
+  sudo: true
+```
+
+### `ufw.rule`
+
+Manage a UFW allow/deny/reject rule.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `rule` | yes | `string` |  | Firewall action such as allow, deny, reject or limit. |
+| `port` | no | `integer` |  | TCP port number. |
+| `protocol` | no | `string` | `tcp` | Network protocol such as tcp or udp. |
+| `from` | no | `string` |  | Source address for firewall rules. |
+| `to` | no | `string` |  | Destination address for firewall rules. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `comment` | no | `string` |  | User account comment or GECOS field. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: ufw.rule
+with:
+  rule: allow
+  port: 22
+  protocol: tcp
+  from: 10.0.0.0/8
+  sudo: true
+```
+
+### `ufw.status`
+
+Read UFW status.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.status`: Raw UFW status output.
+
+Example:
+
+```yaml
+use: ufw.status
+with:
+  sudo: true
 ```
 
 ## user

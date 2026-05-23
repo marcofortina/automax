@@ -99,6 +99,18 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         ArchiveUnzipPlugin,
         ArchiveZipPlugin,
     )
+    from automax.plugins.firewall import (
+        FirewalldPortPlugin,
+        FirewalldReloadPlugin,
+        FirewalldRichRulePlugin,
+        FirewalldServicePlugin,
+        NftablesApplyPlugin,
+        NftablesValidatePlugin,
+        UfwDisablePlugin,
+        UfwEnablePlugin,
+        UfwRulePlugin,
+        UfwStatusPlugin,
+    )
     from automax.plugins.fs_cd import FsCdPlugin
     from automax.plugins.fs_chmod import FsChmodPlugin
     from automax.plugins.fs_chown import FsChownPlugin
@@ -204,6 +216,16 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         AssertFilePlugin(),
         AssertPathPlugin(),
         AssertDiskPlugin(),
+        FirewalldPortPlugin(),
+        FirewalldServicePlugin(),
+        FirewalldRichRulePlugin(),
+        FirewalldReloadPlugin(),
+        UfwRulePlugin(),
+        UfwStatusPlugin(),
+        UfwEnablePlugin(),
+        UfwDisablePlugin(),
+        NftablesValidatePlugin(),
+        NftablesApplyPlugin(),
         RemoteCommandPlugin(),
         PackageInstallPlugin(),
         PackageRemovePlugin(),

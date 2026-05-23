@@ -30,6 +30,10 @@ db.mysql.query
 db.oracle.query
 db.postgres.query
 db.sqlite.query
+firewalld.port
+firewalld.reload
+firewalld.rich_rule
+firewalld.service
 fs.cd
 fs.chmod
 fs.chown
@@ -54,6 +58,8 @@ http.assert
 http.request
 http.wait
 local.command
+nftables.apply
+nftables.validate
 pkg.install
 pkg.query
 pkg.remove
@@ -79,6 +85,10 @@ systemctl.unmask
 transfer.download
 transfer.sync
 transfer.upload
+ufw.disable
+ufw.enable
+ufw.rule
+ufw.status
 user.create
 user.exists
 user.lock
