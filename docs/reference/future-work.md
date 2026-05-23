@@ -38,14 +38,13 @@ pass
 These should be core secret providers, not job-action plugins, so secrets remain
 resolved before templating and execution.
 
-## Exported schemas and formatted output
+## Additional schema and output formats
 
-Possible future CLI contracts:
+Automax currently exports JSON Schema and supports JSON output for plan/run/resume
+operator summaries. Future work may add additional formats without changing the
+command shape, for example:
 
 ```bash
-automax schema export --format=json --output automax-job.schema.json
-automax run --format=json ...
+automax schema export --format=yaml
+automax run --format=yaml ...
 ```
-
-The format flag should be extensible so JSON can be joined later by other output
-formats without changing the command shape.

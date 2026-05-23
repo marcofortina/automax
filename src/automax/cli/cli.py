@@ -20,6 +20,7 @@ import click
 from automax import __version__
 from automax.core.engine import AutomaxEngine, AutomaxError
 from automax.core.plugin_docs import render_plugin_reference
+from automax.core.schema import export_schema
 from automax.core.models import NodeStatus
 from automax.core.state import StateStore
 from automax.plugins.registry import build_builtin_registry
@@ -80,6 +81,7 @@ def _apply_common_options(function):
 @click.option("--skip-tags", multiple=True, help="Skip substeps matching one of these tags.")
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
 @click.option("--dry-run", is_flag=True, help="Validate and simulate actions without changing targets.")
+@click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", show_default=True, help="Output format for the final run summary.")
 def run(
     job_path: str,
     inventory_path: str,
@@ -94,6 +96,7 @@ def run(
     skip_tags: tuple[str, ...],
     plugin_path: tuple[str, ...],
     dry_run: bool,
+    output_format: str,
 ) -> None:
     """Run a job from external YAML definitions."""
     try:
@@ -110,6 +113,7 @@ def run(
             tags=_split_selectors(tags),
             skip_tags=_split_selectors(skip_tags),
             cli_vars=_parse_vars(cli_vars),
+            output_format=output_format,
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc
@@ -123,6 +127,7 @@ def run(
 @click.option("--tags", multiple=True, help="Show only substeps matching one of these tags.")
 @click.option("--skip-tags", multiple=True, help="Hide substeps matching one of these tags.")
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", show_default=True, help="Output format for the execution plan.")
 def plan(
     job_path: str,
     inventory_path: str,
@@ -134,6 +139,7 @@ def plan(
     tags: tuple[str, ...],
     skip_tags: tuple[str, ...],
     plugin_path: tuple[str, ...],
+    output_format: str,
 ) -> None:
     """Print the execution plan without running the job."""
     try:
@@ -148,6 +154,7 @@ def plan(
             tags=_split_selectors(tags),
             skip_tags=_split_selectors(skip_tags),
             cli_vars=_parse_vars(cli_vars),
+            output_format=output_format,
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc
@@ -312,6 +319,7 @@ def doctor(state_dir: str, as_json: bool) -> None:
 @click.option("--skip-successful", is_flag=True, help="Do not rerun nodes already marked successful in this run.")
 @click.option("--only-failed", is_flag=True, help="Rerun only nodes currently marked failed in this run.")
 @click.option("--dry-run", is_flag=True, help="Validate and simulate actions without changing targets.")
+@click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", show_default=True, help="Output format for the final resume summary.")
 def resume(
     run_id: str,
     state_dir: str,
@@ -324,6 +332,7 @@ def resume(
     skip_successful: bool,
     only_failed: bool,
     dry_run: bool,
+    output_format: str,
 ) -> None:
     """Resume an existing run from failed or explicit checkpoint."""
     try:
@@ -339,6 +348,7 @@ def resume(
             cli_vars=_parse_vars(cli_vars),
             skip_successful=skip_successful,
             only_failed=only_failed,
+            output_format=output_format,
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc
@@ -566,6 +576,42 @@ def generate_plugin_docs(output_path: str, plugin_path: tuple[str, ...]) -> None
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(render_plugin_reference(registry.describe_all()), encoding="utf-8")
     click.echo(f"Wrote {output}")
+
+
+@cli.group()
+def schema() -> None:
+    """Export machine-readable Automax schemas."""
+
+
+@schema.command("export")
+@click.option(
+    "--kind",
+    type=click.Choice(["job", "inventory", "vars", "secrets", "all"]),
+    default="job",
+    show_default=True,
+    help="Schema kind to export.",
+)
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["json"]),
+    default="json",
+    show_default=True,
+    help="Schema output format. JSON is currently supported; the option is reserved for future formats.",
+)
+@click.option("--output", "output_path", type=click.Path(dir_okay=False), help="Output file path. Defaults to stdout.")
+def export_schema_command(kind: str, output_format: str, output_path: str | None) -> None:
+    """Export the Automax YAML contract as JSON Schema."""
+    if output_format != "json":
+        raise click.ClickException(f"unsupported schema format: {output_format}")
+    payload = json.dumps(export_schema(kind), indent=2, sort_keys=True) + "\n"
+    if output_path:
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(payload, encoding="utf-8")
+        click.echo(f"Wrote {output}")
+        return
+    click.echo(payload, nl=False)
 
 
 def cli_main() -> None:

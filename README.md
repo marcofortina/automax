@@ -85,6 +85,17 @@ python -m automax plan \
   --inventory examples/next/inventory/local.yaml
 ```
 
+For machine-readable output:
+
+```bash
+python -m automax plan \
+  --job examples/next/jobs/local-smoke.yaml \
+  --inventory examples/next/inventory/local.yaml \
+  --format=json
+
+python -m automax schema export --kind job --format=json --output /tmp/automax-job.schema.json
+```
+
 Run a job:
 
 ```bash

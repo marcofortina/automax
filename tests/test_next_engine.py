@@ -1579,3 +1579,114 @@ def test_doctor_reports_controller_environment(tmp_path: Path):
     assert "Automax doctor" in result.output
     assert "python:" in result.output
     assert "plugins:" in result.output
+
+
+def test_schema_export_emits_json_schema(tmp_path: Path):
+    result = CliRunner().invoke(cli, ["schema", "export", "--kind", "job", "--format", "json"])
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+    assert payload["properties"]["apiVersion"]["const"] == "automax.io/v1"
+
+    output = tmp_path / "schemas" / "all.json"
+    result = CliRunner().invoke(
+        cli,
+        [
+            "schema",
+            "export",
+            "--kind",
+            "all",
+            "--format",
+            "json",
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Wrote" in result.output
+    exported = json.loads(output.read_text(encoding="utf-8"))
+    assert sorted(exported["required"]) == ["inventory", "job", "secrets", "vars"]
+
+
+def test_plan_format_json_outputs_machine_readable_plan(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: json-plan
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: echo
+            tags: [safe]
+            use: local.command
+            with:
+              command: "true"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        ["plan", "--job", str(job), "--inventory", str(inventory), "--format", "json"],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["nodes"][0]["node_id"] == "task.smoke:step.local:substep.echo"
+    assert payload["nodes"][0]["plugin"] == "local.command"
+    assert payload["nodes"][0]["tags"] == ["safe"]
+
+
+def test_run_format_json_outputs_final_summary_only(tmp_path: Path):
+    marker = tmp_path / "marker"
+    job = write(
+        tmp_path / "job.yaml",
+        f"""
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: json-run
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: "printf ok > {marker}"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--state-dir",
+            str(tmp_path / "runs"),
+            "--format",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["status"] == "success"
+    assert payload["summary"]["success"] == 1
+    assert payload["summary"]["failed"] == 0
+    assert payload["resume"]["default"].startswith("automax resume ")
+    assert marker.read_text(encoding="utf-8") == "ok"

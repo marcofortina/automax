@@ -72,8 +72,10 @@ class AutomaxEngine:
         extra_plugin_paths: Iterable[str] = (),
         skip_successful: bool = False,
         only_failed: bool = False,
+        output_format: str = "text",
     ) -> int:
         """Execute a new run from external YAML files."""
+        self._validate_output_format(output_format)
         registry = self.plugin_registry
         if extra_plugin_paths:
             registry.load_from_paths(extra_plugin_paths)
@@ -122,8 +124,8 @@ class AutomaxEngine:
                 skip_tags=skip_tags,
             )
             if plan_only:
-                self._print_plan(run_id, plan)
                 store.update_run_status(NodeStatus.SUCCESS)
+                self._print_plan(run_id, plan, output_format=output_format)
                 return 0
 
             rc = self._execute_plan(
@@ -137,10 +139,11 @@ class AutomaxEngine:
                 from_node=from_node,
                 skip_successful=skip_successful,
                 only_failed=only_failed,
+                output_format=output_format,
             )
             store.update_run_status(NodeStatus.SUCCESS if rc == 0 else NodeStatus.FAILED)
             store.record_event("job_finished", payload={"rc": rc})
-            self._print_run_summary(store, rc=rc, state_dir=state_dir)
+            self._print_run_summary(store, rc=rc, state_dir=state_dir, output_format=output_format)
             return rc
         except Exception as exc:
             store.update_run_status(NodeStatus.FAILED)
@@ -161,8 +164,10 @@ class AutomaxEngine:
         cli_vars: Optional[Dict[str, Any]] = None,
         skip_successful: bool = False,
         only_failed: bool = False,
+        output_format: str = "text",
     ) -> int:
         """Resume a previous run using paths stored in the run state."""
+        self._validate_output_format(output_format)
         store = StateStore(state_dir, run_id)
         run = store.get_run()
         if not run:
@@ -191,6 +196,7 @@ class AutomaxEngine:
             cli_vars=cli_vars,
             skip_successful=skip_successful,
             only_failed=only_failed,
+            output_format=output_format,
         )
 
     def validate(
@@ -488,6 +494,7 @@ class AutomaxEngine:
         from_node: str | None,
         skip_successful: bool = False,
         only_failed: bool = False,
+        output_format: str = "text",
     ) -> int:
         outputs: Dict[str, Any] = {}
         started = from_node is None
@@ -550,6 +557,7 @@ class AutomaxEngine:
                 secrets=secrets,
                 outputs=outputs,
                 strategy=strategy,
+                output_format=output_format,
             )
             for group, group_rc, failed_by_exception in results:
                 if group_rc == 0:
@@ -609,6 +617,7 @@ class AutomaxEngine:
         secrets: Dict[str, Any],
         outputs: Dict[str, Any],
         strategy: Dict[str, Any],
+        output_format: str,
     ) -> List[tuple[List[Dict[str, Any]], int, bool]]:
         mode = strategy["mode"]
         if mode == "serial":
@@ -622,6 +631,7 @@ class AutomaxEngine:
                     variables=variables,
                     secrets=secrets,
                     outputs=outputs,
+                    output_format=output_format,
                 )
                 for group in groups
             ]
@@ -637,6 +647,7 @@ class AutomaxEngine:
                 variables=variables,
                 secrets=secrets,
                 outputs=outputs,
+                output_format=output_format,
             )
 
         if mode == "rolling":
@@ -655,6 +666,7 @@ class AutomaxEngine:
                         variables=variables,
                         secrets=secrets,
                         outputs=outputs,
+                        output_format=output_format,
                     )
                 )
                 if pause > 0 and index < len(chunks) - 1:
@@ -674,6 +686,7 @@ class AutomaxEngine:
         variables: Dict[str, Any],
         secrets: Dict[str, Any],
         outputs: Dict[str, Any],
+        output_format: str,
     ) -> List[tuple[List[Dict[str, Any]], int, bool]]:
         results: List[tuple[List[Dict[str, Any]], int, bool]] = []
         for chunk in groups:
@@ -689,6 +702,7 @@ class AutomaxEngine:
                         variables=variables,
                         secrets=secrets,
                         outputs=outputs,
+                        output_format=output_format,
                     ): group
                     for group in chunk
                 }
@@ -707,6 +721,7 @@ class AutomaxEngine:
         variables: Dict[str, Any],
         secrets: Dict[str, Any],
         outputs: Dict[str, Any],
+        output_format: str,
     ) -> tuple[List[Dict[str, Any]], int, bool]:
         first = group[0]
         task = first["task"]
@@ -727,6 +742,7 @@ class AutomaxEngine:
                         secrets=secrets,
                         outputs=outputs,
                         ssh_client=ssh_client,
+                        output_format=output_format,
                     )
             else:
                 group_rc = self._execute_step_group(
@@ -739,6 +755,7 @@ class AutomaxEngine:
                     secrets=secrets,
                     outputs=outputs,
                     ssh_client=None,
+                    output_format=output_format,
                 )
             return group, group_rc, False
         except Exception as exc:
@@ -771,6 +788,7 @@ class AutomaxEngine:
         secrets: Dict[str, Any],
         outputs: Dict[str, Any],
         ssh_client: Any,
+        output_format: str,
     ) -> int:
         step_state: Dict[str, Any] = {}
         for item in group:
@@ -832,11 +850,12 @@ class AutomaxEngine:
                 target=target.name,
                 payload={"ok": result.ok, "changed": result.changed, "rc": result.rc},
             )
-            status = "OK" if result.ok else "FAILED"
-            with self._print_lock:
-                print(
-                    f"[{status}] {target.name} {node_id} rc={result.rc} {self._mask_text(result.message, secrets)}".rstrip()
-                )
+            if output_format == "text":
+                status = "OK" if result.ok else "FAILED"
+                with self._print_lock:
+                    print(
+                        f"[{status}] {target.name} {node_id} rc={result.rc} {self._mask_text(result.message, secrets)}".rstrip()
+                    )
             if not result.ok:
                 return 1
         return 0
@@ -1177,30 +1196,79 @@ class AutomaxEngine:
 
 
     @staticmethod
-    def _print_run_summary(store: StateStore, *, rc: int, state_dir: str) -> None:
-        """Print a compact operator summary after each real run/resume."""
+    def _validate_output_format(output_format: str) -> None:
+        if output_format not in {"text", "json"}:
+            raise AutomaxError(f"unsupported output format: {output_format}")
+
+    @staticmethod
+    def _run_summary_payload(store: StateStore, *, rc: int, state_dir: str) -> Dict[str, Any]:
         summary = store.summarize()
-        run = summary["run"]
-        state_path = store.run_dir
-        failed_nodes = summary["failed_nodes"]
+        first_failed = summary["failed_nodes"][0]["node_id"] if summary["failed_nodes"] else None
+        resume: Dict[str, str] = {
+            "default": f"automax resume {store.run_id} --state-dir {state_dir}",
+        }
+        if first_failed:
+            resume.update(
+                {
+                    "skip_successful": f"automax resume {store.run_id} --state-dir {state_dir} --skip-successful",
+                    "only_failed": f"automax resume {store.run_id} --state-dir {state_dir} --only-failed",
+                    "from": f"automax resume {store.run_id} --state-dir {state_dir} --from {first_failed}",
+                }
+            )
+        return {
+            "run_id": store.run_id,
+            "rc": rc,
+            "status": summary["run"]["status"],
+            "run": summary["run"],
+            "state_dir": str(store.run_dir),
+            "summary": {
+                "targets": summary["targets_total"],
+                "nodes": summary["nodes_total"],
+                "success": summary["status_counts"].get(NodeStatus.SUCCESS.value, 0),
+                "failed": summary["status_counts"].get(NodeStatus.FAILED.value, 0),
+                "skipped": summary["status_counts"].get(NodeStatus.SKIPPED.value, 0),
+                "changed": summary["changed_nodes"],
+                "artifacts": summary["artifacts_count"],
+            },
+            "targets": summary["targets"],
+            "failed_nodes": summary["failed_nodes"],
+            "first_failed_node": summary["first_failed_node"],
+            "resume": resume,
+            "artifacts_command": f"automax artifacts list {store.run_id} --state-dir {state_dir}"
+            if summary["artifacts_count"]
+            else None,
+        }
+
+    @classmethod
+    def _print_run_summary(
+        cls,
+        store: StateStore,
+        *,
+        rc: int,
+        state_dir: str,
+        output_format: str = "text",
+    ) -> None:
+        """Print a compact operator summary after each real run/resume."""
+        payload = cls._run_summary_payload(store, rc=rc, state_dir=state_dir)
+        if output_format == "json":
+            print(json.dumps(payload, indent=2, sort_keys=True, default=str))
+            return
+
+        run = payload["run"]
+        failed_nodes = payload["failed_nodes"]
         status_word = "succeeded" if rc == 0 else "failed"
         print("")
         print(f"Automax run {status_word}")
         print(f"Run ID: {store.run_id}")
         print(f"Status: {run['status']}")
         print(f"Job: {run['job_path']}")
-        print(f"State: {state_path}")
+        print(f"State: {payload['state_dir']}")
         print("Summary:")
-        print(f"  targets: {summary['targets_total']}")
-        print(f"  nodes: {summary['nodes_total']}")
-        print(f"  success: {summary['status_counts'].get(NodeStatus.SUCCESS.value, 0)}")
-        print(f"  failed: {summary['status_counts'].get(NodeStatus.FAILED.value, 0)}")
-        print(f"  skipped: {summary['status_counts'].get(NodeStatus.SKIPPED.value, 0)}")
-        print(f"  changed: {summary['changed_nodes']}")
-        print(f"  artifacts: {summary['artifacts_count']}")
-        if summary["targets"]:
+        for key in ("targets", "nodes", "success", "failed", "skipped", "changed", "artifacts"):
+            print(f"  {key}: {payload['summary'][key]}")
+        if payload["targets"]:
             print("Targets:")
-            for target in summary["targets"]:
+            for target in payload["targets"]:
                 counts = target["status_counts"]
                 print(
                     "  "
@@ -1218,20 +1286,40 @@ class AutomaxEngine:
                 print(f"  {node['target']} {node['node_id']}{detail}{message}".rstrip())
             if len(failed_nodes) > 10:
                 print(f"  ... {len(failed_nodes) - 10} more failed nodes")
-            first_failed = failed_nodes[0]["node_id"]
             print("Resume options:")
-            print(f"  automax resume {store.run_id} --state-dir {state_dir} --skip-successful")
-            print(f"  automax resume {store.run_id} --state-dir {state_dir} --only-failed")
-            print(
-                f"  automax resume {store.run_id} --state-dir {state_dir} "
-                f"--from {first_failed}"
-            )
-        if summary["artifacts_count"]:
+            for key in ("skip_successful", "only_failed", "from"):
+                if key in payload["resume"]:
+                    print(f"  {payload['resume'][key]}")
+        if payload["artifacts_command"]:
             print("Artifacts:")
-            print(f"  automax artifacts list {store.run_id} --state-dir {state_dir}")
+            print(f"  {payload['artifacts_command']}")
 
     @staticmethod
-    def _print_plan(run_id: str, plan: List[Dict[str, Any]]) -> None:
+    def _plan_payload(run_id: str, plan: List[Dict[str, Any]]) -> Dict[str, Any]:
+        return {
+            "run_id": run_id,
+            "nodes": [
+                {
+                    "target": item["target"].name,
+                    "node_id": item["node_id"],
+                    "task_id": item["task"]["id"],
+                    "step_id": item["step"]["id"],
+                    "substep_id": item["substep"]["id"],
+                    "plugin": str(item["substep"].get("use") or item["substep"].get("plugin")),
+                    "tags": list(item.get("tags") or ()),
+                }
+                for item in plan
+            ],
+        }
+
+    @classmethod
+    def _print_plan(
+        cls, run_id: str, plan: List[Dict[str, Any]], *, output_format: str = "text"
+    ) -> None:
+        payload = cls._plan_payload(run_id, plan)
+        if output_format == "json":
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return
         print(f"Run ID: {run_id}")
         for item in plan:
             tags = f" tags={','.join(item['tags'])}" if item.get("tags") else ""

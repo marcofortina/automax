@@ -29,10 +29,22 @@ automax plan --job job.yaml --inventory inventory.yaml
 
 Prints target, checkpoint, plugin and tags without executing the job.
 
+Machine-readable output:
+
+```bash
+automax plan --job job.yaml --inventory inventory.yaml --format=json
+```
+
 ## Run
 
 ```bash
 automax run --job job.yaml --inventory inventory.yaml --state-dir .automax/runs
+```
+
+Machine-readable final summary:
+
+```bash
+automax run --job job.yaml --inventory inventory.yaml --format=json
 ```
 
 Restart from an explicit checkpoint in a new run:
@@ -86,6 +98,13 @@ automax artifacts path <run-id> --state-dir .automax/runs
 automax plugins list
 automax plugins describe fs.template
 automax plugins describe fs.template --json
+```
+
+## Schema export
+
+```bash
+automax schema export --kind job --format=json --output automax-job.schema.json
+automax schema export --kind inventory --format=json
 ```
 
 ## Documentation helpers
