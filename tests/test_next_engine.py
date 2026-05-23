@@ -1870,3 +1870,33 @@ def test_schema_export_includes_dynamic_inventory_and_command_secret_provider():
     assert "command" in secrets_schema
     assert "env" in secrets_schema
     assert "file" in secrets_schema
+
+
+def test_cli_explain_outputs_targets_and_resume_points(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: explain-smoke
+tasks:
+  - id: deploy
+    targets: all
+    steps:
+      - id: prepare
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: "true"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(cli, ["explain", "--job", str(job), "--inventory", str(inventory)])
+
+    assert result.exit_code == 0, result.output
+    assert "Job: explain-smoke" in result.output
+    assert "Task deploy" in result.output
+    assert "task.deploy:step.prepare:substep.echo" in result.output

@@ -112,3 +112,12 @@ automax schema export --kind inventory --format=json
 ```bash
 automax docs generate-plugins --output docs/plugins/generated.md
 ```
+
+## Explain
+
+Inspect a resolved job without creating run state:
+
+```bash
+automax explain --job jobs/deploy.yaml --inventory inventory/prod.yaml
+automax explain --job jobs/deploy.yaml --inventory inventory/prod.yaml --format=json
+```

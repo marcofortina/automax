@@ -21,6 +21,7 @@ from automax import __version__
 from automax.core.engine import AutomaxEngine, AutomaxError
 from automax.core.plugin_docs import render_plugin_reference
 from automax.core.schema import export_schema
+from automax.core.job_views import render_explain_text
 from automax.core.models import NodeStatus
 from automax.core.state import StateStore
 from automax.plugins.registry import build_builtin_registry
@@ -159,6 +160,49 @@ def plan(
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc
     sys.exit(rc)
+
+
+
+@cli.command()
+@_apply_common_options
+@click.option("--limit", multiple=True, help="Limit targets. Accepts server, group or group:name.")
+@click.option("--exclude", multiple=True, help="Exclude targets. Accepts server, group or group:name.")
+@click.option("--tags", multiple=True, help="Explain only substeps matching one of these tags.")
+@click.option("--skip-tags", multiple=True, help="Hide substeps matching one of these tags.")
+@click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", show_default=True, help="Explanation output format.")
+def explain(
+    job_path: str,
+    inventory_path: str,
+    vars_path: str | None,
+    secrets_path: str | None,
+    cli_vars: tuple[str, ...],
+    limit: tuple[str, ...],
+    exclude: tuple[str, ...],
+    tags: tuple[str, ...],
+    skip_tags: tuple[str, ...],
+    plugin_path: tuple[str, ...],
+    output_format: str,
+) -> None:
+    """Explain the resolved job flow, targets and resume points without creating run state."""
+    try:
+        view = _engine(plugin_path).inspect_job(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=_split_selectors(limit),
+            exclude=_split_selectors(exclude),
+            tags=_split_selectors(tags),
+            skip_tags=_split_selectors(skip_tags),
+            cli_vars=_parse_vars(cli_vars),
+        )
+    except (AutomaxError, ValueError, RuntimeError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    if output_format == "json":
+        click.echo(json.dumps(view, indent=2, sort_keys=True))
+        return
+    click.echo(render_explain_text(view), nl=False)
 
 
 @cli.command()

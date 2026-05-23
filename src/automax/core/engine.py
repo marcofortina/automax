@@ -21,6 +21,7 @@ import uuid
 from typing import Any, Dict, Iterable, List, Optional
 
 from automax.core.inventory import Inventory, load_inventory_document
+from automax.core.job_views import build_job_view
 from automax.core.models import ExecutionContext, NodeStatus, PluginResult, Target
 from automax.core.secrets import SecretManager
 from automax.core.ssh import SshSessionManager
@@ -202,6 +203,48 @@ class AutomaxEngine:
             only_failed=only_failed,
             output_format=output_format,
         )
+
+    def inspect_job(
+        self,
+        *,
+        job_path: str,
+        inventory_path: str,
+        vars_path: str | None = None,
+        secrets_path: str | None = None,
+        limit: Iterable[str] = (),
+        exclude: Iterable[str] = (),
+        tags: Iterable[str] = (),
+        skip_tags: Iterable[str] = (),
+        cli_vars: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Return a resolved, serializable view of a job without creating run state."""
+        documents = self._load_documents(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+        )
+        secrets = self.secret_manager.resolve_all(
+            documents["secrets"],
+            base_dir=Path(secrets_path).expanduser().resolve().parent if secrets_path else None,
+        )
+        variables = self._merge_variables(
+            documents["vars"], documents["job"].get("vars", {}), cli_vars or {}
+        )
+        context = {"vars": variables, "secrets": secrets}
+        inventory_document = load_inventory_document(inventory_path, context)
+        inventory = Inventory(inventory_document, context)
+        job = documents["job"]
+        self.validate_job(job)
+        plan = self._build_plan(
+            job,
+            inventory,
+            limit=limit,
+            exclude=exclude,
+            tags=tags,
+            skip_tags=skip_tags,
+        )
+        return build_job_view(job, plan)
 
     def validate(
         self,
