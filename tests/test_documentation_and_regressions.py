@@ -514,3 +514,14 @@ def test_python39_compatibility_guard_passes_on_repository(capsys):
         sys.argv = saved_argv
     captured = capsys.readouterr()
     assert "Python 3.9 compatibility check passed" in captured.out
+
+def test_development_tooling_uses_ruff_and_pre_commit():
+    pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
+    pre_commit = Path(".pre-commit-config.yaml").read_text(encoding="utf-8")
+
+    assert '"ruff>=0.8,<1.0"' in pyproject
+    assert '"pre-commit>=4.0,<5.0"' in pyproject
+    assert "black>=" not in pyproject
+    assert "flake8>=" not in pyproject
+    assert "isort>=" not in pyproject
+    assert "astral-sh/ruff-pre-commit" in pre_commit

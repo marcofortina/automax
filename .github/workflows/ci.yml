@@ -49,6 +49,9 @@ jobs:
       - name: Check Python 3.9 compatibility guardrails
         run: python scripts/check-python39-compat.py
 
+      - name: Run Ruff
+        run: python -m ruff check src tests scripts
+
       - name: Run tests
         run: python -m pytest -q
 

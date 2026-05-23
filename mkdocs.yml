@@ -48,6 +48,7 @@ nav:
     - First SSH Job: guides/first-ssh-job.md
     - Initialize Workspace: guides/init-workspace.md
     - Operator Diagnostics: guides/doctor.md
+    - Development Tooling: guides/development-tooling.md
     - Writing Jobs: guides/writing-jobs.md
     - Templating: guides/templating.md
     - Template Workflows: guides/template-workflows.md

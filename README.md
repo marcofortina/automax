@@ -275,6 +275,16 @@ NO_MKDOCS_2_WARNING=1 mkdocs build --strict
 GitHub Pages publishing is handled by `.github/workflows/docs.yml`. Configure the
 repository Pages source as **GitHub Actions**.
 
+## Development tooling
+
+Automax uses Ruff and pre-commit for local development checks:
+
+```bash
+python -m pip install -e '.[dev]'
+python -m ruff check src tests scripts
+pre-commit install
+```
+
 ## Operator tooling
 
 Create an external job workspace:
