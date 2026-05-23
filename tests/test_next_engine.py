@@ -2311,3 +2311,122 @@ tasks:
     payload = json.loads(result.output)
     assert payload["target_count"] == 1
     assert payload["targets"][0]["name"] == "controller"
+
+
+def test_secrets_check_reports_only_selected_job_secret_values_masked(
+    tmp_path: Path, monkeypatch
+):
+    secret_file = write(tmp_path / "token.txt", "super-secret-token\n")
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: secrets-check
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: selected
+            tags: [deploy]
+            use: local.command
+            with:
+              command: "printf {{ secrets.deploy_token }}"
+          - id: skipped
+            tags: [skipme]
+            use: local.command
+            with:
+              command: "printf {{ secrets.skipped_token }}"
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        "servers:\n  controller:\n    host: 127.0.0.1\n",
+    )
+    secrets_file = write(
+        tmp_path / "secrets.yaml",
+        f"""
+secrets:
+  deploy_token:
+    provider: file
+    path: {secret_file}
+  skipped_token:
+    provider: env
+    name: AUTOMAX_SKIPPED_TOKEN
+  unused_token:
+    provider: env
+    name: AUTOMAX_UNUSED_TOKEN
+""",
+    )
+    monkeypatch.delenv("AUTOMAX_SKIPPED_TOKEN", raising=False)
+    monkeypatch.delenv("AUTOMAX_UNUSED_TOKEN", raising=False)
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "secrets",
+            "check",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--secrets",
+            str(secrets_file),
+            "--tags",
+            "deploy",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "deploy_token  file  OK  used  resolved" in result.output
+    assert "skipped_token" not in result.output
+    assert "unused_token" not in result.output
+    assert "super-secret-token" not in result.output
+
+
+def test_secrets_check_fails_for_missing_selected_job_secret(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: missing-secret
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: "printf {{ secrets.missing_token }}"
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        "servers:\n  controller:\n    host: 127.0.0.1\n",
+    )
+    secrets_file = write(tmp_path / "secrets.yaml", "secrets: {}\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "secrets",
+            "check",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--secrets",
+            str(secrets_file),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "missing_token  undeclared  MISSING  used" in result.output
+    assert "one or more secrets failed checks" in result.output

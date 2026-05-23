@@ -113,6 +113,12 @@ def _resolve_relative_path(path: str, base_dir: Any = None) -> Path:
     return resolved.resolve()
 
 
+def _is_missing_secret_error(message: str) -> bool:
+    """Return true for missing external secret material errors."""
+    lowered = message.lower()
+    return any(token in lowered for token in ("not set", "not found", "no such file"))
+
+
 def _coerce_bool(value: Any, *, default: bool) -> bool:
     if value is None:
         return default
@@ -185,6 +191,49 @@ class SecretManager:
         for key, definition in raw_secrets.items():
             resolved[str(key)] = self._resolve_one(key, definition, base_dir=base_dir)
         return resolved
+
+    def check_all(
+        self, document: Mapping[str, Any] | None, *, base_dir: Path | None = None
+    ) -> list[Dict[str, Any]]:
+        """Check secret definitions without exposing resolved values."""
+        if not document:
+            return []
+
+        raw_secrets = document.get("secrets", document)
+        if not isinstance(raw_secrets, Mapping):
+            raise SecretProviderError("secrets root must be a mapping")
+
+        checks: list[Dict[str, Any]] = []
+        for key, definition in raw_secrets.items():
+            provider = "literal" if isinstance(definition, str) else "unknown"
+            if isinstance(definition, Mapping):
+                normalized = self._normalize_definition(definition)
+                provider = str(normalized.get("provider") or provider)
+            try:
+                self._resolve_one(key, definition, base_dir=base_dir)
+            except SecretProviderError as exc:
+                detail = str(exc)
+                status = "MISSING" if _is_missing_secret_error(detail) else "ERROR"
+                checks.append(
+                    {
+                        "name": str(key),
+                        "provider": provider,
+                        "status": status,
+                        "ok": False,
+                        "detail": detail,
+                    }
+                )
+            else:
+                checks.append(
+                    {
+                        "name": str(key),
+                        "provider": provider,
+                        "status": "OK",
+                        "ok": True,
+                        "detail": "resolved",
+                    }
+                )
+        return checks
 
     def _resolve_one(self, key: Any, definition: Any, *, base_dir: Path | None = None) -> str:
         if isinstance(definition, str):

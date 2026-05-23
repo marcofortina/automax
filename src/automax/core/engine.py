@@ -435,6 +435,115 @@ class AutomaxEngine:
             "node_count": len(resolved.plan),
         }
 
+    def check_secrets(
+        self,
+        *,
+        job_path: str,
+        inventory_path: str,
+        vars_path: str | None = None,
+        secrets_path: str | None = None,
+        limit: Iterable[str] = (),
+        exclude: Iterable[str] = (),
+        tags: Iterable[str] = (),
+        skip_tags: Iterable[str] = (),
+        cli_vars: Optional[Dict[str, Any]] = None,
+        include_all: bool = False,
+    ) -> Dict[str, Any]:
+        """Check secret definitions referenced by one selected job plan."""
+        documents = self._load_documents(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+        )
+        job = documents["job"]
+        self.validate_job(job)
+        raw_inventory = load_yaml_file(inventory_path)
+        declared = self._declared_secret_names(documents["secrets"])
+        known_refs = self._secret_references(job) | self._secret_references(raw_inventory)
+        placeholder_secrets = {name: f"__automax_secret_{name}__" for name in declared | known_refs}
+        variables = self._merge_variables(documents["vars"], job.get("vars", {}), cli_vars or {})
+        context = {"vars": variables, "secrets": placeholder_secrets}
+        inventory_document = load_inventory_document(inventory_path, context)
+        inventory = Inventory(inventory_document, context)
+        plan = self._build_plan(
+            job,
+            inventory,
+            limit=limit,
+            exclude=exclude,
+            tags=tags,
+            skip_tags=skip_tags,
+        )
+        referenced = set()
+        for item in plan:
+            referenced.update(
+                self._secret_references(
+                    {key: value for key, value in item["task"].items() if key != "steps"}
+                )
+            )
+            referenced.update(
+                self._secret_references(
+                    {key: value for key, value in item["step"].items() if key != "substeps"}
+                )
+            )
+            referenced.update(self._secret_references(item["substep"]))
+
+        checks = self.secret_manager.check_all(documents["secrets"], base_dir=self._path_parent(secrets_path))
+        checks_by_name = {item["name"]: item for item in checks}
+        rows = []
+        for name in sorted(declared | referenced):
+            used = name in referenced
+            if not include_all and not used:
+                continue
+            row = dict(
+                checks_by_name.get(
+                    name,
+                    {
+                        "name": name,
+                        "provider": "undeclared",
+                        "status": "MISSING",
+                        "ok": False,
+                        "detail": "referenced by job but not declared in secrets file",
+                    },
+                )
+            )
+            row["used"] = used
+            rows.append(row)
+
+        return {
+            "job": self._job_name(job),
+            "secrets_path": str(Path(secrets_path).expanduser()) if secrets_path else None,
+            "checked": len(rows),
+            "ok": all(item["ok"] for item in rows),
+            "secrets": rows,
+        }
+
+    @classmethod
+    def _secret_references(cls, value: Any) -> set[str]:
+        """Collect Jinja-style secrets.NAME references from nested values."""
+        found: set[str] = set()
+        if isinstance(value, dict):
+            for child in value.values():
+                found.update(cls._secret_references(child))
+        elif isinstance(value, list):
+            for child in value:
+                found.update(cls._secret_references(child))
+        elif isinstance(value, str):
+            for match in re.finditer(r"secrets\.([A-Za-z_][A-Za-z0-9_]*)", value):
+                found.add(match.group(1))
+            for match in re.finditer(r"secrets\[[\'\"]([^\'\"]+)[\'\"]\]", value):
+                found.add(match.group(1))
+        return found
+
+    @staticmethod
+    def _declared_secret_names(document: Dict[str, Any] | None) -> set[str]:
+        if not document:
+            return set()
+        raw_secrets = document.get("secrets", document)
+        if not isinstance(raw_secrets, dict):
+            raise AutomaxError("secrets root must be a mapping")
+        return {str(key) for key in raw_secrets}
+
     def validate(
         self,
         *,

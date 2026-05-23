@@ -535,6 +535,75 @@ def resume(
 
 
 @cli.group()
+def secrets() -> None:
+    """Inspect job-scoped secret definitions."""
+
+
+@secrets.command("check")
+@_apply_common_options
+@click.option("--limit", multiple=True, help="Limit targets. Accepts server, group or group:name.")
+@click.option("--exclude", multiple=True, help="Exclude targets. Accepts server, group or group:name.")
+@click.option("--tags", multiple=True, help="Check secrets for substeps matching one of these tags.")
+@click.option("--skip-tags", multiple=True, help="Skip substeps matching one of these tags.")
+@click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option("--all", "include_all", is_flag=True, help="Include declared secrets not used by the selected job plan.")
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    show_default=True,
+    help="Output format.",
+)
+def check_secrets(
+    job_path: str,
+    inventory_path: str,
+    vars_path: str | None,
+    secrets_path: str | None,
+    cli_vars: tuple[str, ...],
+    limit: tuple[str, ...],
+    exclude: tuple[str, ...],
+    tags: tuple[str, ...],
+    skip_tags: tuple[str, ...],
+    plugin_path: tuple[str, ...],
+    include_all: bool,
+    output_format: str,
+) -> None:
+    """Check the secrets needed by one resolved job without printing values."""
+    try:
+        payload = _engine(plugin_path).check_secrets(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=_split_selectors(limit),
+            exclude=_split_selectors(exclude),
+            tags=_split_selectors(tags),
+            skip_tags=_split_selectors(skip_tags),
+            cli_vars=_parse_vars(cli_vars),
+            include_all=include_all,
+        )
+    except (AutomaxError, ValueError, RuntimeError) as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    if output_format == "json":
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        click.echo(f"Job: {payload['job']}")
+        click.echo(f"Secrets: {payload['secrets_path'] or '-'}")
+        for item in payload["secrets"]:
+            used = "used" if item.get("used") else "unused"
+            click.echo(
+                f"{item['name']}  {item['provider']}  "
+                f"{item['status']}  {used}  {item['detail']}"
+            )
+        if not payload["secrets"]:
+            click.echo("No secrets referenced by selected job plan")
+    if not payload["ok"]:
+        raise click.ClickException("one or more secrets failed checks")
+
+
+@cli.group()
 def inventory() -> None:
     """Inspect job-scoped inventory resolution."""
 
