@@ -544,6 +544,62 @@ class AutomaxEngine:
             raise AutomaxError("secrets root must be a mapping")
         return {str(key) for key in raw_secrets}
 
+    def check_job(
+        self,
+        *,
+        job_path: str,
+        inventory_path: str,
+        vars_path: str | None = None,
+        secrets_path: str | None = None,
+        limit: Iterable[str] = (),
+        exclude: Iterable[str] = (),
+        tags: Iterable[str] = (),
+        skip_tags: Iterable[str] = (),
+        cli_vars: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Render a safe check-mode preview for one resolved job."""
+        resolved = self.resolve_job_context(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=limit,
+            exclude=exclude,
+            tags=tags,
+            skip_tags=skip_tags,
+            cli_vars=cli_vars,
+        )
+        rows = []
+        for item in self.iter_rendered_plan_items(resolved, dry_run=True):
+            plugin = item["plugin"]
+            params = item["params"]
+            try:
+                result = plugin.dry_run(params, item["context"])
+            except Exception as exc:  # pragma: no cover - defensive plugin boundary
+                result = PluginResult.failure(message=str(exc))
+            rows.append(
+                {
+                    "target": item["target"].name,
+                    "node_id": item["node_id"],
+                    "task_id": str(item["task"]["id"]),
+                    "step_id": str(item["step"]["id"]),
+                    "substep_id": str(item["substep"]["id"]),
+                    "plugin": item["plugin_name"],
+                    "supports_dry_run": bool(plugin.supports_dry_run),
+                    "supports_check_mode": bool(plugin.supports_check_mode),
+                    "ok": result.ok,
+                    "changed": result.changed,
+                    "message": self._mask_text(result.message, resolved.secrets),
+                    "params": self._mask_mapping(params, resolved.secrets),
+                }
+            )
+        return {
+            "job": self._job_name(resolved.job),
+            "mode": "check",
+            "ok": all(row["ok"] for row in rows),
+            "nodes": rows,
+        }
+
     def validate(
         self,
         *,

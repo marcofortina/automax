@@ -2430,3 +2430,95 @@ tasks:
     assert result.exit_code != 0
     assert "missing_token  undeclared  MISSING  used" in result.output
     assert "one or more secrets failed checks" in result.output
+
+
+def test_plan_check_prints_job_scoped_dry_run_preview(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: check-preview
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: "printf {{ secrets.token }}"
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        "servers:\n  controller:\n    host: 127.0.0.1\n",
+    )
+    secrets_file = write(tmp_path / "secrets.yaml", "secrets:\n  token: super-secret\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "plan",
+            "--check",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--secrets",
+            str(secrets_file),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Job: check-preview" in result.output
+    assert "CHECK controller task.t1:step.s1:substep.echo local.command" in result.output
+    assert "super-secret" not in result.output
+    assert "***" in result.output
+
+
+def test_run_check_does_not_create_state(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: run-check-preview
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: "printf ok"
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        "servers:\n  controller:\n    host: 127.0.0.1\n",
+    )
+    state_dir = tmp_path / "runs"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--check",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--state-dir",
+            str(state_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Check mode preview" in result.output
+    assert not state_dir.exists()

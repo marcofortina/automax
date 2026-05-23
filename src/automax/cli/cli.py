@@ -52,6 +52,25 @@ def _engine(extra_plugin_path: tuple[str, ...] = ()) -> AutomaxEngine:
     return AutomaxEngine(plugin_registry=build_builtin_registry(extra_plugin_path))
 
 
+def _echo_check_payload(payload: Dict[str, Any], output_format: str) -> None:
+    if output_format == "json":
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    click.echo(f"Job: {payload['job']}")
+    click.echo("Check mode preview:")
+    for node in payload["nodes"]:
+        changed = str(node["changed"]).lower()
+        support = "check" if node["supports_check_mode"] else "dry-run"
+        params = json.dumps(node["params"], sort_keys=True)
+        click.echo(
+            f"CHECK {node['target']} {node['node_id']} {node['plugin']} "
+            f"support={support} changed={changed} {node['message']} "
+            f"params={params}".rstrip()
+        )
+    if not payload["nodes"]:
+        click.echo("  - no selected nodes")
+
+
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(version=__version__, prog_name="Automax")
 def cli() -> None:
@@ -83,6 +102,7 @@ def _apply_common_options(function):
 @click.option("--skip-tags", multiple=True, help="Skip substeps matching one of these tags.")
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
 @click.option("--dry-run", is_flag=True, help="Validate and simulate actions without changing targets.")
+@click.option("--check", "check_mode", is_flag=True, help="Render a check-mode preview without creating run state.")
 @click.option("--lock", is_flag=True, help="Acquire job/target locks before executing.")
 @click.option("--lock-scope", type=click.Choice(["job", "target", "both"]), default="both", show_default=True, help="Lock job, targets or both.")
 @click.option("--lock-timeout", type=float, default=0.0, show_default=True, help="Seconds to wait for locks.")
@@ -101,6 +121,7 @@ def run(
     skip_tags: tuple[str, ...],
     plugin_path: tuple[str, ...],
     dry_run: bool,
+    check_mode: bool,
     lock: bool,
     lock_scope: str,
     lock_timeout: float,
@@ -108,7 +129,24 @@ def run(
 ) -> None:
     """Run a job from external YAML definitions."""
     try:
-        rc = _engine(plugin_path).run(
+        engine = _engine(plugin_path)
+        if check_mode:
+            payload = engine.check_job(
+                job_path=job_path,
+                inventory_path=inventory_path,
+                vars_path=vars_path,
+                secrets_path=secrets_path,
+                limit=_split_selectors(limit),
+                exclude=_split_selectors(exclude),
+                tags=_split_selectors(tags),
+                skip_tags=_split_selectors(skip_tags),
+                cli_vars=_parse_vars(cli_vars),
+            )
+            _echo_check_payload(payload, output_format)
+            if not payload["ok"]:
+                raise click.ClickException("check-mode preview found errors")
+            return
+        rc = engine.run(
             job_path=job_path,
             inventory_path=inventory_path,
             vars_path=vars_path,
@@ -138,6 +176,7 @@ def run(
 @click.option("--tags", multiple=True, help="Show only substeps matching one of these tags.")
 @click.option("--skip-tags", multiple=True, help="Hide substeps matching one of these tags.")
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option("--check", "check_mode", is_flag=True, help="Render a check-mode preview instead of the execution plan.")
 @click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", show_default=True, help="Output format for the execution plan.")
 def plan(
     job_path: str,
@@ -150,11 +189,29 @@ def plan(
     tags: tuple[str, ...],
     skip_tags: tuple[str, ...],
     plugin_path: tuple[str, ...],
+    check_mode: bool,
     output_format: str,
 ) -> None:
     """Print the execution plan without running the job."""
     try:
-        rc = _engine(plugin_path).run(
+        engine = _engine(plugin_path)
+        if check_mode:
+            payload = engine.check_job(
+                job_path=job_path,
+                inventory_path=inventory_path,
+                vars_path=vars_path,
+                secrets_path=secrets_path,
+                limit=_split_selectors(limit),
+                exclude=_split_selectors(exclude),
+                tags=_split_selectors(tags),
+                skip_tags=_split_selectors(skip_tags),
+                cli_vars=_parse_vars(cli_vars),
+            )
+            _echo_check_payload(payload, output_format)
+            if not payload["ok"]:
+                raise click.ClickException("check-mode preview found errors")
+            return
+        rc = engine.run(
             job_path=job_path,
             inventory_path=inventory_path,
             vars_path=vars_path,
@@ -492,6 +549,7 @@ def doctor(state_dir: str, as_json: bool) -> None:
 @click.option("--skip-successful", is_flag=True, help="Do not rerun nodes already marked successful in this run.")
 @click.option("--only-failed", is_flag=True, help="Rerun only nodes currently marked failed in this run.")
 @click.option("--dry-run", is_flag=True, help="Validate and simulate actions without changing targets.")
+@click.option("--check", "check_mode", is_flag=True, help="Render a check-mode preview without creating run state.")
 @click.option("--lock", is_flag=True, help="Acquire job/target locks before executing.")
 @click.option("--lock-scope", type=click.Choice(["job", "target", "both"]), default="both", show_default=True, help="Lock job, targets or both.")
 @click.option("--lock-timeout", type=float, default=0.0, show_default=True, help="Seconds to wait for locks.")
@@ -508,6 +566,7 @@ def resume(
     skip_successful: bool,
     only_failed: bool,
     dry_run: bool,
+    check_mode: bool,
     lock: bool,
     lock_scope: str,
     lock_timeout: float,
