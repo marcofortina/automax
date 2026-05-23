@@ -171,6 +171,12 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PackageUpdateCachePlugin,
         PackageUpgradePlugin,
     )
+    from automax.plugins.pkg_repo import (
+        PackageKeyAddPlugin,
+        PackageKeyRemovePlugin,
+        PackageRepoAddPlugin,
+        PackageRepoRemovePlugin,
+    )
     from automax.plugins.remote_command import RemoteCommandPlugin
     from automax.plugins.transfer import (
         TransferDownloadPlugin,
@@ -256,6 +262,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PackageUpdateCachePlugin(),
         PackageUpgradePlugin(),
         PackageQueryPlugin(),
+        PackageKeyAddPlugin(),
+        PackageKeyRemovePlugin(),
+        PackageRepoAddPlugin(),
+        PackageRepoRemovePlugin(),
         UserCreatePlugin(),
         UserModifyPlugin(),
         UserRemovePlugin(),

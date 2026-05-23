@@ -67,8 +67,12 @@ mount.present
 nftables.apply
 nftables.validate
 pkg.install
+pkg.key.add
+pkg.key.remove
 pkg.query
 pkg.remove
+pkg.repo.add
+pkg.repo.remove
 pkg.update_cache
 pkg.upgrade
 process.kill

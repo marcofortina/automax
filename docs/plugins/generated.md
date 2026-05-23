@@ -1771,6 +1771,75 @@ with:
     - curl
 ```
 
+### `pkg.key.add`
+
+Install a package repository signing key for apt or rpm-based systems.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `manager` | no | `string` | `auto` | Package manager: auto, apt, dnf, yum, zypper or pacman. |
+| `url` | no | `string` |  | HTTP URL. |
+| `content` | no | `string` |  | Text content to write. |
+| `src` | no | `path` |  | Source path. |
+| `dest` | no | `path` |  | Destination path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pkg.key.add
+with:
+  name: vendor
+  manager: apt
+  url: https://repo.example/key.gpg
+  sudo: true
+```
+
+### `pkg.key.remove`
+
+Remove an apt keyring file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `dest` | no | `path` |  | Destination path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pkg.key.remove
+with:
+  name: nginx
+```
+
 ### `pkg.query`
 
 Query package installation state.
@@ -1837,6 +1906,79 @@ with:
   name: nginx
   packages:
     - curl
+```
+
+### `pkg.repo.add`
+
+Install an apt, yum or dnf repository definition.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `manager` | no | `string` | `auto` | Package manager: auto, apt, dnf, yum, zypper or pacman. |
+| `repo` | no | `string` |  | Repository definition line or repo file content. |
+| `content` | no | `string` |  | Text content to write. |
+| `src` | no | `path` |  | Source path. |
+| `dest` | no | `path` |  | Destination path. |
+| `update_cache` | no | `boolean` | `False` | Refresh package manager metadata after changing repositories. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pkg.repo.add
+with:
+  name: vendor
+  manager: apt
+  repo: deb [signed-by=/etc/apt/keyrings/vendor.gpg] https://repo.example stable main
+  update_cache: true
+  sudo: true
+```
+
+### `pkg.repo.remove`
+
+Remove an apt, yum or dnf repository definition.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `manager` | no | `string` | `auto` | Package manager: auto, apt, dnf, yum, zypper or pacman. |
+| `dest` | no | `path` |  | Destination path. |
+| `update_cache` | no | `boolean` | `False` | Refresh package manager metadata after changing repositories. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pkg.repo.remove
+with:
+  name: nginx
 ```
 
 ### `pkg.update_cache`
