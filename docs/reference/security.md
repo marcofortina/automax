@@ -5,6 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Security reference
 
+## Paramiko dependency floor
+
+Automax requires `paramiko>=5.0.0,<6.0` so SSH transport uses the
+post-4.x dependency line and avoids known older Paramiko RSA/SHA-1 handling
+alerts. Keep the lower bound at or above 5.0.0 unless a future security review
+explicitly changes it.
+
 ## SSH host keys
 
 Production inventories should reject unknown host keys:
