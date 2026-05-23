@@ -178,6 +178,17 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SysctlSetPlugin,
     )
     from automax.plugins.local_command import LocalCommandPlugin
+    from automax.plugins.multipath import (
+        MultipathFlushPlugin,
+        MultipathReloadPlugin,
+        MultipathStatusPlugin,
+    )
+    from automax.plugins.udev import (
+        UdevReloadPlugin,
+        UdevRulePlugin,
+        UdevSettlePlugin,
+        UdevTriggerPlugin,
+    )
     from automax.plugins.mounts import (
         FstabEntryPlugin,
         MountAbsentPlugin,
@@ -349,6 +360,13 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         BlockPartitionPlugin(),
         BlockWipeSignaturesPlugin(),
         BlockMkfsPlugin(),
+        UdevRulePlugin(),
+        UdevReloadPlugin(),
+        UdevTriggerPlugin(),
+        UdevSettlePlugin(),
+        MultipathStatusPlugin(),
+        MultipathReloadPlugin(),
+        MultipathFlushPlugin(),
         ArchiveTarPlugin(),
         ArchiveUntarPlugin(),
         ArchiveCompressPlugin(),
