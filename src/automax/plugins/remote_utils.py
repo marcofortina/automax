@@ -22,7 +22,11 @@ def quote(value: Any) -> str:
 
 
 def apply_cwd(command: str, context: ExecutionContext, explicit_cwd: str | None = None) -> str:
-    """Prefix a remote command with the current step working directory when set."""
+    """Prefix a remote command with the current step environment and working directory."""
+    env = context.step_state.get("env") or {}
+    if env:
+        prefix = " ".join(f"{name}={quote(value)}" for name, value in sorted(env.items()))
+        command = f"{prefix} {command}"
     cwd = explicit_cwd or context.step_state.get("cwd")
     if not cwd:
         return command
