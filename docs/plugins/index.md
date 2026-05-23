@@ -29,6 +29,8 @@ assert.disk
 assert.file
 assert.path
 assert.tcp
+cron.entry
+cron.file
 db.mysql.query
 db.oracle.query
 db.postgres.query

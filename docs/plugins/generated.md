@@ -416,6 +416,81 @@ with:
   port: 22
 ```
 
+## cron
+
+### `cron.entry`
+
+Manage one /etc/cron.d entry file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `schedule` | yes | `string` |  | Five-field cron schedule. |
+| `command` | yes | `string` |  | Command line to execute. |
+| `user` | no | `string` | `root` | User field for /etc/cron.d. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `env` | no | `mapping` |  | Environment lines written before the cron entry. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.path`: Installed cron.d file path.
+
+Example:
+
+```yaml
+use: cron.entry
+with:
+  name: myapp-health
+  schedule: '*/5 * * * *'
+  user: root
+  command: /usr/local/bin/myapp-healthcheck
+  sudo: true
+```
+
+### `cron.file`
+
+Install or remove a complete /etc/cron.d file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `content` | no | `string` |  | Text content to write. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.path`: Installed cron.d file path.
+
+Example:
+
+```yaml
+use: cron.file
+with:
+  name: nginx
+```
+
 ## db
 
 ### `db.mysql.query`
