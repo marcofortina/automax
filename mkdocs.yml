@@ -60,6 +60,7 @@ nav:
     - Artifacts: reference/artifacts.md
     - Security: reference/security.md
     - Testing and CI: reference/testing-and-ci.md
+    - Python Compatibility: reference/python-compatibility.md
     - Python API: reference/api.md
   - Plugins:
     - Overview: plugins/index.md

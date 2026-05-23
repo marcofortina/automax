@@ -274,3 +274,13 @@ NO_MKDOCS_2_WARNING=1 mkdocs build --strict
 
 GitHub Pages publishing is handled by `.github/workflows/docs.yml`. Configure the
 repository Pages source as **GitHub Actions**.
+
+## Python compatibility guardrails
+
+Automax supports Python 3.9 and newer. Development and CI run an explicit
+compatibility guard to catch runtime-only Python 3.10+ constructs before they
+reach the Python 3.9 matrix job:
+
+```bash
+python scripts/check-python39-compat.py
+```

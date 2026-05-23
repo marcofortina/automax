@@ -498,3 +498,19 @@ def test_documentation_home_is_a_landing_page_not_readme_clone():
     assert "## What the public documentation covers" in home
     assert "[Quickstart](quickstart.md)" in home
     assert "[Builtin plugins](plugins/index.md)" in home
+
+def test_python39_compatibility_guard_passes_on_repository(capsys):
+    import runpy
+    import sys
+
+    saved_argv = sys.argv
+    sys.argv = ["scripts/check-python39-compat.py"]
+    try:
+        try:
+            runpy.run_path("scripts/check-python39-compat.py", run_name="__main__")
+        except SystemExit as exc:
+            assert exc.code == 0
+    finally:
+        sys.argv = saved_argv
+    captured = capsys.readouterr()
+    assert "Python 3.9 compatibility check passed" in captured.out
