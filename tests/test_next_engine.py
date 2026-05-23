@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -1690,3 +1691,182 @@ tasks:
     assert payload["summary"]["failed"] == 0
     assert payload["resume"]["default"].startswith("automax resume ")
     assert marker.read_text(encoding="utf-8") == "ok"
+
+
+def test_dynamic_file_inventory_provider_resolves_relative_path(tmp_path: Path):
+    included = write(
+        tmp_path / "inventories" / "generated.yaml",
+        """
+servers:
+  dyn01:
+    host: 127.0.0.1
+    groups: [dynamic]
+""",
+    )
+    wrapper = write(
+        tmp_path / "inventories" / "wrapper.yaml",
+        """
+inventory:
+  provider: file
+  path: generated.yaml
+""",
+    )
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: dynamic-file
+ tasks: []
+""".replace(" tasks", "tasks"),
+    )
+    # Use plan through a real job so the engine exercises dynamic loading.
+    job.write_text(
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: dynamic-file
+tasks:
+  - id: t1
+    targets: dynamic
+    steps:
+      - id: s1
+        substeps:
+          - id: ss1
+            use: local.command
+            with:
+              command: "true"
+""",
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        ["plan", "--job", str(job), "--inventory", str(wrapper)],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "dyn01 task.t1:step.s1:substep.ss1" in result.output
+    assert included.exists()
+
+
+def test_dynamic_command_inventory_provider_uses_stdout_yaml(tmp_path: Path):
+    script = write(
+        tmp_path / "inventory_command.py",
+        """
+import sys
+sys.stdout.write('servers:\\n  cmd01:\\n    host: 127.0.0.1\\n    groups: [cmd]\\n')
+""",
+    )
+    wrapper = write(
+        tmp_path / "inventory.yaml",
+        f"""
+inventory:
+  provider: command
+  command: ["{sys.executable}", "{script}"]
+  timeout: 5
+""",
+    )
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: dynamic-command
+tasks:
+  - id: t1
+    targets: cmd
+    steps:
+      - id: s1
+        substeps:
+          - id: ss1
+            use: local.command
+            with:
+              command: "true"
+""",
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        ["plan", "--job", str(job), "--inventory", str(wrapper)],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "cmd01 task.t1:step.s1:substep.ss1" in result.output
+
+
+def test_command_secret_provider_resolves_stdout_and_masks_value(tmp_path: Path):
+    secret_script = write(
+        tmp_path / "secret.py",
+        """
+print('command-secret-value')
+""",
+    )
+    secrets_file = write(
+        tmp_path / "secrets.yaml",
+        f"""
+secrets:
+  token:
+    provider: command
+    command: ["{sys.executable}", "{secret_script}"]
+    timeout: 5
+""",
+    )
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: command-secret
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: ss1
+            use: local.command
+            with:
+              command: "printf '{{ secrets.token }}'"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+    state_dir = tmp_path / "runs"
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--secrets",
+            str(secrets_file),
+            "--state-dir",
+            str(state_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "command-secret-value" not in result.output
+    state_files = list(state_dir.glob("*/state.sqlite"))
+    assert state_files
+
+
+def test_schema_export_includes_dynamic_inventory_and_command_secret_provider():
+    result = CliRunner().invoke(cli, ["schema", "export", "--kind", "all", "--format", "json"])
+
+    assert result.exit_code == 0, result.output
+    exported = json.loads(result.output)
+    inventory_schema = json.dumps(exported["properties"]["inventory"])
+    secrets_schema = json.dumps(exported["properties"]["secrets"])
+    assert "command" in inventory_schema
+    assert "http" in inventory_schema
+    assert "command" in secrets_schema
+    assert "env" in secrets_schema
+    assert "file" in secrets_schema

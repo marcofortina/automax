@@ -18,7 +18,7 @@ automax run \
 
 ## Inventory
 
-Inventory defines target servers, groups, host variables and SSH connection data:
+Inventory can be static YAML or dynamic provider output. Static inventory defines target servers, groups, host variables and SSH connection data:
 
 ```yaml
 servers:
@@ -38,6 +38,21 @@ servers:
 Supported SSH fields are read into the target model or passed through the `ssh`
 mapping for the SSH manager. Use `missing_host_key_policy: reject` for real
 environments. Lab-only policies should be explicit in the inventory.
+
+Dynamic inventory providers are also supported when the target list is generated
+by another local tool or inventory service:
+
+```yaml
+inventory:
+  provider: command
+  command: ["./scripts/list-hosts.py", "--env", "prod"]
+  format: yaml
+  timeout: 30
+```
+
+Supported providers are `file`, `command` and `http`. See
+[Dynamic inventory](../guides/dynamic-inventory.md) for provider-specific
+examples and safety notes.
 
 ## Variable precedence
 
@@ -73,9 +88,9 @@ automax run --job job.yaml --inventory inventory.yaml --var version=1.2.4
 
 ## Secrets
 
-Secrets currently support only `env` and `file` providers. The secret provider
-interface is intentionally pluggable so Vault, cloud secret managers or other
-providers can be added later without changing job YAML semantics.
+Secrets currently support `env`, `file` and `command` providers. The secret
+provider interface is intentionally pluggable so Vault, cloud secret managers or
+other providers can be added later without changing job YAML semantics.
 
 ```yaml
 secrets:
@@ -86,6 +101,11 @@ secrets:
   ssh_key_file:
     provider: file
     path: ~/.ssh/automax-key-path
+
+  deploy_token:
+    provider: command
+    command: ["pass", "show", "prod/automax/deploy-token"]
+    timeout: 10
 ```
 
 Shorthand forms are also supported:
@@ -96,10 +116,13 @@ secrets:
     env: AUTOMAX_SSH_USER
   ssh_key_file:
     file: ~/.ssh/automax-key-path
+  deploy_token:
+    command: ["pass", "show", "prod/automax/deploy-token"]
 ```
 
 A plain string is accepted as an already-resolved secret value, but this should be
-reserved for local labs and examples.
+reserved for local labs and examples. See [Command secrets](../guides/command-secrets.md)
+for generic external command integration and shell-safety guidance.
 
 ## Template context
 

@@ -183,8 +183,8 @@ Variables are external and can be overridden by CLI:
 automax run --job job.yaml --inventory inventory.yaml --vars vars.yaml --var app_version=2.1.0
 ```
 
-Secrets currently support only `env` and `file`, but the provider interface is
-pluggable.
+Secrets currently support `env`, `file` and `command`, and the provider interface
+remains pluggable.
 
 ```yaml
 secrets:
@@ -195,7 +195,15 @@ secrets:
   ssh_key_file:
     provider: file
     path: ~/.ssh/id_ed25519.path
+
+  deploy_token:
+    provider: command
+    command: ["pass", "show", "prod/automax/deploy-token"]
+    timeout: 10
 ```
+
+Dynamic inventory providers are available when targets come from a generated file,
+local command or HTTP inventory service. See the GitHub Pages manual for details.
 
 ## Strategy, tags and failure policy
 

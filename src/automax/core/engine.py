@@ -20,7 +20,7 @@ import time
 import uuid
 from typing import Any, Dict, Iterable, List, Optional
 
-from automax.core.inventory import Inventory
+from automax.core.inventory import Inventory, load_inventory_document
 from automax.core.models import ExecutionContext, NodeStatus, PluginResult, Target
 from automax.core.secrets import SecretManager
 from automax.core.ssh import SshSessionManager
@@ -86,12 +86,16 @@ class AutomaxEngine:
             vars_path=vars_path,
             secrets_path=secrets_path,
         )
-        secrets = self.secret_manager.resolve_all(documents["secrets"])
+        secrets = self.secret_manager.resolve_all(
+            documents["secrets"],
+            base_dir=Path(secrets_path).expanduser().resolve().parent if secrets_path else None,
+        )
         variables = self._merge_variables(
             documents["vars"], documents["job"].get("vars", {}), cli_vars or {}
         )
         context = {"vars": variables, "secrets": secrets}
-        inventory = Inventory(documents["inventory"], context)
+        inventory_document = load_inventory_document(inventory_path, context)
+        inventory = Inventory(inventory_document, context)
         job = documents["job"]
         self.validate_job(job)
 
@@ -218,11 +222,16 @@ class AutomaxEngine:
             vars_path=vars_path,
             secrets_path=secrets_path,
         )
-        secrets = self.secret_manager.resolve_all(documents["secrets"])
+        secrets = self.secret_manager.resolve_all(
+            documents["secrets"],
+            base_dir=Path(secrets_path).expanduser().resolve().parent if secrets_path else None,
+        )
         variables = self._merge_variables(
             documents["vars"], documents["job"].get("vars", {}), cli_vars or {}
         )
-        inventory = Inventory(documents["inventory"], {"vars": variables, "secrets": secrets})
+        context = {"vars": variables, "secrets": secrets}
+        inventory_document = load_inventory_document(inventory_path, context)
+        inventory = Inventory(inventory_document, context)
         job = documents["job"]
         self.validate_job(job, strict=strict)
         plan = self._build_plan(job, inventory, limit=(), exclude=(), tags=tags, skip_tags=skip_tags)
@@ -398,7 +407,6 @@ class AutomaxEngine:
     def _load_documents(self, **paths: str | None) -> Dict[str, Dict[str, Any]]:
         return {
             "job": load_yaml_file(paths["job_path"]),
-            "inventory": load_yaml_file(paths["inventory_path"]),
             "vars": load_yaml_file(paths.get("vars_path"), required=False)
             if paths.get("vars_path")
             else {},

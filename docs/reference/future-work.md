@@ -8,23 +8,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 This page tracks product ideas that are intentionally not part of the current
 implementation contract.
 
-## Dynamic inventory providers
-
-The current inventory source is YAML. Future inventory providers may load targets
-from external systems at runtime, for example:
-
-```text
-inventory.file
-inventory.command
-inventory.http
-```
-
-This requires a stable provider contract before implementation so host discovery,
-variables and failure handling remain predictable.
-
 ## Additional secret providers
 
-The current secret providers are `env` and `file`. Future providers may include:
+The current secret providers are `env`, `file` and `command`. Future providers may include:
 
 ```text
 Vault

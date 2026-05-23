@@ -48,17 +48,26 @@ ssh:
 
 ## Secrets
 
-Current secret providers are `env` and `file`.
+Current secret providers are `env`, `file` and `command`.
 
 ```yaml
 secrets:
   token:
     provider: env
     name: AUTOMAX_TOKEN
+
+  deploy_token:
+    provider: command
+    command: ["pass", "show", "prod/automax/deploy-token"]
+    timeout: 10
 ```
 
 Resolved secret values are masked before stdout, stderr, messages, structured
 result data and artifacts are persisted to the run state.
+
+Command secrets run on the controller. Prefer list-form commands and keep
+`shell: false` unless a trusted local helper explicitly needs shell features.
+Command provider errors intentionally do not include captured stdout or stderr.
 
 ## Sudo
 

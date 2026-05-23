@@ -525,3 +525,26 @@ def test_development_tooling_uses_ruff_and_pre_commit():
     assert "flake8>=" not in pyproject
     assert "isort>=" not in pyproject
     assert "astral-sh/ruff-pre-commit" in pre_commit
+
+
+def test_dynamic_inventory_and_command_secrets_are_documented():
+    docs = [
+        Path("docs/guides/dynamic-inventory.md"),
+        Path("docs/guides/command-secrets.md"),
+        Path("docs/reference/inventory-vars-secrets.md"),
+        Path("docs/reference/security.md"),
+    ]
+    missing = [path for path in docs if not path.is_file()]
+    assert missing == []
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in docs)
+    assert "provider: command" in combined
+    assert "provider: http" in combined
+    assert "shell: true" in combined
+    assert "command secrets run on the controller" in combined.lower()
+
+
+def test_dynamic_inventory_removed_from_future_work():
+    future_work = Path("docs/reference/future-work.md").read_text(encoding="utf-8")
+    assert "Dynamic inventory providers" not in future_work
+    assert "inventory.command" not in future_work
+    assert "secret providers" in future_work.lower()

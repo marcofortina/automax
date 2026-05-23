@@ -42,6 +42,10 @@ Only JSON is currently supported:
 automax schema export --kind inventory --format=json --output inventory.schema.json
 ```
 
+The inventory schema covers static inventories and dynamic `file`, `command` and
+`http` provider wrappers. The secrets schema covers `env`, `file` and `command`
+providers.
+
 The explicit `--format=json` option is part of the public CLI contract. It keeps
 the interface extensible for future formats such as YAML or OpenAPI-oriented
 exports.

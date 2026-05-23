@@ -49,6 +49,8 @@ nav:
     - Initialize Workspace: guides/init-workspace.md
     - Operator Diagnostics: guides/doctor.md
     - Development Tooling: guides/development-tooling.md
+    - Dynamic Inventory: guides/dynamic-inventory.md
+    - Command Secrets: guides/command-secrets.md
     - Writing Jobs: guides/writing-jobs.md
     - Templating: guides/templating.md
     - Template Workflows: guides/template-workflows.md

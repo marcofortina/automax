@@ -193,45 +193,108 @@ def _job_schema() -> Dict[str, Any]:
 
 
 def _inventory_schema() -> Dict[str, Any]:
-    return {
-        "$schema": SCHEMA_VERSION,
-        "$id": f"{AUTOMAX_SCHEMA_ID}/inventory.schema.json",
-        "title": "Automax Inventory",
-        "description": "Static Automax inventory file.",
+    server_schema = {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["host"],
+        "properties": {
+            "host": {"type": "string", "minLength": 1},
+            "hostname": {"type": "string", "minLength": 1},
+            "port": {"type": "integer", "minimum": 1, "maximum": 65535},
+            "user": {"type": "string"},
+            "username": {"type": "string"},
+            "password": {"type": "string"},
+            "key_file": {"type": "string"},
+            "key_content": {"type": "string"},
+            "groups": {"type": "array", "items": {"type": "string"}},
+            "vars": {"type": "object", "additionalProperties": True},
+            "ssh": {"type": "object", "additionalProperties": True},
+            "timeouts": _timeouts_schema(),
+        },
+    }
+    static_inventory = {
         "type": "object",
         "additionalProperties": False,
         "required": ["servers"],
         "properties": {
             "servers": {
-                "type": "object",
-                "minProperties": 1,
-                "additionalProperties": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": ["host"],
-                    "properties": {
-                        "host": {"type": "string", "minLength": 1},
-                        "port": {"type": "integer", "minimum": 1, "maximum": 65535},
-                        "user": {"type": "string"},
-                        "username": {"type": "string"},
-                        "groups": {"type": "array", "items": {"type": "string"}},
-                        "vars": {"type": "object", "additionalProperties": True},
-                        "ssh": {"type": "object", "additionalProperties": True},
-                        "timeouts": _timeouts_schema(),
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "minProperties": 1,
+                        "additionalProperties": server_schema,
                     },
-                },
+                    {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                            "allOf": [
+                                server_schema,
+                                {
+                                    "type": "object",
+                                    "required": ["name"],
+                                    "properties": {"name": {"type": "string", "minLength": 1}},
+                                },
+                            ]
+                        },
+                    },
+                ]
             },
             "groups": {
                 "type": "object",
                 "additionalProperties": {
-                    "type": "object",
-                    "additionalProperties": True,
-                    "properties": {
-                        "vars": {"type": "object", "additionalProperties": True},
-                        "children": {"type": "array", "items": {"type": "string"}},
-                    },
+                    "type": "array",
+                    "items": {"type": "string", "minLength": 1},
                 },
             },
+        },
+    }
+    provider = _inventory_provider_schema()
+    return {
+        "$schema": SCHEMA_VERSION,
+        "$id": f"{AUTOMAX_SCHEMA_ID}/inventory.schema.json",
+        "title": "Automax Inventory",
+        "description": "Static or dynamic Automax inventory file.",
+        "oneOf": [
+            static_inventory,
+            provider,
+            {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["inventory"],
+                "properties": {"inventory": provider},
+            },
+        ],
+    }
+
+
+def _inventory_provider_schema() -> Dict[str, Any]:
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["provider"],
+        "properties": {
+            "provider": {"type": "string", "enum": ["file", "command", "http"]},
+            "path": {"type": "string", "minLength": 1},
+            "command": {
+                "oneOf": [
+                    {"type": "string", "minLength": 1},
+                    {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {"type": "string", "minLength": 1},
+                    },
+                ]
+            },
+            "url": {"type": "string", "minLength": 1},
+            "method": {"type": "string", "enum": ["GET"]},
+            "headers": {"type": "object", "additionalProperties": {"type": "string"}},
+            "format": {"type": "string", "enum": ["auto", "yaml", "json"]},
+            "timeout": {"type": "integer", "minimum": 1},
+            "cwd": {"type": "string"},
+            "env": {"type": "object", "additionalProperties": True},
+            "shell": {"type": "boolean"},
+            "encoding": {"type": "string"},
         },
     }
 
@@ -256,23 +319,53 @@ def _secrets_schema() -> Dict[str, Any]:
         "additionalProperties": False,
         "required": ["provider"],
         "properties": {
-            "provider": {"type": "string", "enum": ["env", "file"]},
+            "provider": {"type": "string", "enum": ["env", "file", "command"]},
             "name": {"type": "string"},
+            "var": {"type": "string"},
             "path": {"type": "string"},
+            "command": {
+                "oneOf": [
+                    {"type": "string", "minLength": 1},
+                    {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {"type": "string", "minLength": 1},
+                    },
+                ]
+            },
+            "timeout": {"type": "integer", "minimum": 1},
+            "cwd": {"type": "string"},
+            "env": {"type": "object", "additionalProperties": True},
+            "shell": {"type": "boolean"},
+            "strip": {"type": "boolean"},
         },
     }
     return {
         "$schema": SCHEMA_VERSION,
         "$id": f"{AUTOMAX_SCHEMA_ID}/secrets.schema.json",
         "title": "Automax Secrets",
-        "description": "External Automax env/file secrets file.",
+        "description": "External Automax env, file and command secrets file.",
         "type": "object",
         "additionalProperties": False,
         "required": ["secrets"],
         "properties": {
             "secrets": {
                 "type": "object",
-                "additionalProperties": provider,
+                "additionalProperties": {
+                    "oneOf": [
+                        {"type": "string"},
+                        provider,
+                        {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                "env": {"type": "string"},
+                                "file": {"type": "string"},
+                                "command": provider["properties"]["command"],
+                            },
+                        },
+                    ]
+                },
             }
         },
     }
