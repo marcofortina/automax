@@ -1,0 +1,245 @@
+# Copyright (C) 2026 Marco Fortina
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+"""
+Remote account access management plugins.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Dict
+
+from automax.core.models import ExecutionContext, PluginResult
+from automax.plugins.base import BasePlugin, PluginValidationError
+from automax.plugins.file_utils import install_uploaded_file, upload_text_to_temp
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote
+
+
+def _sudo(params: Dict[str, Any]) -> str:
+    return "sudo -n " if bool(params.get("sudo", True)) else ""
+
+
+class UserExistsPlugin(BasePlugin):
+    """Check whether a remote user exists."""
+
+    name = "user.exists"
+    description = "Check whether a remote user exists."
+    required_params = ("name",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        rc, out, err = exec_remote(context, f"id -u {quote(params['name'])} >/dev/null 2>&1")
+        return PluginResult.success(
+            changed=False,
+            rc=0,
+            stdout="",
+            stderr="" if rc == 0 else err,
+            data={"name": params["name"], "exists": rc == 0},
+        )
+
+
+class GroupExistsPlugin(BasePlugin):
+    """Check whether a remote group exists."""
+
+    name = "group.exists"
+    description = "Check whether a remote group exists."
+    required_params = ("name",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        rc, out, err = exec_remote(context, f"getent group {quote(params['name'])} >/dev/null")
+        return PluginResult.success(
+            changed=False,
+            rc=0,
+            stdout=out,
+            stderr="" if rc == 0 else err,
+            data={"name": params["name"], "exists": rc == 0},
+        )
+
+
+class UserLockPlugin(BasePlugin):
+    """Lock a remote user account."""
+
+    name = "user.lock"
+    description = "Lock a remote user account."
+    required_params = ("name",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        name = quote(params["name"])
+        command = (
+            f"id -u {name} >/dev/null 2>&1 && "
+            f"if passwd -S {name} 2>/dev/null | awk '{{print $2}}' | grep -Eq '^(L|LK|NP)$'; then "
+            f"true; else {_sudo(params)}usermod --lock {name} && echo {CHANGE_MARKER}; fi"
+        )
+        rc, out, err = exec_remote(context, command)
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.lock failed")
+
+
+class UserUnlockPlugin(BasePlugin):
+    """Unlock a remote user account."""
+
+    name = "user.unlock"
+    description = "Unlock a remote user account."
+    required_params = ("name",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        name = quote(params["name"])
+        command = (
+            f"id -u {name} >/dev/null 2>&1 && "
+            f"if passwd -S {name} 2>/dev/null | awk '{{print $2}}' | grep -Eq '^(P|PS)$'; then "
+            f"true; else {_sudo(params)}usermod --unlock {name} && echo {CHANGE_MARKER}; fi"
+        )
+        rc, out, err = exec_remote(context, command)
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.unlock failed")
+
+
+class UserSetPasswordPlugin(BasePlugin):
+    """Set a remote user's password using either a password hash or plaintext value."""
+
+    name = "user.set_password"
+    description = "Set a remote user's password using a password hash or plaintext value."
+    required_params = ("name",)
+    optional_params = ("password_hash", "password", "sudo")
+    opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        if bool(params.get("password_hash")) == bool(params.get("password")):
+            raise PluginValidationError("user.set_password requires exactly one of password_hash or password")
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        name = str(params["name"])
+        if params.get("password_hash"):
+            # usermod --password expects a crypt(3) hash. The shell-quoted value is still sensitive,
+            # but avoids sending plaintext passwords to the remote chpasswd process.
+            command = f"id -u {quote(name)} >/dev/null 2>&1 && {_sudo(params)}usermod --password {quote(params['password_hash'])} {quote(name)} && echo {CHANGE_MARKER}"
+        else:
+            temp_path = upload_text_to_temp(context, f"{name}:{params['password']}\n")
+            command = f"{_sudo(params)}chpasswd < {quote(temp_path)} && rm -f {quote(temp_path)} && echo {CHANGE_MARKER}"
+        rc, out, err = exec_remote(context, command)
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.set_password failed")
+
+
+class SshAuthorizedKeyPlugin(BasePlugin):
+    """Manage one line in a remote user's authorized_keys file."""
+
+    name = "ssh.authorized_key"
+    description = "Ensure an SSH authorized key is present or absent for a remote user."
+    required_params = ("user", "key")
+    optional_params = ("state", "sudo")
+    parameter_schema = {
+        "user": {"type": "string", "description": "Remote user account owning authorized_keys."},
+        "key": {"type": "string", "description": "Authorized key line to manage."},
+    }
+    opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        if str(params.get("state", "present")) not in {"present", "absent"}:
+            raise PluginValidationError("ssh.authorized_key state must be present or absent")
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        user = str(params["user"])
+        key = str(params["key"])
+        state = str(params.get("state", "present"))
+        script = r'''
+set -eu
+user=$1
+key=$2
+state=$3
+home=$(getent passwd "$user" | cut -d: -f6)
+if [ -z "$home" ]; then
+  echo "user not found: $user" >&2
+  exit 1
+fi
+ssh_dir="$home/.ssh"
+auth_file="$ssh_dir/authorized_keys"
+mkdir -p "$ssh_dir"
+touch "$auth_file"
+chmod 700 "$ssh_dir"
+chmod 600 "$auth_file"
+if [ "$state" = present ]; then
+  if grep -Fqx -- "$key" "$auth_file"; then
+    exit 0
+  fi
+  printf '%s\n' "$key" >> "$auth_file"
+  echo __AUTOMAX_CHANGED__
+else
+  tmp=$(mktemp)
+  grep -Fxv -- "$key" "$auth_file" > "$tmp" || true
+  if cmp -s "$tmp" "$auth_file"; then
+    rm -f "$tmp"
+    exit 0
+  fi
+  cat "$tmp" > "$auth_file"
+  rm -f "$tmp"
+  echo __AUTOMAX_CHANGED__
+fi
+chown -R "$user":"$user" "$ssh_dir" 2>/dev/null || true
+'''
+        prefix = "sudo -n " if bool(params.get("sudo", True)) else ""
+        command = f"{prefix}sh -s -- {quote(user)} {quote(key)} {quote(state)} <<'SH'\n{script}\nSH"
+        rc, out, err = exec_remote(context, command)
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.authorized_key failed")
+
+
+class SudoersDropinPlugin(BasePlugin):
+    """Install or remove a sudoers drop-in file with optional visudo validation."""
+
+    name = "sudoers.dropin"
+    description = "Install or remove a sudoers drop-in file with visudo validation."
+    required_params = ("name",)
+    optional_params = ("content", "state", "mode", "validate", "sudo")
+    parameter_schema = {
+        "name": {"type": "string", "description": "Drop-in filename under /etc/sudoers.d."},
+        "content": {"type": "string", "description": "sudoers content installed when state=present."},
+        "validate": {"type": "boolean", "default": True, "description": "Validate content with visudo before installing."},
+    }
+    opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        state = str(params.get("state", "present"))
+        if state not in {"present", "absent"}:
+            raise PluginValidationError("sudoers.dropin state must be present or absent")
+        if state == "present" and "content" not in params:
+            raise PluginValidationError("sudoers.dropin requires content when state=present")
+        name = str(params["name"])
+        if "/" in name or name in {".", ".."}:
+            raise PluginValidationError("sudoers.dropin name must be a simple filename")
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        dest = f"/etc/sudoers.d/{params['name']}"
+        state = str(params.get("state", "present"))
+        if state == "absent":
+            command = f"if test -e {quote(dest)}; then {_sudo(params)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
+            rc, out, err = exec_remote(context, command)
+            return result_from_remote(rc=rc, stdout=out, stderr=err, message="sudoers.dropin failed")
+        temp_path = upload_text_to_temp(context, str(params["content"]).rstrip() + "\n")
+        if bool(params.get("validate", True)):
+            rc, out, err = exec_remote(context, f"{_sudo(params)}visudo -cf {quote(temp_path)}")
+            if rc != 0:
+                return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="sudoers.dropin validation failed")
+        rc, out, err = install_uploaded_file(
+            context,
+            temp_path,
+            dest,
+            sudo=bool(params.get("sudo", True)),
+            mode=str(params.get("mode", "0440")),
+            owner="root",
+            group="root",
+        )
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="sudoers.dropin failed", data={"path": dest})

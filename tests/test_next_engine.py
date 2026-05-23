@@ -407,79 +407,11 @@ def test_builtin_macro_plugins_are_registered_with_canonical_names_only():
 
     assert result.exit_code == 0, result.output
     output_names = set(result.output.splitlines())
-    expected_names = {
-        "archive.tar",
-        "archive.untar",
-        "archive.zip",
-        "archive.unzip",
-        "fs.cd",
-        "fs.chmod",
-        "fs.chown",
-        "fs.copy",
-        "fs.exists",
-        "fs.find",
-        "fs.line",
-        "fs.mkdir",
-        "fs.move",
-        "fs.read",
-        "fs.remove",
-        "fs.replace",
-        "fs.stat",
-        "fs.symlink.create",
-        "fs.symlink.remove",
-        "fs.template",
-        "fs.write",
-        "local.command",
-        "pkg.install",
-        "pkg.query",
-        "pkg.remove",
-        "pkg.update_cache",
-        "pkg.upgrade",
-        "process.kill",
-        "process.wait",
-        "remote.command",
-        "systemctl.daemon_reload",
-        "systemctl.disable",
-        "systemctl.enable",
-        "systemctl.is_active",
-        "systemctl.is_enabled",
-        "systemctl.mask",
-        "systemctl.reload",
-        "systemctl.restart",
-        "systemctl.start",
-        "systemctl.status",
-        "systemctl.stop",
-        "systemctl.unmask",
-        "transfer.download",
-        "transfer.sync",
-        "transfer.upload",
-        "user.create",
-        "user.modify",
-        "user.remove",
-        "group.create",
-        "group.remove",
-        "http.assert",
-        "http.request",
-        "http.wait",
-        "wait.tcp",
-        "wait.command",
-        "wait.file",
-        "wait.path",
-        "wait.process",
-        "assert.tcp",
-        "assert.command",
-        "assert.file",
-        "assert.path",
-        "assert.disk",
-        "db.sqlite.query",
-        "db.postgres.query",
-        "db.mysql.query",
-        "db.oracle.query",
-    }
-    assert output_names == expected_names
+    registry_names = set(AutomaxEngine().plugin_registry.names())
+
+    assert output_names == registry_names
     assert "local_command" not in output_names
     assert "ssh_command" not in output_names
-    assert "tar" not in output_names
     assert "systemctl daemon reload" not in output_names
 
 

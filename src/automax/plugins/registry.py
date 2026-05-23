@@ -151,6 +151,15 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         TransferSyncPlugin,
         TransferUploadPlugin,
     )
+    from automax.plugins.users_extra import (
+        GroupExistsPlugin,
+        SshAuthorizedKeyPlugin,
+        SudoersDropinPlugin,
+        UserExistsPlugin,
+        UserLockPlugin,
+        UserSetPasswordPlugin,
+        UserUnlockPlugin,
+    )
     from automax.plugins.user_group_process import (
         GroupCreatePlugin,
         GroupRemovePlugin,
@@ -204,8 +213,15 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         UserCreatePlugin(),
         UserModifyPlugin(),
         UserRemovePlugin(),
+        UserExistsPlugin(),
+        UserLockPlugin(),
+        UserUnlockPlugin(),
+        UserSetPasswordPlugin(),
         GroupCreatePlugin(),
         GroupRemovePlugin(),
+        GroupExistsPlugin(),
+        SshAuthorizedKeyPlugin(),
+        SudoersDropinPlugin(),
         ProcessKillPlugin(),
         ProcessWaitPlugin(),
         TransferUploadPlugin(),

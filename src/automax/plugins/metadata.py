@@ -53,6 +53,10 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "ignore_missing": {"type": "boolean", "default": True, "description": "Treat missing processes as success."},
     "interval": {"type": "number", "default": 2, "description": "Polling interval in seconds."},
     "json": {"type": "mapping", "description": "JSON HTTP request body."},
+    "key": {"type": "string", "description": "SSH public key line."},
+    "password": {"type": "string", "description": "Plaintext password; prefer password_hash when possible."},
+    "password_hash": {"type": "string", "description": "crypt(3) password hash passed to usermod --password."},
+    "validate": {"type": "boolean", "default": True, "description": "Validate generated or uploaded content before installing it."},
     "line": {"type": "string", "description": "Exact line to ensure in a remote file."},
     "lock": {"type": "boolean", "default": False, "description": "Lock the remote user account."},
     "manager": {"type": "string", "default": "auto", "description": "Package manager: auto, apt, dnf, yum, zypper or pacman."},
@@ -135,6 +139,9 @@ RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
     "assert.tcp": {"data.host": "Checked host.", "data.port": "Checked TCP port."},
     "transfer.upload": {"data.src": "Local source path.", "data.dest": "Remote destination path"},
     "transfer.download": {"data.src": "Remote source path.", "data.dest": "Local destination path."},
+    "user.exists": {"data.exists": "Whether the remote user exists.", "data.name": "Checked username."},
+    "group.exists": {"data.exists": "Whether the remote group exists.", "data.name": "Checked group name."},
+    "sudoers.dropin": {"data.path": "Installed sudoers drop-in path."},
     "transfer.sync": {"data.src": "Local source directory.", "data.dest": "Remote destination directory."},
 }
 
@@ -176,6 +183,10 @@ SAMPLE_VALUES: dict[str, Any] = {
     "ignore_missing": True,
     "interval": 2,
     "json": {"ok": True},
+    "key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example",
+    "password": "secret-password",
+    "password_hash": "$6$rounds=4096$salt$hash",
+    "validate": True,
     "line": "KEY=value",
     "lock": True,
     "manager": "auto",
@@ -232,6 +243,8 @@ PLUGIN_EXAMPLES: dict[str, str] = {
     "fs.template": "use: fs.template\nwith:\n  src: ./templates/app.conf.j2\n  dest: /etc/myapp/app.conf\n  mode: '0644'\n  sudo: true",
     "db.sqlite.query": "use: db.sqlite.query\nwith:\n  connection:\n    path: /tmp/automax.sqlite\n  query: SELECT 1 AS value\n  output: rows",
     "remote.command": "use: remote.command\nwith:\n  command: systemctl is-active sshd\n  success_rc: 0",
+    "ssh.authorized_key": "use: ssh.authorized_key\nwith:\n  user: deploy\n  key: '{{ vars.deploy_public_key }}'\n  state: present\n  sudo: true",
+    "sudoers.dropin": "use: sudoers.dropin\nwith:\n  name: deploy-myapp\n  content: 'deploy ALL=(root) NOPASSWD: /bin/systemctl restart myapp'\n  validate: true\n  sudo: true",
     "local.command": "use: local.command\nwith:\n  command: echo automax\n  changed: false",
 }
 

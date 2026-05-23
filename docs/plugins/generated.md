@@ -1085,6 +1085,38 @@ with:
   name: nginx
 ```
 
+### `group.exists`
+
+Check whether a remote group exists.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.exists`: Whether the remote group exists.
+- `data.name`: Checked group name.
+
+Example:
+
+```yaml
+use: group.exists
+with:
+  name: nginx
+```
+
 ### `group.remove`
 
 Remove a remote group.
@@ -1559,6 +1591,83 @@ use: remote.command
 with:
   command: systemctl is-active sshd
   success_rc: 0
+```
+
+## ssh
+
+### `ssh.authorized_key`
+
+Ensure an SSH authorized key is present or absent for a remote user.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `string` | `False` | Remote user account owning authorized_keys. |
+| `key` | yes | `string` |  | Authorized key line to manage. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: ssh.authorized_key
+with:
+  user: deploy
+  key: '{{ vars.deploy_public_key }}'
+  state: present
+  sudo: true
+```
+
+## sudoers
+
+### `sudoers.dropin`
+
+Install or remove a sudoers drop-in file with visudo validation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Drop-in filename under /etc/sudoers.d. |
+| `content` | no | `string` |  | sudoers content installed when state=present. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `validate` | no | `boolean` | `True` | Validate content with visudo before installing. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.path`: Installed sudoers drop-in path.
+
+Example:
+
+```yaml
+use: sudoers.dropin
+with:
+  name: deploy-myapp
+  content: 'deploy ALL=(root) NOPASSWD: /bin/systemctl restart myapp'
+  validate: true
+  sudo: true
 ```
 
 ## systemctl
@@ -2084,6 +2193,68 @@ with:
   name: nginx
 ```
 
+### `user.exists`
+
+Check whether a remote user exists.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.exists`: Whether the remote user exists.
+- `data.name`: Checked username.
+
+Example:
+
+```yaml
+use: user.exists
+with:
+  name: nginx
+```
+
+### `user.lock`
+
+Lock a remote user account.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: user.lock
+with:
+  name: nginx
+```
+
 ### `user.modify`
 
 Modify a remote user.
@@ -2150,6 +2321,68 @@ Example:
 
 ```yaml
 use: user.remove
+with:
+  name: nginx
+```
+
+### `user.set_password`
+
+Set a remote user's password using a password hash or plaintext value.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `password_hash` | no | `string` |  | crypt(3) password hash passed to usermod --password. |
+| `password` | no | `string` |  | Plaintext password; prefer password_hash when possible. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: user.set_password
+with:
+  name: nginx
+```
+
+### `user.unlock`
+
+Unlock a remote user account.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: user.unlock
 with:
   name: nginx
 ```

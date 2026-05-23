@@ -48,6 +48,7 @@ fs.symlink.remove
 fs.template
 fs.write
 group.create
+group.exists
 group.remove
 http.assert
 http.request
@@ -61,6 +62,8 @@ pkg.upgrade
 process.kill
 process.wait
 remote.command
+ssh.authorized_key
+sudoers.dropin
 systemctl.daemon_reload
 systemctl.disable
 systemctl.enable
@@ -77,8 +80,12 @@ transfer.download
 transfer.sync
 transfer.upload
 user.create
+user.exists
+user.lock
 user.modify
 user.remove
+user.set_password
+user.unlock
 wait.command
 wait.file
 wait.path
