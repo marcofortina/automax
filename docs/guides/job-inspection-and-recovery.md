@@ -1,0 +1,118 @@
+<!--
+Copyright (C) 2026 Marco Fortina
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
+# Job inspection and recovery
+
+Automax provides job-scoped inspection commands for operators who need to verify
+what a job will touch before running it, diagnose a failed substep, reproduce the
+failed action manually and then restart from the next safe checkpoint.
+
+These commands resolve the same job, inventory, variables, secrets, target
+filters and tag filters used by `automax run`. They are intentionally scoped to
+one job so the output describes the operation under review, not unrelated files
+or inventory entries.
+
+## Inspect selected targets
+
+Use `automax inventory show` before a production run to confirm the resolved
+server set:
+
+```bash
+automax inventory show \
+  --job jobs/deploy.yaml \
+  --inventory inventory/prod.yaml \
+  --vars vars/prod.yaml \
+  --secrets secrets/prod.yaml \
+  --limit web
+```
+
+The command prints only targets selected by the job after applying `--limit`,
+`--exclude`, `--tags` and `--skip-tags`.
+
+## Check only secrets used by the selected job
+
+Use `automax secrets check` to verify that required secret providers can be read
+without exposing secret values:
+
+```bash
+automax secrets check \
+  --job jobs/deploy.yaml \
+  --inventory inventory/prod.yaml \
+  --secrets secrets/prod.yaml \
+  --limit web
+```
+
+By default the command checks only secrets referenced by the resolved job plan.
+Use `--all` when you explicitly want to check every secret declared in the
+secrets file.
+
+## Preview check-mode behavior
+
+Use `automax plan --check` when you want a dry-run style view of the selected
+substeps and their plugin-level check support:
+
+```bash
+automax plan --check \
+  --job jobs/deploy.yaml \
+  --inventory inventory/prod.yaml \
+  --vars vars/prod.yaml \
+  --secrets secrets/prod.yaml
+```
+
+`automax run --check` prints the same check payload and does not create run
+state. This is useful in CI gates that must verify the plan without touching the
+state directory.
+
+## Preview file diffs
+
+For file-oriented plugins that support deterministic previews, use
+`automax plan --diff`:
+
+```bash
+automax plan --diff \
+  --job jobs/deploy.yaml \
+  --inventory inventory/prod.yaml \
+  --vars vars/prod.yaml \
+  --secrets secrets/prod.yaml
+```
+
+Secret values rendered into previews are masked before output.
+
+## Render manual recovery commands
+
+When a job fails, render copy/pasteable commands for the same selected substeps:
+
+```bash
+automax commands render \
+  --job jobs/deploy.yaml \
+  --inventory inventory/prod.yaml \
+  --vars vars/prod.yaml \
+  --secrets secrets/prod.yaml \
+  --limit web01 \
+  --tags install
+```
+
+The output includes the target, host, checkpoint and plugin name before each
+command. Plugins that cannot safely render a manual command are reported as not
+available instead of inventing shell snippets.
+
+A typical recovery loop is:
+
+1. Run `automax runs show <run-id> --failed` to identify the failed checkpoint.
+2. Run `automax commands render` with matching `--limit` and `--tags` filters.
+3. Execute the printed command manually on the affected host or controller.
+4. Fix the root cause outside Automax.
+5. Restart from the next appropriate checkpoint with `automax resume --from` or
+   `automax run --from`.
+
+## Machine-readable output
+
+All inspection commands support JSON output for CI or operator tooling:
+
+```bash
+automax inventory show --job job.yaml --inventory inventory.yaml --format=json
+automax secrets check --job job.yaml --inventory inventory.yaml --secrets secrets.yaml --format=json
+automax commands render --job job.yaml --inventory inventory.yaml --format=json
+```

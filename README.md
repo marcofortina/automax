@@ -136,6 +136,26 @@ automax run --job job.yaml --inventory inventory.yaml --from task.install
 automax run --job job.yaml --inventory inventory.yaml --from task.install:step.packages
 ```
 
+
+## Job inspection and recovery
+
+Before running or resuming a job, operators can inspect the exact resolved scope
+and render recovery helpers for the job under review:
+
+```bash
+automax inventory show --job job.yaml --inventory inventory.yaml --limit web
+automax secrets check --job job.yaml --inventory inventory.yaml --secrets secrets.yaml
+automax plan --check --job job.yaml --inventory inventory.yaml
+automax plan --diff --job job.yaml --inventory inventory.yaml
+automax commands render --job job.yaml --inventory inventory.yaml --limit web01
+```
+
+These commands use the same job, inventory, vars, secrets, target filters and tag
+filters as `automax run`. Manual command rendering is designed for failed-step
+recovery: copy the command, fix the host manually, then restart from the next
+checkpoint with `automax resume --from` or `automax run --from`. See
+`docs/guides/job-inspection-and-recovery.md` for the full operator workflow.
+
 ## External files
 
 Job, inventory, variable and secret files can live anywhere. They do not need to

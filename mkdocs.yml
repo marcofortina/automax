@@ -48,6 +48,7 @@ nav:
     - First SSH Job: guides/first-ssh-job.md
     - Initialize Workspace: guides/init-workspace.md
     - Operator Diagnostics: guides/doctor.md
+    - Job Inspection and Recovery: guides/job-inspection-and-recovery.md
     - Development Tooling: guides/development-tooling.md
     - Dynamic Inventory: guides/dynamic-inventory.md
     - Account Access: guides/account-access.md

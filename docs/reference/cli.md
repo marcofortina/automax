@@ -29,6 +29,18 @@ automax plan --job job.yaml --inventory inventory.yaml
 
 Prints target, checkpoint, plugin and tags without executing the job.
 
+Check-mode preview for the selected job:
+
+```bash
+automax plan --check --job job.yaml --inventory inventory.yaml
+```
+
+File diff preview for supported file-oriented plugins:
+
+```bash
+automax plan --diff --job job.yaml --inventory inventory.yaml
+```
+
 Machine-readable output:
 
 ```bash
@@ -39,6 +51,12 @@ automax plan --job job.yaml --inventory inventory.yaml --format=json
 
 ```bash
 automax run --job job.yaml --inventory inventory.yaml --state-dir .automax/runs
+```
+
+Preview the selected run without creating run state:
+
+```bash
+automax run --check --job job.yaml --inventory inventory.yaml
 ```
 
 Machine-readable final summary:
@@ -83,6 +101,37 @@ automax runs show <run-id> --state-dir .automax/runs
 automax runs show <run-id> --failed
 automax runs show <run-id> --server web01
 automax runs show <run-id> --json
+```
+
+## Inventory inspection
+
+Show the inventory targets selected by a specific job:
+
+```bash
+automax inventory show --job job.yaml --inventory inventory.yaml
+automax inventory show --job job.yaml --inventory inventory.yaml --limit web
+automax inventory show --job job.yaml --inventory inventory.yaml --format=json
+```
+
+## Secrets check
+
+Check secret providers referenced by the selected job without printing values:
+
+```bash
+automax secrets check --job job.yaml --inventory inventory.yaml --secrets secrets.yaml
+automax secrets check --job job.yaml --inventory inventory.yaml --secrets secrets.yaml --all
+automax secrets check --job job.yaml --inventory inventory.yaml --secrets secrets.yaml --format=json
+```
+
+## Manual commands
+
+Render copy/pasteable commands for selected substeps when a failed operation must
+be reproduced manually before restarting from a checkpoint:
+
+```bash
+automax commands render --job job.yaml --inventory inventory.yaml
+automax commands render --job job.yaml --inventory inventory.yaml --limit web01 --tags install
+automax commands render --job job.yaml --inventory inventory.yaml --format=json
 ```
 
 ## Artifacts

@@ -499,6 +499,29 @@ def test_documentation_home_is_a_landing_page_not_readme_clone():
     assert "[Quickstart](quickstart.md)" in home
     assert "[Builtin plugins](plugins/index.md)" in home
 
+
+def test_job_inspection_and_recovery_workflow_is_documented():
+    mkdocs = Path("mkdocs.yml").read_text(encoding="utf-8")
+    readme = Path("README.md").read_text(encoding="utf-8")
+    cli_ref = Path("docs/reference/cli.md").read_text(encoding="utf-8")
+    guide = Path("docs/guides/job-inspection-and-recovery.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "guides/job-inspection-and-recovery.md" in mkdocs
+    for snippet in [
+        "automax inventory show",
+        "automax secrets check",
+        "automax plan --check",
+        "automax plan --diff",
+        "automax commands render",
+        "automax resume --from",
+    ]:
+        assert snippet in guide
+    assert "automax commands render" in readme
+    assert "automax commands render" in cli_ref
+    assert "automax run --check" in cli_ref
+
 def test_python39_compatibility_guard_passes_on_repository(capsys):
     import runpy
     import sys
