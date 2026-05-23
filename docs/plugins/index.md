@@ -99,6 +99,7 @@ wait.tcp
 - [HTTP/API](http-api.md)
 - [Wait and assert](wait-assert.md)
 - [Database](database.md)
+- [Extended SSH Smoke](../guides/ssh-smoke.md)
 
 External plugin modules can be added through the registry mechanism without
 changing the core execution engine.

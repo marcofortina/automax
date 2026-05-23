@@ -42,6 +42,7 @@ nav:
     - Templating: guides/templating.md
     - Template Workflows: guides/template-workflows.md
     - Publishing Documentation: guides/publishing-docs.md
+    - SSH Smoke: guides/ssh-smoke.md
   - Reference:
     - Job DSL: reference/job-dsl.md
     - Inventory, Vars and Secrets: reference/inventory-vars-secrets.md

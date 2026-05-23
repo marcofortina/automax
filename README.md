@@ -215,7 +215,7 @@ required for audit and restart from task/step/substep.
 
 ## SSH smoke
 
-Run the real SSH smoke against an operator-provided host:
+Run the extended real SSH smoke against an operator-provided host:
 
 ```bash
 AUTOMAX_SSH_HOST=192.0.2.10 \
@@ -224,6 +224,11 @@ AUTOMAX_SSH_KEY_FILE=~/.ssh/id_ed25519 \
 AUTOMAX_SSH_HOST_KEY_POLICY=reject \
 ./scripts/ssh-smoke.sh
 ```
+
+The default smoke is non-destructive and covers remote commands, filesystem,
+archive, transfer, wait/assert and artifact capture. Optional package manager,
+systemd and user/group/process checks are enabled with explicit environment
+variables. See `docs/guides/ssh-smoke.md`.
 
 External plugins can be loaded with:
 

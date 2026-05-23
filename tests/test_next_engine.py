@@ -1459,3 +1459,56 @@ def test_plugins_describe_uses_complete_metadata():
     assert "source (required, path): Remote source path to archive." in result.output
     assert "Result fields:" in result.output
     assert "Examples:" in result.output
+
+
+def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
+    script = Path("scripts/ssh-smoke.sh").read_text(encoding="utf-8")
+    required_snippets = [
+        "fs.write",
+        "fs.read",
+        "fs.exists",
+        "fs.stat",
+        "fs.line",
+        "fs.replace",
+        "fs.move",
+        "fs.symlink.create",
+        "fs.symlink.remove",
+        "archive.tar",
+        "archive.untar",
+        "archive.zip",
+        "archive.unzip",
+        "transfer.upload",
+        "transfer.download",
+        "transfer.sync",
+        "wait.command",
+        "wait.file",
+        "wait.path",
+        "wait.process",
+        "assert.command",
+        "assert.file",
+        "assert.path",
+        "assert.disk",
+        "assert.tcp",
+        "systemctl.status",
+        "pkg.query",
+        "user.create",
+        "group.create",
+        "process.kill",
+    ]
+    for snippet in required_snippets:
+        assert snippet in script
+    assert "AUTOMAX_SSH_SMOKE_PRIVILEGED" in script
+    assert "AUTOMAX_SSH_SMOKE_SYSTEMD_SERVICE" in script
+    assert "AUTOMAX_SSH_SMOKE_PKG" in script
+    assert "exit 77" in script
+
+
+def test_ssh_smoke_documentation_is_linked():
+    guide = Path("docs/guides/ssh-smoke.md").read_text(encoding="utf-8")
+    mkdocs = Path("mkdocs.yml").read_text(encoding="utf-8")
+    readme = Path("README.md").read_text(encoding="utf-8")
+
+    assert "Extended SSH smoke" in guide
+    assert "AUTOMAX_SSH_SMOKE_PRIVILEGED" in guide
+    assert "SSH Smoke: guides/ssh-smoke.md" in mkdocs
+    assert "docs/guides/ssh-smoke.md" in readme
