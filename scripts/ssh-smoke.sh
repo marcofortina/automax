@@ -212,6 +212,20 @@ tasks:
               dest: ${WORK_DIR}/untar
               compression: gzip
               creates: ${WORK_DIR}/untar/uploaded-dir/nested.txt
+          - id: compress_uploaded_file
+            use: archive.compress
+            with:
+              source: ${WORK_DIR}/uploaded.txt
+              dest: ${WORK_DIR}/uploaded.txt.gz
+              compression: gzip
+              creates: ${WORK_DIR}/uploaded.txt.gz
+          - id: decompress_uploaded_file
+            use: archive.decompress
+            with:
+              archive: ${WORK_DIR}/uploaded.txt.gz
+              dest: ${WORK_DIR}/uploaded.txt.roundtrip
+              compression: gzip
+              creates: ${WORK_DIR}/uploaded.txt.roundtrip
           - id: zip_workspace
             use: archive.zip
             with:

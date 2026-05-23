@@ -94,6 +94,8 @@ class PluginRegistry:
 def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegistry:
     """Create a registry with builtin plugins and optional external plugins."""
     from automax.plugins.archive import (
+        ArchiveCompressPlugin,
+        ArchiveDecompressPlugin,
         ArchiveTarPlugin,
         ArchiveUntarPlugin,
         ArchiveUnzipPlugin,
@@ -333,6 +335,8 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsChmodPlugin(),
         ArchiveTarPlugin(),
         ArchiveUntarPlugin(),
+        ArchiveCompressPlugin(),
+        ArchiveDecompressPlugin(),
         ArchiveZipPlugin(),
         ArchiveUnzipPlugin(),
         SystemctlStartPlugin(),

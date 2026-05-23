@@ -20,6 +20,8 @@ Current builtin plugins:
 apparmor.profile
 apparmor.reload
 apparmor.status
+archive.compress
+archive.decompress
 archive.tar
 archive.untar
 archive.unzip

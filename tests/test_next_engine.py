@@ -364,6 +364,18 @@ tasks:
               archive: /tmp/source-dir.tar.gz
               dest: /tmp/extracted
               strip_components: 1
+          - id: compress
+            use: archive.compress
+            with:
+              source: /tmp/source.log
+              dest: /tmp/source.log.gz
+              compression: gzip
+          - id: decompress
+            use: archive.decompress
+            with:
+              archive: /tmp/source.log.gz
+              dest: /tmp/source.log
+              compression: gzip
           - id: zip
             use: archive.zip
             with:
@@ -1406,6 +1418,8 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "fs.symlink.remove",
         "archive.tar",
         "archive.untar",
+        "archive.compress",
+        "archive.decompress",
         "archive.zip",
         "archive.unzip",
         "transfer.upload",
@@ -2948,3 +2962,38 @@ def test_fs_replace_rejects_empty_backup_suffix():
                 "backup_suffix": "",
             }
         )
+
+
+
+def test_archive_compress_and_decompress_render_stream_commands():
+    from automax.plugins.archive import ArchiveCompressPlugin, ArchiveDecompressPlugin
+
+    context = ExecutionContext(
+        run_id="run-1",
+        dry_run=False,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="host", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+
+    compress = ArchiveCompressPlugin().manual_commands(
+        {"source": "/tmp/app.log", "dest": "/tmp/app.log.gz"}, context
+    )
+    decompress = ArchiveDecompressPlugin().manual_commands(
+        {"archive": "/tmp/app.log.bz2", "dest": "/tmp/app.log", "force": True}, context
+    )
+
+    assert "gzip -c /tmp/app.log > /tmp/app.log.gz" in compress[0]
+    assert "bzip2 -dc /tmp/app.log.bz2 > /tmp/app.log" in decompress[0]
+
+
+def test_archive_compress_rejects_unknown_auto_suffix():
+    from automax.plugins.archive import ArchiveCompressPlugin
+
+    with pytest.raises(PluginValidationError, match="compression auto"):
+        ArchiveCompressPlugin().validate({"source": "/tmp/app.log", "dest": "/tmp/app.log.raw"})

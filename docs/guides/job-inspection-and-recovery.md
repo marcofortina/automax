@@ -113,6 +113,12 @@ automax plan --diff \
 
 Secret values rendered into previews are masked before output.
 
+## Compress or decompress standalone files
+
+`archive.tar` already supports `.tar.gz`, `.tar.bz2` and `.tar.xz` through
+`compression: auto`. Use `archive.compress` / `archive.decompress` for standalone
+`.gz`, `.bz2` and `.xz` files that are not tar containers.
+
 ## Preserve file content before regex replacements
 
 `fs.replace` can create a pre-change backup before writing replacements:

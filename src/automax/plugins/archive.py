@@ -69,6 +69,35 @@ def _tar_extract_flag(archive: str, compression: str) -> str:
     return create_flag.replace("c", "x", 1)
 
 
+def _stream_tool(path: str, compression: str, *, action: str) -> str:
+    selected = compression
+    if selected == "auto":
+        suffixes = "".join(PurePosixPath(path).suffixes)
+        if suffixes.endswith(".gz"):
+            selected = "gzip"
+        elif suffixes.endswith(".bz2"):
+            selected = "bzip2"
+        elif suffixes.endswith(".xz"):
+            selected = "xz"
+        else:
+            raise PluginValidationError(
+                f"archive.{action} compression auto requires .gz, .bz2 or .xz suffix"
+            )
+    mapping = {
+        "gzip": "gzip",
+        "gz": "gzip",
+        "bzip2": "bzip2",
+        "bz2": "bzip2",
+        "xz": "xz",
+    }
+    try:
+        return mapping[selected]
+    except KeyError as exc:
+        raise PluginValidationError(
+            f"archive.{action} compression must be auto, gzip, bzip2 or xz"
+        ) from exc
+
+
 class ArchiveTarPlugin(BasePlugin):
     """Create a remote tar archive."""
 
@@ -165,6 +194,112 @@ class ArchiveUntarPlugin(BasePlugin):
             stdout=out,
             stderr=err,
             message="archive.untar failed",
+            data={"archive": params["archive"], "dest": params["dest"]},
+        )
+
+
+class ArchiveCompressPlugin(BasePlugin):
+    """Compress one remote file to gzip, bzip2 or xz stream output."""
+
+    name = "archive.compress"
+    description = "Compress one remote file to gzip, bzip2 or xz."
+    required_params = ("source", "dest")
+    optional_params = ("compression", "force", "creates", "cwd")
+    opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        _stream_tool(str(params.get("dest")), str(params.get("compression", "auto")), action="compress")
+
+    def dry_run(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        return PluginResult.success(
+            changed=False,
+            message=f"dry-run: compress {params.get('source')} to {params.get('dest')}",
+            data={"params": params},
+        )
+
+    def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        tool = _stream_tool(str(params["dest"]), str(params.get("compression", "auto")), action="compress")
+        source = quote(params["source"])
+        dest = quote(params["dest"])
+        body = f"{tool} -c {source} > {dest} && echo {CHANGE_MARKER}"
+        if params.get("creates"):
+            command = f"test -e {quote(params['creates'])} || {{ {body}; }}"
+        elif bool(params.get("force", False)):
+            command = f"{{ {body}; }}"
+        else:
+            command = f"test -e {dest} || {{ {body}; }}"
+        return apply_cwd(command, context, params.get("cwd"))
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [self._command(params, context)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        if context.dry_run:
+            return self.dry_run(params, context)
+        if context.ssh_client is None:
+            return PluginResult.failure(message="archive.compress requires an SSH session")
+        rc, out, err = exec_remote(context, self._command(params, context))
+        return result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="archive.compress failed",
+            data={"source": params["source"], "dest": params["dest"]},
+        )
+
+
+class ArchiveDecompressPlugin(BasePlugin):
+    """Decompress one remote gzip, bzip2 or xz file to a destination file."""
+
+    name = "archive.decompress"
+    description = "Decompress one remote gzip, bzip2 or xz file."
+    required_params = ("archive", "dest")
+    optional_params = ("compression", "force", "creates", "cwd")
+    opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        _stream_tool(str(params.get("archive")), str(params.get("compression", "auto")), action="decompress")
+
+    def dry_run(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        return PluginResult.success(
+            changed=False,
+            message=f"dry-run: decompress {params.get('archive')} to {params.get('dest')}",
+            data={"params": params},
+        )
+
+    def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        tool = _stream_tool(str(params["archive"]), str(params.get("compression", "auto")), action="decompress")
+        archive = quote(params["archive"])
+        dest = quote(params["dest"])
+        body = f"{tool} -dc {archive} > {dest} && echo {CHANGE_MARKER}"
+        if params.get("creates"):
+            command = f"test -e {quote(params['creates'])} || {{ {body}; }}"
+        elif bool(params.get("force", False)):
+            command = f"{{ {body}; }}"
+        else:
+            command = f"test -e {dest} || {{ {body}; }}"
+        return apply_cwd(command, context, params.get("cwd"))
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [self._command(params, context)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        if context.dry_run:
+            return self.dry_run(params, context)
+        if context.ssh_client is None:
+            return PluginResult.failure(message="archive.decompress requires an SSH session")
+        rc, out, err = exec_remote(context, self._command(params, context))
+        return result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="archive.decompress failed",
             data={"archive": params["archive"], "dest": params["dest"]},
         )
 

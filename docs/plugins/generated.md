@@ -110,6 +110,76 @@ with:
 
 ## archive
 
+### `archive.compress`
+
+Compress one remote file to gzip, bzip2 or xz.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `source` | yes | `path` |  | Remote source path to archive. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: archive.compress
+with:
+  source: /var/log/app
+  dest: /tmp/dest
+```
+
+### `archive.decompress`
+
+Decompress one remote gzip, bzip2 or xz file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `archive` | yes | `path` |  | Remote archive path to extract. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: archive.decompress
+with:
+  archive: /tmp/app.tar.gz
+  dest: /tmp/dest
+```
+
 ### `archive.tar`
 
 Create a remote tar archive.

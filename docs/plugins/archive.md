@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 # Archive plugins
 
 Archive plugins operate on remote paths through SSH and use standard remote
-commands: `tar`, `zip` and `unzip`.
+commands: `tar`, `gzip`, `bzip2`, `xz`, `zip` and `unzip`.
 
 ## `archive.tar`
 
@@ -39,6 +39,34 @@ Extracts a tar archive on the remote target.
     dest: /opt/myapp/releases/{{ vars.release_id }}
     strip_components: 1
     creates: /opt/myapp/releases/{{ vars.release_id }}/bin/myapp
+```
+
+## `archive.compress`
+
+Compresses one remote file to a standalone gzip, bzip2 or xz file. Tar archive
+compression such as `.tar.gz` remains handled by `archive.tar`; use this plugin
+for single-file `.gz`, `.bz2` or `.xz` outputs.
+
+```yaml
+- id: compress_report
+  use: archive.compress
+  with:
+    source: /tmp/report.log
+    dest: /tmp/report.log.gz
+    compression: auto
+```
+
+## `archive.decompress`
+
+Decompresses one standalone gzip, bzip2 or xz file to a remote destination file.
+
+```yaml
+- id: decompress_report
+  use: archive.decompress
+  with:
+    archive: /tmp/report.log.bz2
+    dest: /tmp/report.log
+    compression: auto
 ```
 
 ## `archive.zip`
