@@ -31,12 +31,23 @@ assert.disk
 assert.file
 assert.path
 assert.tcp
+block.facts
+block.identity
+block.mkfs
+block.partition
+block.partition_rescan
+block.rescan
+block.wipe_signatures
+chrony.servers
+chrony.sources_assert
 cron.entry
 cron.file
 db.mysql.query
 db.oracle.query
 db.postgres.query
 db.sqlite.query
+download.file
+env.set
 facts.gather
 facts.network
 facts.os
@@ -67,17 +78,24 @@ fstab.entry
 group.create
 group.exists
 group.remove
+hostname.set
+hosts.entry
 http.assert
 http.request
 http.wait
 kernel.module.load
 kernel.module.persist
 kernel.module.unload
+limits.dropin
 local.command
 mount.absent
 mount.present
+multipath.flush
+multipath.reload
+multipath.status
 nftables.apply
 nftables.validate
+pam.limits
 pkg.install
 pkg.key.add
 pkg.key.remove
@@ -90,16 +108,20 @@ pkg.upgrade
 process.kill
 process.wait
 remote.command
+resolver.config
 selinux.boolean
 selinux.context
 selinux.mode
 selinux.restorecon
 ssh.authorized_key
 sudoers.dropin
+swap.absent
+swap.present
 sysctl.get
 sysctl.persist
 sysctl.reload
 sysctl.set
+system.reboot
 systemctl.daemon_reload
 systemctl.disable
 systemctl.enable
@@ -115,6 +137,10 @@ systemctl.unmask
 transfer.download
 transfer.sync
 transfer.upload
+udev.reload
+udev.rule
+udev.settle
+udev.trigger
 ufw.disable
 ufw.enable
 ufw.rule
@@ -138,6 +164,7 @@ wait.tcp
 - [Generated plugin reference](generated.md)
 - [Commands](commands.md)
 - [Filesystem](filesystem.md)
+- [Linux operations](linux-operations.md)
 - [Archive](archive.md)
 - [Package manager](package-manager.md)
 - [Systemctl](systemctl.md)

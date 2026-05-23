@@ -3064,3 +3064,96 @@ tasks:
     payload = json.loads(result.output)
     assert payload["nodes"][0]["available"] is False
     assert "manual command" in payload["nodes"][0]["reason"]
+
+
+def test_storage_and_linux_ops_plugins_are_registered():
+    names = AutomaxEngine().plugin_registry.names()
+    for name in (
+        "block.facts",
+        "block.identity",
+        "block.rescan",
+        "block.partition_rescan",
+        "block.partition",
+        "block.wipe_signatures",
+        "block.mkfs",
+        "udev.rule",
+        "udev.reload",
+        "udev.trigger",
+        "udev.settle",
+        "multipath.status",
+        "multipath.reload",
+        "multipath.flush",
+        "swap.present",
+        "swap.absent",
+        "limits.dropin",
+        "pam.limits",
+        "hosts.entry",
+        "hostname.set",
+        "resolver.config",
+        "chrony.servers",
+        "chrony.sources_assert",
+        "env.set",
+        "system.reboot",
+        "download.file",
+    ):
+        assert name in names
+
+
+def test_storage_manual_commands_cover_scsi_id_partprobe_and_backups():
+    from automax.plugins.block import BlockIdentityPlugin, BlockPartitionPlugin, BlockWipeSignaturesPlugin
+
+    context = ExecutionContext(
+        run_id="test-run",
+        dry_run=True,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="node1", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+
+    assert "/usr/lib/udev/scsi_id -g -u -d /dev/sdb1" in BlockIdentityPlugin().manual_commands({"device": "/dev/sdb1"}, context)[0]
+    partition = BlockPartitionPlugin().manual_commands(
+        {
+            "device": "/dev/sdb",
+            "label": "gpt",
+            "backup": True,
+            "partitions": [{"number": 1, "name": "DATA01", "start": "1MiB", "end": "100%"}],
+        },
+        context,
+    )[0]
+    assert "sfdisk --dump" in partition
+    assert "partprobe" in partition
+    wipe = BlockWipeSignaturesPlugin().manual_commands({"device": "/dev/sdb1", "force": True}, context)
+    assert "wipefs -n" in wipe[0]
+    assert "wipefs -a" in wipe[-1]
+
+
+def test_linux_ops_manual_commands_cover_resolver_env_download_and_sysctl():
+    from automax.plugins.kernel import SysctlReloadPlugin
+    from automax.plugins.linux_ops import DownloadFilePlugin, EnvSetPlugin, ResolverConfigPlugin
+
+    context = ExecutionContext(
+        run_id="test-run",
+        dry_run=True,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="node1", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+
+    resolver = ResolverConfigPlugin().manual_commands({"nameservers": ["192.0.2.53"]}, context)[0]
+    assert "refusing to manage symlinked /etc/resolv.conf" in resolver
+    env = EnvSetPlugin().manual_commands({"variables": {"APP_HOME": "/opt/app"}}, context)[0]
+    assert env == "export APP_HOME=/opt/app"
+    download = DownloadFilePlugin().manual_commands({"url": "https://example.invalid/file.rpm", "dest": "/tmp/file.rpm"}, context)
+    assert "curl -fL" in download[0]
+    assert "wget -O" in download[0]
+    assert SysctlReloadPlugin().manual_commands({"file": "/etc/sysctl.conf", "sudo": True}, context) == ["sudo -n sysctl -p /etc/sysctl.conf"]
