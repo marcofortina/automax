@@ -1512,3 +1512,70 @@ def test_ssh_smoke_documentation_is_linked():
     assert "AUTOMAX_SSH_SMOKE_PRIVILEGED" in guide
     assert "SSH Smoke: guides/ssh-smoke.md" in mkdocs
     assert "docs/guides/ssh-smoke.md" in readme
+
+def test_validate_strict_rejects_unknown_plugin_parameter(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: strict-validation
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: "true"
+              typo: "bad"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        ["validate", "--strict", "--job", str(job), "--inventory", str(inventory)],
+    )
+
+    assert result.exit_code != 0
+    assert "unknown params: typo" in result.output
+
+
+def test_init_creates_external_workspace(tmp_path: Path):
+    workspace = tmp_path / "workspace"
+
+    result = CliRunner().invoke(cli, ["init", str(workspace)])
+
+    assert result.exit_code == 0, result.output
+    assert (workspace / "jobs" / "local-smoke.yaml").exists()
+    assert (workspace / "inventory" / "local.yaml").exists()
+    assert (workspace / "vars" / "local.yaml").exists()
+    assert (workspace / "secrets" / "local.example.yaml").exists()
+
+    validate = CliRunner().invoke(
+        cli,
+        [
+            "validate",
+            "--strict",
+            "--job",
+            str(workspace / "jobs" / "local-smoke.yaml"),
+            "--inventory",
+            str(workspace / "inventory" / "local.yaml"),
+            "--vars",
+            str(workspace / "vars" / "local.yaml"),
+        ],
+    )
+    assert validate.exit_code == 0, validate.output
+
+
+def test_doctor_reports_controller_environment(tmp_path: Path):
+    result = CliRunner().invoke(cli, ["doctor", "--state-dir", str(tmp_path / "runs")])
+
+    assert result.exit_code == 0, result.output
+    assert "Automax doctor" in result.output
+    assert "python:" in result.output
+    assert "plugins:" in result.output

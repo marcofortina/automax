@@ -203,6 +203,7 @@ class AutomaxEngine:
         cli_vars: Optional[Dict[str, Any]] = None,
         tags: Iterable[str] = (),
         skip_tags: Iterable[str] = (),
+        strict: bool = False,
     ) -> None:
         """Validate external YAML files without executing."""
         documents = self._load_documents(
@@ -217,15 +218,34 @@ class AutomaxEngine:
         )
         inventory = Inventory(documents["inventory"], {"vars": variables, "secrets": secrets})
         job = documents["job"]
-        self.validate_job(job)
-        self._build_plan(job, inventory, limit=(), exclude=(), tags=tags, skip_tags=skip_tags)
+        self.validate_job(job, strict=strict)
+        plan = self._build_plan(job, inventory, limit=(), exclude=(), tags=tags, skip_tags=skip_tags)
+        if strict:
+            self._validate_plan_strict(plan)
 
-    def validate_job(self, job: Dict[str, Any]) -> None:
+    def validate_job(self, job: Dict[str, Any], *, strict: bool = False) -> None:
         """Validate the canonical three-level job DSL."""
         if job.get("apiVersion") != "automax.io/v1":
             raise AutomaxError("job apiVersion must be 'automax.io/v1'")
         if job.get("kind") != "Job":
             raise AutomaxError("job kind must be 'Job'")
+        if strict:
+            self._validate_known_keys(
+                job,
+                "job",
+                {
+                    "apiVersion",
+                    "kind",
+                    "metadata",
+                    "vars",
+                    "targets",
+                    "strategy",
+                    "failurePolicy",
+                    "timeouts",
+                    "tags",
+                    "tasks",
+                },
+            )
         self._validate_strategy(job.get("strategy"), "job")
         self._validate_failure_policy(job.get("failurePolicy"), "job")
         self._validate_timeouts(job.get("timeouts"), "job")
@@ -236,6 +256,23 @@ class AutomaxEngine:
         seen_tasks = set()
         for task in tasks:
             task_id = self._require_id(task, "task")
+            if strict:
+                self._validate_known_keys(
+                    task,
+                    f"task '{task_id}'",
+                    {
+                        "id",
+                        "name",
+                        "description",
+                        "vars",
+                        "targets",
+                        "strategy",
+                        "failurePolicy",
+                        "timeouts",
+                        "tags",
+                        "steps",
+                    },
+                )
             self._validate_strategy(task.get("strategy"), f"task '{task_id}'")
             self._validate_failure_policy(task.get("failurePolicy"), f"task '{task_id}'")
             self._validate_timeouts(task.get("timeouts"), f"task '{task_id}'")
@@ -249,6 +286,23 @@ class AutomaxEngine:
             seen_steps = set()
             for step in steps:
                 step_id = self._require_id(step, "step")
+                if strict:
+                    self._validate_known_keys(
+                        step,
+                        f"step '{task_id}:{step_id}'",
+                        {
+                            "id",
+                            "name",
+                            "description",
+                            "vars",
+                            "targets",
+                            "strategy",
+                            "failurePolicy",
+                            "timeouts",
+                            "tags",
+                            "substeps",
+                        },
+                    )
                 self._validate_strategy(step.get("strategy"), f"step '{task_id}:{step_id}'")
                 self._validate_failure_policy(step.get("failurePolicy"), f"step '{task_id}:{step_id}'")
                 self._validate_timeouts(step.get("timeouts"), f"step '{task_id}:{step_id}'")
@@ -264,6 +318,27 @@ class AutomaxEngine:
                 seen_substeps = set()
                 for substep in substeps:
                     substep_id = self._require_id(substep, "substep")
+                    if strict:
+                        self._validate_known_keys(
+                            substep,
+                            f"substep '{task_id}:{step_id}:{substep_id}'",
+                            {
+                                "id",
+                                "name",
+                                "description",
+                                "targets",
+                                "tags",
+                                "timeouts",
+                                "when",
+                                "use",
+                                "plugin",
+                                "with",
+                                "params",
+                                "register",
+                                "artifacts",
+                                "artifact",
+                            },
+                        )
                     self._validate_tags(
                         substep.get("tags"), f"substep '{task_id}:{step_id}:{substep_id}'"
                     )
@@ -287,6 +362,32 @@ class AutomaxEngine:
                             f"substep '{task_id}:{step_id}:{substep_id}' params must be mapping"
                         )
                     plugin.validate(params)
+
+    def _validate_plan_strict(self, plan: List[Dict[str, Any]]) -> None:
+        """Validate plugin parameters after target/tag resolution."""
+        for item in plan:
+            substep = item["substep"]
+            plugin_name = str(substep.get("use") or substep.get("plugin"))
+            plugin = self.plugin_registry.get(plugin_name)
+            params = substep.get("with", substep.get("params", {})) or {}
+            if not isinstance(params, dict):
+                raise AutomaxError(f"substep '{item['node_id']}' params must be mapping")
+            allowed = set(plugin.required_params) | set(plugin.optional_params)
+            unknown = sorted(set(params) - allowed)
+            if unknown:
+                raise AutomaxError(
+                    f"substep '{item['node_id']}' plugin '{plugin.name}' unknown params: "
+                    + ", ".join(unknown)
+                )
+
+    @staticmethod
+    def _validate_known_keys(node: Dict[str, Any], label: str, allowed: set[str]) -> None:
+        unknown = sorted(set(node) - allowed)
+        if unknown:
+            raise AutomaxError(
+                f"{label} has unsupported keys: {', '.join(unknown)}. "
+                f"Allowed keys: {', '.join(sorted(allowed))}"
+            )
 
     def _load_documents(self, **paths: str | None) -> Dict[str, Dict[str, Any]]:
         return {

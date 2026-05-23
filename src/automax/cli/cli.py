@@ -7,6 +7,9 @@ Command-line interface for Automax next engine.
 
 from __future__ import annotations
 
+import importlib.util
+import platform
+import shutil
 import sys
 from typing import Any, Dict, Iterable
 from pathlib import Path
@@ -156,6 +159,7 @@ def plan(
 @click.option("--tags", multiple=True, help="Validate plan after keeping only these tags.")
 @click.option("--skip-tags", multiple=True, help="Validate plan after skipping these tags.")
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option("--strict", is_flag=True, help="Reject unknown DSL keys and plugin parameters.")
 def validate(
     job_path: str,
     inventory_path: str,
@@ -165,6 +169,7 @@ def validate(
     tags: tuple[str, ...],
     skip_tags: tuple[str, ...],
     plugin_path: tuple[str, ...],
+    strict: bool,
 ) -> None:
     """Validate job, inventory, variables, secrets and plugin parameters."""
     try:
@@ -176,10 +181,123 @@ def validate(
             cli_vars=_parse_vars(cli_vars),
             tags=_split_selectors(tags),
             skip_tags=_split_selectors(skip_tags),
+            strict=strict,
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc
-    click.echo("Validation successful")
+    suffix = " strict" if strict else ""
+    click.echo(f"Validation{suffix} successful")
+
+
+@cli.command()
+@click.argument("path", type=click.Path(file_okay=False, dir_okay=True))
+@click.option("--force", is_flag=True, help="Overwrite generated files when they already exist.")
+def init(path: str, force: bool) -> None:
+    """Create an external Automax workspace skeleton."""
+    root = Path(path).expanduser().resolve()
+    files = {
+        "jobs/local-smoke.yaml": """apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: local-smoke
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: \"printf 'hello from automax\\n'\"
+""",
+        "inventory/local.yaml": """servers:
+  controller:
+    host: 127.0.0.1
+""",
+        "vars/local.yaml": """vars:
+  message: hello
+""",
+        "secrets/local.example.yaml": """secrets:
+  demo:
+    provider: env
+    name: AUTOMAX_DEMO_SECRET
+""",
+        "templates/example.conf.j2": """message={{ vars.message }}
+""",
+        "README.md": """# Automax workspace
+
+Run the local smoke job with:
+
+```bash
+automax validate --strict \
+  --job jobs/local-smoke.yaml \
+  --inventory inventory/local.yaml \
+  --vars vars/local.yaml
+
+automax run \
+  --job jobs/local-smoke.yaml \
+  --inventory inventory/local.yaml \
+  --vars vars/local.yaml
+```
+""",
+    }
+    created = []
+    for relative, content in files.items():
+        destination = root / relative
+        if destination.exists() and not force:
+            raise click.ClickException(f"refusing to overwrite existing file: {destination}")
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(content, encoding="utf-8")
+        created.append(destination)
+    click.echo(f"Initialized Automax workspace: {root}")
+    for item in created:
+        click.echo(f"  {item.relative_to(root)}")
+
+
+@cli.command()
+@click.option("--state-dir", default=".automax/runs", show_default=True, help="Run state directory to check.")
+@click.option("--json", "as_json", is_flag=True, help="Print structured JSON diagnostics.")
+def doctor(state_dir: str, as_json: bool) -> None:
+    """Inspect the local Automax runtime environment."""
+    checks = []
+
+    def add(name: str, ok: bool, detail: str) -> None:
+        checks.append({"name": name, "ok": bool(ok), "detail": detail})
+
+    version = sys.version_info
+    add("python", version >= (3, 9), platform.python_version())
+    add("automax", True, __version__)
+    add("paramiko", importlib.util.find_spec("paramiko") is not None, "installed" if importlib.util.find_spec("paramiko") else "missing")
+    for module, label in (("sqlite3", "sqlite"), ("psycopg", "postgres"), ("pymysql", "mysql"), ("oracledb", "oracle")):
+        add(f"database.{label}", importlib.util.find_spec(module) is not None, "installed" if importlib.util.find_spec(module) else "optional driver missing")
+    add("mkdocs", importlib.util.find_spec("mkdocs") is not None, "installed" if importlib.util.find_spec("mkdocs") else "optional docs extra missing")
+    path = Path(state_dir).expanduser().resolve()
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        probe = path / ".doctor-write-test"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink()
+        add("state-dir", True, str(path))
+    except Exception as exc:
+        add("state-dir", False, f"{path}: {exc}")
+    add("ssh", shutil.which("ssh") is not None, shutil.which("ssh") or "ssh executable not found")
+    add("plugins", True, f"{len(build_builtin_registry().names())} builtin plugins")
+
+    blocking = {"python", "state-dir", "plugins"}
+    payload = {
+        "ok": all(item["ok"] for item in checks if item["name"] in blocking),
+        "checks": checks,
+    }
+    if as_json:
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        click.echo("Automax doctor")
+        for item in checks:
+            status = "OK" if item["ok"] else "WARN"
+            click.echo(f"  {status:<4} {item['name']}: {item['detail']}")
+    if not payload["ok"]:
+        raise click.ClickException("doctor found blocking issues")
 
 
 @cli.command()

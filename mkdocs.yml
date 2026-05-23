@@ -46,6 +46,8 @@ nav:
     - Installation: guides/installation.md
     - First Local Job: guides/first-local-job.md
     - First SSH Job: guides/first-ssh-job.md
+    - Initialize Workspace: guides/init-workspace.md
+    - Operator Diagnostics: guides/doctor.md
     - Writing Jobs: guides/writing-jobs.md
     - Templating: guides/templating.md
     - Template Workflows: guides/template-workflows.md
@@ -59,9 +61,11 @@ nav:
     - State and Resume: reference/state-and-resume.md
     - Artifacts: reference/artifacts.md
     - Security: reference/security.md
+    - Validation: reference/validation.md
     - Testing and CI: reference/testing-and-ci.md
     - Python Compatibility: reference/python-compatibility.md
     - Python API: reference/api.md
+    - Future Work: reference/future-work.md
   - Plugins:
     - Overview: plugins/index.md
     - Generated Reference: plugins/generated.md

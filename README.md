@@ -275,6 +275,26 @@ NO_MKDOCS_2_WARNING=1 mkdocs build --strict
 GitHub Pages publishing is handled by `.github/workflows/docs.yml`. Configure the
 repository Pages source as **GitHub Actions**.
 
+## Operator tooling
+
+Create an external job workspace:
+
+```bash
+automax init ./company-automation
+```
+
+Validate job definitions strictly before running them:
+
+```bash
+automax validate --strict --job jobs/local-smoke.yaml --inventory inventory/local.yaml
+```
+
+Check the controller environment:
+
+```bash
+automax doctor
+```
+
 ## Python compatibility guardrails
 
 Automax supports Python 3.9 and newer. Development and CI run an explicit
