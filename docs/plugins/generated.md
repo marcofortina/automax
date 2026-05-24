@@ -4878,6 +4878,36 @@ with:
 
 ## process
 
+### `process.assert_absent`
+
+Assert that no remote process matches a pattern.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: process.assert_absent
+with:
+  pattern: KEY=.*
+```
+
 ### `process.kill`
 
 Kill a remote process by PID or pattern.

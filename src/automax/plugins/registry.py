@@ -297,6 +297,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     from automax.plugins.user_group_process import (
         GroupCreatePlugin,
         GroupRemovePlugin,
+        ProcessAssertAbsentPlugin,
         ProcessKillPlugin,
         ProcessSignalPlugin,
         ProcessWaitPlugin,
@@ -426,6 +427,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SudoersDropinPlugin(),
         SudoRulePlugin(),
         SudoValidatePlugin(),
+        ProcessAssertAbsentPlugin(),
         ProcessKillPlugin(),
         ProcessSignalPlugin(),
         ProcessWaitPlugin(),

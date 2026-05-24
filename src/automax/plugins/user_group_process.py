@@ -275,3 +275,26 @@ class ProcessSignalPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="process.signal failed")
+
+class ProcessAssertAbsentPlugin(BasePlugin):
+    """Assert no process matches a pattern."""
+
+    name = "process.assert_absent"
+    description = "Assert that no remote process matches a pattern."
+    required_params = ("pattern",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "process.assert_absent is a read-only process assertion"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [f"! {_sudo(params)}pgrep -f {quote(params['pattern'])} >/dev/null"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="process.assert_absent failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)

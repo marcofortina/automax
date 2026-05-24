@@ -72,3 +72,4 @@ These plugins run on the remote target through SSH.
 ```
 
 `process.signal` sends a runtime signal by PID or pattern and renders the exact manual command for recovery.
+`process.assert_absent` is a read-only pgrep assertion used as a pre/post check.

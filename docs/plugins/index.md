@@ -156,6 +156,7 @@ pki.ca_install
 pki.cert_expiry_assert
 pki.key_permissions
 platform.facts
+process.assert_absent
 process.kill
 process.signal
 process.wait

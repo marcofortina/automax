@@ -3676,3 +3676,12 @@ def test_process_signal_plugin_renders_runtime_signal():
     command = ProcessSignalPlugin().manual_commands({"pattern": "worker", "signal": "HUP"}, context)[0]
     assert "pkill -HUP -f worker" in command
     assert "runtime process" in ProcessSignalPlugin().diff_preview_reason({}, context)
+
+
+def test_process_assert_absent_plugin_renders_pgrep_assertion():
+    from automax.plugins.user_group_process import ProcessAssertAbsentPlugin
+
+    assert "process.assert_absent" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    assert "pgrep -f worker" in ProcessAssertAbsentPlugin().manual_commands({"pattern": "worker"}, context)[0]
+    assert ProcessAssertAbsentPlugin().supports_check_mode is True
