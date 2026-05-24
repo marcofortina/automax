@@ -216,3 +216,9 @@ existing configuration files.
 `cert.verify_chain` performs read-only openssl chain verification.
 `cert.install_keypair` installs certificate/key pairs with private-key mode `0600`.
 `cert.expiry_report` reads certificate expiry and fails when inside the configured warning window.
+
+## Network assertions and bridge operations
+
+Use `network.bridge` for explicit runtime bridge creation/removal. Use
+`network.link_assert`, `network.route_assert`, `network.dns_assert` and
+`network.port_check` as precheck/postcheck guards around network operations.

@@ -4617,6 +4617,40 @@ with:
     - eth2
 ```
 
+### `network.bridge`
+
+Create or remove a runtime Linux bridge and enslave interfaces.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `interfaces` | no | `list` |  | Network interfaces to include in a bond or aggregate. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `stp` | no | `boolean` | `False` | Enable STP on a Linux bridge when supported. |
+| `mtu` | no | `integer` |  | Network interface MTU. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.bridge
+with:
+  name: nginx
+```
+
 ### `network.dns`
 
 Configure DNS resolver settings using the backend-aware resolver implementation.
@@ -4655,6 +4689,41 @@ with:
   backend: auto
   nameservers:
     - 192.0.2.53
+```
+
+### `network.dns_assert`
+
+Assert resolver nameserver, search and option entries from /etc/resolv.conf.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `nameservers` | no | `list` |  | Resolver nameserver addresses. |
+| `search` | no | `list` |  | Resolver search domains. |
+| `options` | no | `list` |  | Resolver options. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.dns_assert
+with:
+  nameservers:
+    - 192.0.2.53
+  search:
+    - example.com
 ```
 
 ### `network.interface`
@@ -4696,6 +4765,72 @@ with:
   name: nginx
 ```
 
+### `network.link_assert`
+
+Assert that a network link exists and optionally has expected state or MTU.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `mtu` | no | `integer` |  | Network interface MTU. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.link_assert
+with:
+  name: nginx
+```
+
+### `network.port_check`
+
+Check TCP or UDP connectivity from the remote target.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `host` | yes | `string` |  | Hostname or IP address to check from the controller. |
+| `port` | yes | `integer` |  | TCP port number. |
+| `protocol` | no | `string` | `tcp` | Network protocol such as tcp or udp. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.port_check
+with:
+  host: 127.0.0.1
+  port: 22
+```
+
 ### `network.route`
 
 Ensure a runtime and optional persistent IP route is present or absent.
@@ -4731,6 +4866,40 @@ Example:
 
 ```yaml
 use: network.route
+with:
+  dest: /tmp/dest
+```
+
+### `network.route_assert`
+
+Assert that a route exists with optional gateway, device, table or metric.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `dest` | yes | `path` |  | Destination path. |
+| `gateway` | no | `string` |  | Route gateway address. |
+| `dev` | no | `string` |  | Network device name for a route. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `metric` | no | `integer` |  | Route metric. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.route_assert
 with:
   dest: /tmp/dest
 ```

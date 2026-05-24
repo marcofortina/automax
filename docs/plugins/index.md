@@ -150,9 +150,14 @@ multipath.flush
 multipath.reload
 multipath.status
 network.bond
+network.bridge
 network.dns
+network.dns_assert
 network.interface
+network.link_assert
+network.port_check
 network.route
+network.route_assert
 network.vlan
 nftables.apply
 nftables.export

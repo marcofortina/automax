@@ -269,3 +269,154 @@ class NetworkVlanPlugin(BasePlugin):
 class NetworkDnsPlugin(ResolverConfigPlugin):
     name = "network.dns"
     description = "Configure DNS resolver settings using the backend-aware resolver implementation."
+
+
+class NetworkBridgePlugin(BasePlugin):
+    name = "network.bridge"
+    description = "Create or remove a runtime Linux bridge and enslave interfaces."
+    required_params = ("name",)
+    optional_params = ("interfaces", "state", "stp", "mtu", "sudo")
+    opens_remote_session = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        state = str(params.get("state", "present"))
+        sudo = _sudo(params)
+        name = quote(params["name"])
+        if state == "absent":
+            return [f"ip link show dev {name} >/dev/null 2>&1 && {{ {sudo}ip link set dev {name} down; {sudo}ip link delete {name} type bridge; }} || true"]
+        if state != "present":
+            raise PluginValidationError("network.bridge state must be present or absent")
+        interfaces = params.get("interfaces") or []
+        if isinstance(interfaces, str):
+            interfaces = [interfaces]
+        commands = [f"ip link show dev {name} >/dev/null 2>&1 || {sudo}ip link add name {name} type bridge"]
+        if params.get("mtu"):
+            commands.append(f"{sudo}ip link set dev {name} mtu {quote(params['mtu'])}")
+        if params.get("stp") is not None:
+            stp = "1" if bool(params.get("stp")) else "0"
+            commands.append(f"{sudo}ip link set dev {name} type bridge stp_state {stp}")
+        for iface in interfaces:
+            commands.append(f"{sudo}ip link set dev {quote(iface)} master {name}")
+        commands.append(f"{sudo}ip link set dev {name} up")
+        return commands
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="network.bridge failed")
+
+
+class NetworkLinkAssertPlugin(BasePlugin):
+    name = "network.link_assert"
+    description = "Assert that a network link exists and optionally has expected state or MTU."
+    required_params = ("name",)
+    optional_params = ("state", "mtu", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "network.link_assert is a read-only network link assertion"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        name = quote(params["name"])
+        commands = [f"ip link show dev {name}"]
+        if params.get("state"):
+            commands.append(f"ip -brief link show dev {name} | grep -w {quote(str(params['state']).upper())}")
+        if params.get("mtu"):
+            commands.append(f"ip link show dev {name} | grep -w 'mtu {params['mtu']}'")
+        return commands
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.link_assert failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+
+
+class NetworkRouteAssertPlugin(BasePlugin):
+    name = "network.route_assert"
+    description = "Assert that a route exists with optional gateway, device, table or metric."
+    required_params = ("dest",)
+    optional_params = ("gateway", "dev", "table", "metric", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "network.route_assert is a read-only route assertion"
+
+    def _route_text(self, params: Dict[str, Any]) -> str:
+        parts = [str(params["dest"])]
+        if params.get("gateway"):
+            parts.extend(["via", str(params["gateway"])])
+        if params.get("dev"):
+            parts.extend(["dev", str(params["dev"])])
+        if params.get("metric"):
+            parts.extend(["metric", str(params["metric"])])
+        return " ".join(parts)
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        table = f" table {quote(params['table'])}" if params.get("table") else ""
+        return [f"ip route show{table} {quote(params['dest'])} | grep -F -- {quote(self._route_text(params))}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.route_assert failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+
+
+class NetworkDnsAssertPlugin(BasePlugin):
+    name = "network.dns_assert"
+    description = "Assert resolver nameserver, search and option entries from /etc/resolv.conf."
+    optional_params = ("nameservers", "search", "options", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "network.dns_assert is a read-only resolver assertion"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        commands = ["test -r /etc/resolv.conf"]
+        for ns in params.get("nameservers") or []:
+            commands.append(f"grep -Eq '^nameserver[[:space:]]+{quote(ns)}($|[[:space:]])' /etc/resolv.conf")
+        search_values = params.get("search") or []
+        if search_values:
+            commands.append(f"grep -Eq '^search .*{quote(' '.join(str(item) for item in search_values))}' /etc/resolv.conf")
+        for option in params.get("options") or []:
+            commands.append(f"grep -Eq '^options .*{quote(option)}' /etc/resolv.conf")
+        return commands
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.dns_assert failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+
+
+class NetworkPortCheckPlugin(BasePlugin):
+    name = "network.port_check"
+    description = "Check TCP or UDP connectivity from the remote target."
+    required_params = ("host", "port")
+    optional_params = ("protocol", "timeout", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "network.port_check is a read-only connectivity check"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        protocol = str(params.get("protocol", "tcp"))
+        timeout = str(params.get("timeout", 5))
+        udp = " -u" if protocol == "udp" else ""
+        if protocol not in {"tcp", "udp"}:
+            raise PluginValidationError("network.port_check protocol must be tcp or udp")
+        return [f"nc -z{udp} -w {quote(timeout)} {quote(params['host'])} {quote(params['port'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.port_check failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)

@@ -225,8 +225,13 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     )
     from automax.plugins.network import (
         NetworkBondPlugin,
+        NetworkBridgePlugin,
+        NetworkDnsAssertPlugin,
         NetworkDnsPlugin,
         NetworkInterfacePlugin,
+        NetworkLinkAssertPlugin,
+        NetworkPortCheckPlugin,
+        NetworkRouteAssertPlugin,
         NetworkRoutePlugin,
         NetworkVlanPlugin,
     )
@@ -548,6 +553,11 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         NetworkBondPlugin(),
         NetworkVlanPlugin(),
         NetworkDnsPlugin(),
+        NetworkBridgePlugin(),
+        NetworkLinkAssertPlugin(),
+        NetworkRouteAssertPlugin(),
+        NetworkDnsAssertPlugin(),
+        NetworkPortCheckPlugin(),
         HealthPortPlugin(),
         HealthListenPlugin(),
         HealthProcessPlugin(),

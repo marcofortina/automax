@@ -4085,3 +4085,17 @@ def test_package_inspection_plugins_render_manual_commands():
     assert "dpkg -L curl" in registry.get("pkg.files").manual_commands({"name": "curl", "manager": "apt", "sudo": False}, context)[0]
     assert "dpkg -V curl" in registry.get("pkg.verify").manual_commands({"name": "curl", "manager": "apt", "sudo": False}, context)[0]
     assert "apt-get clean" in registry.get("pkg.clean").manual_commands({"manager": "apt", "sudo": False}, context)[0]
+
+
+def test_network_advanced_plugins_render_manual_commands():
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins.registry import build_builtin_registry
+
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
+    registry = build_builtin_registry()
+
+    assert "ip link add name br0 type bridge" in " && ".join(registry.get("network.bridge").manual_commands({"name": "br0", "interfaces": ["eth1"], "sudo": False}, context))
+    assert "ip link show dev eth0" in registry.get("network.link_assert").manual_commands({"name": "eth0"}, context)[0]
+    assert "ip route show" in registry.get("network.route_assert").manual_commands({"dest": "default", "gateway": "192.0.2.1"}, context)[0]
+    assert "nameserver" in " && ".join(registry.get("network.dns_assert").manual_commands({"nameservers": ["192.0.2.53"]}, context))
+    assert "nc -z" in registry.get("network.port_check").manual_commands({"host": "example.com", "port": 443}, context)[0]
