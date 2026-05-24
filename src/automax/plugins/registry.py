@@ -173,6 +173,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     )
     from automax.plugins.kernel import (
         KernelModuleLoadPlugin,
+        KernelBootParamPlugin,
         KernelModulePersistPlugin,
         KernelModuleUnloadPlugin,
         SysctlGetPlugin,
@@ -369,6 +370,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SysctlSetPlugin(),
         SysctlPersistPlugin(),
         SysctlReloadPlugin(),
+        KernelBootParamPlugin(),
         KernelModuleLoadPlugin(),
         KernelModuleUnloadPlugin(),
         KernelModulePersistPlugin(),

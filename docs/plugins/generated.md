@@ -2831,6 +2831,42 @@ with:
 
 ## kernel
 
+### `kernel.boot_param`
+
+Ensure a persistent kernel boot parameter in GRUB-compatible defaults with backup and grub config regeneration.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `value` | no | `string` |  | Desired parameter value. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `update_grub` | no | `boolean` | `True` | Regenerate GRUB configuration after modifying boot parameters. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: kernel.boot_param
+with:
+  name: nginx
+```
+
 ### `kernel.module.load`
 
 Load a Linux kernel module and optionally persist it.

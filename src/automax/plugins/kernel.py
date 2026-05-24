@@ -269,3 +269,78 @@ class KernelModulePersistPlugin(BasePlugin):
             command = f"if test -e {quote(file_path)}; then tmp=$(mktemp); grep -Fxv -- {quote(module)} {quote(file_path)} > $tmp || true; if cmp -s $tmp {quote(file_path)}; then rm -f $tmp; else {_sudo(params)}cp $tmp {quote(file_path)} && rm -f $tmp && echo {CHANGE_MARKER}; fi; fi"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.module.persist failed")
+
+class KernelBootParamPlugin(BasePlugin):
+    name = "kernel.boot_param"
+    description = "Ensure a persistent kernel boot parameter in GRUB-compatible defaults with backup and grub config regeneration."
+    required_params = ("name",)
+    optional_params = ("value", "state", "path", "backup", "backup_suffix", "update_grub", "sudo")
+    opens_remote_session = True
+
+    def _token(self, params: Dict[str, Any]) -> str:
+        if params.get("value") is None or str(params.get("value")) == "":
+            return str(params["name"])
+        return f"{params['name']}={params['value']}"
+
+    def _path(self, params: Dict[str, Any]) -> str:
+        return str(params.get("path", "/etc/default/grub"))
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        token = self._token(params)
+        state = str(params.get("state", "present"))
+        return [{"path": self._path(params), "kind": "kernel-boot-plan", "diff": f"{state} GRUB_CMDLINE_LINUX token: {token}\n"}]
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        state = str(params.get("state", "present"))
+        if state not in {"present", "absent"}:
+            raise PluginValidationError("kernel.boot_param state must be present or absent")
+        path = self._path(params)
+        token = self._token(params)
+        sudo = _sudo(params)
+        script = r'''
+set -eu
+path=$1
+state=$2
+token=$3
+tmp=$(mktemp)
+if [ ! -e "$path" ]; then echo 'missing grub defaults file' >&2; exit 1; fi
+awk -v state="$state" -v token="$token" '
+  BEGIN{done=0}
+  /^GRUB_CMDLINE_LINUX=/ {
+    line=$0
+    sub(/^GRUB_CMDLINE_LINUX="/, "", line)
+    sub(/"$/, "", line)
+    n=split(line, parts, " ")
+    out=""
+    found=0
+    split(token, kv, "=")
+    for (i=1; i<=n; i++) {
+      if (parts[i] == "") continue
+      split(parts[i], pkv, "=")
+      if (pkv[1] == kv[1]) { found=1; if (state == "present") parts[i]=token; else parts[i]="" }
+      if (parts[i] != "") out=(out == "" ? parts[i] : out " " parts[i])
+    }
+    if (state == "present" && !found) out=(out == "" ? token : out " " token)
+    print "GRUB_CMDLINE_LINUX=\"" out "\""
+    done=1
+    next
+  }
+  {print}
+  END{if(!done && state == "present") print "GRUB_CMDLINE_LINUX=\"" token "\""}
+' "$path" > "$tmp"
+cat "$tmp"
+rm -f "$tmp"
+'''
+        commands = []
+        if bool(params.get("backup", True)):
+            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
+        commands.append(f"{sudo}sh -s -- {quote(path)} {quote(state)} {quote(token)} <<'SH' > /tmp/automax-grub.$$\n{script}\nSH")
+        commands.append(f"{sudo}install -m 0644 /tmp/automax-grub.$$ {quote(path)} && rm -f /tmp/automax-grub.$$")
+        if bool(params.get("update_grub", True)):
+            commands.append(f"if command -v update-grub >/dev/null 2>&1; then {sudo}update-grub; elif command -v grub2-mkconfig >/dev/null 2>&1; then {sudo}grub2-mkconfig -o /boot/grub2/grub.cfg; fi")
+        return commands
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="kernel.boot_param failed")

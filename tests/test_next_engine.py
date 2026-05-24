@@ -3520,3 +3520,14 @@ def test_selinux_port_and_fcontext_plugins_render_persistent_rules():
     context = _sysops_preview_context()
     assert "semanage port" in SelinuxPortPlugin().manual_commands({"port": 8443, "protocol": "tcp", "selinux_type": "http_port_t"}, context)[0]
     assert "semanage fcontext" in SelinuxFcontextPlugin().execute.__qualname__ or SelinuxFcontextPlugin().name == "selinux.fcontext"
+
+
+def test_kernel_boot_param_plugin_renders_safe_grub_update():
+    from automax.plugins.kernel import KernelBootParamPlugin
+
+    assert "kernel.boot_param" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = " && ".join(KernelBootParamPlugin().manual_commands({"name": "transparent_hugepage", "value": "never"}, context))
+    assert "/etc/default/grub" in command
+    assert "update-grub" in command
+    assert KernelBootParamPlugin().diff_preview({"name": "quiet", "state": "absent"}, context)[0]["kind"] == "kernel-boot-plan"
