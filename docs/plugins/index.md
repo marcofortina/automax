@@ -180,7 +180,15 @@ nftables.apply
 nftables.export
 nftables.list
 nftables.validate
+pam.access
+pam.authselect
+pam.faillock
 pam.limits
+pam.pwhistory
+pam.service_line
+pam.stack_facts
+pam.succeed_if
+pam.validate
 password.policy
 pkg.clean
 pkg.files
@@ -279,6 +287,7 @@ wait.file
 wait.path
 wait.process
 wait.tcp
+
 ```
 
 ## Manuals by category

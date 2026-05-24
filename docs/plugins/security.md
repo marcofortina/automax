@@ -18,6 +18,43 @@ Use `apparmor.status` for read-only status, `apparmor.profile` to load, enforce,
 complain or remove one profile, and `apparmor.reload` to reload the AppArmor
 service.
 
+
+## PAM hardening
+
+Use `pam.access`, `pam.faillock`, `pam.pwhistory`, `pam.succeed_if`,
+`pam.service_line`, `pam.validate`, `pam.stack_facts` and `pam.authselect` for
+service-scoped PAM hardening and readback. PAM is authentication-critical: these
+plugins avoid broad `/etc/pam.d/*` rewrites and operate only on explicit service
+files or explicit service names. Mutating plugins back up files by default and
+render the exact PAM line or policy file content in operator previews.
+
+Recommended workflow:
+
+```yaml
+- id: inspect_pam
+  use: pam.stack_facts
+  with:
+    service: sshd
+
+- id: validate_pam
+  use: pam.validate
+  with:
+    service: sshd
+
+- id: enable_access
+  use: pam.access
+  with:
+    entries:
+      - "+ : deploy : 10.0.0.0/8"
+    service: sshd
+    backup: true
+    sudo: true
+```
+
+`pam.authselect` is read-only and validates the active RHEL-like authselect
+profile/features. Use `authselect.profile` when the job intentionally changes the
+authselect profile.
+
 ## SSH and sudo
 
 `ssh.keygen` generates a remote SSH keypair with overwrite protection.

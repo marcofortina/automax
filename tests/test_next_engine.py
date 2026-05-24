@@ -4256,3 +4256,31 @@ def test_ssh_keygen_hardening_options_render_secret_safe_manual_command():
     public_only = " && ".join(plugin.manual_commands({"path": "/tmp/id_ed25519", "public_key_only": True, "fingerprint": True, "sudo": False}, context))
     assert "ssh-keygen -y" in public_only
     assert "ssh-keygen -lf" in public_only
+
+def test_pam_hardening_plugins_render_manual_commands():
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins.registry import build_builtin_registry
+
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
+    registry = build_builtin_registry()
+
+    access = registry.get("pam.access").manual_commands({"entries": ["+ : deploy : 10.0.0.0/8"], "service": "sshd", "sudo": False}, context)
+    assert "/etc/security/access.conf" in " && ".join(access)
+    assert "pam_access.so" in " && ".join(access)
+    faillock = registry.get("pam.faillock").manual_commands({"settings": {"deny": 5}, "service": "system-auth", "sudo": False}, context)
+    assert "faillock.conf" in " && ".join(faillock)
+    assert "pam_faillock.so" in " && ".join(faillock)
+    pwhistory = registry.get("pam.pwhistory").manual_commands({"settings": {"remember": 5}, "service": "password-auth", "sudo": False}, context)
+    assert "pwhistory.conf" in " && ".join(pwhistory)
+    assert "pam_pwhistory.so" in " && ".join(pwhistory)
+    succeed = " && ".join(registry.get("pam.succeed_if").manual_commands({"service": "sshd", "condition": "user ingroup wheel", "sudo": False}, context))
+    assert "pam_succeed_if.so user ingroup wheel" in succeed
+    line = " && ".join(registry.get("pam.service_line").manual_commands({"service": "sshd", "line": "auth required pam_env.so", "sudo": False}, context))
+    assert "pam_env.so" in line
+    validate = registry.get("pam.validate").manual_commands({"service": "sshd"}, context)[0]
+    assert "awk" in validate and "/etc/pam.d/sshd" in validate
+    facts = registry.get("pam.stack_facts").manual_commands({"service": "sshd"}, context)[0]
+    assert "grep -En" in facts and "/etc/pam.d/sshd" in facts
+    authselect = registry.get("pam.authselect").manual_commands({"profile": "sssd", "features": ["with-faillock"], "sudo": False}, context)[0]
+    assert "authselect current" in authselect
+    assert "with-faillock" in authselect

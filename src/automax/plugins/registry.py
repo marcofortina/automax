@@ -248,6 +248,16 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         NetworkVlanPlugin,
     )
     from automax.plugins.hardening import AuthselectProfilePlugin, LoginDefsPlugin, PasswordPolicyPlugin, SshdConfigPlugin
+    from automax.plugins.pam_ops import (
+        PamAccessPlugin,
+        PamAuthselectPlugin,
+        PamFaillockPlugin,
+        PamPwhistoryPlugin,
+        PamServiceLinePlugin,
+        PamStackFactsPlugin,
+        PamSucceedIfPlugin,
+        PamValidatePlugin,
+    )
     from automax.plugins.health import (
         HealthHttpPlugin,
         HealthListenPlugin,
@@ -575,6 +585,14 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SwapAbsentPlugin(),
         LimitsDropinPlugin(),
         PamLimitsPlugin(),
+        PamAccessPlugin(),
+        PamFaillockPlugin(),
+        PamPwhistoryPlugin(),
+        PamSucceedIfPlugin(),
+        PamServiceLinePlugin(),
+        PamValidatePlugin(),
+        PamStackFactsPlugin(),
+        PamAuthselectPlugin(),
         HostsEntryPlugin(),
         HostnameSetPlugin(),
         ResolverConfigPlugin(),

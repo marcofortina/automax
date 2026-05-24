@@ -61,6 +61,8 @@ where they modify system files:
 swap.present / swap.absent
 limits.dropin
 pam.limits
+pam.access / pam.faillock / pam.pwhistory / pam.succeed_if
+pam.service_line / pam.validate / pam.stack_facts / pam.authselect
 hosts.entry
 hostname.set
 resolver.config

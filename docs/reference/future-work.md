@@ -207,33 +207,9 @@ specific behavior.
 
 ### PAM hardening candidates
 
-Automax currently includes `pam.limits`, `limits.dropin`, password policy and
-`login.defs` primitives. Additional PAM work should stay explicit, distro-aware
-and service-scoped. Do not add a generic `/etc/pam.d/*` template rewriter.
-
-Candidate plugins:
-
-```text
-pam.access         # manage access.conf entries and required pam_access wiring
-pam.faillock       # manage faillock policy files and required auth stack lines
-pam.pwhistory      # manage password history policy and pam_pwhistory wiring
-pam.succeed_if     # manage guarded pam_succeed_if conditions for a service
-pam.service_line   # ensure/remove one exact PAM service line with backup
-pam.validate       # read-only validation and parser/sanity checks
-pam.stack_facts    # read-only inventory of PAM service files and included stacks
-pam.authselect     # RHEL-like authselect profile/custom-profile assertions
-```
-
-Safety requirements for future PAM plugins:
-
-```text
-- service file path must be explicit; no broad glob rewrites
-- backup_before defaults to true for mutating plugins
-- manual_commands must show exact file and line changes
-- diff_preview must render the target PAM line/snippet
-- validate mode must be available before reload/login-affecting changes
-- Debian/Ubuntu common-auth and RHEL authselect layouts must stay separate
-```
-
-PAM is authentication-critical; plugins should prefer narrow line insertion,
-readback assertions and syntax checks over broad generated templates.
+The initial PAM hardening backlog is implemented through explicit, service-scoped
+plugins: `pam.access`, `pam.faillock`, `pam.pwhistory`, `pam.succeed_if`,
+`pam.service_line`, `pam.validate`, `pam.stack_facts` and `pam.authselect`. Future
+PAM work should preserve the same model: no broad `/etc/pam.d/*` template
+rewriter, backups by default for mutating plugins, and read-only validation
+before authentication-affecting changes.

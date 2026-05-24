@@ -117,7 +117,7 @@ Set an AppArmor profile to enforce or complain mode.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `profile` | yes | `string` |  | AppArmor profile name or profile file path. |
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
 | `state` | yes | `string` |  | Desired state such as present, absent, started or stopped. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
@@ -150,7 +150,7 @@ Reload one AppArmor profile file or the AppArmor service.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `profile` | no | `string` |  | AppArmor profile name or profile file path. |
+| `profile` | no | `string` |  | AppArmor profile, authselect profile or profile file path. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -687,7 +687,7 @@ Select an authselect profile with optional features and backup.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `profile` | yes | `string` |  | AppArmor profile name or profile file path. |
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
 | `features` | no | `list` |  | Profile or backend feature flags. |
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
 | `force` | no | `boolean` | `False` | Force the operation when supported. |
@@ -2358,7 +2358,7 @@ Manage a firewalld service rule.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `service` | yes | `string` |  | systemd service unit name. |
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `zone` | no | `string` |  | firewalld zone name. |
 | `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
 | `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
@@ -4087,7 +4087,7 @@ Collect journalctl output for artifact capture through stdout.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `service` | no | `string` |  | systemd service unit name. |
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `since` | no | `string` |  | Start time for journalctl queries. |
 | `until` | no | `string` |  | End time for journalctl queries. |
 | `lines` | no | `integer` | `200` | Number of log or journal lines to collect. |
@@ -4123,7 +4123,7 @@ Collect journalctl output and filter it with grep.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
-| `service` | no | `string` |  | systemd service unit name. |
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `since` | no | `string` |  | Start time for journalctl queries. |
 | `until` | no | `string` |  | End time for journalctl queries. |
 | `lines` | no | `integer` | `200` | Number of log or journal lines to collect. |
@@ -4371,7 +4371,7 @@ Export remote log or journal output to stdout for declared artifact capture.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `files` | no | `list` |  | Target files to inspect or modify. |
-| `service` | no | `string` |  | systemd service unit name. |
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `since` | no | `string` |  | Start time for journalctl queries. |
 | `lines` | no | `integer` | `200` | Number of log or journal lines to collect. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
@@ -5659,6 +5659,111 @@ with:
 
 ## pam
 
+### `pam.access`
+
+Manage access.conf entries and optional pam_access service wiring.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `entries` | yes | `list` |  | Structured entries for limits or configuration files. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `services` | no | `list` |  | PAM service names to inspect or modify. |
+| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pam.access
+with:
+  entries:
+    - {'domain': 'appuser', 'type': 'soft', 'item': 'nofile', 'value': 1024}
+```
+
+### `pam.authselect`
+
+Assert the current authselect profile and enabled features on RHEL-like systems.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | no | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `features` | no | `list` |  | Profile or backend feature flags. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pam.authselect
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+```
+
+### `pam.faillock`
+
+Manage faillock.conf settings and optional pam_faillock service wiring.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `settings` | yes | `mapping` |  | SSH client or server settings. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `services` | no | `list` |  | PAM service names to inspect or modify. |
+| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pam.faillock
+with:
+  settings: value
+```
+
 ### `pam.limits`
 
 Ensure pam_limits.so is enabled in one or more PAM service files.
@@ -5690,6 +5795,183 @@ use: pam.limits
 with:
   files:
     - /etc/pam.d/login
+```
+
+### `pam.pwhistory`
+
+Manage pwhistory.conf settings and optional pam_pwhistory service wiring.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `settings` | yes | `mapping` |  | SSH client or server settings. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `services` | no | `list` |  | PAM service names to inspect or modify. |
+| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
+| `control` | no | `string` |  | PAM control field such as required, requisite, sufficient or a bracketed control expression. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pam.pwhistory
+with:
+  settings: value
+```
+
+### `pam.service_line`
+
+Ensure or remove one exact line in one PAM service file with backup.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `line` | yes | `string` |  | Exact line to ensure in a remote file. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pam.service_line
+with:
+  service: sshd
+  line: KEY=value
+```
+
+### `pam.stack_facts`
+
+Inventory PAM service files and include/substack relationships.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `services` | no | `list` |  | PAM service names to inspect or modify. |
+| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pam.stack_facts
+with:
+  service: sshd
+  services:
+    - sshd
+```
+
+### `pam.succeed_if`
+
+Ensure or remove one guarded pam_succeed_if condition in a PAM service file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `condition` | yes | `string` |  | PAM condition expression, for example user ingroup wheel. |
+| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
+| `control` | no | `string` |  | PAM control field such as required, requisite, sufficient or a bracketed control expression. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pam.succeed_if
+with:
+  service: sshd
+  condition: user ingroup wheel
+```
+
+### `pam.validate`
+
+Run read-only sanity checks against explicit PAM service files.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `services` | no | `list` |  | PAM service names to inspect or modify. |
+| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pam.validate
+with:
+  service: sshd
+  services:
+    - sshd
 ```
 
 ## password
@@ -7746,7 +8028,7 @@ Disable a remote systemd service.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `service` | yes | `string` |  | systemd service unit name. |
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
 
@@ -7777,7 +8059,7 @@ Enable a remote systemd service.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `service` | yes | `string` |  | systemd service unit name. |
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
 
@@ -7808,7 +8090,7 @@ Check remote systemd active state.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `service` | yes | `string` |  | systemd service unit name. |
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
 | `fail_on_inactive` | no | `boolean` | `False` | Fail when the queried service is not active. |
@@ -7840,7 +8122,7 @@ Check remote systemd enabled state.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `service` | yes | `string` |  | systemd service unit name. |
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
 | `fail_on_disabled` | no | `boolean` | `False` | Fail when the queried service is not enabled. |
@@ -7872,7 +8154,7 @@ Mask a remote systemd service.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `service` | yes | `string` |  | systemd service unit name. |
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
 
@@ -7903,7 +8185,7 @@ Reload a remote systemd service.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `service` | yes | `string` |  | systemd service unit name. |
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
 
@@ -7934,7 +8216,7 @@ Restart a remote systemd service.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `service` | yes | `string` |  | systemd service unit name. |
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
 
@@ -7965,7 +8247,7 @@ Start a remote systemd service.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `service` | yes | `string` |  | systemd service unit name. |
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
 
@@ -7996,7 +8278,7 @@ Read remote systemd service status.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `service` | yes | `string` |  | systemd service unit name. |
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
 
@@ -8027,7 +8309,7 @@ Stop a remote systemd service.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `service` | yes | `string` |  | systemd service unit name. |
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
 
@@ -8058,7 +8340,7 @@ Unmask a remote systemd service.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `service` | yes | `string` |  | systemd service unit name. |
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
 
