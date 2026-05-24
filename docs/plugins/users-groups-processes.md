@@ -76,3 +76,4 @@ These plugins run on the remote target through SSH.
 `process.assert_count` gates process cardinality with exact, minimum or maximum count checks.
 
 `sshd.config` installs server-side SSH hardening drop-ins and validates them with `sshd -t` before reload.
+`login.defs` manages account-aging defaults in `/etc/login.defs` with backup.

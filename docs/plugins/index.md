@@ -117,6 +117,7 @@ limits.dropin
 local.command
 log.export
 log.grep
+login.defs
 lvm.lv_extend
 lvm.lv_present
 lvm.lv_remove

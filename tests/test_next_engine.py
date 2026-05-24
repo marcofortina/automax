@@ -3740,3 +3740,14 @@ def test_sshd_config_plugin_renders_validated_dropin():
     assert "/etc/ssh/sshd_config.d/10-hardening.conf" in commands
     assert "sshd -t" in commands
     assert SshdConfigPlugin().diff_preview({"name": "10-hardening", "settings": {"PermitRootLogin": "no"}}, context)[0]["kind"] == "sshd-config-plan"
+
+
+def test_login_defs_plugin_renders_key_updates():
+    from automax.plugins.hardening import LoginDefsPlugin
+
+    assert "login.defs" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    commands = " && ".join(LoginDefsPlugin().manual_commands({"settings": {"PASS_MAX_DAYS": 90}}, context))
+    assert "/etc/login.defs" in commands
+    assert "PASS_MAX_DAYS 90" in commands
+    assert LoginDefsPlugin().diff_preview({"settings": {"PASS_MAX_DAYS": 90}}, context)[0]["kind"] == "login-defs-plan"
