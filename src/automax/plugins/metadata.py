@@ -23,6 +23,7 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "append": {"type": "boolean", "default": False, "description": "Append supplementary groups instead of replacing the user group list."},
     "apply": {"type": "boolean", "default": False, "description": "Apply a generated system resource immediately after installation."},
     "archive": {"type": "path", "description": "Remote archive path to extract."},
+    "atomic": {"type": "boolean", "default": True, "description": "Install generated file content via a temporary path and final rename where possible."},
     "body": {"type": "string", "description": "Raw HTTP request body."},
     "sensitive": {"type": "boolean", "default": False, "description": "Mask sensitive content in previews or logs."},
     "validate_before_reload": {"type": "boolean", "default": True, "description": "Validate service configuration before reload."},

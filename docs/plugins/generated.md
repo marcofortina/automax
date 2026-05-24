@@ -4146,6 +4146,7 @@ Render a local Jinja2 template to a remote file.
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `validate_command` | no | `string` |  | Command used to validate generated file content. |
 | `sensitive` | no | `boolean` | `False` | Mask sensitive content in previews or logs. |
+| `atomic` | no | `boolean` | `True` | Install generated file content via a temporary path and final rename where possible. |
 
 Result fields:
 
@@ -4190,6 +4191,7 @@ Write text content to a remote file.
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `validate_command` | no | `string` |  | Command used to validate generated file content. |
 | `sensitive` | no | `boolean` | `False` | Mask sensitive content in previews or logs. |
+| `atomic` | no | `boolean` | `True` | Install generated file content via a temporary path and final rename where possible. |
 
 Result fields:
 

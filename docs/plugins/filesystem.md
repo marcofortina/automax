@@ -340,5 +340,8 @@ prefixes.
 ## File mutation validation
 
 `fs.write`, `fs.template`, `fs.line` and `fs.replace` support validation commands
-and backup-before semantics for configuration file edits. `fs.replace` also
-supports `match_count_assert` to prevent zero-match or broad-match regex changes.
+and backup-before semantics for configuration file edits. `fs.write` and
+`fs.template` expose an explicit `atomic` option, defaulting to true, so generated
+content is installed through a temporary path and final rename where possible.
+`fs.replace` also supports `match_count_assert` to prevent zero-match or
+broad-match regex changes.

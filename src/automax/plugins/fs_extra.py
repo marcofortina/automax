@@ -565,8 +565,8 @@ class FsFindPlugin(BasePlugin):
         return PluginResult.success(changed=False, stdout=out, data={"paths": paths})
 
 # File mutation hardening: optional backups, validation commands and match-count guards.
-FsWritePlugin.optional_params = ("mode", "owner", "group", "sudo", "encoding", "backup_before", "backup_suffix", "validate_command", "sensitive")
-FsTemplatePlugin.optional_params = ("mode", "owner", "group", "sudo", "encoding", "values", "backup_before", "backup_suffix", "validate_command", "sensitive")
+FsWritePlugin.optional_params = ("mode", "owner", "group", "sudo", "encoding", "backup_before", "backup_suffix", "validate_command", "sensitive", "atomic")
+FsTemplatePlugin.optional_params = ("mode", "owner", "group", "sudo", "encoding", "values", "backup_before", "backup_suffix", "validate_command", "sensitive", "atomic")
 FsLinePlugin.optional_params = ("state", "create", "sudo", "backup_before", "backup_suffix", "validate_command")
 FsReplacePlugin.optional_params = ("count", "sudo", "backup", "backup_before", "backup_suffix", "backup_path", "validate_command", "match_count_assert")
 
@@ -597,7 +597,16 @@ def _fs_write_execute(self: FsWritePlugin, params: Dict[str, Any], context: Exec
         rc, out, err = exec_remote(context, validation)
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.write validation failed")
-    rc, out, err = install_uploaded_file(context, temp_path, path, sudo=bool(params.get("sudo", False)), mode=params.get("mode"), owner=params.get("owner"), group=params.get("group"))
+    rc, out, err = install_uploaded_file(
+        context,
+        temp_path,
+        path,
+        sudo=bool(params.get("sudo", False)),
+        mode=params.get("mode"),
+        owner=params.get("owner"),
+        group=params.get("group"),
+        atomic=bool(params.get("atomic", True)),
+    )
     return result_from_remote(rc=rc, stdout=out, stderr=err, message="fs.write failed", data={"path": path})
 
 
@@ -618,7 +627,16 @@ def _fs_template_execute(self: FsTemplatePlugin, params: Dict[str, Any], context
         rc, out, err = exec_remote(context, validation)
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.template validation failed")
-    rc, out, err = install_uploaded_file(context, temp_path, dest, sudo=bool(params.get("sudo", False)), mode=params.get("mode"), owner=params.get("owner"), group=params.get("group"))
+    rc, out, err = install_uploaded_file(
+        context,
+        temp_path,
+        dest,
+        sudo=bool(params.get("sudo", False)),
+        mode=params.get("mode"),
+        owner=params.get("owner"),
+        group=params.get("group"),
+        atomic=bool(params.get("atomic", True)),
+    )
     return result_from_remote(rc=rc, stdout=out, stderr=err, message="fs.template failed", data={"src": template_path, "dest": dest})
 
 

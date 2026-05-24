@@ -58,11 +58,14 @@ def install_uploaded_file(
     mode: str | None = None,
     owner: str | None = None,
     group: str | None = None,
+    atomic: bool = True,
 ) -> tuple[int, str, str]:
     """Move a remote temp file into final location, preserving idempotent change checks."""
     dest_q = quote(dest)
     temp_q = quote(temp_path)
     mkdir = f"mkdir -p {quote(remote_dir(dest))}"
+    stage = f"{dest}.automax-{uuid.uuid4().hex}.tmp"
+    stage_q = quote(stage)
     install_flags = []
     if mode:
         install_flags.extend(["-m", quote(mode)])
@@ -72,28 +75,46 @@ def install_uploaded_file(
         install_flags.extend(["-g", quote(group)])
 
     if sudo:
-        install = " ".join(["sudo -n install", *install_flags, temp_q, dest_q])
-        command = (
-            f"sudo -n mkdir -p {quote(remote_dir(dest))} && "
-            f"if test -e {dest_q} && cmp -s {temp_q} {dest_q}; then "
-            f"rm -f {temp_q}; "
-            f"else {install} && rm -f {temp_q} && echo __AUTOMAX_CHANGED__; fi"
-        )
-    else:
-        if install_flags:
-            install = " ".join(["install", *install_flags, temp_q, dest_q])
+        if atomic:
+            install = " ".join(["sudo -n install", *install_flags, temp_q, stage_q])
             command = (
-                f"{mkdir} && "
+                f"sudo -n mkdir -p {quote(remote_dir(dest))} && "
+                f"if test -e {dest_q} && cmp -s {temp_q} {dest_q}; then "
+                f"rm -f {temp_q}; "
+                f"else {install} && sudo -n mv -f {stage_q} {dest_q} && rm -f {temp_q} && echo __AUTOMAX_CHANGED__; fi"
+            )
+        else:
+            install = " ".join(["sudo -n install", *install_flags, temp_q, dest_q])
+            command = (
+                f"sudo -n mkdir -p {quote(remote_dir(dest))} && "
                 f"if test -e {dest_q} && cmp -s {temp_q} {dest_q}; then "
                 f"rm -f {temp_q}; "
                 f"else {install} && rm -f {temp_q} && echo __AUTOMAX_CHANGED__; fi"
             )
+    else:
+        if install_flags:
+            if atomic:
+                install = " ".join(["install", *install_flags, temp_q, stage_q])
+                command = (
+                    f"{mkdir} && "
+                    f"if test -e {dest_q} && cmp -s {temp_q} {dest_q}; then "
+                    f"rm -f {temp_q}; "
+                    f"else {install} && mv -f {stage_q} {dest_q} && rm -f {temp_q} && echo __AUTOMAX_CHANGED__; fi"
+                )
+            else:
+                install = " ".join(["install", *install_flags, temp_q, dest_q])
+                command = (
+                    f"{mkdir} && "
+                    f"if test -e {dest_q} && cmp -s {temp_q} {dest_q}; then "
+                    f"rm -f {temp_q}; "
+                    f"else {install} && rm -f {temp_q} && echo __AUTOMAX_CHANGED__; fi"
+                )
         else:
             command = (
                 f"{mkdir} && "
                 f"if test -e {dest_q} && cmp -s {temp_q} {dest_q}; then "
                 f"rm -f {temp_q}; "
-                f"else mv {temp_q} {dest_q} && echo __AUTOMAX_CHANGED__; fi"
+                f"else mv -f {temp_q} {dest_q} && echo __AUTOMAX_CHANGED__; fi"
             )
     return exec_remote(context, command)
 

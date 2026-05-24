@@ -4335,3 +4335,35 @@ def test_backup_completeness_plugins_render_manual_commands():
 
     verify = registry.get("backup.restore_verify").manual_commands({"src": "/var/backups/app.tar.gz", "dest": "/srv/app", "archive": True, "sudo": False}, context)[0]
     assert "tar -df /var/backups/app.tar.gz" in verify
+
+
+def test_file_install_atomic_option_controls_final_install_command(monkeypatch):
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins import file_utils
+
+    captured: list[str] = []
+
+    def fake_exec_remote(context, command, **kwargs):
+        captured.append(command)
+        return 0, "", ""
+
+    monkeypatch.setattr(file_utils, "exec_remote", fake_exec_remote)
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
+
+    file_utils.install_uploaded_file(context, "/tmp/source", "/etc/demo.conf", sudo=True, mode="0644", atomic=True)
+    assert ".automax-" in captured[-1]
+    assert "mv -f" in captured[-1]
+    assert "/etc/demo.conf" in captured[-1]
+
+    file_utils.install_uploaded_file(context, "/tmp/source", "/etc/demo.conf", sudo=True, mode="0644", atomic=False)
+    assert ".automax-" not in captured[-1]
+    assert "sudo -n install -m 0644 /tmp/source /etc/demo.conf" in captured[-1]
+
+
+def test_fs_write_template_metadata_exposes_atomic_option():
+    from automax.plugins.registry import build_builtin_registry
+
+    registry = build_builtin_registry()
+    for name in ("fs.write", "fs.template"):
+        params = {parameter["name"] for parameter in registry.get(name).metadata()["parameters"]}
+        assert "atomic" in params
