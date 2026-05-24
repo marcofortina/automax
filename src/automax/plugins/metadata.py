@@ -173,6 +173,7 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "wait": {"type": "boolean", "default": False, "description": "Wait for the operation to become reachable again when supported."},
     "delay": {"type": "integer", "default": 3, "description": "Initial delay in seconds."},
     "checksum": {"type": "string", "description": "Expected SHA256 checksum for a downloaded file."},
+    "checksum_file": {"type": "path", "description": "Checksum sidecar file path."},
     "schedule": {"type": "string", "description": "Five-field cron schedule."},
     "shell": {"type": "boolean", "description": "Run a local command through the platform shell."},
     "signal": {"type": "string", "default": "TERM", "description": "Signal name or number sent to a process."},

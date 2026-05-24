@@ -121,3 +121,29 @@ class BackupRestorePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="backup.restore failed")
+
+class BackupVerifyPlugin(BasePlugin):
+    name = "backup.verify"
+    description = "Verify a remote backup artifact checksum without changing state."
+    required_params = ("path",)
+    optional_params = ("checksum_file", "checksum", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "backup.verify is a read-only checksum verification operation"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        path = str(params["path"])
+        checksum = str(params.get("checksum", "sha256"))
+        if checksum != "sha256":
+            raise PluginValidationError("backup.verify supports checksum=sha256")
+        checksum_file = str(params.get("checksum_file", path + ".sha256"))
+        return [f"cd $(dirname {quote(path)}) && {_sudo(params)}sha256sum -c {quote(checksum_file)}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="backup.verify failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)

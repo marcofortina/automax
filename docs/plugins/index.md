@@ -38,6 +38,7 @@ auditd.status
 backup.directory
 backup.file
 backup.restore
+backup.verify
 block.facts
 block.identity
 block.mkfs

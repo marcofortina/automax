@@ -3621,3 +3621,14 @@ def test_backup_restore_plugin_requires_confirmation_and_renders_restore():
     command = BackupRestorePlugin().manual_commands({"src": "/backup/hosts", "dest": "/etc/hosts", "confirm": True}, context)[0]
     assert "cp -a /backup/hosts /etc/hosts" in command
     assert "confirm=true" in BackupRestorePlugin().diff_preview_reason({}, context)
+
+
+def test_backup_verify_plugin_renders_read_only_checksum():
+    from automax.plugins.backup import BackupVerifyPlugin
+
+    assert "backup.verify" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = BackupVerifyPlugin().manual_commands({"path": "/backup/hosts"}, context)[0]
+    assert "sha256sum -c" in command
+    assert BackupVerifyPlugin().supports_check_mode is True
+    assert "read-only" in BackupVerifyPlugin().diff_preview_reason({}, context)

@@ -722,6 +722,38 @@ with:
   confirm: value
 ```
 
+### `backup.verify`
+
+Verify a remote backup artifact checksum without changing state.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `checksum_file` | no | `path` |  | Checksum sidecar file path. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: backup.verify
+with:
+  path: /tmp/automax-demo
+```
+
 ## block
 
 ### `block.facts`
