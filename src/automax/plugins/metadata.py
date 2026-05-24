@@ -18,6 +18,7 @@ from automax.plugins.base import BasePlugin
 PARAMETERS: dict[str, dict[str, Any]] = {
     "allow_replace_non_symlink": {"type": "boolean", "default": False, "description": "Allow force replacement when the destination exists and is not a symlink."},
     "append": {"type": "boolean", "default": False, "description": "Append supplementary groups instead of replacing the user group list."},
+    "apply": {"type": "boolean", "default": False, "description": "Apply a generated system resource immediately after installation."},
     "archive": {"type": "path", "description": "Remote archive path to extract."},
     "body": {"type": "string", "description": "Raw HTTP request body."},
     "baseurl": {"type": "string", "description": "Repository base URL for package manager repository files."},
@@ -61,6 +62,8 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "creates": {"type": "path", "description": "Remote path that makes the operation idempotent when already present."},
     "cwd": {"type": "path", "description": "Remote or local working directory for this operation."},
     "dest": {"type": "path", "description": "Destination path."},
+    "enable": {"type": "boolean", "default": False, "description": "Enable a service or timer after installing its unit."},
+    "start": {"type": "boolean", "default": False, "description": "Start a service or timer after installing its unit."},
     "encoding": {"type": "string", "default": "utf-8", "description": "Text encoding used for command output, HTTP bodies or file content."},
     "env": {"type": "mapping", "description": "Environment variables for a local command."},
     "dump": {"type": "integer", "default": 0, "description": "fstab dump field."},

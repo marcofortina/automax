@@ -305,6 +305,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SelinuxModePlugin,
         SelinuxRestoreconPlugin,
     )
+    from automax.plugins.systemd_resources import SystemdSysusersPlugin, SystemdTimerPlugin, SystemdTmpfilesPlugin, SystemdUnitPlugin
     from automax.plugins.systemctl import (
         SystemctlDaemonReloadPlugin,
         SystemctlDisablePlugin,
@@ -501,6 +502,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SystemctlMaskPlugin(),
         SystemctlUnmaskPlugin(),
         SystemctlDaemonReloadPlugin(),
+        SystemdUnitPlugin(),
+        SystemdTimerPlugin(),
+        SystemdTmpfilesPlugin(),
+        SystemdSysusersPlugin(),
     ):
         registry.register(apply_builtin_metadata(plugin))
     registry.load_from_paths(extra_plugin_paths)

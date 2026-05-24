@@ -3456,3 +3456,16 @@ def test_filesystem_acl_attr_quota_plugins_render_safe_commands():
     assert "setfacl" in " && ".join(FsAclPlugin().manual_commands({"path": "/data", "acl": "u:app:rwx"}, context))
     assert "chattr +i" in FsAttrPlugin().manual_commands({"path": "/data/file", "attrs": "i"}, context)[0]
     assert "setquota -u app" in FsQuotaPlugin().manual_commands({"target": "app", "mountpoint": "/data"}, context)[0]
+
+
+def test_systemd_resource_plugins_render_units_and_dropins():
+    from automax.plugins.systemd_resources import SystemdSysusersPlugin, SystemdTimerPlugin, SystemdTmpfilesPlugin, SystemdUnitPlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in ("systemd.unit", "systemd.timer", "systemd.tmpfiles", "systemd.sysusers"):
+        assert name in names
+    context = _sysops_preview_context()
+    assert "systemctl daemon-reload" in " && ".join(SystemdUnitPlugin().manual_commands({"name": "demo.service", "content": "[Service]\nExecStart=/bin/true\n"}, context))
+    assert "/etc/systemd/system/demo.timer" in " && ".join(SystemdTimerPlugin().manual_commands({"name": "demo", "content": "[Timer]\nOnBootSec=1m\n"}, context))
+    assert "systemd-tmpfiles --create" in " && ".join(SystemdTmpfilesPlugin().manual_commands({"name": "demo", "content": "d /run/demo 0755 root root -\n", "apply": True}, context))
+    assert "systemd-sysusers" in " && ".join(SystemdSysusersPlugin().manual_commands({"name": "demo", "content": "u demo - Demo /nonexistent\n", "apply": True}, context))

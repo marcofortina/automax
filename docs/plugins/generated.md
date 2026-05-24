@@ -5445,6 +5445,158 @@ with:
   service: sshd
 ```
 
+## systemd
+
+### `systemd.sysusers`
+
+Install a sysusers.d drop-in and optionally apply it immediately.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `content` | yes | `string` |  | Text content to write. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `apply` | no | `boolean` | `False` | Apply a generated system resource immediately after installation. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: systemd.sysusers
+with:
+  name: nginx
+  content: managed by automax
+
+```
+
+### `systemd.timer`
+
+Install a systemd timer file with backup, daemon-reload and optional enable/start.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `content` | yes | `string` |  | Text content to write. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `enable` | no | `boolean` | `False` | Enable a service or timer after installing its unit. |
+| `start` | no | `boolean` | `False` | Start a service or timer after installing its unit. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: systemd.timer
+with:
+  name: nginx
+  content: managed by automax
+
+```
+
+### `systemd.tmpfiles`
+
+Install a tmpfiles.d drop-in and optionally apply it immediately.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `content` | yes | `string` |  | Text content to write. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `apply` | no | `boolean` | `False` | Apply a generated system resource immediately after installation. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: systemd.tmpfiles
+with:
+  name: nginx
+  content: managed by automax
+
+```
+
+### `systemd.unit`
+
+Install a systemd unit file with backup, daemon-reload and optional enable/start.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `content` | yes | `string` |  | Text content to write. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `enable` | no | `boolean` | `False` | Enable a service or timer after installing its unit. |
+| `start` | no | `boolean` | `False` | Start a service or timer after installing its unit. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: systemd.unit
+with:
+  name: nginx
+  content: managed by automax
+
+```
+
 ## transfer
 
 ### `transfer.download`
