@@ -71,10 +71,13 @@ facts.os
 facts.packages
 facts.services
 findmnt.assert
+firewalld.list
 firewalld.port
 firewalld.reload
 firewalld.rich_rule
 firewalld.service
+firewalld.status
+firewalld.zone
 fs.acl
 fs.attr
 fs.bind_mount
@@ -112,6 +115,9 @@ hosts.entry
 http.assert
 http.request
 http.wait
+iptables.chain
+iptables.list
+iptables.policy
 iptables.restore
 iptables.rule
 iptables.save
@@ -149,6 +155,8 @@ network.interface
 network.route
 network.vlan
 nftables.apply
+nftables.export
+nftables.list
 nftables.validate
 pam.limits
 password.policy
@@ -238,7 +246,6 @@ wait.file
 wait.path
 wait.process
 wait.tcp
-
 ```
 
 ## Manuals by category

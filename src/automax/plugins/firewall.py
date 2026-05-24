@@ -117,6 +117,57 @@ class FirewalldReloadPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="firewalld.reload failed")
 
 
+class FirewalldStatusPlugin(BasePlugin):
+    name = "firewalld.status"
+    description = "Read firewalld daemon state, default zone and active zones."
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "firewalld.status is a read-only firewall state query"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        sudo = _sudo(params)
+        return [f"{sudo}firewall-cmd --state && {sudo}firewall-cmd --get-default-zone && {sudo}firewall-cmd --get-active-zones"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="firewalld.status failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"status": out})
+
+
+class FirewalldListPlugin(BasePlugin):
+    name = "firewalld.list"
+    description = "List firewalld rules for one zone or all zones."
+    optional_params = ("zone", "permanent", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "firewalld.list is a read-only firewall rule listing"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        permanent = " --permanent" if bool(params.get("permanent", False)) else ""
+        zone = f" --zone={quote(params['zone'])}" if params.get("zone") else ""
+        action = "--list-all" if params.get("zone") else "--list-all-zones"
+        return [f"{_sudo(params)}firewall-cmd{permanent}{zone} {action}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="firewalld.list failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"rules": out})
+
+
+class FirewalldZonePlugin(FirewalldListPlugin):
+    name = "firewalld.zone"
+    description = "Read one firewalld zone configuration."
+    required_params = ("zone",)
+    optional_params = ("permanent", "sudo")
+
+
 class UfwRulePlugin(BasePlugin):
     name = "ufw.rule"
     description = "Manage a UFW allow/deny/reject rule."
@@ -228,6 +279,55 @@ class NftablesApplyPlugin(NftablesValidatePlugin):
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="nftables.apply failed")
 
+class NftablesListPlugin(BasePlugin):
+    name = "nftables.list"
+    description = "List the active nftables ruleset or one table."
+    optional_params = ("family", "table", "handle", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "nftables.list is a read-only ruleset query"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        handle = " -a" if bool(params.get("handle", False)) else ""
+        if params.get("table"):
+            family = str(params.get("family", "inet"))
+            return [f"{_sudo(params)}nft{handle} list table {quote(family)} {quote(params['table'])}"]
+        return [f"{_sudo(params)}nft{handle} list ruleset"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="nftables.list failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"ruleset": out})
+
+
+class NftablesExportPlugin(NftablesListPlugin):
+    name = "nftables.export"
+    description = "Export the active nftables ruleset to stdout or a remote file."
+    optional_params = ("family", "table", "handle", "dest", "backup", "backup_suffix", "sudo")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        command = super().manual_commands(params, context)[0]
+        if not params.get("dest"):
+            return [command]
+        dest = str(params["dest"])
+        sudo = _sudo(params)
+        commands = []
+        if bool(params.get("backup", True)):
+            commands.append(f"test ! -e {quote(dest)} || {sudo}cp -p {quote(dest)} {quote(dest + str(params.get('backup_suffix', '.bak')))}")
+        commands.append(f"{sudo}mkdir -p $(dirname {quote(dest)})")
+        commands.append(f"{command} | {sudo}tee {quote(dest)} >/dev/null")
+        return [" && ".join(commands)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="nftables.export failed")
+        return PluginResult.success(changed=bool(params.get("dest")), rc=rc, stdout=out, stderr=err, data={"dest": params.get("dest")})
+
+
 class IptablesRulePlugin(BasePlugin):
     name = "iptables.rule"
     description = "Ensure an iptables rule is present or absent in a table and chain."
@@ -305,3 +405,94 @@ class IptablesRestorePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.restore failed")
+
+
+class IptablesListPlugin(BasePlugin):
+    name = "iptables.list"
+    description = "List iptables or ip6tables rules for a table or chain."
+    optional_params = ("table", "chain", "ipv6", "numeric", "verbose", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def _bin(self, params: Dict[str, Any]) -> str:
+        return "ip6tables" if bool(params.get("ipv6", False)) else "iptables"
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "iptables.list is a read-only firewall rule listing"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        table = str(params.get("table", "filter"))
+        flags = "-S"
+        if bool(params.get("numeric", True)) or bool(params.get("verbose", False)):
+            extra = []
+            if bool(params.get("numeric", True)):
+                extra.append("-n")
+            if bool(params.get("verbose", False)):
+                extra.append("-v")
+            flags = "-L " + " ".join(extra)
+        chain = f" {quote(params['chain'])}" if params.get("chain") else ""
+        return [f"{_sudo(params)}{self._bin(params)} -t {quote(table)} {flags}{chain}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="iptables.list failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"rules": out})
+
+
+class IptablesPolicyPlugin(BasePlugin):
+    name = "iptables.policy"
+    description = "Read or set an iptables built-in chain default policy."
+    required_params = ("chain",)
+    optional_params = ("table", "policy", "ipv6", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def _bin(self, params: Dict[str, Any]) -> str:
+        return "ip6tables" if bool(params.get("ipv6", False)) else "iptables"
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "iptables.policy reads or updates a chain default policy; use manual commands for the exact operation"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        table = str(params.get("table", "filter"))
+        chain = str(params["chain"])
+        binary = self._bin(params)
+        sudo = _sudo(params)
+        if not params.get("policy"):
+            return [f"{sudo}{binary} -t {quote(table)} -S {quote(chain)} | sed -n '1p'"]
+        policy = str(params["policy"]).upper()
+        if policy not in {"ACCEPT", "DROP", "QUEUE", "RETURN"}:
+            raise PluginValidationError("iptables.policy policy must be ACCEPT, DROP, QUEUE or RETURN")
+        return [f"{sudo}{binary} -t {quote(table)} -S {quote(chain)} | grep -Fx -- {quote('-P ' + chain + ' ' + policy)} >/dev/null || {sudo}{binary} -t {quote(table)} -P {quote(chain)} {quote(policy)}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        command = self.manual_commands(params, context)[0]
+        marker = f" && echo {CHANGE_MARKER}" if params.get("policy") else ""
+        rc, out, err = exec_remote(context, command + marker)
+        if params.get("policy"):
+            return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.policy failed")
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="iptables.policy failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"policy": out.strip()})
+
+
+class IptablesChainPlugin(BasePlugin):
+    name = "iptables.chain"
+    description = "Read one iptables or ip6tables chain."
+    required_params = ("chain",)
+    optional_params = ("table", "ipv6", "numeric", "verbose", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "iptables.chain is a read-only chain query"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return IptablesListPlugin().manual_commands({**params, "chain": params["chain"]}, context)
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="iptables.chain failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"chain": out})

@@ -1881,6 +1881,38 @@ with:
 
 ## firewalld
 
+### `firewalld.list`
+
+List firewalld rules for one zone or all zones.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `zone` | no | `string` |  | firewalld zone name. |
+| `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: firewalld.list
+with:
+  zone: public
+  permanent: true
+```
+
 ### `firewalld.port`
 
 Manage a firewalld port rule.
@@ -2017,6 +2049,66 @@ Example:
 use: firewalld.service
 with:
   service: sshd
+```
+
+### `firewalld.status`
+
+Read firewalld daemon state, default zone and active zones.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: firewalld.status
+with:
+  sudo: true
+```
+
+### `firewalld.zone`
+
+Read one firewalld zone configuration.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `zone` | yes | `string` |  | firewalld zone name. |
+| `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: firewalld.zone
+with:
+  zone: public
 ```
 
 ## fs
@@ -3306,6 +3398,107 @@ with:
 ```
 
 ## iptables
+
+### `iptables.chain`
+
+Read one iptables or ip6tables chain.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `chain` | yes | `string` |  | Firewall chain name. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `ipv6` | no | `boolean` | `False` | Use IPv6 command variant when supported. |
+| `numeric` | no | `boolean` | `True` | Use numeric address and service output when supported. |
+| `verbose` | no | `boolean` | `False` | Include verbose firewall listing output when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: iptables.chain
+with:
+  chain: value
+```
+
+### `iptables.list`
+
+List iptables or ip6tables rules for a table or chain.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `table` | no | `string` |  | Routing table name or number. |
+| `chain` | no | `string` |  | Firewall chain name. |
+| `ipv6` | no | `boolean` | `False` | Use IPv6 command variant when supported. |
+| `numeric` | no | `boolean` | `True` | Use numeric address and service output when supported. |
+| `verbose` | no | `boolean` | `False` | Include verbose firewall listing output when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: iptables.list
+with:
+  table: main
+```
+
+### `iptables.policy`
+
+Read or set an iptables built-in chain default policy.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `chain` | yes | `string` |  | Firewall chain name. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `policy` | no | `string` |  | Default firewall policy such as ACCEPT or DROP. |
+| `ipv6` | no | `boolean` | `False` | Use IPv6 command variant when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: iptables.policy
+with:
+  chain: value
+```
 
 ### `iptables.restore`
 
@@ -4615,6 +4808,75 @@ use: nftables.apply
 with:
   src: ./firewall/prod.nft
   sudo: true
+```
+
+### `nftables.export`
+
+Export the active nftables ruleset to stdout or a remote file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `family` | no | `string` | `inet` | nftables address family such as ip, ip6, inet, arp, bridge or netdev. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `handle` | no | `boolean` | `False` | Include nftables rule handles when listing rules. |
+| `dest` | no | `path` |  | Destination path. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: nftables.export
+with:
+  family: inet
+  table: main
+```
+
+### `nftables.list`
+
+List the active nftables ruleset or one table.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `family` | no | `string` | `inet` | nftables address family such as ip, ip6, inet, arp, bridge or netdev. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `handle` | no | `boolean` | `False` | Include nftables rule handles when listing rules. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: nftables.list
+with:
+  family: inet
+  table: main
 ```
 
 ### `nftables.validate`

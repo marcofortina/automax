@@ -32,3 +32,11 @@ Use `iptables.rule` for one explicit rule, `iptables.save` to persist the active
 ruleset to a file, and `iptables.restore` to load a saved ruleset. These plugins
 are intentionally separate from nftables/firewalld/UFW because compatibility
 layers and persistence paths differ by distribution.
+
+## Readback and export plugins
+
+Use `firewalld.status`, `firewalld.list` and `firewalld.zone` for firewalld
+precheck and postcheck readback. Use `nftables.list` and `nftables.export` to
+inspect or archive the active nftables ruleset. Use `iptables.list`,
+`iptables.policy` and `iptables.chain` to inspect legacy iptables state before
+and after runtime rule changes.

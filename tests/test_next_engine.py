@@ -3903,6 +3903,7 @@ def _audit_sample_value(name: str):
         "password": "secret",
         "path": "/tmp/automax-demo",
         "pattern": "automax-demo",
+        "policy": "DROP",
         "port": 22,
         "priority": 900,
         "profile": "sssd",
@@ -4054,3 +4055,19 @@ def test_all_builtin_plugins_have_operator_preview_manual_commands_and_dry_run()
         except Exception as exc:  # pragma: no cover - assertion collects all offenders
             failures.append(f"{name}: dry_run raised {exc!r}")
     assert not failures, "\n" + "\n".join(failures)
+
+
+def test_firewall_readback_plugins_render_manual_commands():
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins.registry import build_builtin_registry
+
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
+    registry = build_builtin_registry()
+
+    assert "firewall-cmd --state" in registry.get("firewalld.status").manual_commands({}, context)[0]
+    assert "firewall-cmd --zone=public --list-all" in registry.get("firewalld.zone").manual_commands({"zone": "public", "permanent": False}, context)[0]
+    assert "nft -a list ruleset" in registry.get("nftables.list").manual_commands({"handle": True}, context)[0]
+    assert "nft list ruleset" in registry.get("nftables.export").manual_commands({"dest": "/tmp/rules.nft", "sudo": False}, context)[0]
+    assert "iptables -t filter -L -n INPUT" in registry.get("iptables.list").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
+    assert "iptables -t filter -S INPUT" in registry.get("iptables.policy").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
+    assert "iptables -t filter -L -n INPUT" in registry.get("iptables.chain").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]

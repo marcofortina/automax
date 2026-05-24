@@ -255,6 +255,11 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "changed": {"type": "boolean", "default": True, "description": "Whether a successful command should be reported as changed."},
     "ipv6": {"type": "boolean", "default": False, "description": "Use IPv6 command variant when supported."},
     "chain": {"type": "string", "description": "Firewall chain name."},
+    "family": {"type": "string", "default": "inet", "description": "nftables address family such as ip, ip6, inet, arp, bridge or netdev."},
+    "handle": {"type": "boolean", "default": False, "description": "Include nftables rule handles when listing rules."},
+    "numeric": {"type": "boolean", "default": True, "description": "Use numeric address and service output when supported."},
+    "verbose": {"type": "boolean", "default": False, "description": "Include verbose firewall listing output when supported."},
+    "policy": {"type": "string", "description": "Default firewall policy such as ACCEPT or DROP."},
 }
 
 OPTIONAL_PARAM_OVERRIDES: dict[str, tuple[str, ...]] = {
@@ -492,6 +497,11 @@ SAMPLE_VALUES: dict[str, Any] = {
     "reply_to": "ops@example.com",
     "attachments": ["/tmp/report.txt"],
     "changed": True,
+    "family": "inet",
+    "handle": True,
+    "numeric": True,
+    "verbose": False,
+    "policy": "DROP",
 }
 
 PLUGIN_EXAMPLES: dict[str, str] = {
