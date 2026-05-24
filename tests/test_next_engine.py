@@ -3304,3 +3304,19 @@ def test_health_plugins_render_safe_assertions():
     assert "pgrep -af" in HealthProcessPlugin().manual_commands({"pattern": "sshd"}, context)[0]
     assert "read-only process assertion" in HealthProcessPlugin().diff_preview_reason({"pattern": "sshd"}, context)
     assert HealthHttpPlugin().name == "health.http"
+
+
+def test_pki_plugins_install_permissions_and_expiry_preview():
+    from automax.plugins.pki import PkiCaInstallPlugin, PkiCertExpiryAssertPlugin, PkiKeyPermissionsPlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in ("pki.ca_install", "pki.key_permissions", "pki.cert_expiry_assert"):
+        assert name in names
+
+    context = _sysops_preview_context()
+    ca = PkiCaInstallPlugin().manual_commands({"dest": "/usr/local/share/ca-certificates/demo.crt", "content": "CERT"}, context)[0]
+    assert "update-ca-certificates" in ca
+    assert "cp -p" in ca
+    assert "chmod 0600" in " && ".join(PkiKeyPermissionsPlugin().manual_commands({"path": "/etc/pki/private/key.pem", "mode": "0600"}, context))
+    assert "openssl x509 -checkend" in PkiCertExpiryAssertPlugin().manual_commands({"path": "/etc/pki/cert.pem", "min_days": 10}, context)[0]
+    assert PkiCaInstallPlugin().diff_preview({"dest": "/tmp/ca.crt", "content": "CERT"}, context)[0]["kind"] == "pki-plan"

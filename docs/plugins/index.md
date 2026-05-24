@@ -119,6 +119,9 @@ pkg.repo.add
 pkg.repo.remove
 pkg.update_cache
 pkg.upgrade
+pki.ca_install
+pki.cert_expiry_assert
+pki.key_permissions
 process.kill
 process.wait
 remote.command

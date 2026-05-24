@@ -3567,6 +3567,111 @@ with:
     - curl
 ```
 
+## pki
+
+### `pki.ca_install`
+
+Install a CA certificate into the system trust store and optionally refresh trust.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `dest` | yes | `path` |  | Destination path. |
+| `src` | no | `path` |  | Source path. |
+| `content` | no | `string` |  | Text content to write. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `update_trust` | no | `boolean` | `True` | Refresh the system trust store after installing a CA certificate. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pki.ca_install
+with:
+  dest: /tmp/dest
+```
+
+### `pki.cert_expiry_assert`
+
+Assert that a certificate remains valid for at least min_days.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `min_days` | no | `integer` | `30` | Minimum remaining certificate validity in days. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pki.cert_expiry_assert
+with:
+  path: /tmp/automax-demo
+```
+
+### `pki.key_permissions`
+
+Enforce owner/group/mode on a private key or certificate file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pki.key_permissions
+with:
+  path: /tmp/automax-demo
+```
+
 ## process
 
 ### `process.kill`

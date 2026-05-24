@@ -211,6 +211,11 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         HealthPortPlugin,
         HealthProcessPlugin,
     )
+    from automax.plugins.pki import (
+        PkiCaInstallPlugin,
+        PkiCertExpiryAssertPlugin,
+        PkiKeyPermissionsPlugin,
+    )
     from automax.plugins.local_command import LocalCommandPlugin
     from automax.plugins.multipath import (
         MultipathFlushPlugin,
@@ -427,6 +432,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         HealthListenPlugin(),
         HealthProcessPlugin(),
         HealthHttpPlugin(),
+        PkiCaInstallPlugin(),
+        PkiKeyPermissionsPlugin(),
+        PkiCertExpiryAssertPlugin(),
         ArchiveTarPlugin(),
         ArchiveUntarPlugin(),
         ArchiveCompressPlugin(),

@@ -180,6 +180,9 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "metric": {"type": "integer", "description": "Route metric."},
 
     "listen": {"type": "boolean", "default": True, "description": "Check whether a port is listening on the target."},
+
+    "min_days": {"type": "integer", "default": 30, "description": "Minimum remaining certificate validity in days."},
+    "update_trust": {"type": "boolean", "default": True, "description": "Refresh the system trust store after installing a CA certificate."},
     "changed": {"type": "boolean", "default": True, "description": "Whether a successful command should be reported as changed."},
 }
 
@@ -389,6 +392,9 @@ SAMPLE_VALUES: dict[str, Any] = {
     "metric": 100,
 
     "listen": True,
+
+    "min_days": 30,
+    "update_trust": True,
     "changed": True,
 }
 

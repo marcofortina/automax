@@ -118,6 +118,14 @@ that ports, processes and HTTP endpoints are available after a change. These
 macros are read-only and provide explicit no-diff reasons plus copy/pasteable
 manual checks.
 
+
+## Certificate and PKI operations
+
+Use `pki.ca_install`, `pki.key_permissions` and `pki.cert_expiry_assert` to
+install CA certificates, enforce private-key permissions and validate certificate
+expiry windows. File-changing operations include preview data and backups where
+applicable.
+
 ## Recovery workflow
 
 All Linux operation macros should be used with the operator recovery commands:
