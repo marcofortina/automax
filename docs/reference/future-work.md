@@ -156,3 +156,101 @@ acl.default_remove
 
 The implementation should be explicit about `setfacl`/`getfacl` availability and
 should avoid silently emulating ACL behavior with broader `chmod` permissions.
+
+## Deferred plugin backlog
+
+The following items are intentionally deferred while the current scope focuses on
+readback, assertions and explicit Linux operation primitives.
+
+### Backup completeness
+
+Future backup work should extend the current `backup.file`, `backup.directory`,
+`backup.restore` and `backup.verify` primitives with:
+
+```text
+backup.manifest
+backup.prune
+backup.rotate
+backup.restore_preview
+backup.restore_verify
+```
+
+These should preserve the existing safety model: explicit output paths, checksum
+metadata, no silent overwrite, and restore validation before destructive use.
+
+### Systemd resource completeness
+
+The current `systemctl.*` and `systemd.unit/timer/tmpfiles/sysusers` plugins are
+sufficient for now. Future systemd resource plugins may include:
+
+```text
+systemd.dropin
+systemd.socket
+systemd.path
+systemd.journal_config
+systemd.unit_verify
+```
+
+`systemd.unit_verify` should wrap `systemd-analyze verify` and remain read-only.
+
+### Log and journal assertions
+
+Current `log.*` and `journal.*` plugins cover grep, collect and export. Future
+assertive plugins may include:
+
+```text
+journal.assert
+log.assert_absent
+log.tail
+log.since
+```
+
+These should be used for postcheck evidence after service and security changes.
+
+### Package install enhancements
+
+`pkg.install` is intentionally left unchanged in the current series. Future
+install hardening may add:
+
+```text
+version
+enablerepo / disablerepo
+no_recommends
+lock_after_install
+```
+
+These options should be implemented cross-distro without hiding package-manager
+specific behavior.
+
+### PAM hardening candidates
+
+Automax currently includes `pam.limits`, `limits.dropin`, password policy and
+login.defs primitives. Additional PAM work should stay explicit and distro-aware:
+
+```text
+pam.access        # manage pam_access enablement and access.conf snippets
+pam.faillock      # manage faillock/pam_tally replacement policy where available
+pam.pwhistory     # manage password history policy
+pam.succeed_if    # assert or render guarded PAM conditions
+pam.validate      # run conservative syntax/readback checks on PAM service files
+```
+
+PAM plugins must always back up service files by default, render exact manual
+commands, and avoid broad template rewrites of `/etc/pam.d/*`.
+
+### fs.remove safety hardening
+
+`fs.remove` is intentionally small today. A future hardening pass should add:
+
+```text
+confirm
+backup_before
+trash_dir
+max_depth
+allowlist / denylist guards
+refuse_root_paths
+require_recursive_for_directories
+```
+
+The goal is to prevent accidental broad deletes while keeping the existing simple
+idempotent behavior for safe paths.
