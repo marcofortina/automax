@@ -616,6 +616,41 @@ with:
   sudo: true
 ```
 
+## backup
+
+### `backup.file`
+
+Create a timestampable backup copy of a remote file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: backup.file
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+```
+
 ## block
 
 ### `block.facts`

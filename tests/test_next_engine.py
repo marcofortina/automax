@@ -3588,3 +3588,14 @@ def test_transfer_rsync_plugin_renders_secret_free_manual_command():
     assert "127.0.0.1:/opt/app/" in command
     assert "*.tmp" in command
     assert "rsync --dry-run" in TransferRsyncPlugin().diff_preview_reason({}, context)
+
+
+def test_backup_file_plugin_renders_copy_and_checksum():
+    from automax.plugins.backup import BackupFilePlugin
+
+    assert "backup.file" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = BackupFilePlugin().manual_commands({"src": "/etc/hosts", "dest": "/backup/hosts"}, context)[0]
+    assert "cp -a /etc/hosts /backup/hosts" in command
+    assert "sha256sum /backup/hosts" in command
+    assert "backup artifact" in BackupFilePlugin().diff_preview_reason({}, context)

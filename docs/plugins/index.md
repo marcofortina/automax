@@ -35,6 +35,7 @@ assert.tcp
 auditd.reload
 auditd.rule
 auditd.status
+backup.file
 block.facts
 block.identity
 block.mkfs

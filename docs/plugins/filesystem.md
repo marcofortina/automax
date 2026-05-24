@@ -273,3 +273,10 @@ step.
 
 `fs.cd` does not keep a shell open. It updates Automax `step_state` and later
 remote commands are prefixed with `cd <path> &&` where supported.
+
+
+## Operational backups
+
+`backup.file` creates an explicit remote backup copy and checksum before risky
+maintenance operations. Backup operations are intentionally separate from file
+mutation plugins so operators can preview and run them as dedicated steps.
