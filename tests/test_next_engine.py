@@ -4071,3 +4071,17 @@ def test_firewall_readback_plugins_render_manual_commands():
     assert "iptables -t filter -L -n INPUT" in registry.get("iptables.list").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
     assert "iptables -t filter -S INPUT" in registry.get("iptables.policy").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
     assert "iptables -t filter -L -n INPUT" in registry.get("iptables.chain").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
+
+
+def test_package_inspection_plugins_render_manual_commands():
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins.registry import build_builtin_registry
+
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
+    registry = build_builtin_registry()
+
+    assert "dpkg-query -W" in registry.get("pkg.version_assert").manual_commands({"name": "curl", "version": "1.0", "manager": "apt", "sudo": False}, context)[0]
+    assert "dpkg-query -S /usr/bin/curl" in registry.get("pkg.owner").manual_commands({"path": "/usr/bin/curl", "manager": "apt", "sudo": False}, context)[0]
+    assert "dpkg -L curl" in registry.get("pkg.files").manual_commands({"name": "curl", "manager": "apt", "sudo": False}, context)[0]
+    assert "dpkg -V curl" in registry.get("pkg.verify").manual_commands({"name": "curl", "manager": "apt", "sudo": False}, context)[0]
+    assert "apt-get clean" in registry.get("pkg.clean").manual_commands({"manager": "apt", "sudo": False}, context)[0]

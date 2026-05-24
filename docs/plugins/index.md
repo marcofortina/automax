@@ -160,10 +160,13 @@ nftables.list
 nftables.validate
 pam.limits
 password.policy
+pkg.clean
+pkg.files
 pkg.hold
 pkg.install
 pkg.key.add
 pkg.key.remove
+pkg.owner
 pkg.query
 pkg.remove
 pkg.repo.add
@@ -172,6 +175,8 @@ pkg.repo_priority
 pkg.unhold
 pkg.update_cache
 pkg.upgrade
+pkg.verify
+pkg.version_assert
 pkg.version_pin
 pki.ca_install
 pki.cert_expiry_assert

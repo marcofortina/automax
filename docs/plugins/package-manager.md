@@ -77,3 +77,10 @@ Returns package installation state without changing the host.
 ## Repository keys and definitions
 
 Use `pkg.key.add` and `pkg.key.remove` for package signing keys. Use `pkg.repo.add` and `pkg.repo.remove` for repository definitions. Keep key and repository changes in separate substeps so package-manager trust changes remain reviewable.
+
+## Inspection and verification
+
+Use `pkg.version_assert` to gate a run on an expected installed package version.
+Use `pkg.owner` and `pkg.files` for troubleshooting package/file ownership. Use
+`pkg.verify` for package-manager integrity checks and `pkg.clean` for explicit
+cache cleanup.

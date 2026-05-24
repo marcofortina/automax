@@ -279,11 +279,16 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         MountPresentPlugin,
     )
     from automax.plugins.pkg import (
+        PackageCleanPlugin,
+        PackageFilesPlugin,
         PackageInstallPlugin,
+        PackageOwnerPlugin,
         PackageQueryPlugin,
         PackageRemovePlugin,
         PackageUpdateCachePlugin,
         PackageUpgradePlugin,
+        PackageVerifyPlugin,
+        PackageVersionAssertPlugin,
     )
     from automax.plugins.pkg_repo import (
         PackageKeyAddPlugin,
@@ -439,6 +444,11 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PackageUpdateCachePlugin(),
         PackageUpgradePlugin(),
         PackageQueryPlugin(),
+        PackageVersionAssertPlugin(),
+        PackageOwnerPlugin(),
+        PackageFilesPlugin(),
+        PackageVerifyPlugin(),
+        PackageCleanPlugin(),
         PackageKeyAddPlugin(),
         PackageKeyRemovePlugin(),
         PackageRepoAddPlugin(),
