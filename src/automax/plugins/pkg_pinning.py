@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from difflib import unified_diff
-from typing import Dict
+from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
