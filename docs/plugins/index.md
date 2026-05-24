@@ -70,6 +70,7 @@ block.partition_rescan
 block.rescan
 block.size_assert
 block.wipe_signatures
+capability.assert
 cert.expiry_report
 cert.fingerprint
 cert.generate_csr
@@ -257,6 +258,7 @@ pki.ca_install
 pki.cert_expiry_assert
 pki.key_permissions
 platform.facts
+plugin.requirements
 process.assert_absent
 process.assert_count
 process.kill
@@ -265,6 +267,9 @@ process.wait
 remote.command
 resolver.config
 resolver.facts
+secret.redact_assert
+secret.scan_output
+secret.scan_preview
 selinux.boolean
 selinux.context
 selinux.fcontext
@@ -317,6 +322,8 @@ systemd.unit
 timedatectl.ntp
 timedatectl.status
 timedatectl.timezone
+tool.exists
+tool.version_assert
 transfer.download
 transfer.rsync
 transfer.sync

@@ -100,3 +100,18 @@ PAM stack assertion and backup plugins complement the mutating PAM plugins:
 `pam.include_assert`, `pam.module_assert`, `pam.order_assert`, `pam.backup` and
 `pam.restore`. `pam.restore` requires `confirm: true` because it can affect login
 paths.
+
+## Capability preflight and redaction policy
+
+Use `capabilities requirements` to derive remote tool requirements from the selected job plan before execution. Use `--preflight-capabilities` on `automax run`, or set `preflight.capabilities: true` in the job, to make Automax check required remote executables before running selected substeps.
+
+The explicit capability plugins are:
+
+```text
+tool.exists
+tool.version_assert
+capability.assert
+plugin.requirements
+```
+
+Use `secret.redact_assert`, `secret.scan_output` and `secret.scan_preview` to validate that previews, command output and registered payloads do not expose declared secret values or common secret-shaped assignments such as `password=...`, bearer tokens or private-key blocks.

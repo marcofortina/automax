@@ -93,6 +93,7 @@ class PluginRegistry:
 
 def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegistry:
     """Create a registry with builtin plugins and optional external plugins."""
+    from automax.plugins.capabilities import CapabilityAssertPlugin, PluginRequirementsPlugin, ToolExistsPlugin, ToolVersionAssertPlugin
     from automax.plugins.block import (
         BlockFactsPlugin,
         BlockIdentityPlugin,
@@ -393,6 +394,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PackageRepoAddPlugin,
         PackageRepoRemovePlugin,
     )
+    from automax.plugins.redaction import SecretRedactAssertPlugin, SecretScanOutputPlugin, SecretScanPreviewPlugin
     from automax.plugins.remote_command import RemoteCommandPlugin
     from automax.plugins.transfer import (
         TransferDownloadPlugin,
@@ -472,6 +474,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         LocalCommandPlugin(),
         AlternativesGetPlugin(),
         AlternativesListPlugin(),
+        ToolExistsPlugin(),
+        ToolVersionAssertPlugin(),
+        CapabilityAssertPlugin(),
+        PluginRequirementsPlugin(),
         AlternativesSetPlugin(),
         BackupFilePlugin(),
         BackupDirectoryPlugin(),
@@ -598,6 +604,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         AuditdSyscallPlugin(),
         AuditdSearchPlugin(),
         AuditdBacklogAssertPlugin(),
+        SecretRedactAssertPlugin(),
+        SecretScanOutputPlugin(),
+        SecretScanPreviewPlugin(),
         RemoteCommandPlugin(),
         PackageInstallPlugin(),
         PackageRemovePlugin(),

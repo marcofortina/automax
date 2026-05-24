@@ -121,6 +121,25 @@ def _echo_vars_payload(payload: Dict[str, Any], output_format: str) -> None:
             click.echo(f"    {node['node_id']} {node['plugin']}")
 
 
+def _echo_capabilities_payload(payload: Dict[str, Any], output_format: str) -> None:
+    if output_format == "json":
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    click.echo(f"Job: {payload['job']}")
+    click.echo(f"Targets: {payload['target_count']}  Tools: {payload['tool_count']}")
+    for target in payload["targets"]:
+        click.echo(f"Target {target['target']} {target['host']}")
+        if not target["tools"]:
+            click.echo("  - no external tool requirements detected")
+            continue
+        for tool in target["tools"]:
+            plugins = ", ".join(target["plugins"].get(tool, []))
+            click.echo(f"  {tool}: {plugins}")
+        click.echo("  preflight commands:")
+        for command in target["commands"]:
+            click.echo(f"    {command}")
+
+
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(version=__version__, prog_name="Automax")
 def cli() -> None:
@@ -156,6 +175,7 @@ def _apply_common_options(function):
 @click.option("--lock", is_flag=True, help="Acquire job/target locks before executing.")
 @click.option("--lock-scope", type=click.Choice(["job", "target", "both"]), default="both", show_default=True, help="Lock job, targets or both.")
 @click.option("--lock-timeout", type=float, default=0.0, show_default=True, help="Seconds to wait for locks.")
+@click.option("--preflight-capabilities", is_flag=True, help="Check remote tools required by the selected job before execution.")
 @click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", show_default=True, help="Output format for the final run summary.")
 def run(
     job_path: str,
@@ -175,6 +195,7 @@ def run(
     lock: bool,
     lock_scope: str,
     lock_timeout: float,
+    preflight_capabilities: bool,
     output_format: str,
 ) -> None:
     """Run a job from external YAML definitions."""
@@ -213,6 +234,7 @@ def run(
             lock=lock,
             lock_scope=lock_scope,
             lock_timeout=lock_timeout,
+            preflight_capabilities=preflight_capabilities,
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc
@@ -730,6 +752,7 @@ def doctor(state_dir: str, as_json: bool) -> None:
 @click.option("--lock", is_flag=True, help="Acquire job/target locks before executing.")
 @click.option("--lock-scope", type=click.Choice(["job", "target", "both"]), default="both", show_default=True, help="Lock job, targets or both.")
 @click.option("--lock-timeout", type=float, default=0.0, show_default=True, help="Seconds to wait for locks.")
+@click.option("--preflight-capabilities", is_flag=True, help="Check remote tools required by the selected job before execution.")
 @click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", show_default=True, help="Output format for the final resume summary.")
 def resume(
     run_id: str,
@@ -747,6 +770,7 @@ def resume(
     lock: bool,
     lock_scope: str,
     lock_timeout: float,
+    preflight_capabilities: bool,
     output_format: str,
 ) -> None:
     """Resume an existing run from failed or explicit checkpoint."""
@@ -905,6 +929,57 @@ def check_secrets(
     if not payload["ok"]:
         raise click.ClickException("one or more secrets failed checks")
 
+
+
+@cli.group()
+def capabilities() -> None:
+    """Inspect job-scoped remote capability requirements."""
+
+
+@capabilities.command("requirements")
+@_apply_common_options
+@click.option("--limit", multiple=True, help="Limit targets. Accepts server, group or group:name.")
+@click.option("--exclude", multiple=True, help="Exclude targets. Accepts server, group or group:name.")
+@click.option("--tags", multiple=True, help="Show requirements for substeps matching one of these tags.")
+@click.option("--skip-tags", multiple=True, help="Hide requirements for substeps matching one of these tags.")
+@click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    show_default=True,
+    help="Output format.",
+)
+def capability_requirements(
+    job_path: str,
+    inventory_path: str,
+    vars_path: str | None,
+    secrets_path: str | None,
+    cli_vars: tuple[str, ...],
+    limit: tuple[str, ...],
+    exclude: tuple[str, ...],
+    tags: tuple[str, ...],
+    skip_tags: tuple[str, ...],
+    plugin_path: tuple[str, ...],
+    output_format: str,
+) -> None:
+    """Render tool requirements derived from the selected job plan."""
+    try:
+        payload = _engine(plugin_path).capability_requirements_job(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=_split_selectors(limit),
+            exclude=_split_selectors(exclude),
+            tags=_split_selectors(tags),
+            skip_tags=_split_selectors(skip_tags),
+            cli_vars=_parse_vars(cli_vars),
+        )
+    except (AutomaxError, ValueError, RuntimeError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _echo_capabilities_payload(payload, output_format)
 
 
 @cli.group()

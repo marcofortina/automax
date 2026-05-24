@@ -20,9 +20,11 @@ import time
 import uuid
 from typing import Any, Dict, Iterable, List, Optional
 
+from automax.core.capabilities import collect_requirements
 from automax.core.inventory import Inventory, load_inventory_document
 from automax.core.job_views import build_job_view
 from automax.core.locks import LockManager
+from automax.core.redaction import iter_secret_texts, redact_mapping, redact_text
 from automax.core.models import ExecutionContext, NodeStatus, PluginResult, Target
 from automax.core.secrets import SecretManager
 from automax.core.ssh import SshSessionManager
@@ -94,6 +96,7 @@ class AutomaxEngine:
         lock: bool = False,
         lock_scope: str = "both",
         lock_timeout: float = 0,
+        preflight_capabilities: bool = False,
     ) -> int:
         """Execute a new run from external YAML files."""
         self._validate_output_format(output_format)
@@ -138,6 +141,7 @@ class AutomaxEngine:
                 "lock": lock,
                 "lock_scope": lock_scope,
                 "lock_timeout": lock_timeout,
+                "preflight_capabilities": preflight_capabilities,
             },
         )
         store.record_event("job_started", payload={"job": self._job_name(job)})
@@ -155,6 +159,10 @@ class AutomaxEngine:
                 store.update_run_status(NodeStatus.SUCCESS)
                 self._print_plan(run_id, plan, output_format=output_format)
                 return 0
+
+            if preflight_capabilities or bool(job.get("preflight", {}).get("capabilities", False)):
+                self._run_capability_preflight(job=job, plan=plan, variables=variables, secrets=secrets)
+                store.record_event("capability_preflight_ok", payload={"targets": len({item["target"].name for item in plan})})
 
             lock_manager = LockManager.for_state_dir(state_dir) if lock else None
             acquired_locks = []
@@ -772,6 +780,40 @@ class AutomaxEngine:
             "nodes": rows,
         }
 
+    def capability_requirements_job(
+        self,
+        *,
+        job_path: str,
+        inventory_path: str,
+        vars_path: str | None = None,
+        secrets_path: str | None = None,
+        limit: Iterable[str] = (),
+        exclude: Iterable[str] = (),
+        tags: Iterable[str] = (),
+        skip_tags: Iterable[str] = (),
+        cli_vars: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Return job-scoped remote capability requirements from the selected plan."""
+        resolved = self.resolve_job_context(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=limit,
+            exclude=exclude,
+            tags=tags,
+            skip_tags=skip_tags,
+            cli_vars=cli_vars,
+        )
+        requirements = collect_requirements(self.iter_rendered_plan_items(resolved, dry_run=True))
+        return {
+            "job": self._job_name(resolved.job),
+            "mode": "capability-requirements",
+            "targets": [requirements[name] for name in sorted(requirements)],
+            "target_count": len(requirements),
+            "tool_count": len({tool for item in requirements.values() for tool in item["tools"]}),
+        }
+
     def validate(
         self,
         *,
@@ -1083,6 +1125,48 @@ class AutomaxEngine:
         if not plan:
             raise AutomaxError("job plan is empty after target/tag filtering")
         return plan
+
+    def _run_capability_preflight(
+        self,
+        *,
+        job: Dict[str, Any],
+        plan: List[Dict[str, Any]],
+        variables: Dict[str, Any],
+        secrets: Dict[str, Any],
+    ) -> None:
+        """Check remote tools required by the selected job before executing it."""
+        rendered_items = []
+        resolved = ResolvedJobContext(
+            job_path="",
+            inventory_path="",
+            vars_path=None,
+            secrets_path=None,
+            documents={},
+            job=job,
+            inventory=None,  # type: ignore[arg-type]
+            variables=variables,
+            secrets=secrets,
+            plan=plan,
+        )
+        rendered_items.extend(self.iter_rendered_plan_items(resolved, dry_run=True))
+        requirements = collect_requirements(rendered_items)
+        for target_name, entry in requirements.items():
+            tools = entry["tools"]
+            if not tools:
+                continue
+            target = next(item["target"] for item in plan if item["target"].name == target_name)
+            command = "missing=0; " + " ".join(
+                f"command -v {tool} >/dev/null 2>&1 || {{ echo 'missing tool: {tool}' >&2; missing=1; }};"
+                for tool in tools
+            ) + " exit $missing"
+            with self.ssh_manager.connect(target) as client:
+                stdin, stdout, stderr = client.exec_command(command)
+                rc = stdout.channel.recv_exit_status()
+                out = stdout.read().decode("utf-8", errors="replace")
+                err = stderr.read().decode("utf-8", errors="replace")
+            if rc != 0:
+                detail = self._mask_text((out + "\n" + err).strip(), secrets)
+                raise AutomaxError(f"capability preflight failed for {target_name}: {detail}")
 
     def _execute_plan(
         self,
@@ -1721,40 +1805,17 @@ class AutomaxEngine:
         }
 
     def _mask_mapping(self, value: Any, secrets: Dict[str, Any]) -> Any:
-        if isinstance(value, dict):
-            return {key: self._mask_mapping(item, secrets) for key, item in value.items()}
-        if isinstance(value, list):
-            return [self._mask_mapping(item, secrets) for item in value]
-        if isinstance(value, tuple):
-            return tuple(self._mask_mapping(item, secrets) for item in value)
-        if isinstance(value, str):
-            return self._mask_text(value, secrets)
-        return value
+        return redact_mapping(value, secrets)
 
     @classmethod
     def _mask_text(cls, value: str, secrets: Dict[str, Any]) -> str:
-        """Mask every printable secret value before logs/state/artifacts persist it."""
-        masked = str(value)
-        for secret_text in cls._iter_secret_texts(secrets):
-            masked = masked.replace(secret_text, "***")
-        return masked
+        """Mask declared secrets and secret-shaped values before persistence."""
+        return redact_text(str(value), secrets)
 
     @classmethod
     def _iter_secret_texts(cls, value: Any) -> Iterable[str]:
         """Yield nested secret strings, ignoring tiny values that would over-mask logs."""
-        if isinstance(value, dict):
-            for item in value.values():
-                yield from cls._iter_secret_texts(item)
-            return
-        if isinstance(value, (list, tuple, set)):
-            for item in value:
-                yield from cls._iter_secret_texts(item)
-            return
-        if value is None:
-            return
-        secret_text = str(value)
-        if len(secret_text) >= 4:
-            yield secret_text
+        yield from iter_secret_texts(value)
 
     @staticmethod
     def _node_status_for_result(result: PluginResult) -> NodeStatus:

@@ -4032,6 +4032,8 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["connection"] = {"path": "/tmp/automax.sqlite"}
     if plugin.name in {"lvm.lv_remove", "lvm.vg_remove", "lvm.pv_remove", "backup.restore", "backup.prune", "backup.rotate", "iptables.restore", "fs.remove"}:
         params["confirm"] = True
+    if plugin.name == "plugin.requirements":
+        params["plugin"] = "transfer.rsync"
     if plugin.name == "fs.remove":
         params["path"] = "/tmp/automax-demo"
         params["allowlist"] = ["/tmp"]
@@ -4367,3 +4369,88 @@ def test_fs_write_template_metadata_exposes_atomic_option():
     for name in ("fs.write", "fs.template"):
         params = {parameter["name"] for parameter in registry.get(name).metadata()["parameters"]}
         assert "atomic" in params
+
+
+def test_capability_requirements_are_derived_from_selected_job(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: caps
+preflight:
+  capabilities: true
+tasks:
+  - id: ops
+    targets: all
+    steps:
+      - id: transfer
+        substeps:
+          - id: sync
+            use: transfer.rsync
+            with:
+              src: /tmp/src
+              dest: /tmp/dest
+          - id: acl
+            use: fs.acl.restore
+            with:
+              file: /tmp/acl.backup
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    payload = AutomaxEngine().capability_requirements_job(job_path=str(job), inventory_path=str(inventory))
+
+    assert payload["tool_count"] >= 2
+    target = payload["targets"][0]
+    assert "rsync" in target["tools"]
+    assert "setfacl" in target["tools"]
+    assert target["plugins"]["rsync"] == ["transfer.rsync"]
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "capabilities",
+            "requirements",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--format",
+            "json",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    rendered = json.loads(result.output)
+    assert rendered["mode"] == "capability-requirements"
+    assert "rsync" in rendered["targets"][0]["tools"]
+
+
+def test_capability_and_redaction_plugins_render_safe_previews():
+    context = ExecutionContext(
+        run_id="test",
+        dry_run=True,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="node", host="host"),
+        vars={},
+        outputs={},
+        secrets={"token": "super-secret-token"},
+    )
+    registry = AutomaxEngine().plugin_registry
+
+    assert registry.get("tool.exists").manual_commands({"name": "rsync"}, context) == ["command -v rsync"]
+    assert "grep -F" in registry.get("tool.version_assert").manual_commands({"name": "rsync", "contains": "rsync"}, context)[0]
+    assert "command -v setfacl" in registry.get("capability.assert").manual_commands({"tools": ["setfacl"]}, context)[0]
+    assert registry.get("plugin.requirements").execute({"plugin": "transfer.rsync"}, context).data["requirements"]["transfer.rsync"] == ["rsync"]
+
+    redacted = registry.get("secret.scan_output").execute({"text": "token=super-secret-token password=abc"}, context)
+    assert redacted.ok
+    assert redacted.data["changed_by_redaction"] is True
+    assert "super-secret-token" not in redacted.data["redacted"]
+    assert "password=***" in redacted.data["redacted"]
+    leaked = registry.get("secret.redact_assert").execute({"text": "value=super-secret-token"}, context)
+    assert not leaked.ok

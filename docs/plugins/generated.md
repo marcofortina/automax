@@ -1785,6 +1785,38 @@ with:
   device: /dev/sdb
 ```
 
+## capability
+
+### `capability.assert`
+
+Assert remote tools, paths and optional shell checks required by a job preflight.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `tools` | no | `list` |  | Executable names required by a capability preflight. |
+| `paths` | no | `list` |  | Relative paths selected for manifest or inventory operations. |
+| `commands` | no | `list` |  | Allowed sudo command list or ALL. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: capability.assert
+```
+
 ## cert
 
 ### `cert.expiry_report`
@@ -8284,6 +8316,36 @@ with:
   sudo: true
 ```
 
+## plugin
+
+### `plugin.requirements`
+
+Report remote tools required by one or more plugins without connecting to a target.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `plugin` | no | `string` |  | Plugin name selected for requirements inspection. |
+| `plugins` | no | `list` |  | Plugin names selected for requirements inspection. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: plugin.requirements
+```
+
 ## process
 
 ### `process.assert_absent`
@@ -8560,6 +8622,104 @@ Example:
 use: resolver.facts
 with:
   sudo: true
+```
+
+## secret
+
+### `secret.redact_assert`
+
+Assert that a payload contains no declared secret values after redaction policy is applied.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `text` | no | `string` |  | Text payload for redaction scanning or assertion. |
+| `value` | no | `string` |  | Desired parameter value. |
+| `source` | no | `path` |  | Remote source path to archive. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: secret.redact_assert
+with:
+  text: password=secret
+  value: 1
+```
+
+### `secret.scan_output`
+
+Scan an arbitrary output payload and report whether redaction would change it.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `text` | no | `string` |  | Text payload for redaction scanning or assertion. |
+| `value` | no | `string` |  | Desired parameter value. |
+| `source` | no | `path` |  | Remote source path to archive. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: secret.scan_output
+with:
+  text: password=secret
+  value: 1
+```
+
+### `secret.scan_preview`
+
+Scan preview/manual-command text with the same redaction policy used by the engine.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `text` | no | `string` |  | Text payload for redaction scanning or assertion. |
+| `value` | no | `string` |  | Desired parameter value. |
+| `source` | no | `path` |  | Remote source path to archive. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: secret.scan_preview
+with:
+  text: password=secret
+  value: 1
 ```
 
 ## selinux
@@ -10318,6 +10478,70 @@ Example:
 use: timedatectl.timezone
 with:
   timezone: value
+```
+
+## tool
+
+### `tool.exists`
+
+Assert that one executable exists on the remote PATH.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: tool.exists
+with:
+  name: nginx
+```
+
+### `tool.version_assert`
+
+Assert that a remote tool version output contains or matches the expected value.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `version_arg` | no | `string` | `--version` | Argument used to print a tool version. |
+| `contains` | no | `string` |  | Required substring in stdout or HTTP response body. |
+| `regex` | no | `string` |  | Regular expression expected in command output. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: tool.version_assert
+with:
+  name: nginx
 ```
 
 ## transfer

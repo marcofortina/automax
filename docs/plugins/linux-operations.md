@@ -236,3 +236,13 @@ Time synchronization helpers include `timedatectl.status`,
 User and group readback/assertion plugins include `user.facts`,
 `user.shell_assert`, `user.home_assert`, `user.groups_assert`, `group.members`
 and `group.member_absent`. Removing a group member requires `confirm: true`.
+
+## Job-scoped capability preflight
+
+Automax can derive remote command dependencies from the selected job plan and render per-target checks. This keeps dependency preflight scoped to the actual plugins that will run, rather than requiring broad host assumptions.
+
+```bash
+automax capabilities requirements --job jobs/site.yaml --inventory inventory/prod.yaml
+```
+
+Use job-level `preflight.capabilities: true` or the `automax run --preflight-capabilities` flag to make the run fail early when required remote tools are missing.
