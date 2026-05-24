@@ -138,3 +138,31 @@ class PasswordPolicyPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="password.policy failed")
+
+class AuthselectProfilePlugin(BasePlugin):
+    name = "authselect.profile"
+    description = "Select an authselect profile with optional features and backup."
+    required_params = ("profile",)
+    optional_params = ("features", "backup", "force", "sudo")
+    opens_remote_session = True
+
+    def _features(self, params: Dict[str, Any]) -> list[str]:
+        raw = params.get("features") or []
+        if isinstance(raw, str):
+            return [raw]
+        return [str(item) for item in raw]
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "authselect.profile changes PAM/NSS profile state through authselect"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        sudo = _sudo(params)
+        features = " ".join(quote(item) for item in self._features(params))
+        backup = " --backup=automax" if bool(params.get("backup", True)) else ""
+        force = " --force" if bool(params.get("force", False)) else ""
+        return [f"{sudo}authselect select {quote(params['profile'])}{(' ' + features) if features else ''}{backup}{force}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="authselect.profile failed")

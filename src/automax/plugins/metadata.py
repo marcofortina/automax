@@ -90,6 +90,7 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "fail_on_disabled": {"type": "boolean", "default": False, "description": "Fail when the queried service is not enabled."},
     "fail_on_inactive": {"type": "boolean", "default": False, "description": "Fail when the queried service is not active."},
     "fetch": {"type": "string", "default": "all", "description": "Database fetch mode: all, one or none."},
+    "features": {"type": "list", "description": "Profile or backend feature flags."},
     "file": {"type": "path", "description": "Remote configuration file path."},
     "module": {"type": "string", "description": "Linux kernel module name."},
     "persist": {"type": "boolean", "default": False, "description": "Persist the change across reboots."},

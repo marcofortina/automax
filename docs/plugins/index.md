@@ -35,6 +35,7 @@ assert.tcp
 auditd.reload
 auditd.rule
 auditd.status
+authselect.profile
 backup.directory
 backup.file
 backup.restore

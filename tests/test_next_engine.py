@@ -3762,3 +3762,14 @@ def test_password_policy_plugin_renders_pwquality_dropin():
     assert "/etc/security/pwquality.conf.d/10-hardening.conf" in commands
     assert "minlen = 14" in commands
     assert PasswordPolicyPlugin().diff_preview({"name": "10-hardening", "settings": {"minlen": 14}}, context)[0]["kind"] == "password-policy-plan"
+
+
+def test_authselect_profile_plugin_renders_profile_selection():
+    from automax.plugins.hardening import AuthselectProfilePlugin
+
+    assert "authselect.profile" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = AuthselectProfilePlugin().manual_commands({"profile": "sssd", "features": ["with-faillock"]}, context)[0]
+    assert "authselect select sssd with-faillock" in command
+    assert "--backup=automax" in command
+    assert "authselect" in AuthselectProfilePlugin().diff_preview_reason({}, context)

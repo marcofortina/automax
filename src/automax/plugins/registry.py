@@ -221,7 +221,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         NetworkRoutePlugin,
         NetworkVlanPlugin,
     )
-    from automax.plugins.hardening import LoginDefsPlugin, PasswordPolicyPlugin, SshdConfigPlugin
+    from automax.plugins.hardening import AuthselectProfilePlugin, LoginDefsPlugin, PasswordPolicyPlugin, SshdConfigPlugin
     from automax.plugins.health import (
         HealthHttpPlugin,
         HealthListenPlugin,
@@ -433,6 +433,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SshdConfigPlugin(),
         LoginDefsPlugin(),
         PasswordPolicyPlugin(),
+        AuthselectProfilePlugin(),
         SshConfigPlugin(),
         SshKnownHostsPlugin(),
         SudoersDropinPlugin(),

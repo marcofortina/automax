@@ -616,6 +616,41 @@ with:
   sudo: true
 ```
 
+## authselect
+
+### `authselect.profile`
+
+Select an authselect profile with optional features and backup.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile name or profile file path. |
+| `features` | no | `list` |  | Profile or backend feature flags. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: authselect.profile
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+```
+
 ## backup
 
 ### `backup.directory`
