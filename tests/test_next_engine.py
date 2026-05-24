@@ -3803,3 +3803,13 @@ def test_cert_verify_chain_plugin_renders_read_only_verify():
     command = CertVerifyChainPlugin().manual_commands({"cert": "/tmp/app.crt", "ca_file": "/tmp/ca.crt"}, context)[0]
     assert "openssl verify -CAfile /tmp/ca.crt /tmp/app.crt" in command
     assert CertVerifyChainPlugin().supports_check_mode is True
+
+
+def test_cert_install_keypair_plugin_renders_permissions():
+    from automax.plugins.cert_ops import CertInstallKeypairPlugin
+
+    assert "cert.install_keypair" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    commands = " && ".join(CertInstallKeypairPlugin().manual_commands({"cert": "/tmp/app.crt", "key": "/tmp/app.key", "cert_dest": "/etc/pki/app.crt", "key_dest": "/etc/pki/private/app.key"}, context))
+    assert "install -D -m 0644 /tmp/app.crt /etc/pki/app.crt" in commands
+    assert "install -D -m 0600 /tmp/app.key /etc/pki/private/app.key" in commands

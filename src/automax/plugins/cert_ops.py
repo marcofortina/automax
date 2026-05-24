@@ -76,3 +76,39 @@ class CertVerifyChainPlugin(BasePlugin):
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cert.verify_chain failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+
+class CertInstallKeypairPlugin(BasePlugin):
+    name = "cert.install_keypair"
+    description = "Install a certificate and private key with safe permissions and optional validation."
+    required_params = ("cert", "key", "cert_dest", "key_dest")
+    optional_params = ("backup", "backup_suffix", "validate", "owner", "group", "sudo")
+    opens_remote_session = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "cert.install_keypair installs certificate material and enforces file permissions"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        sudo = _sudo(params)
+        cert_dest = str(params["cert_dest"])
+        key_dest = str(params["key_dest"])
+        commands = []
+        if bool(params.get("validate", True)):
+            commands.append(f"openssl x509 -in {quote(params['cert'])} -noout")
+            commands.append(f"openssl pkey -in {quote(params['key'])} -noout")
+        if bool(params.get("backup", True)):
+            commands.append(f"test ! -e {quote(cert_dest)} || {sudo}cp -p {quote(cert_dest)} {quote(cert_dest + str(params.get('backup_suffix', '.bak')))}")
+            commands.append(f"test ! -e {quote(key_dest)} || {sudo}cp -p {quote(key_dest)} {quote(key_dest + str(params.get('backup_suffix', '.bak')))}")
+        commands.extend([
+            f"{sudo}install -D -m 0644 {quote(params['cert'])} {quote(cert_dest)}",
+            f"{sudo}install -D -m 0600 {quote(params['key'])} {quote(key_dest)}",
+        ])
+        if params.get("owner") or params.get("group"):
+            owner = str(params.get("owner", ""))
+            group = str(params.get("group", ""))
+            commands.append(f"{sudo}chown {quote(owner + ':' + group)} {quote(cert_dest)} {quote(key_dest)}")
+        return commands
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="cert.install_keypair failed")

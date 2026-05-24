@@ -48,6 +48,7 @@ block.partition_rescan
 block.rescan
 block.wipe_signatures
 cert.generate_csr
+cert.install_keypair
 cert.self_signed
 cert.verify_chain
 chrony.servers

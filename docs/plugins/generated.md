@@ -1063,6 +1063,47 @@ with:
   subject: Automax notification
 ```
 
+### `cert.install_keypair`
+
+Install a certificate and private key with safe permissions and optional validation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `key` | yes | `string` |  | SSH public key line. |
+| `cert_dest` | yes | `path` |  | Installed certificate destination path. |
+| `key_dest` | yes | `path` |  | Installed private key destination path. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `validate` | no | `boolean` | `True` | Validate generated or uploaded content before installing it. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cert.install_keypair
+with:
+  cert: value
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+  cert_dest: value
+  key_dest: value
+```
+
 ### `cert.self_signed`
 
 Generate a self-signed certificate using an existing private key.

@@ -57,6 +57,8 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "commands": {"type": "list", "description": "Allowed sudo command list or ALL."},
     "nopassword": {"type": "boolean", "default": False, "description": "Whether to include NOPASSWD."},
     "cert": {"type": "path", "description": "Certificate path."},
+    "key_dest": {"type": "path", "description": "Installed private key destination path."},
+    "cert_dest": {"type": "path", "description": "Installed certificate destination path."},
     "untrusted": {"type": "path", "description": "Untrusted intermediate certificate chain file."},
     "ca_file": {"type": "path", "description": "CA bundle file path."},
     "config": {"type": "path", "description": "OpenSSL configuration file path."},
