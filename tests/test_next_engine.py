@@ -4128,3 +4128,18 @@ def test_ssh_security_plugins_render_manual_commands():
     assert "ssh-keygen -A" in registry.get("ssh.host_keygen").manual_commands({"sudo": False}, context)[0]
     assert "authorized_keys" in registry.get("ssh.authorized_key_absent").manual_commands({"user": "deploy", "key": "ssh-ed25519 AAA demo", "sudo": False}, context)[0]
     assert "sshd -t" in registry.get("sshd.validate").manual_commands({}, context)[0]
+
+
+def test_certificate_assert_plugins_render_manual_commands():
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins.registry import build_builtin_registry
+
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
+    registry = build_builtin_registry()
+
+    assert "-fingerprint" in registry.get("cert.fingerprint").manual_commands({"cert": "/tmp/cert.pem", "sudo": False}, context)[0]
+    assert "openssl pkey" in registry.get("cert.matches_key").manual_commands({"cert": "/tmp/cert.pem", "key": "/tmp/key.pem", "sudo": False}, context)[0]
+    assert "subjectAltName" in registry.get("cert.san_assert").manual_commands({"cert": "/tmp/cert.pem", "names": ["DNS:example.com"], "sudo": False}, context)[0]
+    assert "-subject" in registry.get("cert.subject_assert").manual_commands({"cert": "/tmp/cert.pem", "subject": "CN=example", "sudo": False}, context)[0]
+    assert "-issuer" in registry.get("cert.issuer_assert").manual_commands({"cert": "/tmp/cert.pem", "issuer": "CN=ca", "sudo": False}, context)[0]
+    assert "install -D" in " && ".join(registry.get("cert.install_ca_bundle").manual_commands({"src": "/tmp/ca.pem", "dest": "/usr/local/share/ca-certificates/ca.crt", "sudo": False}, context))

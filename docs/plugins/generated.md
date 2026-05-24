@@ -1153,6 +1153,37 @@ with:
   cert: value
 ```
 
+### `cert.fingerprint`
+
+Read a certificate fingerprint with openssl.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `algorithm` | no | `string` | `sha256` | Fingerprint or checksum algorithm name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cert.fingerprint
+with:
+  cert: value
+```
+
 ### `cert.generate_csr`
 
 Generate a CSR from an existing private key using openssl.
@@ -1186,6 +1217,44 @@ with:
   key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
   dest: /tmp/dest
   subject: Automax notification
+```
+
+### `cert.install_ca_bundle`
+
+Install a CA bundle file with safe permissions and optional trust-store refresh.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `update_trust` | no | `boolean` | `True` | Refresh the system trust store after installing a CA certificate. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cert.install_ca_bundle
+with:
+  src: /tmp/source
+  dest: /tmp/dest
 ```
 
 ### `cert.install_keypair`
@@ -1229,6 +1298,104 @@ with:
   key_dest: value
 ```
 
+### `cert.issuer_assert`
+
+Assert that a certificate issuer contains an expected string.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `issuer` | yes | `string` |  | Expected certificate issuer string. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cert.issuer_assert
+with:
+  cert: value
+  issuer: CN=Example CA
+```
+
+### `cert.matches_key`
+
+Assert that a certificate public key matches a private key.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `key` | yes | `string` |  | SSH public key line. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cert.matches_key
+with:
+  cert: value
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+```
+
+### `cert.san_assert`
+
+Assert that a certificate contains required Subject Alternative Names.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `names` | yes | `list` |  | Hostnames or aliases for a hosts entry. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cert.san_assert
+with:
+  cert: value
+  names:
+    - app1.example.com
+    - app1
+```
+
 ### `cert.self_signed`
 
 Generate a self-signed certificate using an existing private key.
@@ -1261,6 +1428,38 @@ Example:
 use: cert.self_signed
 with:
   key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+  cert: value
+  subject: Automax notification
+```
+
+### `cert.subject_assert`
+
+Assert that a certificate subject contains an expected string.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `subject` | yes | `string` |  | Email subject line. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cert.subject_assert
+with:
   cert: value
   subject: Automax notification
 ```

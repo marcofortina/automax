@@ -103,7 +103,19 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         BlockWipeSignaturesPlugin,
     )
     from automax.plugins.alternatives import AlternativesGetPlugin, AlternativesListPlugin, AlternativesSetPlugin
-    from automax.plugins.cert_ops import CertExpiryReportPlugin, CertGenerateCsrPlugin, CertInstallKeypairPlugin, CertSelfSignedPlugin, CertVerifyChainPlugin
+    from automax.plugins.cert_ops import (
+        CertExpiryReportPlugin,
+        CertFingerprintPlugin,
+        CertGenerateCsrPlugin,
+        CertInstallCaBundlePlugin,
+        CertInstallKeypairPlugin,
+        CertIssuerAssertPlugin,
+        CertMatchesKeyPlugin,
+        CertSanAssertPlugin,
+        CertSelfSignedPlugin,
+        CertSubjectAssertPlugin,
+        CertVerifyChainPlugin,
+    )
     from automax.plugins.backup import BackupDirectoryPlugin, BackupFilePlugin, BackupRestorePlugin, BackupVerifyPlugin
     from automax.plugins.auditd import AuditdReloadPlugin, AuditdRulePlugin, AuditdStatusPlugin
     from automax.plugins.archive import (
@@ -390,6 +402,12 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         CertInstallKeypairPlugin(),
         CertSelfSignedPlugin(),
         CertVerifyChainPlugin(),
+        CertFingerprintPlugin(),
+        CertMatchesKeyPlugin(),
+        CertSanAssertPlugin(),
+        CertSubjectAssertPlugin(),
+        CertIssuerAssertPlugin(),
+        CertInstallCaBundlePlugin(),
         HttpRequestPlugin(),
         HttpAssertPlugin(),
         HttpWaitPlugin(),

@@ -32,3 +32,9 @@ rules, and `sudo.validate` before relying on a sudoers change.
 Use `ssh.fingerprint`, `ssh.public_key`, `ssh.host_keygen`,
 `ssh.authorized_key_absent` and `sshd.validate` to make SSH key and daemon
 operations auditable before and after access-control changes.
+
+## Certificate assertions
+
+Use `cert.fingerprint`, `cert.matches_key`, `cert.san_assert`,
+`cert.subject_assert`, `cert.issuer_assert` and `cert.install_ca_bundle` for
+certificate prechecks, trust-bundle installation and post-install validation.

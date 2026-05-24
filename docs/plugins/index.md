@@ -51,9 +51,15 @@ block.partition_rescan
 block.rescan
 block.wipe_signatures
 cert.expiry_report
+cert.fingerprint
 cert.generate_csr
+cert.install_ca_bundle
 cert.install_keypair
+cert.issuer_assert
+cert.matches_key
+cert.san_assert
 cert.self_signed
+cert.subject_assert
 cert.verify_chain
 chrony.servers
 chrony.sources_assert
