@@ -2082,6 +2082,38 @@ with:
   path: /tmp/automax-demo
 ```
 
+### `fs.inode_usage_assert`
+
+Assert that filesystem inode usage is below a maximum percentage.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `max_percent` | yes | `integer` |  | Maximum allowed percentage. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: df -i assertion output.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.inode_usage_assert
+with:
+  path: /tmp/automax-demo
+  max_percent: value
+```
+
 ### `fs.line`
 
 Ensure an exact line is present or absent in a remote file.

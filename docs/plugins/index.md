@@ -77,6 +77,7 @@ fs.copy
 fs.disk_usage_assert
 fs.exists
 fs.find
+fs.inode_usage_assert
 fs.line
 fs.mkdir
 fs.move

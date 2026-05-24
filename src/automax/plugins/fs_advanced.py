@@ -84,3 +84,24 @@ class FsDiskUsageAssertPlugin(BasePlugin):
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.disk_usage_assert failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+
+class FsInodeUsageAssertPlugin(BasePlugin):
+    name = "fs.inode_usage_assert"
+    description = "Assert that filesystem inode usage is below a maximum percentage."
+    required_params = ("path", "max_percent")
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "fs.inode_usage_assert is a read-only df -i assertion"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [f"usage=$({_sudo(params)}df -Pi {quote(params['path'])} | awk 'NR==2 {{gsub(/%/, \"\", $5); print $5}}'); test \"$usage\" -le {quote(params['max_percent'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.inode_usage_assert failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)

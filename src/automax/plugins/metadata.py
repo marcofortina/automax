@@ -259,6 +259,7 @@ DEFAULT_RESULT_FIELDS = {
 RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
     "fs.bind_mount": {"data.path": "Bind mount target path when returned by the implementation."},
     "fs.disk_usage_assert": {"stdout": "df assertion output."},
+    "fs.inode_usage_assert": {"stdout": "df -i assertion output."},
     "fs.exists": {"data.exists": "Boolean path existence result.", "data.path": "Checked remote path."},
     "fs.stat": {"data.exists": "Boolean path existence result.", "data.size": "Path size in bytes.", "data.mode": "POSIX mode.", "data.owner": "Owner name.", "data.group": "Group name."},
     "fs.read": {"stdout": "Remote file content.", "data.path": "Read remote path."},

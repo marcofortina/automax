@@ -3655,3 +3655,14 @@ def test_fs_disk_usage_assert_plugin_renders_df_check():
     assert "df -P /" in command
     assert 'test "$usage" -le 90' in command
     assert FsDiskUsageAssertPlugin().supports_check_mode is True
+
+
+def test_fs_inode_usage_assert_plugin_renders_df_inode_check():
+    from automax.plugins.fs_advanced import FsInodeUsageAssertPlugin
+
+    assert "fs.inode_usage_assert" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = FsInodeUsageAssertPlugin().manual_commands({"path": "/", "max_percent": 85}, context)[0]
+    assert "df -Pi /" in command
+    assert 'test "$usage" -le 85' in command
+    assert FsInodeUsageAssertPlugin().supports_check_mode is True
