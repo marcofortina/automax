@@ -17,6 +17,7 @@ automax plugins list
 Current builtin plugins:
 
 ```text
+alternatives.get
 alternatives.set
 apparmor.profile
 apparmor.reload

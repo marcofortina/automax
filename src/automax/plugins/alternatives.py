@@ -36,3 +36,25 @@ class AlternativesSetPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="alternatives.set failed")
+
+
+class AlternativesGetPlugin(BasePlugin):
+    name = "alternatives.get"
+    description = "Read the current alternatives configuration for one alternative name."
+    required_params = ("name",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "alternatives.get is a read-only alternatives query"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        sudo = _sudo(params)
+        name = quote(params["name"])
+        return [f"if command -v update-alternatives >/dev/null 2>&1; then {sudo}update-alternatives --query {name}; elif command -v alternatives >/dev/null 2>&1; then {sudo}alternatives --display {name}; else echo 'no alternatives command found' >&2; exit 1; fi"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="alternatives.get failed", data={"name": str(params["name"])})

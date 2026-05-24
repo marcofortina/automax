@@ -3510,6 +3510,19 @@ def test_alternatives_set_plugin_renders_cross_distro_commands():
     assert AlternativesSetPlugin().diff_preview({"name": "java", "path": "/usr/bin/java-21"}, context)[0]["kind"] == "alternative-plan"
 
 
+def test_alternatives_get_plugin_renders_read_only_query():
+    from automax.plugins.alternatives import AlternativesGetPlugin
+
+    assert "alternatives.get" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    plugin = AlternativesGetPlugin()
+    command = plugin.manual_commands({"name": "java"}, context)[0]
+    assert "update-alternatives --query java" in command
+    assert "alternatives --display java" in command
+    assert plugin.supports_check_mode is True
+    assert "read-only" in plugin.diff_preview_reason({"name": "java"}, context)
+
+
 def test_auditd_plugins_render_rules_status_and_reload():
     from automax.plugins.auditd import AuditdReloadPlugin, AuditdRulePlugin, AuditdStatusPlugin
 

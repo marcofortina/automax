@@ -102,7 +102,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         BlockRescanPlugin,
         BlockWipeSignaturesPlugin,
     )
-    from automax.plugins.alternatives import AlternativesSetPlugin
+    from automax.plugins.alternatives import AlternativesGetPlugin, AlternativesSetPlugin
     from automax.plugins.cert_ops import CertExpiryReportPlugin, CertGenerateCsrPlugin, CertInstallKeypairPlugin, CertSelfSignedPlugin, CertVerifyChainPlugin
     from automax.plugins.backup import BackupDirectoryPlugin, BackupFilePlugin, BackupRestorePlugin, BackupVerifyPlugin
     from automax.plugins.auditd import AuditdReloadPlugin, AuditdRulePlugin, AuditdStatusPlugin
@@ -343,6 +343,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     registry = PluginRegistry()
     for plugin in (
         LocalCommandPlugin(),
+        AlternativesGetPlugin(),
         AlternativesSetPlugin(),
         BackupFilePlugin(),
         BackupDirectoryPlugin(),
