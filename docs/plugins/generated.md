@@ -5093,6 +5093,78 @@ with:
   host: 127.0.0.1
 ```
 
+## sudo
+
+### `sudo.rule`
+
+Install a structured sudoers.d rule with visudo validation, backup and safe mode.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `subject` | yes | `string` |  | Email subject line. |
+| `hosts` | no | `string` | `ALL` | sudoers hosts field. |
+| `runas` | no | `string` | `ALL` | sudoers run-as field. |
+| `commands` | no | `list` |  | Allowed sudo command list or ALL. |
+| `nopassword` | no | `boolean` | `False` | Whether to include NOPASSWD. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: sudo.rule
+with:
+  name: nginx
+  subject: Automax notification
+```
+
+### `sudo.validate`
+
+Validate sudoers syntax with visudo without changing files.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: sudo.validate
+with:
+  path: /tmp/automax-demo
+  sudo: true
+```
+
 ## sudoers
 
 ### `sudoers.dropin`

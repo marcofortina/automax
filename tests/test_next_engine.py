@@ -3531,3 +3531,17 @@ def test_kernel_boot_param_plugin_renders_safe_grub_update():
     assert "/etc/default/grub" in command
     assert "update-grub" in command
     assert KernelBootParamPlugin().diff_preview({"name": "quiet", "state": "absent"}, context)[0]["kind"] == "kernel-boot-plan"
+
+
+def test_sudo_management_plugins_render_validated_dropins():
+    from automax.plugins.sudo_ops import SudoRulePlugin, SudoValidatePlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in ("sudo.rule", "sudo.validate"):
+        assert name in names
+    context = _sysops_preview_context()
+    rule = " && ".join(SudoRulePlugin().manual_commands({"name": "ops", "subject": "%ops", "commands": ["/usr/bin/systemctl"], "nopassword": True}, context))
+    assert "visudo -cf" in rule
+    assert "NOPASSWD" in rule
+    assert "/etc/sudoers.d/ops" in rule
+    assert SudoValidatePlugin().manual_commands({}, context)[0] == "sudo -n visudo -cf /etc/sudoers"

@@ -310,6 +310,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SelinuxPortPlugin,
         SelinuxRestoreconPlugin,
     )
+    from automax.plugins.sudo_ops import SudoRulePlugin, SudoValidatePlugin
     from automax.plugins.ssh_ops import SshConfigPlugin, SshKnownHostsPlugin
     from automax.plugins.systemd_resources import SystemdSysusersPlugin, SystemdTimerPlugin, SystemdTmpfilesPlugin, SystemdUnitPlugin
     from automax.plugins.systemctl import (
@@ -413,6 +414,8 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SshConfigPlugin(),
         SshKnownHostsPlugin(),
         SudoersDropinPlugin(),
+        SudoRulePlugin(),
+        SudoValidatePlugin(),
         ProcessKillPlugin(),
         ProcessWaitPlugin(),
         TransferUploadPlugin(),
