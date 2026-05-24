@@ -12,6 +12,40 @@ Do not edit plugin parameter lists here by hand; update plugin metadata and rege
 automax docs generate-plugins --output docs/plugins/generated.md
 ```
 
+## alternatives
+
+### `alternatives.set`
+
+Set a system alternative using update-alternatives or alternatives.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: alternatives.set
+with:
+  name: nginx
+  path: /tmp/automax-demo
+```
+
 ## apparmor
 
 ### `apparmor.profile`

@@ -3469,3 +3469,14 @@ def test_systemd_resource_plugins_render_units_and_dropins():
     assert "/etc/systemd/system/demo.timer" in " && ".join(SystemdTimerPlugin().manual_commands({"name": "demo", "content": "[Timer]\nOnBootSec=1m\n"}, context))
     assert "systemd-tmpfiles --create" in " && ".join(SystemdTmpfilesPlugin().manual_commands({"name": "demo", "content": "d /run/demo 0755 root root -\n", "apply": True}, context))
     assert "systemd-sysusers" in " && ".join(SystemdSysusersPlugin().manual_commands({"name": "demo", "content": "u demo - Demo /nonexistent\n", "apply": True}, context))
+
+
+def test_alternatives_set_plugin_renders_cross_distro_commands():
+    from automax.plugins.alternatives import AlternativesSetPlugin
+
+    assert "alternatives.set" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = AlternativesSetPlugin().manual_commands({"name": "java", "path": "/usr/bin/java-21"}, context)[0]
+    assert "update-alternatives --set java /usr/bin/java-21" in command
+    assert "alternatives --set java /usr/bin/java-21" in command
+    assert AlternativesSetPlugin().diff_preview({"name": "java", "path": "/usr/bin/java-21"}, context)[0]["kind"] == "alternative-plan"

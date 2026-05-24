@@ -102,6 +102,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         BlockRescanPlugin,
         BlockWipeSignaturesPlugin,
     )
+    from automax.plugins.alternatives import AlternativesSetPlugin
     from automax.plugins.archive import (
         ArchiveCompressPlugin,
         ArchiveDecompressPlugin,
@@ -324,6 +325,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     registry = PluginRegistry()
     for plugin in (
         LocalCommandPlugin(),
+        AlternativesSetPlugin(),
         HttpRequestPlugin(),
         HttpAssertPlugin(),
         HttpWaitPlugin(),
