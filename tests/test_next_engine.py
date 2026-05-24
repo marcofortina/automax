@@ -3783,3 +3783,13 @@ def test_cert_generate_csr_plugin_renders_openssl_req():
     command = CertGenerateCsrPlugin().manual_commands({"key": "/etc/pki/tls/private/app.key", "dest": "/tmp/app.csr", "subject": "/CN=app"}, context)[0]
     assert "openssl req -new" in command
     assert "-subj /CN=app" in command
+
+
+def test_cert_self_signed_plugin_renders_openssl_x509_req():
+    from automax.plugins.cert_ops import CertSelfSignedPlugin
+
+    assert "cert.self_signed" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = CertSelfSignedPlugin().manual_commands({"key": "/tmp/app.key", "cert": "/tmp/app.crt", "subject": "/CN=app", "days": 30}, context)[0]
+    assert "openssl req -x509" in command
+    assert "-days 30" in command

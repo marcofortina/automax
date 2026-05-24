@@ -34,3 +34,23 @@ class CertGenerateCsrPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="cert.generate_csr failed")
+
+class CertSelfSignedPlugin(BasePlugin):
+    name = "cert.self_signed"
+    description = "Generate a self-signed certificate using an existing private key."
+    required_params = ("key", "cert", "subject")
+    optional_params = ("days", "extensions", "sudo")
+    opens_remote_session = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "cert.self_signed creates a certificate artifact; use manual commands for the exact openssl invocation"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        days = int(params.get("days", 365))
+        extensions = f" -extensions {quote(params['extensions'])}" if params.get("extensions") else ""
+        return [f"{_sudo(params)}openssl req -x509 -new -key {quote(params['key'])} -out {quote(params['cert'])} -subj {quote(params['subject'])} -days {days}{extensions}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="cert.self_signed failed")

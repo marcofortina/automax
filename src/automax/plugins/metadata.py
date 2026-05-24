@@ -73,6 +73,8 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "creates": {"type": "path", "description": "Remote path that makes the operation idempotent when already present."},
     "cwd": {"type": "path", "description": "Remote or local working directory for this operation."},
     "dest": {"type": "path", "description": "Destination path."},
+    "extensions": {"type": "string", "description": "OpenSSL extension section name."},
+    "days": {"type": "integer", "default": 365, "description": "Certificate validity in days."},
     "delete": {"type": "boolean", "default": False, "description": "Delete extraneous destination files when supported."},
     "rsync_path": {"type": "path", "description": "Remote rsync executable path."},
     "ssh_options": {"type": "list", "description": "Extra ssh options used by rsync."},

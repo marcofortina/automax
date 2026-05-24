@@ -212,3 +212,4 @@ existing configuration files.
 ## Certificate operations
 
 `cert.generate_csr` creates CSRs from existing keys using openssl.
+`cert.self_signed` generates self-signed certificates from existing private keys.

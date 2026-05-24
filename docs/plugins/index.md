@@ -48,6 +48,7 @@ block.partition_rescan
 block.rescan
 block.wipe_signatures
 cert.generate_csr
+cert.self_signed
 chrony.servers
 chrony.sources_assert
 cron.entry

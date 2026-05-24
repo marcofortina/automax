@@ -1063,6 +1063,42 @@ with:
   subject: Automax notification
 ```
 
+### `cert.self_signed`
+
+Generate a self-signed certificate using an existing private key.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `key` | yes | `string` |  | SSH public key line. |
+| `cert` | yes | `path` |  | Certificate path. |
+| `subject` | yes | `string` |  | Email subject line. |
+| `days` | no | `integer` | `365` | Certificate validity in days. |
+| `extensions` | no | `string` |  | OpenSSL extension section name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cert.self_signed
+with:
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+  cert: value
+  subject: Automax notification
+```
+
 ## chrony
 
 ### `chrony.servers`
