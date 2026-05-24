@@ -205,6 +205,12 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         NetworkRoutePlugin,
         NetworkVlanPlugin,
     )
+    from automax.plugins.health import (
+        HealthHttpPlugin,
+        HealthListenPlugin,
+        HealthPortPlugin,
+        HealthProcessPlugin,
+    )
     from automax.plugins.local_command import LocalCommandPlugin
     from automax.plugins.multipath import (
         MultipathFlushPlugin,
@@ -417,6 +423,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         NetworkBondPlugin(),
         NetworkVlanPlugin(),
         NetworkDnsPlugin(),
+        HealthPortPlugin(),
+        HealthListenPlugin(),
+        HealthProcessPlugin(),
+        HealthHttpPlugin(),
         ArchiveTarPlugin(),
         ArchiveUntarPlugin(),
         ArchiveCompressPlugin(),

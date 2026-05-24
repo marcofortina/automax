@@ -110,6 +110,14 @@ Use `network.interface`, `network.route`, `network.bond`, `network.vlan` and
 backend-aware through the same safety rules as `resolver.config`: managed or
 symlinked resolver files are not overwritten silently.
 
+
+## Service health assertions
+
+Use `health.port`, `health.listen`, `health.process` and `health.http` to assert
+that ports, processes and HTTP endpoints are available after a change. These
+macros are read-only and provide explicit no-diff reasons plus copy/pasteable
+manual checks.
+
 ## Recovery workflow
 
 All Linux operation macros should be used with the operator recovery commands:

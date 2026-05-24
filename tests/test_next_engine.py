@@ -3289,3 +3289,18 @@ def test_network_plugins_render_interface_route_bond_vlan_dns():
     assert "type vlan id 100" in NetworkVlanPlugin().manual_commands({"name": "eth0.100", "parent": "eth0", "vlan_id": 100}, context)[0]
     assert "network-plan" == NetworkInterfacePlugin().diff_preview({"name": "eth0"}, context)[0]["kind"]
     assert NetworkDnsPlugin().manual_commands({"nameservers": ["192.0.2.53"]}, context)
+
+
+def test_health_plugins_render_safe_assertions():
+    from automax.plugins.health import HealthHttpPlugin, HealthListenPlugin, HealthPortPlugin, HealthProcessPlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in ("health.port", "health.listen", "health.process", "health.http"):
+        assert name in names
+
+    context = _sysops_preview_context()
+    assert "ss -H -ltn" in HealthPortPlugin().manual_commands({"port": 443}, context)[0]
+    assert "ss -H -ltn" in HealthListenPlugin().manual_commands({"port": 8443}, context)[0]
+    assert "pgrep -af" in HealthProcessPlugin().manual_commands({"pattern": "sshd"}, context)[0]
+    assert "read-only process assertion" in HealthProcessPlugin().diff_preview_reason({"pattern": "sshd"}, context)
+    assert HealthHttpPlugin().name == "health.http"

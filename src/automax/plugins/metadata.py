@@ -178,6 +178,8 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "dev": {"type": "string", "description": "Network device name for a route."},
     "table": {"type": "string", "description": "Routing table name or number."},
     "metric": {"type": "integer", "description": "Route metric."},
+
+    "listen": {"type": "boolean", "default": True, "description": "Check whether a port is listening on the target."},
     "changed": {"type": "boolean", "default": True, "description": "Whether a successful command should be reported as changed."},
 }
 
@@ -385,6 +387,8 @@ SAMPLE_VALUES: dict[str, Any] = {
     "dev": "eth0",
     "table": "main",
     "metric": 100,
+
+    "listen": True,
     "changed": True,
 }
 

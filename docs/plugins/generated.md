@@ -2118,6 +2118,144 @@ with:
   name: nginx
 ```
 
+## health
+
+### `health.http`
+
+Assert HTTP status and optional body content from the controller.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `url` | yes | `string` |  | HTTP URL. |
+| `method` | no | `string` | `GET` | HTTP request method. |
+| `headers` | no | `mapping` |  | HTTP request headers. |
+| `body` | no | `string` |  | Raw HTTP request body. |
+| `json` | no | `mapping` |  | JSON HTTP request body. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
+| `validate_tls` | no | `boolean` | `True` | Validate TLS certificates for HTTPS requests. |
+| `expected_status` | no | `integer` | `200` | Expected HTTP status code. |
+| `status` | no | `integer` |  | Expected HTTP status code alias. |
+| `contains` | no | `string` |  | Required substring in stdout or HTTP response body. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: health.http
+with:
+  url: https://example.invalid/health
+```
+
+### `health.listen`
+
+Assert that a TCP port is listening on the target.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `port` | yes | `integer` |  | TCP port number. |
+| `host` | no | `string` |  | Hostname or IP address to check from the controller. |
+| `listen` | no | `boolean` | `True` | Check whether a port is listening on the target. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: health.listen
+with:
+  port: 22
+```
+
+### `health.port`
+
+Assert that a TCP port is reachable from the controller or listening on the target.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `port` | yes | `integer` |  | TCP port number. |
+| `host` | no | `string` |  | Hostname or IP address to check from the controller. |
+| `listen` | no | `boolean` | `True` | Check whether a port is listening on the target. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: health.port
+with:
+  port: 22
+```
+
+### `health.process`
+
+Assert that a remote process matching a pattern exists or is absent.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: health.process
+with:
+  pattern: KEY=.*
+```
+
 ## hostname
 
 ### `hostname.set`

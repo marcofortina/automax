@@ -78,6 +78,10 @@ fstab.entry
 group.create
 group.exists
 group.remove
+health.http
+health.listen
+health.port
+health.process
 hostname.set
 hosts.entry
 http.assert
