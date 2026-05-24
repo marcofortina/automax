@@ -3365,7 +3365,7 @@ Search remote log files with grep and return matching lines.
 |---|---:|---|---|---|
 | `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
 | `files` | no | `list` |  | Target files to inspect or modify. |
-| `max_count` | no | `integer` |  | Maximum number of matching log lines. |
+| `max_count` | no | `integer` |  | Maximum number of matching log or process entries. |
 | `ignore_missing` | no | `boolean` | `True` | Treat missing processes as success. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
@@ -4904,6 +4904,39 @@ Example:
 
 ```yaml
 use: process.assert_absent
+with:
+  pattern: KEY=.*
+```
+
+### `process.assert_count`
+
+Assert the number of remote processes matching a pattern.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
+| `count` | no | `integer` | `0` | Maximum regex replacements; 0 means replace all matches. |
+| `min_count` | no | `integer` |  | Minimum number of matching process entries. |
+| `max_count` | no | `integer` |  | Maximum number of matching log or process entries. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: process.assert_count
 with:
   pattern: KEY=.*
 ```

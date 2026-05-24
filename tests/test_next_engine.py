@@ -3685,3 +3685,14 @@ def test_process_assert_absent_plugin_renders_pgrep_assertion():
     context = _sysops_preview_context()
     assert "pgrep -f worker" in ProcessAssertAbsentPlugin().manual_commands({"pattern": "worker"}, context)[0]
     assert ProcessAssertAbsentPlugin().supports_check_mode is True
+
+
+def test_process_assert_count_plugin_renders_count_assertion():
+    from automax.plugins.user_group_process import ProcessAssertCountPlugin
+
+    assert "process.assert_count" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = ProcessAssertCountPlugin().manual_commands({"pattern": "worker", "min_count": 1, "max_count": 3}, context)[0]
+    assert "pgrep -fc worker" in command
+    assert 'test "$actual" -ge 1' in command
+    assert 'test "$actual" -le 3' in command

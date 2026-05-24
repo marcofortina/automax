@@ -223,7 +223,8 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "version": {"type": "string", "description": "Package version to pin."},
     "priority": {"type": "integer", "description": "Package repository or pin priority."},
 
-    "max_count": {"type": "integer", "description": "Maximum number of matching log lines."},
+    "max_count": {"type": "integer", "description": "Maximum number of matching log or process entries."},
+    "min_count": {"type": "integer", "description": "Minimum number of matching process entries."},
     "max_percent": {"type": "integer", "description": "Maximum allowed percentage."},
     "since": {"type": "string", "description": "Start time for journalctl queries."},
     "until": {"type": "string", "description": "End time for journalctl queries."},

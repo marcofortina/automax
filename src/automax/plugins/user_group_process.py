@@ -298,3 +298,38 @@ class ProcessAssertAbsentPlugin(BasePlugin):
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="process.assert_absent failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+
+class ProcessAssertCountPlugin(BasePlugin):
+    """Assert process count for a pattern."""
+
+    name = "process.assert_count"
+    description = "Assert the number of remote processes matching a pattern."
+    required_params = ("pattern",)
+    optional_params = ("count", "min_count", "max_count", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        if not any(key in params for key in ("count", "min_count", "max_count")):
+            raise PluginValidationError("process.assert_count requires count, min_count or max_count")
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "process.assert_count is a read-only process count assertion"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        checks = [f"actual=$({_sudo(params)}pgrep -fc {quote(params['pattern'])})"]
+        if params.get("count") is not None:
+            checks.append(f"test \"$actual\" -eq {quote(params['count'])}")
+        if params.get("min_count") is not None:
+            checks.append(f"test \"$actual\" -ge {quote(params['min_count'])}")
+        if params.get("max_count") is not None:
+            checks.append(f"test \"$actual\" -le {quote(params['max_count'])}")
+        return [" && ".join(checks)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="process.assert_count failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
