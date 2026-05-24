@@ -166,6 +166,18 @@ PARAMETERS: dict[str, dict[str, Any]] = {
 
     "vg": {"type": "string", "description": "LVM volume group name."},
     "resizefs": {"type": "boolean", "default": True, "description": "Resize the filesystem along with the block/LVM operation."},
+
+    "address": {"type": "string", "description": "IP address to configure."},
+    "prefix": {"type": "integer", "description": "CIDR prefix length."},
+    "mtu": {"type": "integer", "description": "Network interface MTU."},
+    "parent": {"type": "string", "description": "Parent network interface."},
+    "vlan_id": {"type": "integer", "description": "VLAN identifier."},
+    "interfaces": {"type": "list", "description": "Network interfaces to include in a bond or aggregate."},
+    "miimon": {"type": "integer", "default": 100, "description": "Bond link monitoring interval in milliseconds."},
+    "gateway": {"type": "string", "description": "Route gateway address."},
+    "dev": {"type": "string", "description": "Network device name for a route."},
+    "table": {"type": "string", "description": "Routing table name or number."},
+    "metric": {"type": "integer", "description": "Route metric."},
     "changed": {"type": "boolean", "default": True, "description": "Whether a successful command should be reported as changed."},
 }
 
@@ -361,6 +373,18 @@ SAMPLE_VALUES: dict[str, Any] = {
 
     "vg": "vg_app",
     "resizefs": True,
+
+    "address": "192.0.2.10",
+    "prefix": 24,
+    "mtu": 1500,
+    "parent": "eth0",
+    "vlan_id": 100,
+    "interfaces": ["eth1", "eth2"],
+    "miimon": 100,
+    "gateway": "192.0.2.1",
+    "dev": "eth0",
+    "table": "main",
+    "metric": 100,
     "changed": True,
 }
 

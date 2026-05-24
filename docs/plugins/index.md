@@ -98,6 +98,11 @@ mount.present
 multipath.flush
 multipath.reload
 multipath.status
+network.bond
+network.dns
+network.interface
+network.route
+network.vlan
 nftables.apply
 nftables.validate
 pam.limits

@@ -3267,3 +3267,25 @@ def test_lvm_plugins_render_manual_commands_and_previews():
     assert "lvextend -r" in LvmLvExtendPlugin().manual_commands({"vg": "vg_app", "name": "data", "size": "20G"}, context)[0]
     assert "resize2fs" in LvmResizeFsPlugin().manual_commands({"device": "/dev/vg_app/data", "fstype": "ext4"}, context)[0]
     assert LvmLvPresentPlugin().diff_preview({"vg": "vg_app", "name": "data", "size": "10G"}, context)[0]["kind"] == "lvm-plan"
+
+
+def test_network_plugins_render_interface_route_bond_vlan_dns():
+    from automax.plugins.network import (
+        NetworkBondPlugin,
+        NetworkDnsPlugin,
+        NetworkInterfacePlugin,
+        NetworkRoutePlugin,
+        NetworkVlanPlugin,
+    )
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in ("network.interface", "network.route", "network.bond", "network.vlan", "network.dns"):
+        assert name in names
+
+    context = _sysops_preview_context()
+    assert "ip addr replace" in " && ".join(NetworkInterfacePlugin().manual_commands({"name": "eth0", "address": "192.0.2.10", "prefix": 24}, context))
+    assert NetworkRoutePlugin().manual_commands({"dest": "default", "gateway": "192.0.2.1", "dev": "eth0"}, context)[0] == "sudo -n ip route replace default via 192.0.2.1 dev eth0"
+    assert "modprobe bonding" in NetworkBondPlugin().manual_commands({"name": "bond0", "interfaces": ["eth1", "eth2"]}, context)[0]
+    assert "type vlan id 100" in NetworkVlanPlugin().manual_commands({"name": "eth0.100", "parent": "eth0", "vlan_id": 100}, context)[0]
+    assert "network-plan" == NetworkInterfacePlugin().diff_preview({"name": "eth0"}, context)[0]["kind"]
+    assert NetworkDnsPlugin().manual_commands({"nameservers": ["192.0.2.53"]}, context)

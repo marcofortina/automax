@@ -198,6 +198,13 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         LvmResizeFsPlugin,
         LvmVgPresentPlugin,
     )
+    from automax.plugins.network import (
+        NetworkBondPlugin,
+        NetworkDnsPlugin,
+        NetworkInterfacePlugin,
+        NetworkRoutePlugin,
+        NetworkVlanPlugin,
+    )
     from automax.plugins.local_command import LocalCommandPlugin
     from automax.plugins.multipath import (
         MultipathFlushPlugin,
@@ -405,6 +412,11 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         LvmLvPresentPlugin(),
         LvmLvExtendPlugin(),
         LvmResizeFsPlugin(),
+        NetworkInterfacePlugin(),
+        NetworkRoutePlugin(),
+        NetworkBondPlugin(),
+        NetworkVlanPlugin(),
+        NetworkDnsPlugin(),
         ArchiveTarPlugin(),
         ArchiveUntarPlugin(),
         ArchiveCompressPlugin(),

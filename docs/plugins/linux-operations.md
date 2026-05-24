@@ -102,6 +102,14 @@ and `lvm.resizefs` for physical volumes, volume groups, logical volumes and
 filesystem growth. These macros expose deterministic manual commands and
 structured `plan --diff` previews before applying storage changes.
 
+
+## Runtime network operations
+
+Use `network.interface`, `network.route`, `network.bond`, `network.vlan` and
+`network.dns` for runtime network setup and DNS resolver changes. DNS handling is
+backend-aware through the same safety rules as `resolver.config`: managed or
+symlinked resolver files are not overwritten silently.
+
 ## Recovery workflow
 
 All Linux operation macros should be used with the operator recovery commands:

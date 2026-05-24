@@ -2829,6 +2829,190 @@ with:
   expect_paths: 4
 ```
 
+## network
+
+### `network.bond`
+
+Create or update a runtime Linux bonding interface.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `interfaces` | yes | `list` |  | Network interfaces to include in a bond or aggregate. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `miimon` | no | `integer` | `100` | Bond link monitoring interval in milliseconds. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.bond
+with:
+  name: nginx
+  interfaces:
+    - eth1
+    - eth2
+```
+
+### `network.dns`
+
+Configure DNS resolver settings using the backend-aware resolver implementation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `backend` | no | `string` | `auto` | Resolver backend: auto, plain, systemd-resolved, NetworkManager or resolvconf. |
+| `nameservers` | no | `list` |  | Resolver nameserver addresses. |
+| `search` | no | `list` |  | Resolver search domains. |
+| `options` | no | `list` |  | Resolver options. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.dns
+with:
+  backend: auto
+  nameservers:
+    - 192.0.2.53
+```
+
+### `network.interface`
+
+Apply runtime interface state and optional address configuration with iproute2.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `address` | no | `string` |  | IP address to configure. |
+| `prefix` | no | `integer` |  | CIDR prefix length. |
+| `mtu` | no | `integer` |  | Network interface MTU. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.interface
+with:
+  name: nginx
+```
+
+### `network.route`
+
+Ensure a runtime IP route is present or absent.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `dest` | yes | `path` |  | Destination path. |
+| `gateway` | no | `string` |  | Route gateway address. |
+| `dev` | no | `string` |  | Network device name for a route. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `metric` | no | `integer` |  | Route metric. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.route
+with:
+  dest: /tmp/dest
+```
+
+### `network.vlan`
+
+Create or update a runtime VLAN interface.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `parent` | yes | `string` |  | Parent network interface. |
+| `vlan_id` | yes | `integer` |  | VLAN identifier. |
+| `address` | no | `string` |  | IP address to configure. |
+| `prefix` | no | `integer` |  | CIDR prefix length. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.vlan
+with:
+  name: nginx
+  parent: eth0
+  vlan_id: 100
+```
+
 ## nftables
 
 ### `nftables.apply`
