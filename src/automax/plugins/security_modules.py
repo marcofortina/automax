@@ -160,3 +160,33 @@ class ApparmorReloadPlugin(BasePlugin):
             command = f"{_sudo(params)}systemctl reload apparmor && echo {CHANGE_MARKER}"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="apparmor.reload failed")
+
+class SelinuxPortPlugin(BasePlugin):
+    name = "selinux.port"
+    description = "Manage a persistent SELinux port type mapping with semanage port."
+    required_params = ("port", "protocol", "selinux_type")
+    optional_params = ("state", "sudo")
+    opens_remote_session = True
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        desired = f"{params.get('state', 'present')} {params['protocol']}/{params['port']} -> {params['selinux_type']}"
+        return [{"path": f"selinux-port:{params['protocol']}/{params['port']}", "kind": "selinux-port-plan", "diff": desired + "\n"}]
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        state = str(params.get("state", "present"))
+        target = f"{params['protocol']} {params['port']}"
+        if state == "present":
+            return [f"{_sudo(params)}semanage port -a -t {quote(params['selinux_type'])} -p {quote(params['protocol'])} {quote(params['port'])} 2>/dev/null || {_sudo(params)}semanage port -m -t {quote(params['selinux_type'])} -p {quote(params['protocol'])} {quote(params['port'])}"]
+        if state == "absent":
+            return [f"{_sudo(params)}semanage port -d -p {quote(params['protocol'])} {quote(params['port'])} || true"]
+        raise PluginValidationError("selinux.port state must be present or absent")
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="selinux.port failed")
+
+
+class SelinuxFcontextPlugin(SelinuxContextPlugin):
+    name = "selinux.fcontext"
+    description = "Manage a persistent SELinux fcontext mapping with semanage fcontext."

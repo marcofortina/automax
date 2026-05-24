@@ -304,7 +304,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         ApparmorStatusPlugin,
         SelinuxBooleanPlugin,
         SelinuxContextPlugin,
+        SelinuxFcontextPlugin,
         SelinuxModePlugin,
+        SelinuxPortPlugin,
         SelinuxRestoreconPlugin,
     )
     from automax.plugins.ssh_ops import SshConfigPlugin, SshKnownHostsPlugin
@@ -376,6 +378,8 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SelinuxModePlugin(),
         SelinuxBooleanPlugin(),
         SelinuxContextPlugin(),
+        SelinuxFcontextPlugin(),
+        SelinuxPortPlugin(),
         SelinuxRestoreconPlugin(),
         ApparmorStatusPlugin(),
         ApparmorProfilePlugin(),

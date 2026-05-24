@@ -4815,6 +4815,39 @@ with:
   selinux_type: httpd_sys_content_t
 ```
 
+### `selinux.fcontext`
+
+Manage a persistent SELinux fcontext mapping with semanage fcontext.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `selinux_type` | yes | `string` |  | SELinux file context type. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: selinux.fcontext
+with:
+  path: /tmp/automax-demo
+  selinux_type: httpd_sys_content_t
+```
+
 ### `selinux.mode`
 
 Set SELinux runtime and/or persistent mode.
@@ -4844,6 +4877,41 @@ Example:
 use: selinux.mode
 with:
   state: present
+```
+
+### `selinux.port`
+
+Manage a persistent SELinux port type mapping with semanage port.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `port` | yes | `integer` |  | TCP port number. |
+| `protocol` | yes | `string` | `tcp` | Network protocol such as tcp or udp. |
+| `selinux_type` | yes | `string` |  | SELinux file context type. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: selinux.port
+with:
+  port: 22
+  protocol: tcp
+  selinux_type: httpd_sys_content_t
 ```
 
 ### `selinux.restorecon`

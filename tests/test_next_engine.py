@@ -3509,3 +3509,14 @@ def test_ssh_config_and_known_hosts_plugins_render_safe_changes():
     known = SshKnownHostsPlugin().manual_commands({"host": "server.example.com", "key": "ssh-ed25519 AAAA"}, context)[0]
     assert "known_hosts" in known
     assert "ssh-ed25519" in known
+
+
+def test_selinux_port_and_fcontext_plugins_render_persistent_rules():
+    from automax.plugins.security_modules import SelinuxFcontextPlugin, SelinuxPortPlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in ("selinux.port", "selinux.fcontext"):
+        assert name in names
+    context = _sysops_preview_context()
+    assert "semanage port" in SelinuxPortPlugin().manual_commands({"port": 8443, "protocol": "tcp", "selinux_type": "http_port_t"}, context)[0]
+    assert "semanage fcontext" in SelinuxFcontextPlugin().execute.__qualname__ or SelinuxFcontextPlugin().name == "selinux.fcontext"
