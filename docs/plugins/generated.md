@@ -5567,6 +5567,44 @@ with:
   host: 127.0.0.1
 ```
 
+## sshd
+
+### `sshd.config`
+
+Install an sshd_config.d hardening drop-in with sshd syntax validation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `settings` | yes | `mapping` |  | SSH client or server settings. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: sshd.config
+with:
+  name: nginx
+  settings: value
+```
+
 ## sudo
 
 ### `sudo.rule`

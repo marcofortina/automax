@@ -176,6 +176,7 @@ selinux.restorecon
 ssh.authorized_key
 ssh.config
 ssh.known_hosts
+sshd.config
 sudo.rule
 sudo.validate
 sudoers.dropin

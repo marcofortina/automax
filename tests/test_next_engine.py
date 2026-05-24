@@ -3729,3 +3729,14 @@ def test_iptables_restore_plugin_requires_confirm_or_test_only():
     command = IptablesRestorePlugin().manual_commands({"src": "/etc/iptables/rules.v4", "test_only": True}, context)[0]
     assert "iptables-restore --test" in command
     assert "runtime firewall" in IptablesRestorePlugin().diff_preview_reason({}, context)
+
+
+def test_sshd_config_plugin_renders_validated_dropin():
+    from automax.plugins.hardening import SshdConfigPlugin
+
+    assert "sshd.config" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    commands = " && ".join(SshdConfigPlugin().manual_commands({"name": "10-hardening", "settings": {"PermitRootLogin": "no"}}, context))
+    assert "/etc/ssh/sshd_config.d/10-hardening.conf" in commands
+    assert "sshd -t" in commands
+    assert SshdConfigPlugin().diff_preview({"name": "10-hardening", "settings": {"PermitRootLogin": "no"}}, context)[0]["kind"] == "sshd-config-plan"
