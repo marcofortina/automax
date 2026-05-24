@@ -141,6 +141,13 @@ Use `mount.remount`, `fs.resize` and `findmnt.assert` to remount filesystems,
 grow supported filesystems and assert current mount state with `findmnt`. Runtime
 operations provide state previews and manual recovery commands.
 
+
+## Logs and journal collection
+
+Use `log.grep`, `journal.collect`, `journal.grep` and `log.export` to inspect
+logs, grep journal output and emit stdout suitable for artifact capture. These
+macros are read-oriented and document why no file diff is emitted.
+
 ## Recovery workflow
 
 All Linux operation macros should be used with the operator recovery commands:

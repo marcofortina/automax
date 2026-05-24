@@ -3351,3 +3351,18 @@ def test_advanced_mount_plugins_render_remount_resize_and_findmnt():
     assert "xfs_growfs" in FsResizePlugin().manual_commands({"device": "/dev/vg/data", "fstype": "xfs", "path": "/data"}, context)[0]
     assert "findmnt -rn" in FindmntAssertPlugin().manual_commands({"path": "/data", "fstype": "xfs"}, context)[0]
     assert FsResizePlugin().diff_preview({"device": "/dev/vg/data", "fstype": "ext4"}, context)[0]["kind"] == "filesystem-plan"
+
+
+def test_log_and_journal_plugins_render_queries_and_exports():
+    from automax.plugins.logs import JournalCollectPlugin, JournalGrepPlugin, LogExportPlugin, LogGrepPlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in ("log.grep", "journal.collect", "journal.grep", "log.export"):
+        assert name in names
+
+    context = _sysops_preview_context()
+    assert "grep -R" in LogGrepPlugin().manual_commands({"pattern": "ERROR", "files": ["/var/log/app.log"]}, context)[0]
+    assert "journalctl" in JournalCollectPlugin().manual_commands({"service": "sshd", "lines": 50}, context)[0]
+    assert "| grep -- ERROR" in JournalGrepPlugin().manual_commands({"pattern": "ERROR"}, context)[0]
+    assert "tail -n 100" in LogExportPlugin().manual_commands({"files": ["/var/log/app.log"], "lines": 100}, context)[0]
+    assert "artifact capture" in LogExportPlugin().diff_preview_reason({}, context)

@@ -89,11 +89,15 @@ hosts.entry
 http.assert
 http.request
 http.wait
+journal.collect
+journal.grep
 kernel.module.load
 kernel.module.persist
 kernel.module.unload
 limits.dropin
 local.command
+log.export
+log.grep
 lvm.lv_extend
 lvm.lv_present
 lvm.pv_present

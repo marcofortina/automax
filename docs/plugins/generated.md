@@ -2520,6 +2520,78 @@ with:
   url: https://example.invalid/health
 ```
 
+## journal
+
+### `journal.collect`
+
+Collect journalctl output for artifact capture through stdout.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | no | `string` |  | systemd service unit name. |
+| `since` | no | `string` |  | Start time for journalctl queries. |
+| `until` | no | `string` |  | End time for journalctl queries. |
+| `lines` | no | `integer` | `200` | Number of log or journal lines to collect. |
+| `output` | no | `string` | `rows` | Database output format: rows, scalar, json or none. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: journal.collect
+with:
+  service: sshd
+  since: 1 hour ago
+```
+
+### `journal.grep`
+
+Collect journalctl output and filter it with grep.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
+| `service` | no | `string` |  | systemd service unit name. |
+| `since` | no | `string` |  | Start time for journalctl queries. |
+| `until` | no | `string` |  | End time for journalctl queries. |
+| `lines` | no | `integer` | `200` | Number of log or journal lines to collect. |
+| `output` | no | `string` | `rows` | Database output format: rows, scalar, json or none. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: journal.grep
+with:
+  pattern: KEY=.*
+```
+
 ## kernel
 
 ### `kernel.module.load`
@@ -2693,6 +2765,76 @@ use: local.command
 with:
   command: echo automax
   changed: false
+```
+
+## log
+
+### `log.export`
+
+Export remote log or journal output to stdout for declared artifact capture.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `files` | no | `list` |  | Target files to inspect or modify. |
+| `service` | no | `string` |  | systemd service unit name. |
+| `since` | no | `string` |  | Start time for journalctl queries. |
+| `lines` | no | `integer` | `200` | Number of log or journal lines to collect. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: log.export
+with:
+  files:
+    - /etc/pam.d/login
+  service: sshd
+```
+
+### `log.grep`
+
+Search remote log files with grep and return matching lines.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
+| `files` | no | `list` |  | Target files to inspect or modify. |
+| `max_count` | no | `integer` |  | Maximum number of matching log lines. |
+| `ignore_missing` | no | `boolean` | `True` | Treat missing processes as success. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: log.grep
+with:
+  pattern: KEY=.*
 ```
 
 ## lvm

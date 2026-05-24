@@ -227,6 +227,12 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsResizePlugin,
         MountRemountPlugin,
     )
+    from automax.plugins.logs import (
+        JournalCollectPlugin,
+        JournalGrepPlugin,
+        LogExportPlugin,
+        LogGrepPlugin,
+    )
     from automax.plugins.local_command import LocalCommandPlugin
     from automax.plugins.multipath import (
         MultipathFlushPlugin,
@@ -453,6 +459,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         MountRemountPlugin(),
         FsResizePlugin(),
         FindmntAssertPlugin(),
+        LogGrepPlugin(),
+        JournalCollectPlugin(),
+        JournalGrepPlugin(),
+        LogExportPlugin(),
         ArchiveTarPlugin(),
         ArchiveUntarPlugin(),
         ArchiveCompressPlugin(),

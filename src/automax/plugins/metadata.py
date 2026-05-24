@@ -186,6 +186,11 @@ PARAMETERS: dict[str, dict[str, Any]] = {
 
     "version": {"type": "string", "description": "Package version to pin."},
     "priority": {"type": "integer", "description": "Package repository or pin priority."},
+
+    "max_count": {"type": "integer", "description": "Maximum number of matching log lines."},
+    "since": {"type": "string", "description": "Start time for journalctl queries."},
+    "until": {"type": "string", "description": "End time for journalctl queries."},
+    "lines": {"type": "integer", "default": 200, "description": "Number of log or journal lines to collect."},
     "changed": {"type": "boolean", "default": True, "description": "Whether a successful command should be reported as changed."},
 }
 
@@ -401,6 +406,11 @@ SAMPLE_VALUES: dict[str, Any] = {
 
     "version": "1.2.3*",
     "priority": 1001,
+
+    "max_count": 10,
+    "since": "1 hour ago",
+    "until": "now",
+    "lines": 200,
     "changed": True,
 }
 
