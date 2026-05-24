@@ -3161,7 +3161,6 @@ def test_linux_ops_manual_commands_cover_resolver_env_download_and_sysctl():
 
 def test_linux_ops_diff_previews_cover_persistent_and_runtime_operations():
     from automax.plugins.block import BlockFactsPlugin
-    from automax.plugins.fs_extra import FsReplacePlugin
     from automax.plugins.linux_ops import (
         DownloadFilePlugin,
         HostnameSetPlugin,
@@ -3208,7 +3207,7 @@ def test_linux_ops_diff_previews_cover_persistent_and_runtime_operations():
     assert download["kind"] == "download-plan"
     assert "+url: https://example.invalid/app.rpm" in download["diff"]
 
-    replace = FsReplacePlugin().diff_preview(
+    replace = fs_extra.FsReplacePlugin().diff_preview(
         {
             "path": "/etc/app.conf",
             "pattern": "^port=.*$",
