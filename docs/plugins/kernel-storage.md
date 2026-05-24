@@ -27,3 +27,20 @@ state explicit in jobs so reboot behavior is visible during review.
 Use `lvm.facts`, `lvm.lv_assert`, `mount.facts`, `fstab.validate`,
 `swap.status` and `blkid.assert` for storage prechecks and postchecks before and
 after LVM, mount, swap and block-device operations.
+
+## Kernel, sysctl and block safety assertions
+
+Kernel hardening readback/guard plugins include `kernel.module.status`,
+`kernel.module.blacklist`, `kernel.cmdline_assert` and
+`kernel.boot_param_absent`. Removing a boot parameter requires `confirm: true`.
+
+Sysctl readback and drop-in management is covered by `sysctl.assert`,
+`sysctl.facts` and `sysctl.dropin`.
+
+Block-device safety assertions should be placed before destructive storage steps:
+`block.size_assert`, `block.fs_assert`, `block.mountpoint_assert`,
+`block.empty_assert` and `block.not_mounted_assert`.
+
+Mount and fstab readback/removal helpers include `mount.assert`,
+`mount.options_assert`, `fstab.assert` and `fstab.absent`. Removing fstab entries
+requires `confirm: true`.

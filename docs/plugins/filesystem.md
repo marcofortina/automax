@@ -328,3 +328,9 @@ Use `backup_before` when the target must be copied before removal. Use
 `trash_dir` when operators need a reversible move instead of an immediate
 `rm`. `allowlist` and `denylist` keep cleanup jobs scoped to known-safe path
 prefixes.
+
+## File mutation validation
+
+`fs.write`, `fs.template`, `fs.line` and `fs.replace` support validation commands
+and backup-before semantics for configuration file edits. `fs.replace` also
+supports `match_count_assert` to prevent zero-match or broad-match regex changes.

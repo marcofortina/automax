@@ -563,3 +563,125 @@ class FsFindPlugin(BasePlugin):
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.find failed")
         paths = [line for line in out.splitlines() if line]
         return PluginResult.success(changed=False, stdout=out, data={"paths": paths})
+
+# File mutation hardening: optional backups, validation commands and match-count guards.
+FsWritePlugin.optional_params = ("mode", "owner", "group", "sudo", "encoding", "backup_before", "backup_suffix", "validate_command", "sensitive")
+FsTemplatePlugin.optional_params = ("mode", "owner", "group", "sudo", "encoding", "values", "backup_before", "backup_suffix", "validate_command", "sensitive")
+FsLinePlugin.optional_params = ("state", "create", "sudo", "backup_before", "backup_suffix", "validate_command")
+FsReplacePlugin.optional_params = ("count", "sudo", "backup", "backup_before", "backup_suffix", "backup_path", "validate_command", "match_count_assert")
+
+
+def _backup_existing_command(path: str, params: Dict[str, Any]) -> str:
+    sudo = "sudo -n " if bool(params.get("sudo", False)) else ""
+    return f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}"
+
+
+def _validate_command_for(path: str, params: Dict[str, Any]) -> str | None:
+    command = params.get("validate_command")
+    if not command:
+        return None
+    return str(command).replace("{path}", path).replace("{file}", path)
+
+
+def _fs_write_execute(self: FsWritePlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    self.validate(params)
+    path = str(params["path"])
+    if bool(params.get("backup_before", False)):
+        rc, out, err = exec_remote(context, _backup_existing_command(path, params))
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.write backup failed")
+    content = str(params.get("content", ""))
+    temp_path = upload_text_to_temp(context, content, encoding=str(params.get("encoding", "utf-8")))
+    validation = _validate_command_for(temp_path, params)
+    if validation:
+        rc, out, err = exec_remote(context, validation)
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.write validation failed")
+    rc, out, err = install_uploaded_file(context, temp_path, path, sudo=bool(params.get("sudo", False)), mode=params.get("mode"), owner=params.get("owner"), group=params.get("group"))
+    return result_from_remote(rc=rc, stdout=out, stderr=err, message="fs.write failed", data={"path": path})
+
+
+def _fs_template_execute(self: FsTemplatePlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    self.validate(params)
+    dest = str(params["dest"])
+    if bool(params.get("backup_before", False)):
+        rc, out, err = exec_remote(context, _backup_existing_command(dest, params))
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.template backup failed")
+    try:
+        template_path, rendered = _render_template_content(params, context)
+    except FileNotFoundError as exc:
+        return PluginResult.failure(message=str(exc))
+    temp_path = upload_text_to_temp(context, rendered, encoding=str(params.get("encoding", "utf-8")))
+    validation = _validate_command_for(temp_path, params)
+    if validation:
+        rc, out, err = exec_remote(context, validation)
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.template validation failed")
+    rc, out, err = install_uploaded_file(context, temp_path, dest, sudo=bool(params.get("sudo", False)), mode=params.get("mode"), owner=params.get("owner"), group=params.get("group"))
+    return result_from_remote(rc=rc, stdout=out, stderr=err, message="fs.template failed", data={"src": template_path, "dest": dest})
+
+
+def _fs_line_execute(self: FsLinePlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    if bool(params.get("backup_before", False)):
+        rc, out, err = exec_remote(context, _backup_existing_command(str(params["path"]), params))
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.line backup failed")
+    result = FsLinePlugin.__dict__["execute"](self, params, context)  # type: ignore[misc]
+    validation = _validate_command_for(str(params["path"]), params)
+    if validation and result.rc == 0:
+        rc, out, err = exec_remote(context, validation)
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.line validation failed")
+    return result
+
+
+_orig_replace_execute = FsReplacePlugin.execute
+_orig_replace_validate = FsReplacePlugin.validate
+
+def _fs_replace_validate(self: FsReplacePlugin, params: Dict[str, Any]) -> None:
+    _orig_replace_validate(self, params)
+    if params.get("match_count_assert") is not None and int(params["match_count_assert"]) < 0:
+        raise PluginValidationError("fs.replace match_count_assert must be >= 0")
+
+
+def _fs_replace_execute(self: FsReplacePlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    if params.get("match_count_assert") is not None:
+        rc, out, err = exec_remote(context, f"python3 - <<'PY'\nimport pathlib,re\ntext=pathlib.Path({str(params['path'])!r}).read_text()\nprint(len(re.findall({str(params['pattern'])!r}, text)))\nPY")
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.replace match-count check failed")
+        if int(out.strip() or "0") != int(params["match_count_assert"]):
+            return PluginResult.failure(rc=1, stdout=out, message="fs.replace match_count_assert failed")
+    if bool(params.get("backup_before", False)):
+        params = dict(params)
+        params["backup"] = True
+    result = _orig_replace_execute(self, params, context)
+    validation = _validate_command_for(str(params["path"]), params)
+    if validation and result.rc == 0:
+        rc, out, err = exec_remote(context, validation)
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.replace validation failed")
+    return result
+
+
+FsWritePlugin.execute = _fs_write_execute  # type: ignore[method-assign]
+FsTemplatePlugin.execute = _fs_template_execute  # type: ignore[method-assign]
+FsReplacePlugin.validate = _fs_replace_validate  # type: ignore[method-assign]
+FsReplacePlugin.execute = _fs_replace_execute  # type: ignore[method-assign]
+
+_orig_line_execute = FsLinePlugin.execute
+
+def _fs_line_execute2(self: FsLinePlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    if bool(params.get("backup_before", False)):
+        rc, out, err = exec_remote(context, _backup_existing_command(str(params["path"]), params))
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.line backup failed")
+    result = _orig_line_execute(self, params, context)
+    validation = _validate_command_for(str(params["path"]), params)
+    if validation and result.rc == 0:
+        rc, out, err = exec_remote(context, validation)
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.line validation failed")
+    return result
+
+FsLinePlugin.execute = _fs_line_execute2  # type: ignore[method-assign]

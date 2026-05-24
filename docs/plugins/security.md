@@ -81,3 +81,22 @@ certificate prechecks, trust-bundle installation and post-install validation.
 `ssh.keygen` keeps no-overwrite behavior by default unless `force: true` is set.
 It supports passphrase material via `passphrase_secret`, secret-safe manual
 preview, public-key-only readback and fingerprint output after generation.
+
+## Security operation completeness
+
+AppArmor completeness plugins manage and validate profile modes explicitly:
+`apparmor.enforce`, `apparmor.complain`, `apparmor.disable`,
+`apparmor.profile_assert` and `apparmor.parser_validate`.
+
+Auditd readback and rule-builder plugins provide active/persistent rule facts,
+file watches, syscall rules, event search and backlog/lost-event assertions:
+`auditd.rules_facts`, `auditd.watch`, `auditd.syscall`, `auditd.search` and
+`auditd.backlog_assert`.
+
+Sudo readback plugins verify effective privileges without changing sudoers:
+`sudo.list`, `sudo.assert` and `sudo.can_run`.
+
+PAM stack assertion and backup plugins complement the mutating PAM plugins:
+`pam.include_assert`, `pam.module_assert`, `pam.order_assert`, `pam.backup` and
+`pam.restore`. `pam.restore` requires `confirm: true` because it can affect login
+paths.

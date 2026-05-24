@@ -99,3 +99,10 @@ Extracts a zip archive on the remote target.
 
 
 Archive plugins do not add `sudo` themselves. Run them as a user with the required remote permissions, or wrap exceptional privileged archive operations with an explicit `remote.command` until privileged archive support is added.
+
+## Safe extraction
+
+`archive.untar` and `archive.unzip` support checksum verification and safe
+extraction checks that reject absolute paths or `..` traversal before extracting.
+They also support include/exclude filtering and post-extract owner/group/mode
+handling.

@@ -166,3 +166,31 @@ class AuthselectProfilePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="authselect.profile failed")
+
+# Extended sshd_config rendering with Match blocks and explicit validation controls.
+SshdConfigPlugin.optional_params = ("path", "backup", "backup_suffix", "reload", "validate_before_reload", "match_blocks", "sudo")
+_orig_sshd_content = SshdConfigPlugin._content
+_orig_sshd_manual = SshdConfigPlugin.manual_commands
+
+def _sshd_content_extended(self: SshdConfigPlugin, params: Dict[str, Any]) -> str:
+    content = _orig_sshd_content(self, params)
+    blocks = params.get("match_blocks") or []
+    for block in blocks:
+        if not isinstance(block, dict) or "match" not in block or "settings" not in block:
+            raise PluginValidationError("sshd.config match_blocks entries require match and settings")
+        content += f"\nMatch {block['match']}\n"
+        settings = block["settings"]
+        if not isinstance(settings, dict):
+            raise PluginValidationError("sshd.config match block settings must be a mapping")
+        for key, value in sorted(settings.items()):
+            content += f"    {key} {value}\n"
+    return content
+
+def _sshd_manual_extended(self: SshdConfigPlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+    commands = _orig_sshd_manual(self, params, context)
+    if not bool(params.get("validate_before_reload", True)):
+        commands = [cmd for cmd in commands if "sshd -t" not in cmd]
+    return commands
+
+SshdConfigPlugin._content = _sshd_content_extended  # type: ignore[method-assign]
+SshdConfigPlugin.manual_commands = _sshd_manual_extended  # type: ignore[method-assign]

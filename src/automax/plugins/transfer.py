@@ -335,3 +335,25 @@ class TransferRsyncPlugin(BasePlugin):
             return PluginResult.failure(rc=completed.returncode, stdout=completed.stdout, stderr=completed.stderr, message="transfer.rsync failed")
         changed = bool(completed.stdout.strip()) and not (bool(params.get("dry_run", False)) or context.dry_run)
         return PluginResult.success(changed=changed, rc=completed.returncode, stdout=completed.stdout, stderr=completed.stderr, data={"command": command})
+
+# Extended rsync operator controls.
+TransferRsyncPlugin.optional_params = ("direction", "archive", "compress", "delete", "checksum", "dry_run", "excludes", "ssh_options", "rsync_path", "timeout", "partial", "bwlimit", "numeric_ids", "itemize_changes", "stats")
+_orig_rsync_parts = TransferRsyncPlugin._command_parts
+
+def _rsync_parts_extended(self: TransferRsyncPlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+    parts = _orig_rsync_parts(self, params, context)
+    insert_at = 1
+    extras: list[str] = []
+    if bool(params.get("partial", False)):
+        extras.append("--partial")
+    if params.get("bwlimit") is not None:
+        extras.extend(["--bwlimit", str(params["bwlimit"])])
+    if bool(params.get("numeric_ids", False)):
+        extras.append("--numeric-ids")
+    if bool(params.get("itemize_changes", False)):
+        extras.append("--itemize-changes")
+    if bool(params.get("stats", False)):
+        extras.append("--stats")
+    return parts[:insert_at] + extras + parts[insert_at:]
+
+TransferRsyncPlugin._command_parts = _rsync_parts_extended  # type: ignore[method-assign]

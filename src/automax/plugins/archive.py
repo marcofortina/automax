@@ -401,3 +401,63 @@ class ArchiveUnzipPlugin(BasePlugin):
             message="archive.unzip failed",
             data={"archive": params["archive"], "dest": params["dest"]},
         )
+
+# Harden archive extraction with optional checksum and safe path validation.
+ArchiveUntarPlugin.optional_params = ("compression", "strip_components", "creates", "cwd", "safe_extract", "checksum_verify", "include", "exclude", "owner", "group", "mode")
+ArchiveUnzipPlugin.optional_params = ("overwrite", "creates", "cwd", "safe_extract", "checksum_verify", "include", "exclude", "owner", "group", "mode")
+
+
+def _checksum_command(path: str, expected: str) -> str:
+    return f"sha256sum {quote(path)} | awk '{{print $1}}' | grep -Fix -- {quote(expected)}"
+
+
+def _tar_safe_command(archive: str) -> str:
+    return f"tar -tf {quote(archive)} | awk 'BEGIN{{bad=0}} /^\\// || /(^|\\/)\\.\\.($|\\//) {{bad=1; print \"unsafe archive path: \" $0 > \"/dev/stderr\"}} END{{exit bad}}'"
+
+
+def _zip_safe_command(archive: str) -> str:
+    return f"unzip -Z1 {quote(archive)} | awk 'BEGIN{{bad=0}} /^\\// || /(^|\\/)\\.\\.($|\\//) {{bad=1; print \"unsafe archive path: \" $0 > \"/dev/stderr\"}} END{{exit bad}}'"
+
+
+def _post_extract_attrs(dest: str, params: Dict[str, Any]) -> list[str]:
+    cmds = []
+    if params.get("owner") or params.get("group"):
+        spec = f"{params.get('owner', '')}:{params.get('group', '')}"
+        cmds.append(f"chown -R {quote(spec)} {quote(dest)}")
+    if params.get("mode"):
+        cmds.append(f"chmod -R {quote(params['mode'])} {quote(dest)}")
+    return cmds
+
+
+def _hardened_untar_command(self: ArchiveUntarPlugin, params: Dict[str, Any], context: ExecutionContext) -> str:
+    flag = _tar_extract_flag(str(params["archive"]), str(params.get("compression", "auto")))
+    parts = []
+    if params.get("checksum_verify"):
+        parts.append(_checksum_command(str(params["archive"]), str(params["checksum_verify"])))
+    if bool(params.get("safe_extract", True)):
+        parts.append(_tar_safe_command(str(params["archive"])))
+    strip = f"--strip-components={int(params['strip_components'])}" if "strip_components" in params else ""
+    excludes = " ".join(f"--exclude={quote(item)}" for item in _as_list(params.get("exclude")))
+    includes = " ".join(quote(item) for item in _as_list(params.get("include")))
+    extract = " ".join(part for part in (f"mkdir -p {quote(params['dest'])} && tar", flag, quote(params["archive"]), "-C", quote(params["dest"]), strip, excludes, includes) if part)
+    parts.append(extract)
+    parts.extend(_post_extract_attrs(str(params["dest"]), params))
+    return apply_cwd(_guarded(" && ".join(parts), params.get("creates")), context, params.get("cwd"))
+
+
+def _hardened_unzip_command(self: ArchiveUnzipPlugin, params: Dict[str, Any], context: ExecutionContext) -> str:
+    parts = []
+    if params.get("checksum_verify"):
+        parts.append(_checksum_command(str(params["archive"]), str(params["checksum_verify"])))
+    if bool(params.get("safe_extract", True)):
+        parts.append(_zip_safe_command(str(params["archive"])))
+    mode = "-o" if bool(params.get("overwrite", False)) else "-n"
+    includes = " ".join(quote(item) for item in _as_list(params.get("include")))
+    excludes = " ".join(f"-x {quote(item)}" for item in _as_list(params.get("exclude")))
+    parts.append(" ".join(part for part in (f"mkdir -p {quote(params['dest'])} && unzip", mode, quote(params["archive"]), includes, "-d", quote(params["dest"]), excludes) if part))
+    parts.extend(_post_extract_attrs(str(params["dest"]), params))
+    return apply_cwd(_guarded(" && ".join(parts), params.get("creates")), context, params.get("cwd"))
+
+
+ArchiveUntarPlugin._command = _hardened_untar_command  # type: ignore[method-assign]
+ArchiveUnzipPlugin._command = _hardened_unzip_command  # type: ignore[method-assign]

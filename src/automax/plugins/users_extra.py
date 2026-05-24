@@ -243,3 +243,46 @@ class SudoersDropinPlugin(BasePlugin):
             group="root",
         )
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="sudoers.dropin failed", data={"path": dest})
+
+# Extended authorized_keys controls.
+SshAuthorizedKeyPlugin.optional_params = ("state", "sudo", "key_options", "exclusive", "comment_update", "fingerprint_assert")
+_orig_authorized_key_execute = SshAuthorizedKeyPlugin.execute
+
+def _authorized_key_execute_extended(self: SshAuthorizedKeyPlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    self.validate(params)
+    params = dict(params)
+    key = str(params["key"])
+    if params.get("fingerprint_assert"):
+        rc, out, err = exec_remote(context, f"printf '%s\\n' {quote(key)} | ssh-keygen -lf - | grep -F -- {quote(params['fingerprint_assert'])}")
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="ssh.authorized_key fingerprint_assert failed")
+    if params.get("key_options") and not key.startswith(str(params["key_options"])):
+        key = f"{params['key_options']} {key}"
+    if params.get("comment_update"):
+        parts = key.split()
+        if len(parts) >= 2:
+            key = " ".join([*parts[:2], str(params["comment_update"])])
+    params["key"] = key
+    if bool(params.get("exclusive", False)) and str(params.get("state", "present")) == "present":
+        user = str(params["user"])
+        prefix = "sudo -n " if bool(params.get("sudo", True)) else ""
+        script = r'''
+set -eu
+user=$1
+key=$2
+home=$(getent passwd "$user" | cut -d: -f6)
+[ -n "$home" ] || { echo "user not found: $user" >&2; exit 1; }
+ssh_dir="$home/.ssh"
+auth_file="$ssh_dir/authorized_keys"
+mkdir -p "$ssh_dir"
+printf '%s\n' "$key" > "$auth_file"
+chmod 700 "$ssh_dir"
+chmod 600 "$auth_file"
+chown -R "$user":"$user" "$ssh_dir" 2>/dev/null || true
+echo __AUTOMAX_CHANGED__
+'''
+        rc, out, err = exec_remote(context, f"{prefix}sh -s -- {quote(user)} {quote(key)} <<'SH'\n{script}\nSH")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.authorized_key failed")
+    return _orig_authorized_key_execute(self, params, context)
+
+SshAuthorizedKeyPlugin.execute = _authorized_key_execute_extended  # type: ignore[method-assign]

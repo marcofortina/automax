@@ -84,3 +84,12 @@ Use `pkg.version_assert` to gate a run on an expected installed package version.
 Use `pkg.owner` and `pkg.files` for troubleshooting package/file ownership. Use
 `pkg.verify` for package-manager integrity checks and `pkg.clean` for explicit
 cache cleanup.
+
+## Package lifecycle hardening
+
+`pkg.install` supports version pinning during install, temporary repository
+selection, no-recommends installs, explicit downgrade allowance and optional lock
+after install. `pkg.remove` supports purge/autoremove with `confirm: true` for
+risky removals and protected package guards. `pkg.upgrade` supports security-only,
+exclude, download-only and reboot-required checks where the selected package
+manager supports them.

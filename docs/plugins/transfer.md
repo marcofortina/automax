@@ -73,3 +73,9 @@ render a copy/pasteable `rsync --dry-run` command before applying changes.
 `overwrite`, `backup_existing`, `backup_suffix`, timestamp preservation and file
 mode handling. Directory uploads can also receive recursive owner/group/mode
 application after transfer.
+
+## Rsync operational controls
+
+`transfer.rsync` supports partial transfers, bandwidth limiting, numeric ids,
+itemized change output and transfer statistics in addition to existing checksum,
+compress, delete and dry-run controls.

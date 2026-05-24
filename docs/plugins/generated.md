@@ -107,6 +107,127 @@ with:
 
 ## apparmor
 
+### `apparmor.complain`
+
+Put one AppArmor profile in complain mode.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: apparmor.complain
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+```
+
+### `apparmor.disable`
+
+Disable one AppArmor profile after explicit confirmation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: apparmor.disable
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+```
+
+### `apparmor.enforce`
+
+Put one AppArmor profile in enforcing mode.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: apparmor.enforce
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+```
+
+### `apparmor.parser_validate`
+
+Validate an AppArmor profile with apparmor_parser before applying it.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: apparmor.parser_validate
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+```
+
 ### `apparmor.profile`
 
 Set an AppArmor profile to enforce or complain mode.
@@ -138,6 +259,38 @@ with:
   profile: /etc/apparmor.d/usr.sbin.nginx
   state: enforce
   sudo: true
+```
+
+### `apparmor.profile_assert`
+
+Assert that an AppArmor profile is loaded in the expected mode.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `state` | yes | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: apparmor.profile_assert
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+  state: present
 ```
 
 ### `apparmor.reload`
@@ -324,6 +477,13 @@ Extract a remote tar archive.
 | `strip_components` | no | `integer` | `0` | Path components stripped while extracting a tar archive. |
 | `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
 | `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+| `safe_extract` | no | `boolean` | `True` | Reject unsafe archive paths before extraction. |
+| `checksum_verify` | no | `string` |  | Expected checksum for archive or file verification. |
+| `include` | no | `string` |  | PAM include/substack target name. |
+| `exclude` | no | `list` |  | Package or archive excludes. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
 
 Result fields:
 
@@ -358,6 +518,13 @@ Extract a remote zip archive.
 | `overwrite` | no | `boolean` | `False` | Replace an existing destination when supported. |
 | `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
 | `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+| `safe_extract` | no | `boolean` | `True` | Reject unsafe archive paths before extraction. |
+| `checksum_verify` | no | `string` |  | Expected checksum for archive or file verification. |
+| `include` | no | `string` |  | PAM include/substack target name. |
+| `exclude` | no | `list` |  | Package or archive excludes. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
 
 Result fields:
 
@@ -581,6 +748,35 @@ with:
 
 ## auditd
 
+### `auditd.backlog_assert`
+
+Assert auditd lost-event count and backlog are below thresholds.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `max_lost` | no | `integer` | `0` | Maximum allowed audit lost-event count. |
+| `max_backlog` | no | `integer` | `8192` | Maximum allowed audit backlog. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: auditd.backlog_assert
+```
+
 ### `auditd.reload`
 
 Reload auditd rules using augenrules or the auditd service.
@@ -646,6 +842,69 @@ with:
   name: nginx
 ```
 
+### `auditd.rules_facts`
+
+List active auditd rules and persistent rules.d files.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: auditd.rules_facts
+with:
+  sudo: true
+```
+
+### `auditd.search`
+
+Search audit events by key, user or time window.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `key` | no | `string` |  | SSH public key line. |
+| `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
+| `start` | no | `boolean` | `False` | Start a service or timer after installing its unit. |
+| `end` | no | `string` |  | End time for an audit search or time window. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: auditd.search
+with:
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+  user: deploy
+```
+
 ### `auditd.status`
 
 Read auditd status without changing the system.
@@ -673,6 +932,85 @@ Example:
 use: auditd.status
 with:
   sudo: true
+```
+
+### `auditd.syscall`
+
+Install an auditd syscall rule.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `syscalls` | yes | `list` |  | Audit syscall names. |
+| `key` | yes | `string` |  | SSH public key line. |
+| `arch` | no | `string` | `b64` | CPU architecture selector for audit rules. |
+| `action` | no | `string` |  | udev action to trigger. |
+| `filters` | no | `list` |  | Audit rule filters such as auid>=1000. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: auditd.syscall
+with:
+  name: nginx
+  syscalls: value
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+```
+
+### `auditd.watch`
+
+Install an auditd filesystem watch rule.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `permissions` | yes | `string` |  | Audit permissions such as rwa or wa. |
+| `key` | yes | `string` |  | SSH public key line. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: auditd.watch
+with:
+  name: nginx
+  path: /tmp/automax-demo
+  permissions: value
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
 ```
 
 ## authselect
@@ -885,6 +1223,36 @@ with:
 
 ## block
 
+### `block.empty_assert`
+
+Assert a block device has no detectable signature before destructive use.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: block.empty_assert
+with:
+  device: /dev/sdb
+```
+
 ### `block.facts`
 
 Collect remote block-device facts with lsblk, blkid, udevadm and optional multipath output.
@@ -917,6 +1285,38 @@ with:
   devices:
     - /dev/sdb
   multipath: false
+```
+
+### `block.fs_assert`
+
+Assert block device filesystem type.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: block.fs_assert
+with:
+  device: /dev/sdb
+  fstype: xfs
 ```
 
 ### `block.identity`
@@ -982,6 +1382,68 @@ use: block.mkfs
 with:
   device: /dev/sdb
   fstype: xfs
+```
+
+### `block.mountpoint_assert`
+
+Assert a block device is mounted at a path.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: block.mountpoint_assert
+with:
+  device: /dev/sdb
+  path: /tmp/automax-demo
+```
+
+### `block.not_mounted_assert`
+
+Assert a block device is not mounted.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: block.not_mounted_assert
+with:
+  device: /dev/sdb
 ```
 
 ### `block.partition`
@@ -1085,6 +1547,38 @@ use: block.rescan
 with:
   device: /dev/sdb
   udev_settle: true
+```
+
+### `block.size_assert`
+
+Assert block device size in bytes.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: block.size_assert
+with:
+  device: /dev/sdb
+  size: 16G
 ```
 
 ### `block.wipe_signatures`
@@ -1563,6 +2057,35 @@ with:
   sudo: true
 ```
 
+### `chrony.tracking_assert`
+
+Assert chrony tracking health using chronyc tracking.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `max_offset` | no | `number` | `1.0` | Maximum allowed NTP/chrony offset in seconds. |
+| `max_stratum` | no | `integer` | `16` | Maximum allowed NTP/chrony stratum. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: chrony.tracking_assert
+```
+
 ## cron
 
 ### `cron.absent`
@@ -1695,7 +2218,7 @@ Example:
 ```yaml
 use: cron.list
 with:
-  user: false
+  user: deploy
   sudo: true
 ```
 
@@ -2206,6 +2729,78 @@ with:
 
 ## firewalld
 
+### `firewalld.forward_port`
+
+Manage firewalld forward-port rules.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `port` | yes | `integer` |  | TCP port number. |
+| `to_port` | yes | `integer` |  | Forward destination port. |
+| `protocol` | no | `string` | `tcp` | Network protocol such as tcp or udp. |
+| `to_addr` | no | `string` |  | Forward destination address. |
+| `zone` | no | `string` |  | firewalld zone name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: firewalld.forward_port
+with:
+  port: 22
+  to_port: value
+```
+
+### `firewalld.icmp_block`
+
+Manage a firewalld ICMP block.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `icmp_type` | yes | `string` |  | firewalld ICMP type name. |
+| `zone` | no | `string` |  | firewalld zone name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: firewalld.icmp_block
+with:
+  icmp_type: value
+```
+
 ### `firewalld.list`
 
 List firewalld rules for one zone or all zones.
@@ -2236,6 +2831,40 @@ use: firewalld.list
 with:
   zone: public
   permanent: true
+```
+
+### `firewalld.masquerade`
+
+Manage firewalld masquerading for a zone.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `zone` | no | `string` |  | firewalld zone name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: firewalld.masquerade
+with:
+  zone: public
+  state: present
 ```
 
 ### `firewalld.port`
@@ -2383,6 +3012,40 @@ Example:
 use: firewalld.service
 with:
   service: sshd
+```
+
+### `firewalld.source`
+
+Manage a firewalld source in a zone.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `source` | yes | `path` |  | Remote source path to archive. |
+| `zone` | no | `string` |  | firewalld zone name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: firewalld.source
+with:
+  source: /var/log/app
 ```
 
 ### `firewalld.status`
@@ -2922,6 +3585,9 @@ Ensure an exact line is present or absent in a remote file.
 | `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
 | `create` | no | `boolean` | `False` | Create the remote file when ensuring a line is present. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `validate_command` | no | `string` |  | Command used to validate generated file content. |
 
 Result fields:
 
@@ -3129,8 +3795,11 @@ Replace text in a remote file using a regex pattern.
 | `count` | no | `integer` | `0` | Maximum regex replacements; 0 means replace all matches. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `backup_path` | no | `path` |  | Explicit backup path for pre-change file content. |
+| `validate_command` | no | `string` |  | Command used to validate generated file content. |
+| `match_count_assert` | no | `integer` |  | Expected number of regex matches. |
 
 Result fields:
 
@@ -3302,6 +3971,10 @@ Render a local Jinja2 template to a remote file.
 | `sudo` | no | `boolean` | `False` | Install the rendered file with sudo. |
 | `encoding` | no | `string` | `utf-8` | Template and upload encoding. |
 | `values` | no | `mapping` |  | Additional values exposed to the template as values.*. |
+| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `validate_command` | no | `string` |  | Command used to validate generated file content. |
+| `sensitive` | no | `boolean` | `False` | Mask sensitive content in previews or logs. |
 
 Result fields:
 
@@ -3342,6 +4015,10 @@ Write text content to a remote file.
 | `group` | no | `string` |  | Primary group, file group owner or remote group name. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
+| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `validate_command` | no | `string` |  | Command used to validate generated file content. |
+| `sensitive` | no | `boolean` | `False` | Mask sensitive content in previews or logs. |
 
 Result fields:
 
@@ -3363,6 +4040,76 @@ with:
 ```
 
 ## fstab
+
+### `fstab.absent`
+
+Remove fstab entries matching a mountpoint or source after confirmation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `source` | no | `path` |  | Remote source path to archive. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fstab.absent
+with:
+  path: /tmp/automax-demo
+  source: /var/log/app
+```
+
+### `fstab.assert`
+
+Assert an fstab entry exists for source, path or fstype.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `source` | no | `path` |  | Remote source path to archive. |
+| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fstab.assert
+with:
+  path: /tmp/automax-demo
+  source: /var/log/app
+```
 
 ### `fstab.entry`
 
@@ -3500,6 +4247,69 @@ Example:
 use: group.exists
 with:
   name: nginx
+```
+
+### `group.member_absent`
+
+Remove a user from a group after explicit confirmation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `string` | `False` | User account name. |
+| `group` | yes | `string` |  | Group name. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: group.member_absent
+with:
+  user: deploy
+  group: app
+```
+
+### `group.members`
+
+List members of a group.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `group` | yes | `string` |  | Group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: group.members
+with:
+  group: app
 ```
 
 ### `group.remove`
@@ -3903,6 +4713,108 @@ with:
   chain: value
 ```
 
+### `iptables.counter_assert`
+
+Assert iptables chain packet counters are above a threshold.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `chain` | yes | `string` |  | Firewall chain name. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `min_packets` | no | `integer` | `1` | Minimum firewall counter packet threshold. |
+| `ipv6` | no | `boolean` | `False` | Use IPv6 command variant when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: iptables.counter_assert
+with:
+  chain: value
+```
+
+### `iptables.delete`
+
+Delete an iptables rule after explicit confirmation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `chain` | yes | `string` |  | Firewall chain name. |
+| `rule` | yes | `string` |  | Firewall action such as allow, deny, reject or limit. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `ipv6` | no | `boolean` | `False` | Use IPv6 command variant when supported. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: iptables.delete
+with:
+  chain: value
+  rule: allow
+```
+
+### `iptables.exists_assert`
+
+Assert an iptables rule exists.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `chain` | yes | `string` |  | Firewall chain name. |
+| `rule` | yes | `string` |  | Firewall action such as allow, deny, reject or limit. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `ipv6` | no | `boolean` | `False` | Use IPv6 command variant when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: iptables.exists_assert
+with:
+  chain: value
+  rule: allow
+```
+
 ### `iptables.list`
 
 List iptables or ip6tables rules for a table or chain.
@@ -4185,6 +5097,105 @@ with:
   name: nginx
 ```
 
+### `kernel.boot_param_absent`
+
+Remove a kernel boot parameter from GRUB defaults after explicit confirmation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `param` | yes | `string` |  | Kernel command-line parameter. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: kernel.boot_param_absent
+with:
+  param: value
+```
+
+### `kernel.cmdline_assert`
+
+Assert that the running kernel command line contains or omits a parameter.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `param` | yes | `string` |  | Kernel command-line parameter. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: kernel.cmdline_assert
+with:
+  param: value
+```
+
+### `kernel.module.blacklist`
+
+Install or remove a persistent kernel module blacklist drop-in.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `module` | yes | `string` |  | Linux kernel module name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: kernel.module.blacklist
+with:
+  module: br_netfilter
+```
+
 ### `kernel.module.load`
 
 Load a Linux kernel module and optionally persist it.
@@ -4249,6 +5260,37 @@ Example:
 use: kernel.module.persist
 with:
   name: nginx
+```
+
+### `kernel.module.status`
+
+Assert or report kernel module load status.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `module` | yes | `string` |  | Linux kernel module name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: kernel.module.status
+with:
+  module: br_netfilter
 ```
 
 ### `kernel.module.unload`
@@ -4950,6 +5992,38 @@ with:
   path: /tmp/automax-demo
 ```
 
+### `mount.assert`
+
+Assert a mountpoint is mounted, optionally from source and fstype.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `source` | no | `path` |  | Remote source path to archive. |
+| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: mount.assert
+with:
+  path: /tmp/automax-demo
+```
+
 ### `mount.facts`
 
 Collect mounted filesystem facts with findmnt.
@@ -4979,6 +6053,39 @@ use: mount.facts
 with:
   path: /tmp/automax-demo
   sudo: true
+```
+
+### `mount.options_assert`
+
+Assert required mount options are active.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `options` | yes | `list` |  | Resolver options. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: mount.options_assert
+with:
+  path: /tmp/automax-demo
+  options:
+    - timeout:2
 ```
 
 ### `mount.present`
@@ -5624,6 +6731,67 @@ with:
   table: main
 ```
 
+### `nftables.rollback_file`
+
+Apply an nftables rollback ruleset file after explicit confirmation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `file` | yes | `path` |  | Remote configuration file path. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: nftables.rollback_file
+with:
+  file: /etc/sysctl.d/99-automax.conf
+```
+
+### `nftables.ruleset_assert`
+
+Assert the active nftables ruleset contains a fragment.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `fragment` | yes | `string` |  | Expected configuration or ruleset fragment. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: nftables.ruleset_assert
+with:
+  fragment: value
+```
+
 ### `nftables.validate`
 
 Validate nftables rules from inline content or a controller file.
@@ -5728,6 +6896,37 @@ with:
   profile: /etc/apparmor.d/usr.sbin.nginx
 ```
 
+### `pam.backup`
+
+Backup one PAM service file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `dest` | no | `path` |  | Destination path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pam.backup
+with:
+  service: sshd
+```
+
 ### `pam.faillock`
 
 Manage faillock.conf settings and optional pam_faillock service wiring.
@@ -5764,6 +6963,38 @@ with:
   settings: value
 ```
 
+### `pam.include_assert`
+
+Assert a PAM service includes another stack.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `include` | yes | `string` |  | PAM include/substack target name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pam.include_assert
+with:
+  service: sshd
+  include: value
+```
+
 ### `pam.limits`
 
 Ensure pam_limits.so is enabled in one or more PAM service files.
@@ -5795,6 +7026,73 @@ use: pam.limits
 with:
   files:
     - /etc/pam.d/login
+```
+
+### `pam.module_assert`
+
+Assert a PAM module line exists in a service.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `module` | yes | `string` |  | Linux kernel module name. |
+| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pam.module_assert
+with:
+  service: sshd
+  module: br_netfilter
+```
+
+### `pam.order_assert`
+
+Assert one PAM line appears before another.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `before` | yes | `string` |  | Marker that must appear before another line or rule. |
+| `after` | yes | `string` |  | Marker that must appear after another line or rule. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pam.order_assert
+with:
+  service: sshd
+  before: value
+  after: value
 ```
 
 ### `pam.pwhistory`
@@ -5832,6 +7130,39 @@ Example:
 use: pam.pwhistory
 with:
   settings: value
+```
+
+### `pam.restore`
+
+Restore one PAM service file from backup after confirmation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `src` | yes | `path` |  | Source path. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pam.restore
+with:
+  service: sshd
+  src: /tmp/source
 ```
 
 ### `pam.service_line`
@@ -6122,6 +7453,12 @@ Install packages on a remote target.
 | `name` | no | `string` |  | Package, user or group name. |
 | `packages` | no | `list` |  | Package names for package-manager operations. |
 | `manager` | no | `string` | `auto` | Package manager: auto, apt, dnf, yum, zypper or pacman. |
+| `version` | no | `string` |  | Package version to pin. |
+| `enablerepo` | no | `list` |  | Temporary repository to enable for package operation. |
+| `disablerepo` | no | `list` |  | Temporary repository to disable for package operation. |
+| `no_recommends` | no | `boolean` | `False` | Disable recommended dependencies where supported. |
+| `lock_after_install` | no | `boolean` | `False` | Lock package after installation. |
+| `allow_downgrade` | no | `boolean` | `False` | Allow explicit package downgrades. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -6290,6 +7627,10 @@ Remove packages from a remote target.
 | `name` | no | `string` |  | Package, user or group name. |
 | `packages` | no | `list` |  | Package names for package-manager operations. |
 | `manager` | no | `string` | `auto` | Package manager: auto, apt, dnf, yum, zypper or pacman. |
+| `purge` | no | `boolean` | `False` | Remove package configuration where supported. |
+| `autoremove` | no | `boolean` | `False` | Remove unused dependencies where supported. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `protect_packages` | no | `list` |  | Packages that must not be removed. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -6503,9 +7844,11 @@ Upgrade remote packages.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `name` | no | `string` |  | Package, user or group name. |
-| `packages` | no | `list` |  | Package names for package-manager operations. |
 | `manager` | no | `string` | `auto` | Package manager: auto, apt, dnf, yum, zypper or pacman. |
+| `security_only` | no | `boolean` | `False` | Apply only security updates where supported. |
+| `exclude` | no | `list` |  | Package or archive excludes. |
+| `download_only` | no | `boolean` | `False` | Download packages without installing. |
+| `reboot_required_check` | no | `boolean` | `False` | Check whether reboot is required after package operation. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -6522,9 +7865,7 @@ Example:
 ```yaml
 use: pkg.upgrade
 with:
-  name: nginx
-  packages:
-    - curl
+  manager: auto
 ```
 
 ### `pkg.verify`
@@ -7264,6 +8605,10 @@ Ensure an SSH authorized key is present or absent for a remote user.
 | `key` | yes | `string` |  | Authorized key line to manage. |
 | `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `key_options` | no | `string` |  | SSH authorized_keys options prefix. |
+| `exclusive` | no | `boolean` | `False` | Keep only managed entries where supported. |
+| `comment_update` | no | `string` |  | Authorized key comment to write. |
+| `fingerprint_assert` | no | `string` |  | Expected fingerprint value. |
 
 Result fields:
 
@@ -7313,7 +8658,7 @@ Example:
 ```yaml
 use: ssh.authorized_key_absent
 with:
-  user: false
+  user: deploy
   key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
 ```
 
@@ -7547,6 +8892,8 @@ Install an sshd_config.d hardening drop-in with sshd syntax validation.
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `validate_before_reload` | no | `boolean` | `True` | Validate service configuration before reload. |
+| `match_blocks` | no | `list` |  | OpenSSH Match blocks to render. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -7598,6 +8945,101 @@ with:
 ```
 
 ## sudo
+
+### `sudo.assert`
+
+Assert sudo -l output contains a rule fragment.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `string` | `False` | User account name. |
+| `rule` | yes | `string` |  | Firewall action such as allow, deny, reject or limit. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: sudo.assert
+with:
+  user: deploy
+  rule: allow
+```
+
+### `sudo.can_run`
+
+Assert that a user can run a command via sudo without prompting.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `string` | `False` | User account name. |
+| `command` | yes | `string` |  | Command line to execute. |
+| `run_as` | no | `string` |  | sudo run-as target user. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: sudo.can_run
+with:
+  user: deploy
+  command: echo automax
+```
+
+### `sudo.list`
+
+List sudo privileges for a user.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `string` | `False` | User account name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: sudo.list
+with:
+  user: deploy
+```
 
 ### `sudo.rule`
 
@@ -7812,6 +9254,107 @@ with:
 
 ## sysctl
 
+### `sysctl.assert`
+
+Assert a runtime sysctl value.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `value` | yes | `string` |  | Desired parameter value. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: sysctl.assert
+with:
+  name: nginx
+  value: 1
+```
+
+### `sysctl.dropin`
+
+Install a sysctl.d drop-in and reload sysctl values.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `settings` | yes | `mapping` |  | SSH client or server settings. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: sysctl.dropin
+with:
+  name: nginx
+  settings: value
+```
+
+### `sysctl.facts`
+
+Read one or more sysctl values.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `names` | no | `list` |  | Hostnames or aliases for a hosts entry. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: sysctl.facts
+with:
+  names:
+    - app1.example.com
+    - app1
+  sudo: true
+```
+
 ### `sysctl.get`
 
 Read a Linux sysctl value.
@@ -8015,7 +9558,7 @@ Example:
 use: systemctl.daemon_reload
 with:
   sudo: true
-  user: false
+  user: deploy
 ```
 
 ### `systemctl.disable`
@@ -8513,6 +10056,97 @@ with:
 
 ```
 
+## timedatectl
+
+### `timedatectl.ntp`
+
+Enable or disable NTP through timedatectl.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `enabled` | yes | `boolean` | `True` | Whether a repository or persistent resource is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: timedatectl.ntp
+with:
+  enabled: value
+```
+
+### `timedatectl.status`
+
+Read timedatectl time, timezone and NTP state.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: timedatectl.status
+with:
+  sudo: true
+```
+
+### `timedatectl.timezone`
+
+Set system timezone with timedatectl.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `timezone` | yes | `string` |  | IANA timezone name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: timedatectl.timezone
+with:
+  timezone: value
+```
+
 ## transfer
 
 ### `transfer.download`
@@ -8579,6 +10213,11 @@ Synchronize files with rsync using the current target as the default remote endp
 | `ssh_options` | no | `list` |  | Extra ssh options used by rsync. |
 | `rsync_path` | no | `path` |  | Remote rsync executable path. |
 | `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `partial` | no | `boolean` | `False` | Keep partially transferred files. |
+| `bwlimit` | no | `integer` |  | Bandwidth limit. |
+| `numeric_ids` | no | `boolean` | `False` | Preserve numeric UID/GID values. |
+| `itemize_changes` | no | `boolean` | `False` | Show per-file rsync changes. |
+| `stats` | no | `boolean` | `False` | Show transfer statistics. |
 
 Result fields:
 
@@ -8677,6 +10316,36 @@ with:
 
 ## udev
 
+### `udev.facts`
+
+Read udev properties for a device path.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: udev.facts
+with:
+  device: /dev/sdb
+```
+
 ### `udev.reload`
 
 Reload udev rules.
@@ -8772,6 +10441,36 @@ with:
   timeout: 60
 ```
 
+### `udev.test`
+
+Run udevadm test for a device sysfs path.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: udev.test
+with:
+  device: /dev/sdb
+```
+
 ### `udev.trigger`
 
 Trigger udev events and optionally wait for settle.
@@ -8805,7 +10504,68 @@ with:
   action: change
 ```
 
+### `udev.validate`
+
+Validate udev rules file syntax with udevadm test where possible.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `file` | yes | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: udev.validate
+with:
+  file: /etc/sysctl.d/99-automax.conf
+```
+
 ## ufw
+
+### `ufw.delete`
+
+Delete a UFW rule after explicit confirmation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `rule` | yes | `string` |  | Firewall action such as allow, deny, reject or limit. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: ufw.delete
+with:
+  rule: allow
+```
 
 ### `ufw.disable`
 
@@ -8861,6 +10621,36 @@ Example:
 
 ```yaml
 use: ufw.enable
+with:
+  sudo: true
+```
+
+### `ufw.reset`
+
+Reset UFW after explicit confirmation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: ufw.reset
 with:
   sudo: true
 ```
@@ -9007,6 +10797,102 @@ with:
   name: nginx
 ```
 
+### `user.facts`
+
+Read passwd, shadow lock and group facts for a user.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `string` | `False` | User account name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: user.facts
+with:
+  user: deploy
+```
+
+### `user.groups_assert`
+
+Assert required group membership for a user.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `string` | `False` | User account name. |
+| `groups` | yes | `list` |  | Supplementary group names. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: user.groups_assert
+with:
+  user: deploy
+  groups:
+    - app
+```
+
+### `user.home_assert`
+
+Assert a user's home directory path, owner or mode.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `string` | `False` | User account name. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: user.home_assert
+with:
+  user: deploy
+```
+
 ### `user.lock`
 
 Lock a remote user account.
@@ -9137,6 +11023,38 @@ Example:
 use: user.set_password
 with:
   name: nginx
+```
+
+### `user.shell_assert`
+
+Assert a user's login shell.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `string` | `False` | User account name. |
+| `shell` | yes | `string` |  | Expected login shell. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: user.shell_assert
+with:
+  user: deploy
+  shell: /bin/bash
 ```
 
 ### `user.unlock`

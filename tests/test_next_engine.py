@@ -4070,6 +4070,21 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["type"] = "user"
     if plugin.name == "ufw.rule":
         params["rule"] = "allow 22/tcp"
+    if plugin.name == "apparmor.profile_assert":
+        params["state"] = "enforce"
+    if plugin.name == "auditd.backlog_assert":
+        params["max_lost"] = 0
+        params["max_backlog"] = 8192
+    if plugin.name == "chrony.tracking_assert":
+        params["max_offset"] = 1.0
+        params["max_stratum"] = 16
+    if plugin.name == "iptables.counter_assert":
+        params["min_packets"] = 1
+    if plugin.name == "fs.replace":
+        params["count"] = 0
+        params["match_count_assert"] = 1
+    if plugin.name == "sshd.config":
+        params["match_blocks"] = [{"match": "User deploy", "settings": {"X11Forwarding": "no"}}]
     if plugin.name == "network.dns":
         params["backend"] = "plain-file"
     if plugin.name == "resolver.config":

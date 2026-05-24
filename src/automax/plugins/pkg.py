@@ -371,3 +371,132 @@ esac
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}", get_pty=bool(params.get("sudo", True)))
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.clean failed")
+
+# Extended package operation renderers added after the base classes to keep the
+# original implementation small while exposing safer enterprise controls.
+PackageInstallPlugin.optional_params = ("name", "packages", "manager", "version", "enablerepo", "disablerepo", "no_recommends", "lock_after_install", "allow_downgrade", "sudo")
+PackageRemovePlugin.optional_params = ("name", "packages", "manager", "purge", "autoremove", "confirm", "protect_packages", "sudo")
+PackageUpgradePlugin.optional_params = ("manager", "security_only", "exclude", "download_only", "reboot_required_check", "sudo")
+
+
+def _repo_opts(params: Dict[str, Any]) -> str:
+    opts: list[str] = []
+    for repo in _as_list(params.get("enablerepo")):
+        opts.append(f"--enablerepo={quote(repo)}")
+    for repo in _as_list(params.get("disablerepo")):
+        opts.append(f"--disablerepo={quote(repo)}")
+    return " ".join(opts)
+
+
+def _pkg_install_manual(self: PackageInstallPlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+    self.validate(params)
+    packages = _as_packages(params)
+    if params.get("version") and len(packages) != 1:
+        raise PluginValidationError("pkg.install version requires exactly one package")
+    package_exprs = [f"{packages[0]}={params['version']}" if params.get("version") else package for package in packages]
+    pkg_args = _package_args(package_exprs)
+    sudo = _sudo(params)
+    no_recommends = " --no-install-recommends" if bool(params.get("no_recommends", False)) else ""
+    allow_downgrade = " --allow-downgrades" if bool(params.get("allow_downgrade", False)) else ""
+    repo_opts = _repo_opts(params)
+    command = _shell_header(params) + f"""
+missing=""
+for package in {_package_args(packages)}; do
+  if ! is_installed "$package"; then missing="$missing $package"; fi
+done
+if [ -n "$missing" ]; then
+  case "$manager" in
+    apt|apt-get) {sudo}env DEBIAN_FRONTEND=noninteractive apt-get install -y{no_recommends}{allow_downgrade} {pkg_args} ;;
+    dnf) {sudo}dnf install -y {repo_opts} {pkg_args} ;;
+    yum) {sudo}yum install -y {repo_opts} {pkg_args} ;;
+    zypper) {sudo}zypper --non-interactive install {pkg_args} ;;
+    pacman) {sudo}pacman -S --noconfirm {pkg_args} ;;
+  esac
+  echo {CHANGE_MARKER}
+fi
+"""
+    if bool(params.get("lock_after_install", False)):
+        command += f"\nif command -v apt-mark >/dev/null 2>&1; then {sudo}apt-mark hold {_package_args(packages)}; elif command -v dnf >/dev/null 2>&1; then {sudo}dnf versionlock add {_package_args(packages)}; elif command -v yum >/dev/null 2>&1; then {sudo}yum versionlock add {_package_args(packages)}; elif command -v zypper >/dev/null 2>&1; then {sudo}zypper addlock {_package_args(packages)}; fi\n"
+    return [command]
+
+
+def _pkg_install_execute(self: PackageInstallPlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    rc, out, err = exec_remote(context, self.manual_commands(params, context)[0], get_pty=bool(params.get("sudo", True)))
+    return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.install failed", data={"packages": _as_packages(params)})
+
+
+def _pkg_remove_manual(self: PackageRemovePlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+    self.validate(params)
+    packages = _as_packages(params)
+    protected = set(_as_list(params.get("protect_packages"))) | {"sudo", "systemd", "openssh-server", "ssh", "python3"}
+    dangerous = bool(params.get("purge", False)) or bool(params.get("autoremove", False)) or bool(set(packages) & protected)
+    if dangerous and not bool(params.get("confirm", False)):
+        raise PluginValidationError("pkg.remove purge/autoremove/protected package removal requires confirm=true")
+    pkg_args = _package_args(packages)
+    sudo = _sudo(params)
+    purge = " purge" if bool(params.get("purge", False)) else " remove"
+    autoremove = f" && {sudo}apt-get autoremove -y" if bool(params.get("autoremove", False)) else ""
+    command = _shell_header(params) + f"""
+present=""
+for package in {pkg_args}; do
+  if is_installed "$package"; then present="$present $package"; fi
+done
+if [ -n "$present" ]; then
+  case "$manager" in
+    apt|apt-get) {sudo}env DEBIAN_FRONTEND=noninteractive apt-get{purge} -y $present{autoremove} ;;
+    dnf) {sudo}dnf remove -y $present ;;
+    yum) {sudo}yum remove -y $present ;;
+    zypper) {sudo}zypper --non-interactive remove $present ;;
+    pacman) {sudo}pacman -R --noconfirm $present ;;
+  esac
+  echo {CHANGE_MARKER}
+fi
+"""
+    return [command]
+
+
+def _pkg_remove_execute(self: PackageRemovePlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    rc, out, err = exec_remote(context, self.manual_commands(params, context)[0], get_pty=bool(params.get("sudo", True)))
+    return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.remove failed", data={"packages": _as_packages(params)})
+
+
+def _pkg_upgrade_manual(self: PackageUpgradePlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+    _manager(params)
+    sudo = _sudo(params)
+    excludes = " ".join(f"--exclude={quote(item)}" for item in _as_list(params.get("exclude")))
+    download = " --download-only" if bool(params.get("download_only", False)) else ""
+    security = " --security" if bool(params.get("security_only", False)) else ""
+    command = _shell_header(params) + f"""
+case "$manager" in
+  apt|apt-get) {sudo}env DEBIAN_FRONTEND=noninteractive apt-get upgrade -y{download} ;;
+  dnf) {sudo}dnf upgrade -y{security}{download} {excludes} ;;
+  yum) {sudo}yum update -y{security}{download} {excludes} ;;
+  zypper) {sudo}zypper --non-interactive update ;;
+  pacman) {sudo}pacman -Syu --noconfirm ;;
+esac
+echo {CHANGE_MARKER}
+"""
+    if bool(params.get("reboot_required_check", False)):
+        command += "\nif command -v needs-restarting >/dev/null 2>&1; then needs-restarting -r || true; elif test -e /var/run/reboot-required; then cat /var/run/reboot-required; fi\n"
+    return [command]
+
+
+def _pkg_upgrade_execute(self: PackageUpgradePlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    rc, out, err = exec_remote(context, self.manual_commands(params, context)[0], get_pty=bool(params.get("sudo", True)))
+    return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.upgrade failed")
+
+
+PackageInstallPlugin.manual_commands = _pkg_install_manual  # type: ignore[method-assign]
+PackageInstallPlugin.execute = _pkg_install_execute  # type: ignore[method-assign]
+PackageRemovePlugin.manual_commands = _pkg_remove_manual  # type: ignore[method-assign]
+PackageRemovePlugin.execute = _pkg_remove_execute  # type: ignore[method-assign]
+PackageUpgradePlugin.manual_commands = _pkg_upgrade_manual  # type: ignore[method-assign]
+PackageUpgradePlugin.execute = _pkg_upgrade_execute  # type: ignore[method-assign]
+
+# Helper intentionally appended after extended renderers; functions resolve globals at call time.
+def _as_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple)):
+        return [str(item) for item in value]
+    return [str(value)]

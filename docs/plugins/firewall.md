@@ -48,3 +48,19 @@ and after runtime rule changes.
 insertion, comments, `-w` wait handling, pre-change backups and `save_after`.
 `nftables.apply` supports check-only validation, pre-apply backup, persistent
 ruleset installation and service reload.
+
+## Backend-specific firewall extras
+
+firewalld backend extras manage source bindings, ICMP blocks, masquerading and
+forward-port rules through explicit plugins: `firewalld.source`,
+`firewalld.icmp_block`, `firewalld.masquerade` and `firewalld.forward_port`.
+
+nftables extras provide readback assertion and rollback: `nftables.ruleset_assert`
+and `nftables.rollback_file`. Rollback requires `confirm: true`.
+
+iptables extras provide deletion, rule existence assertion and counter assertion:
+`iptables.delete`, `iptables.exists_assert` and `iptables.counter_assert`.
+Deletion requires `confirm: true`.
+
+UFW extras provide `ufw.delete` and `ufw.reset`. Both require `confirm: true`
+because they remove firewall state.

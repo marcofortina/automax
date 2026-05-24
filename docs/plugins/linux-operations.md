@@ -224,3 +224,15 @@ existing configuration files.
 Use `network.bridge` for explicit runtime bridge creation/removal. Use
 `network.link_assert`, `network.route_assert`, `network.dns_assert` and
 `network.port_check` as precheck/postcheck guards around network operations.
+
+## Udev, time and account readback
+
+Udev validation/readback plugins are `udev.validate`, `udev.test` and
+`udev.facts`. Use them before and after installing udev rules.
+
+Time synchronization helpers include `timedatectl.status`,
+`timedatectl.timezone`, `timedatectl.ntp` and `chrony.tracking_assert`.
+
+User and group readback/assertion plugins include `user.facts`,
+`user.shell_assert`, `user.home_assert`, `user.groups_assert`, `group.members`
+and `group.member_absent`. Removing a group member requires `confirm: true`.
