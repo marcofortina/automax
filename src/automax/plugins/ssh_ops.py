@@ -110,16 +110,18 @@ class SshKnownHostsPlugin(BasePlugin):
         path = self._path(params)
         host = str(params["host"])
         sudo = _sudo(params) if path.startswith("/etc/") else ""
-        mkdir = f"mkdir -p $(dirname {quote(path)})"
-        backup = f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}" if bool(params.get("backup", True)) else "true"
+        path_expr = "${HOME}/.ssh/known_hosts" if path == "$HOME/.ssh/known_hosts" else quote(path)
+        mkdir = f'mkdir -p "$(dirname {path_expr})"'
+        backup_dest = quote(path + str(params.get('backup_suffix', '.bak'))) if path != "$HOME/.ssh/known_hosts" else '"${HOME}/.ssh/known_hosts' + str(params.get('backup_suffix', '.bak')) + '"'
+        backup = f"test ! -e {path_expr} || {sudo}cp -p {path_expr} {backup_dest}" if bool(params.get("backup", True)) else "true"
         if state == "absent":
             target = f"[{host}]:{params['port']}" if params.get("port") else host
-            return [f"{mkdir} && {backup} && ssh-keygen -R {quote(target)} -f {quote(path)} >/dev/null 2>&1 || true"]
+            return [f"{mkdir} && {backup} && ssh-keygen -R {quote(target)} -f {path_expr} >/dev/null 2>&1 || true"]
         if params.get("key"):
             entry = self._entry(params)
-            return [f"{mkdir} && {backup} && touch {quote(path)} && grep -Fqx -- {quote(entry)} {quote(path)} || printf '%s\n' {quote(entry)} >> {quote(path)}"]
+            return [f"{mkdir} && {backup} && touch {path_expr} && grep -Fqx -- {quote(entry)} {path_expr} || printf '%s\n' {quote(entry)} >> {path_expr}"]
         port_arg = f" -p {quote(params['port'])}" if params.get("port") else ""
-        return [f"{mkdir} && {backup} && ssh-keygen -R {quote(host)} -f {quote(path)} >/dev/null 2>&1 || true; ssh-keyscan{port_arg} {quote(host)} >> {quote(path)}"]
+        return [f"{mkdir} && {backup} && ssh-keygen -R {quote(host)} -f {path_expr} >/dev/null 2>&1 || true; ssh-keyscan{port_arg} {quote(host)} >> {path_expr}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
