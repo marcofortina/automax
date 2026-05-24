@@ -3936,6 +3936,7 @@ def _audit_sample_value(name: str):
         "ip": "127.0.0.1",
         "key": "/tmp/server.key",
         "key_dest": "/etc/ssl/private/server.key",
+        "keep": 7,
         "label": "gpt",
         "line": "managed=yes",
         "max_percent": 90,
@@ -3991,7 +3992,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
             continue
         if name in {"sudo", "force", "backup", "reload", "permanent", "validate", "persist", "runtime", "create", "recursive", "ignore_missing", "test_only", "dry_run", "compress"}:
             params[name] = True
-        elif name in {"port", "connect_timeout", "timeout", "interval", "expected_status", "status", "warning_days", "min_days", "max_percent", "count", "min_count", "max_count", "block_soft", "block_hard", "inode_soft", "inode_hard", "uid", "gid", "smtp_port", "strip_components", "days", "delay", "connect_timeout"}:
+        elif name in {"port", "connect_timeout", "timeout", "interval", "expected_status", "status", "warning_days", "min_days", "max_percent", "count", "min_count", "max_count", "block_soft", "block_hard", "inode_soft", "inode_hard", "uid", "gid", "smtp_port", "strip_components", "days", "delay", "connect_timeout", "older_than_days", "keep"}:
             params[name] = 1 if name not in {"port", "smtp_port", "expected_status", "status", "max_percent"} else (22 if name in {"port", "smtp_port"} else (200 if name in {"expected_status", "status"} else 90))
         elif name in {"manager"}:
             params[name] = "auto"
@@ -4029,7 +4030,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "db.health":
         params["engine"] = "sqlite"
         params["connection"] = {"path": "/tmp/automax.sqlite"}
-    if plugin.name in {"lvm.lv_remove", "lvm.vg_remove", "lvm.pv_remove", "backup.restore", "iptables.restore", "fs.remove"}:
+    if plugin.name in {"lvm.lv_remove", "lvm.vg_remove", "lvm.pv_remove", "backup.restore", "backup.prune", "backup.rotate", "iptables.restore", "fs.remove"}:
         params["confirm"] = True
     if plugin.name == "fs.remove":
         params["path"] = "/tmp/automax-demo"
@@ -4299,3 +4300,38 @@ def test_pam_hardening_plugins_render_manual_commands():
     authselect = registry.get("pam.authselect").manual_commands({"profile": "sssd", "features": ["with-faillock"], "sudo": False}, context)[0]
     assert "authselect current" in authselect
     assert "with-faillock" in authselect
+
+
+def test_backup_completeness_plugins_render_manual_commands():
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins.base import PluginValidationError
+    from automax.plugins.registry import build_builtin_registry
+
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
+    registry = build_builtin_registry()
+
+    manifest = registry.get("backup.manifest").manual_commands({"root": "/var/backups", "dest": "/var/backups/manifest.txt", "sudo": False}, context)[0]
+    assert "find . -type f" in manifest
+    assert "tee /var/backups/manifest.txt" in manifest
+
+    try:
+        registry.get("backup.prune").manual_commands({"path": "/var/backups", "keep": 7}, context)
+    except PluginValidationError as exc:
+        assert "confirm: true" in str(exc)
+    else:
+        raise AssertionError("backup.prune must require confirm=true")
+
+    prune = registry.get("backup.prune").manual_commands({"path": "/var/backups", "keep": 7, "older_than_days": 30, "patterns": ["*.tar.gz"], "confirm": True, "sudo": False}, context)[0]
+    assert "find /var/backups" in prune
+    assert "older_than_days" not in prune
+    assert "python3 - /var/backups 7" in prune
+
+    rotate = registry.get("backup.rotate").manual_commands({"path": "/var/backups/app.tar.gz", "keep": 3, "confirm": True, "sudo": False}, context)[0]
+    assert "app.tar.gz.3" in rotate
+    assert "app.tar.gz.1" in rotate
+
+    preview = registry.get("backup.restore_preview").manual_commands({"src": "/var/backups/app.tar.gz", "dest": "/srv/app", "archive": True, "sudo": False}, context)[0]
+    assert "tar -tf /var/backups/app.tar.gz" in preview
+
+    verify = registry.get("backup.restore_verify").manual_commands({"src": "/var/backups/app.tar.gz", "dest": "/srv/app", "archive": True, "sudo": False}, context)[0]
+    assert "tar -df /var/backups/app.tar.gz" in verify

@@ -50,7 +50,12 @@ auditd.watch
 authselect.profile
 backup.directory
 backup.file
+backup.manifest
+backup.prune
 backup.restore
+backup.restore_preview
+backup.restore_verify
+backup.rotate
 backup.verify
 blkid.assert
 block.empty_assert

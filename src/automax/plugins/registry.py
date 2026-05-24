@@ -116,7 +116,17 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         CertSubjectAssertPlugin,
         CertVerifyChainPlugin,
     )
-    from automax.plugins.backup import BackupDirectoryPlugin, BackupFilePlugin, BackupRestorePlugin, BackupVerifyPlugin
+    from automax.plugins.backup import (
+        BackupDirectoryPlugin,
+        BackupFilePlugin,
+        BackupManifestPlugin,
+        BackupPrunePlugin,
+        BackupRestorePlugin,
+        BackupRestorePreviewPlugin,
+        BackupRestoreVerifyPlugin,
+        BackupRotatePlugin,
+        BackupVerifyPlugin,
+    )
     from automax.plugins.auditd import AuditdReloadPlugin, AuditdRulePlugin, AuditdStatusPlugin
     from automax.plugins.archive import (
         ArchiveCompressPlugin,
@@ -467,6 +477,11 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         BackupDirectoryPlugin(),
         BackupRestorePlugin(),
         BackupVerifyPlugin(),
+        BackupManifestPlugin(),
+        BackupPrunePlugin(),
+        BackupRotatePlugin(),
+        BackupRestorePreviewPlugin(),
+        BackupRestoreVerifyPlugin(),
         CertExpiryReportPlugin(),
         CertGenerateCsrPlugin(),
         CertInstallKeypairPlugin(),

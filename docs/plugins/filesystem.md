@@ -281,8 +281,16 @@ remote commands are prefixed with `cd <path> &&` where supported.
 maintenance operations. `backup.directory` creates compressed tar archives with optional checksums. Backup operations are intentionally separate from file
 mutation plugins so operators can preview and run them as dedicated steps.
 
+`backup.manifest` creates a deterministic inventory for backup artifacts, with
+optional per-file checksums. `backup.prune` removes old artifacts by age or
+retention count and requires `confirm: true`. `backup.rotate` rotates one backup
+artifact through numbered generations and also requires `confirm: true`.
+
 `backup.restore` restores an explicit file or archive backup and requires `confirm: true`.
-`backup.verify` validates checksum sidecars as a read-only post-backup or pre-restore gate.
+Use `backup.restore_preview` before restore to inspect what would be restored,
+and `backup.restore_verify` after restore to verify restored content against the
+backup artifact. `backup.verify` validates checksum sidecars as a read-only
+post-backup or pre-restore gate.
 
 `fs.bind_mount` manages runtime bind mounts and optional `/etc/fstab` persistence.
 `fs.disk_usage_assert` is a read-only disk usage gate for preflight checks.
