@@ -280,3 +280,28 @@ class IptablesSavePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.save failed")
+
+class IptablesRestorePlugin(BasePlugin):
+    name = "iptables.restore"
+    description = "Restore iptables or ip6tables rules from a ruleset file."
+    required_params = ("src",)
+    optional_params = ("confirm", "ipv6", "test_only", "sudo")
+    opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        if params.get("confirm") is not True and not bool(params.get("test_only", False)):
+            raise PluginValidationError("iptables.restore requires confirm: true unless test_only=true")
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "iptables.restore replaces runtime firewall state from an explicit ruleset file"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        binary = "ip6tables-restore" if bool(params.get("ipv6", False)) else "iptables-restore"
+        test_flag = " --test" if bool(params.get("test_only", False)) else ""
+        return [f"test -f {quote(params['src'])} && {_sudo(params)}{binary}{test_flag} < {quote(params['src'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.restore failed")

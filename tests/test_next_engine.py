@@ -3717,3 +3717,15 @@ def test_iptables_save_plugin_renders_ruleset_export():
     command = IptablesSavePlugin().manual_commands({"dest": "/etc/iptables/rules.v4"}, context)[0]
     assert "iptables-save" in command
     assert "/etc/iptables/rules.v4" in command
+
+
+def test_iptables_restore_plugin_requires_confirm_or_test_only():
+    from automax.plugins.firewall import IptablesRestorePlugin
+
+    assert "iptables.restore" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    with pytest.raises(PluginValidationError):
+        IptablesRestorePlugin().manual_commands({"src": "/etc/iptables/rules.v4"}, context)
+    command = IptablesRestorePlugin().manual_commands({"src": "/etc/iptables/rules.v4", "test_only": True}, context)[0]
+    assert "iptables-restore --test" in command
+    assert "runtime firewall" in IptablesRestorePlugin().diff_preview_reason({}, context)

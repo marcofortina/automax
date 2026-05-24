@@ -3035,6 +3035,39 @@ with:
 
 ## iptables
 
+### `iptables.restore`
+
+Restore iptables or ip6tables rules from a ruleset file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `ipv6` | no | `boolean` | `False` | Use IPv6 command variant when supported. |
+| `test_only` | no | `boolean` | `False` | Validate without applying when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: iptables.restore
+with:
+  src: /tmp/source
+```
+
 ### `iptables.rule`
 
 Ensure an iptables rule is present or absent in a table and chain.

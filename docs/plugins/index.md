@@ -104,6 +104,7 @@ hosts.entry
 http.assert
 http.request
 http.wait
+iptables.restore
 iptables.rule
 iptables.save
 journal.collect
