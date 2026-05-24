@@ -2605,7 +2605,7 @@ Load a Linux kernel module and optionally persist it.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `name` | yes | `string` |  | Package, user or group name. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `persist` | no | `boolean` | `False` | Persist the operation across reboot when supported by the selected backend. |
 | `file` | no | `path` |  | Remote configuration file path. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
@@ -2671,7 +2671,7 @@ Unload a Linux kernel module and optionally remove persisted entries.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `name` | yes | `string` |  | Package, user or group name. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `persist` | no | `boolean` | `False` | Persist the operation across reboot when supported by the selected backend. |
 | `file` | no | `path` |  | Remote configuration file path. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
@@ -3070,7 +3070,7 @@ Ensure a mount point is unmounted and optionally removed from fstab.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `persist` | no | `boolean` | `False` | Persist the operation across reboot when supported by the selected backend. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -3104,7 +3104,7 @@ Ensure a filesystem is mounted and optionally persisted in fstab.
 | `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
 | `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
 | `opts` | no | `string` | `defaults` | Mount options. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `persist` | no | `boolean` | `False` | Persist the operation across reboot when supported by the selected backend. |
 | `dump` | no | `integer` | `0` | fstab dump field. |
 | `passno` | no | `integer` | `0` | fstab fsck pass number. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
@@ -3259,7 +3259,7 @@ with:
 
 ### `network.bond`
 
-Create or update a runtime Linux bonding interface.
+Create or update a runtime and optional persistent Linux bonding interface.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -3272,6 +3272,10 @@ Create or update a runtime Linux bonding interface.
 | `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
 | `miimon` | no | `integer` | `100` | Bond link monitoring interval in milliseconds. |
 | `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `persist` | no | `boolean` | `False` | Persist the operation across reboot when supported by the selected backend. |
+| `backend` | no | `string` | `runtime` | Persistence backend such as runtime, networkmanager, systemd-networkd, ifcfg, plain-file or systemd-resolved. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -3304,7 +3308,7 @@ Configure DNS resolver settings using the backend-aware resolver implementation.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `backend` | no | `string` | `auto` | Resolver backend: auto, plain, systemd-resolved, NetworkManager or resolvconf. |
+| `backend` | no | `string` | `runtime` | Persistence backend such as runtime, networkmanager, systemd-networkd, ifcfg, plain-file or systemd-resolved. |
 | `nameservers` | no | `list` |  | Resolver nameserver addresses. |
 | `search` | no | `list` |  | Resolver search domains. |
 | `options` | no | `list` |  | Resolver options. |
@@ -3335,7 +3339,7 @@ with:
 
 ### `network.interface`
 
-Apply runtime interface state and optional address configuration with iproute2.
+Apply runtime and optional persistent interface state/address configuration.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -3347,7 +3351,12 @@ Apply runtime interface state and optional address configuration with iproute2.
 | `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
 | `address` | no | `string` |  | IP address to configure. |
 | `prefix` | no | `integer` |  | CIDR prefix length. |
+| `gateway` | no | `string` |  | Route gateway address. |
 | `mtu` | no | `integer` |  | Network interface MTU. |
+| `persist` | no | `boolean` | `False` | Persist the operation across reboot when supported by the selected backend. |
+| `backend` | no | `string` | `runtime` | Persistence backend such as runtime, networkmanager, systemd-networkd, ifcfg, plain-file or systemd-resolved. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -3369,7 +3378,7 @@ with:
 
 ### `network.route`
 
-Ensure a runtime IP route is present or absent.
+Ensure a runtime and optional persistent IP route is present or absent.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -3383,6 +3392,10 @@ Ensure a runtime IP route is present or absent.
 | `table` | no | `string` |  | Routing table name or number. |
 | `metric` | no | `integer` |  | Route metric. |
 | `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `persist` | no | `boolean` | `False` | Persist the operation across reboot when supported by the selected backend. |
+| `backend` | no | `string` | `runtime` | Persistence backend such as runtime, networkmanager, systemd-networkd, ifcfg, plain-file or systemd-resolved. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -3404,7 +3417,7 @@ with:
 
 ### `network.vlan`
 
-Create or update a runtime VLAN interface.
+Create or update a runtime and optional persistent VLAN interface.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -3418,6 +3431,10 @@ Create or update a runtime VLAN interface.
 | `address` | no | `string` |  | IP address to configure. |
 | `prefix` | no | `integer` |  | CIDR prefix length. |
 | `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `persist` | no | `boolean` | `False` | Persist the operation across reboot when supported by the selected backend. |
+| `backend` | no | `string` | `runtime` | Persistence backend such as runtime, networkmanager, systemd-networkd, ifcfg, plain-file or systemd-resolved. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -4259,7 +4276,7 @@ Manage resolver configuration safely, refusing unmanaged /etc/resolv.conf owners
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `backend` | no | `string` | `auto` | Resolver backend: auto, plain, systemd-resolved, NetworkManager or resolvconf. |
+| `backend` | no | `string` | `runtime` | Persistence backend such as runtime, networkmanager, systemd-networkd, ifcfg, plain-file or systemd-resolved. |
 | `nameservers` | no | `list` |  | Resolver nameserver addresses. |
 | `search` | no | `list` |  | Resolver search domains. |
 | `options` | no | `list` |  | Resolver options. |
@@ -4302,7 +4319,7 @@ Set an SELinux boolean.
 |---|---:|---|---|---|
 | `name` | yes | `string` |  | Package, user or group name. |
 | `value` | yes | `string` |  | Desired parameter value. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `persist` | no | `boolean` | `False` | Persist the operation across reboot when supported by the selected backend. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -4369,7 +4386,7 @@ Set SELinux runtime and/or persistent mode.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `state` | yes | `string` |  | Desired state such as present, absent, started or stopped. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `persist` | no | `boolean` | `False` | Persist the operation across reboot when supported by the selected backend. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -4510,7 +4527,7 @@ Disable a swap file or swap device and optionally remove its fstab entry.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `persist` | no | `boolean` | `False` | Persist the operation across reboot when supported by the selected backend. |
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
@@ -4544,7 +4561,7 @@ Ensure a swap file or swap device is active and optionally persisted in fstab.
 |---|---:|---|---|---|
 | `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
 | `size` | no | `string` |  | Size such as 16G for file-backed swap. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `persist` | no | `boolean` | `False` | Persist the operation across reboot when supported by the selected backend. |
 | `opts` | no | `string` | `defaults` | Mount options. |
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
@@ -4678,7 +4695,7 @@ Set a Linux sysctl value at runtime and/or persistently.
 | `name` | yes | `string` |  | Package, user or group name. |
 | `value` | yes | `string` |  | Desired parameter value. |
 | `runtime` | no | `boolean` | `True` | Apply the change to the running system. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `persist` | no | `boolean` | `False` | Persist the operation across reboot when supported by the selected backend. |
 | `file` | no | `path` |  | Remote configuration file path. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 

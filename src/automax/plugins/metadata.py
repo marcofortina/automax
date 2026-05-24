@@ -175,6 +175,8 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "prefix": {"type": "integer", "description": "CIDR prefix length."},
     "mtu": {"type": "integer", "description": "Network interface MTU."},
     "parent": {"type": "string", "description": "Parent network interface."},
+    "persist": {"type": "boolean", "default": False, "description": "Persist the operation across reboot when supported by the selected backend."},
+    "backend": {"type": "string", "default": "runtime", "description": "Persistence backend such as runtime, networkmanager, systemd-networkd, ifcfg, plain-file or systemd-resolved."},
     "vlan_id": {"type": "integer", "description": "VLAN identifier."},
     "interfaces": {"type": "list", "description": "Network interfaces to include in a bond or aggregate."},
     "miimon": {"type": "integer", "default": 100, "description": "Bond link monitoring interval in milliseconds."},
