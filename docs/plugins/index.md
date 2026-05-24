@@ -190,6 +190,7 @@ systemd.timer
 systemd.tmpfiles
 systemd.unit
 transfer.download
+transfer.rsync
 transfer.sync
 transfer.upload
 udev.reload

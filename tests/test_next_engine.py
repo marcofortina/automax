@@ -3570,3 +3570,21 @@ def test_sudo_management_plugins_render_validated_dropins():
     assert "NOPASSWD" in rule
     assert "/etc/sudoers.d/ops" in rule
     assert SudoValidatePlugin().manual_commands({}, context)[0] == "sudo -n visudo -cf /etc/sudoers"
+
+
+def test_transfer_rsync_plugin_renders_secret_free_manual_command():
+    from automax.plugins.transfer import TransferRsyncPlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    assert "transfer.rsync" in names
+    context = _sysops_preview_context()
+    command = TransferRsyncPlugin().manual_commands(
+        {"src": "./dist/", "dest": "/opt/app/", "delete": True, "dry_run": True, "excludes": ["*.tmp"]},
+        context,
+    )[0]
+    assert "rsync" in command
+    assert "--delete" in command
+    assert "--dry-run" in command
+    assert "127.0.0.1:/opt/app/" in command
+    assert "*.tmp" in command
+    assert "rsync --dry-run" in TransferRsyncPlugin().diff_preview_reason({}, context)

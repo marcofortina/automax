@@ -6051,6 +6051,48 @@ with:
   dest: /tmp/dest
 ```
 
+### `transfer.rsync`
+
+Synchronize files with rsync using the current target as the default remote endpoint.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `direction` | no | `string` | `upload` | Transfer direction such as upload, download or local. |
+| `archive` | no | `path` |  | Remote archive path to extract. |
+| `compress` | no | `boolean` | `False` | Enable stream compression when supported. |
+| `delete` | no | `boolean` | `False` | Delete extraneous destination files when supported. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `dry_run` | no | `boolean` | `False` | Render or run without applying changes when supported. |
+| `excludes` | no | `list` |  | Glob patterns excluded from archive creation. |
+| `ssh_options` | no | `list` |  | Extra ssh options used by rsync. |
+| `rsync_path` | no | `path` |  | Remote rsync executable path. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.command`: Executed rsync argument vector.
+
+Example:
+
+```yaml
+use: transfer.rsync
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+```
+
 ### `transfer.sync`
 
 Sync a local directory tree to a remote directory.

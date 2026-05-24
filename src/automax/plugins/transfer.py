@@ -8,6 +8,7 @@ Controller-to-target file transfer plugins.
 from __future__ import annotations
 
 from pathlib import Path, PurePosixPath
+import subprocess
 import stat
 from typing import Any, Dict
 
@@ -172,3 +173,78 @@ class TransferSyncPlugin(BasePlugin):
         finally:
             sftp.close()
         return PluginResult.success(changed=True, data={"src": str(src), "dest": dest})
+
+
+class TransferRsyncPlugin(BasePlugin):
+    """Synchronize files using the local rsync executable."""
+
+    name = "transfer.rsync"
+    description = "Synchronize files with rsync using the current target as the default remote endpoint."
+    required_params = ("src", "dest")
+    optional_params = ("direction", "archive", "compress", "delete", "checksum", "dry_run", "excludes", "ssh_options", "rsync_path", "timeout")
+    opens_remote_session = False
+    supports_check_mode = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        direction = str(params.get("direction", "upload"))
+        if direction not in {"upload", "download", "local"}:
+            raise PluginValidationError("transfer.rsync direction must be upload, download or local")
+
+    def _target_prefix(self, context: ExecutionContext) -> str:
+        user = f"{context.target.user}@" if context.target.user else ""
+        return f"{user}{context.target.host}:"
+
+    def _remote_path(self, value: str, context: ExecutionContext) -> str:
+        if ":" in value or str(value).startswith("/") and str(value).startswith("//"):
+            return value
+        return self._target_prefix(context) + value
+
+    def _command_parts(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        parts = ["rsync"]
+        parts.append("-a" if bool(params.get("archive", True)) else "-r")
+        if bool(params.get("compress", False)):
+            parts.append("-z")
+        if bool(params.get("delete", False)):
+            parts.append("--delete")
+        if bool(params.get("checksum", False)):
+            parts.append("--checksum")
+        if bool(params.get("dry_run", False)) or context.dry_run:
+            parts.append("--dry-run")
+        if params.get("rsync_path"):
+            parts.extend(["--rsync-path", str(params["rsync_path"])])
+        ssh_options = params.get("ssh_options")
+        if ssh_options:
+            if isinstance(ssh_options, list):
+                ssh_options = " ".join(str(item) for item in ssh_options)
+            parts.extend(["-e", f"ssh {ssh_options}"])
+        excludes = params.get("excludes") or []
+        if isinstance(excludes, str):
+            excludes = [excludes]
+        for pattern in excludes:
+            parts.extend(["--exclude", str(pattern)])
+        direction = str(params.get("direction", "upload"))
+        src = str(params["src"])
+        dest = str(params["dest"])
+        if direction == "upload":
+            parts.extend([src, self._remote_path(dest, context)])
+        elif direction == "download":
+            parts.extend([self._remote_path(src, context), dest])
+        else:
+            parts.extend([src, dest])
+        return parts
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "transfer.rsync previews changes with rsync --dry-run rather than a deterministic file diff"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return [" ".join(quote(part) for part in self._command_parts(params, context))]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        command = self._command_parts(params, context)
+        completed = subprocess.run(command, text=True, capture_output=True, timeout=float(params.get("timeout", 0)) or None, check=False)
+        if completed.returncode != 0:
+            return PluginResult.failure(rc=completed.returncode, stdout=completed.stdout, stderr=completed.stderr, message="transfer.rsync failed")
+        changed = bool(completed.stdout.strip()) and not (bool(params.get("dry_run", False)) or context.dry_run)
+        return PluginResult.success(changed=changed, rc=completed.returncode, stdout=completed.stdout, stderr=completed.stderr, data={"command": command})

@@ -45,3 +45,24 @@ Synchronizes a local tree to a remote destination.
 ```
 
 Use `transfer.sync` for small operational trees. It uploads local content to the remote directory and does not currently delete remote files that are missing locally. For very large trees, prefer a specialized artifact or package distribution mechanism.
+
+
+## Rsync transfers
+
+`transfer.rsync` uses the controller-side `rsync` executable and the current
+Automax target as the default remote endpoint. It is intended for large or
+incremental transfers where SFTP upload/download would be too slow.
+
+Example:
+
+```yaml
+use: transfer.rsync
+with:
+  src: ./dist/
+  dest: /opt/app/
+  delete: true
+  dry_run: true
+```
+
+The preview path is rsync-native: use `dry_run: true` or job dry-run mode to
+render a copy/pasteable `rsync --dry-run` command before applying changes.
