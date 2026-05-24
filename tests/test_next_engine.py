@@ -4187,3 +4187,19 @@ def test_firewall_lifecycle_options_render_manual_commands():
     assert "iptables-save" in iptables
     nft = registry.get("nftables.apply").metadata()
     assert {"backup_before", "persistent_file", "reload_service", "check_only"}.issubset({parameter["name"] for parameter in nft["parameters"]})
+
+
+def test_ssh_keygen_hardening_options_render_secret_safe_manual_command():
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins.registry import build_builtin_registry
+
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={"key_passphrase": "secret"})
+    plugin = build_builtin_registry().get("ssh.keygen")
+
+    manual = plugin.manual_commands({"path": "/tmp/id_ed25519", "passphrase_secret": "key_passphrase", "fingerprint": True, "sudo": False}, context)[0]
+    assert "***" in manual
+    assert "secret" not in manual
+    assert "ssh-keygen -lf" in manual
+    public_only = " && ".join(plugin.manual_commands({"path": "/tmp/id_ed25519", "public_key_only": True, "fingerprint": True, "sudo": False}, context))
+    assert "ssh-keygen -y" in public_only
+    assert "ssh-keygen -lf" in public_only

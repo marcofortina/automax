@@ -38,3 +38,9 @@ operations auditable before and after access-control changes.
 Use `cert.fingerprint`, `cert.matches_key`, `cert.san_assert`,
 `cert.subject_assert`, `cert.issuer_assert` and `cert.install_ca_bundle` for
 certificate prechecks, trust-bundle installation and post-install validation.
+
+## SSH key generation safeguards
+
+`ssh.keygen` keeps no-overwrite behavior by default unless `force: true` is set.
+It supports passphrase material via `passphrase_secret`, secret-safe manual
+preview, public-key-only readback and fingerprint output after generation.

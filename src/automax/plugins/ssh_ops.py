@@ -299,3 +299,61 @@ class SshdValidatePlugin(BasePlugin):
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="sshd.validate failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+
+
+def _ssh_keygen_passphrase(params: Dict[str, Any], context: ExecutionContext, *, masked: bool) -> str:
+    if params.get("passphrase_secret"):
+        if masked:
+            return "***"
+        secret_name = str(params["passphrase_secret"])
+        if secret_name not in context.secrets:
+            raise PluginValidationError(f"ssh.keygen passphrase_secret not found: {secret_name}")
+        return str(context.secrets[secret_name])
+    return ""
+
+
+def _ssh_keygen_commands(self: SshKeygenPlugin, params: Dict[str, Any], context: ExecutionContext, *, masked: bool) -> list[str]:
+    self.validate(params)
+    path = str(params["path"])
+    sudo = _sudo(params)
+    algorithm = str(params.get("algorithm", "sha256"))
+    if bool(params.get("public_key_only", False)):
+        commands = [f"test -f {quote(path + '.pub')} && cat {quote(path + '.pub')} || {sudo}ssh-keygen -y -f {quote(path)}"]
+        if bool(params.get("fingerprint", False)):
+            commands.append(f"{sudo}ssh-keygen -lf {quote(path + '.pub')} -E {quote(algorithm)}")
+        return commands
+    key_type = str(params.get("type", "ed25519"))
+    comment = str(params.get("comment", "automax"))
+    force = bool(params.get("force", False))
+    bits = f" -b {quote(params['bits'])}" if params.get("bits") else ""
+    mode = str(params.get("mode", "0600"))
+    passphrase = _ssh_keygen_passphrase(params, context, masked=masked)
+    commands = [
+        f"{sudo}install -d -m 0700 \"$(dirname {quote(path)})\"",
+        f"if test -e {quote(path)}; then {'sudo -n rm -f ' + quote(path) + ' ' + quote(path + '.pub') if force and sudo else 'rm -f ' + quote(path) + ' ' + quote(path + '.pub') if force else 'echo ' + quote('ssh key already exists: ' + path) + '; exit 0'}; fi",
+        f"{sudo}ssh-keygen -q -t {quote(key_type)}{bits} -f {quote(path)} -N {quote(passphrase)} -C {quote(comment)}",
+        f"{sudo}chmod {quote(mode)} {quote(path)}",
+    ]
+    owner = params.get("owner")
+    group = params.get("group")
+    if owner or group:
+        spec = f"{owner or ''}:{group or ''}"
+        commands.append(f"{sudo}chown {quote(spec)} {quote(path)} {quote(path + '.pub')}")
+    if bool(params.get("fingerprint", True)):
+        commands.append(f"{sudo}ssh-keygen -lf {quote(path + '.pub')} -E {quote(algorithm)}")
+    commands.append(f"printf '%s\\n' {quote(CHANGE_MARKER)}")
+    return [" && ".join(commands)]
+
+
+def _ssh_keygen_manual(self: SshKeygenPlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+    return _ssh_keygen_commands(self, params, context, masked=True)
+
+
+def _ssh_keygen_execute(self: SshKeygenPlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    rc, out, err = exec_remote(context, _ssh_keygen_commands(self, params, context, masked=False)[0])
+    return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.keygen failed", data={"path": str(params["path"]), "public_key": str(params["path"]) + ".pub"})
+
+
+SshKeygenPlugin.optional_params = ("type", "bits", "comment", "force", "passphrase_secret", "public_key_only", "fingerprint", "algorithm", "sudo", "owner", "group", "mode")
+SshKeygenPlugin.manual_commands = _ssh_keygen_manual  # type: ignore[method-assign]
+SshKeygenPlugin.execute = _ssh_keygen_execute  # type: ignore[method-assign]

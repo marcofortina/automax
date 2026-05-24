@@ -7047,6 +7047,10 @@ Generate an SSH keypair on a remote target with idempotent overwrite protection.
 | `bits` | no | `integer` |  | Key size in bits when supported by the selected key type. |
 | `comment` | no | `string` |  | User account comment or GECOS field. |
 | `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `passphrase_secret` | no | `string` |  | Secret name containing a key passphrase. |
+| `public_key_only` | no | `boolean` | `False` | Only derive/read the public key instead of generating a new keypair. |
+| `fingerprint` | no | `boolean` | `True` | Emit a key or certificate fingerprint after the operation. |
+| `algorithm` | no | `string` | `sha256` | Fingerprint or checksum algorithm name. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `owner` | no | `string` |  | Remote file owner. |
 | `group` | no | `string` |  | Primary group, file group owner or remote group name. |
