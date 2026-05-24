@@ -4143,3 +4143,15 @@ def test_certificate_assert_plugins_render_manual_commands():
     assert "-subject" in registry.get("cert.subject_assert").manual_commands({"cert": "/tmp/cert.pem", "subject": "CN=example", "sudo": False}, context)[0]
     assert "-issuer" in registry.get("cert.issuer_assert").manual_commands({"cert": "/tmp/cert.pem", "issuer": "CN=ca", "sudo": False}, context)[0]
     assert "install -D" in " && ".join(registry.get("cert.install_ca_bundle").manual_commands({"src": "/tmp/ca.pem", "dest": "/usr/local/share/ca-certificates/ca.crt", "sudo": False}, context))
+
+
+def test_cron_readback_plugins_render_manual_commands():
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins.registry import build_builtin_registry
+
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
+    registry = build_builtin_registry()
+
+    assert "crontab -l" in registry.get("cron.list").manual_commands({}, context)[0]
+    assert "/etc/cron.d/demo" in registry.get("cron.absent").manual_commands({"name": "demo", "sudo": False}, context)[0]
+    assert "awk" in registry.get("cron.validate").manual_commands({"path": "/tmp/cron"}, context)[0]

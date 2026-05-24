@@ -177,7 +177,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsTemplatePlugin,
         FsWritePlugin,
     )
-    from automax.plugins.cron import CronEntryPlugin, CronFilePlugin
+    from automax.plugins.cron import CronAbsentPlugin, CronEntryPlugin, CronFilePlugin, CronListPlugin, CronValidatePlugin
     from automax.plugins.db import (
         DbHealthPlugin,
         DbMysqlQueryPlugin,
@@ -418,6 +418,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         DbOracleQueryPlugin(),
         CronEntryPlugin(),
         CronFilePlugin(),
+        CronListPlugin(),
+        CronAbsentPlugin(),
+        CronValidatePlugin(),
         FactsGatherPlugin(),
         FactsOsPlugin(),
         FactsNetworkPlugin(),

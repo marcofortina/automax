@@ -1565,6 +1565,36 @@ with:
 
 ## cron
 
+### `cron.absent`
+
+Remove one /etc/cron.d entry file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cron.absent
+with:
+  name: nginx
+```
+
 ### `cron.entry`
 
 Manage one /etc/cron.d entry file.
@@ -1636,6 +1666,67 @@ Example:
 use: cron.file
 with:
   name: nginx
+```
+
+### `cron.list`
+
+List system cron.d entries and optionally one user's crontab.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cron.list
+with:
+  user: false
+  sudo: true
+```
+
+### `cron.validate`
+
+Validate basic cron file syntax without installing it.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cron.validate
+with:
+  path: /tmp/automax-demo
 ```
 
 ## db

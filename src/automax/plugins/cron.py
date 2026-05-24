@@ -92,3 +92,81 @@ class CronFilePlugin(BasePlugin):
         temp_path = upload_text_to_temp(context, str(params["content"]).rstrip() + "\n")
         rc, out, err = install_uploaded_file(context, temp_path, dest, sudo=bool(params.get("sudo", True)), mode="0644", owner="root", group="root")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="cron.file failed", data={"path": dest})
+
+
+class CronListPlugin(BasePlugin):
+    name = "cron.list"
+    description = "List system cron.d entries and optionally one user's crontab."
+    optional_params = ("user", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "cron.list is a read-only cron listing"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        if params.get("user"):
+            return [f"{_sudo(params)}crontab -l -u {quote(params['user'])}"]
+        return [f"{_sudo(params)}ls -1 /etc/cron.d 2>/dev/null || true; {_sudo(params)}crontab -l 2>/dev/null || true"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cron.list failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"cron": out})
+
+
+class CronAbsentPlugin(BasePlugin):
+    name = "cron.absent"
+    description = "Remove one /etc/cron.d entry file."
+    required_params = ("name",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        _safe_name(str(params["name"]))
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "cron.absent removes one /etc/cron.d file when present"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        path = f"/etc/cron.d/{params['name']}"
+        return [f"test ! -e {quote(path)} || {_sudo(params)}rm -f {quote(path)}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="cron.absent failed")
+
+
+class CronValidatePlugin(BasePlugin):
+    name = "cron.validate"
+    description = "Validate basic cron file syntax without installing it."
+    required_params = ("path",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "cron.validate is a read-only cron syntax check"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        script = r'''
+set -eu
+file=$1
+awk '
+  /^[[:space:]]*($|#)/ { next }
+  /^[A-Za-z_][A-Za-z0-9_]*=/ { next }
+  NF < 6 { printf "invalid cron line %d: %s\n", NR, $0 > "/dev/stderr"; bad=1 }
+  END { exit bad ? 1 : 0 }
+' "$file"
+'''
+        return [f"{_sudo(params)}sh -s -- {quote(params['path'])} <<'SH'\n{script}\nSH"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cron.validate failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)

@@ -63,8 +63,11 @@ cert.subject_assert
 cert.verify_chain
 chrony.servers
 chrony.sources_assert
+cron.absent
 cron.entry
 cron.file
+cron.list
+cron.validate
 db.health
 db.mysql.query
 db.oracle.query
