@@ -287,3 +287,7 @@ mutation plugins so operators can preview and run them as dedicated steps.
 `fs.bind_mount` manages runtime bind mounts and optional `/etc/fstab` persistence.
 `fs.disk_usage_assert` is a read-only disk usage gate for preflight checks.
 `fs.inode_usage_assert` is a read-only inode exhaustion gate for preflight checks.
+
+## Removal guardrails
+
+`fs.remove` removes files or directories. Use it with explicit review, dry-run/manual preview and a preceding backup/restore step when removing operational state.

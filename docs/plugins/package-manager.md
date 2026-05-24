@@ -73,3 +73,7 @@ Returns package installation state without changing the host.
   register:
     package_state: stdout.trim
 ```
+
+## Repository keys and definitions
+
+Use `pkg.key.add` and `pkg.key.remove` for package signing keys. Use `pkg.repo.add` and `pkg.repo.remove` for repository definitions. Keep key and repository changes in separate substeps so package-manager trust changes remain reviewable.

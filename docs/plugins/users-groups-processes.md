@@ -79,3 +79,7 @@ These plugins run on the remote target through SSH.
 `login.defs` manages account-aging defaults in `/etc/login.defs` with backup.
 `password.policy` installs pwquality drop-ins for password complexity policy.
 `authselect.profile` selects RHEL-style authentication profiles with explicit backup by default.
+
+## Account assertions and access changes
+
+`user.exists` and `group.exists` are read-only assertions for account prerequisites. `user.lock`, `user.unlock` and `user.set_password` are explicit account state changes and should be reviewed separately from user creation/removal.

@@ -255,6 +255,11 @@ wait.tcp
 - [HTTP/API](http-api.md)
 - [Wait and assert](wait-assert.md)
 - [Database](database.md)
+- [Alternatives](alternatives.md)
+- [Firewall](firewall.md)
+- [Facts and cron](facts-cron.md)
+- [Kernel, mount and storage](kernel-storage.md)
+- [Security and access control](security.md)
 - [Extended SSH Smoke](../guides/ssh-smoke.md)
 
 External plugin modules can be added through the registry mechanism without

@@ -1,0 +1,28 @@
+<!--
+Copyright (C) 2026 Marco Fortina
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
+# Security and access-control plugins
+
+## SELinux
+
+Use `selinux.mode`, `selinux.boolean`, `selinux.context`, `selinux.fcontext`,
+`selinux.restorecon` and `selinux.port` for SELinux policy/runtime operations.
+Keep context definitions and `restorecon` execution as separate substeps when a
+reviewer must distinguish policy declaration from filesystem relabeling.
+
+## AppArmor
+
+Use `apparmor.status` for read-only status, `apparmor.profile` to load, enforce,
+complain or remove one profile, and `apparmor.reload` to reload the AppArmor
+service.
+
+## SSH and sudo
+
+`ssh.keygen` generates a remote SSH keypair with overwrite protection.
+`ssh.config`, `ssh.known_hosts` and `ssh.authorized_key` cover SSH configuration,
+known-host pinning and authorized key installation.
+
+Use `sudoers.dropin` for raw sudoers drop-ins, `sudo.rule` for structured sudoers
+rules, and `sudo.validate` before relying on a sudoers change.

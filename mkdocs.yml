@@ -100,6 +100,11 @@ nav:
     - HTTP/API: plugins/http-api.md
     - Wait and Assert: plugins/wait-assert.md
     - Database: plugins/database.md
+    - Alternatives: plugins/alternatives.md
+    - Firewall: plugins/firewall.md
+    - Facts and Cron: plugins/facts-cron.md
+    - Kernel, Mount and Storage: plugins/kernel-storage.md
+    - Security and Access Control: plugins/security.md
   - Project:
     - Technical design: TECHNICAL_DESIGN.md
     - Developer Notes: DEVELOPER-NOTES.md
