@@ -283,3 +283,5 @@ mutation plugins so operators can preview and run them as dedicated steps.
 
 `backup.restore` restores an explicit file or archive backup and requires `confirm: true`.
 `backup.verify` validates checksum sidecars as a read-only post-backup or pre-restore gate.
+
+`fs.bind_mount` manages runtime bind mounts and optional `/etc/fstab` persistence.

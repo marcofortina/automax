@@ -69,6 +69,7 @@ firewalld.rich_rule
 firewalld.service
 fs.acl
 fs.attr
+fs.bind_mount
 fs.cd
 fs.chmod
 fs.chown

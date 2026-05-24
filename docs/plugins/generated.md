@@ -1819,6 +1819,43 @@ with:
   attrs: value
 ```
 
+### `fs.bind_mount`
+
+Ensure a runtime and optional persistent bind mount.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `opts` | no | `string` | `defaults` | Mount options. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `runtime` | no | `boolean` | `True` | Apply the change to the running system. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.path`: Bind mount target path when returned by the implementation.
+
+Example:
+
+```yaml
+use: fs.bind_mount
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+```
+
 ### `fs.cd`
 
 Set current remote working directory for the active step.

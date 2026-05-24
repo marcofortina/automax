@@ -3632,3 +3632,15 @@ def test_backup_verify_plugin_renders_read_only_checksum():
     assert "sha256sum -c" in command
     assert BackupVerifyPlugin().supports_check_mode is True
     assert "read-only" in BackupVerifyPlugin().diff_preview_reason({}, context)
+
+
+def test_fs_bind_mount_plugin_renders_runtime_and_persistent_commands():
+    from automax.plugins.fs_advanced import FsBindMountPlugin
+
+    assert "fs.bind_mount" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    commands = FsBindMountPlugin().manual_commands({"src": "/srv/data", "dest": "/mnt/data", "persist": True}, context)
+    rendered = " && ".join(commands)
+    assert "mount --bind /srv/data /mnt/data" in rendered
+    assert "/etc/fstab" in rendered
+    assert FsBindMountPlugin().diff_preview({"src": "/srv/data", "dest": "/mnt/data"}, context)[0]["kind"] == "bind-mount-plan"
