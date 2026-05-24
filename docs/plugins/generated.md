@@ -4912,6 +4912,40 @@ with:
   pattern: KEY=.*
 ```
 
+### `process.signal`
+
+Send a signal to a remote process by PID or pattern.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `pid` | no | `integer` |  | Process id. |
+| `pattern` | no | `string` |  | Regex, process pattern or search pattern. |
+| `signal` | no | `string` | `TERM` | Signal name or number sent to a process. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `ignore_missing` | no | `boolean` | `True` | Treat missing processes as success. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: process.signal
+with:
+  pid: 1234
+  pattern: KEY=.*
+```
+
 ### `process.wait`
 
 Wait for a remote process state.

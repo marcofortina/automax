@@ -245,3 +245,33 @@ exit 1
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="process.wait failed")
         return PluginResult.success(changed=False, stdout=out, stderr=err)
+
+class ProcessSignalPlugin(BasePlugin):
+    """Send a signal to a process by PID or pattern."""
+
+    name = "process.signal"
+    description = "Send a signal to a remote process by PID or pattern."
+    optional_params = ("pid", "pattern", "signal", "sudo", "ignore_missing")
+    opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        if bool(params.get("pid")) == bool(params.get("pattern")):
+            raise PluginValidationError("process.signal requires exactly one of pid or pattern")
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "process.signal is a runtime process operation with no file diff"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        signal = str(params.get("signal", "TERM"))
+        if params.get("pid"):
+            command = f"{_sudo(params)}kill -s {quote(signal)} {quote(params['pid'])}"
+        else:
+            command = f"{_sudo(params)}pkill -{quote(signal)} -f {quote(params['pattern'])}"
+        if bool(params.get("ignore_missing", True)):
+            command += " || true"
+        return [command]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="process.signal failed")

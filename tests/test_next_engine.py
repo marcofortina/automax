@@ -3666,3 +3666,13 @@ def test_fs_inode_usage_assert_plugin_renders_df_inode_check():
     assert "df -Pi /" in command
     assert 'test "$usage" -le 85' in command
     assert FsInodeUsageAssertPlugin().supports_check_mode is True
+
+
+def test_process_signal_plugin_renders_runtime_signal():
+    from automax.plugins.user_group_process import ProcessSignalPlugin
+
+    assert "process.signal" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = ProcessSignalPlugin().manual_commands({"pattern": "worker", "signal": "HUP"}, context)[0]
+    assert "pkill -HUP -f worker" in command
+    assert "runtime process" in ProcessSignalPlugin().diff_preview_reason({}, context)

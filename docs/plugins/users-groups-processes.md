@@ -70,3 +70,5 @@ These plugins run on the remote target through SSH.
     signal: TERM
     sudo: true
 ```
+
+`process.signal` sends a runtime signal by PID or pattern and renders the exact manual command for recovery.

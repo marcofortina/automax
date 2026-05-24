@@ -157,6 +157,7 @@ pki.cert_expiry_assert
 pki.key_permissions
 platform.facts
 process.kill
+process.signal
 process.wait
 remote.command
 resolver.config
