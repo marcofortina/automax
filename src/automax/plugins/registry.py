@@ -216,6 +216,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PkiCertExpiryAssertPlugin,
         PkiKeyPermissionsPlugin,
     )
+    from automax.plugins.platform import PlatformFactsPlugin
     from automax.plugins.pkg_pinning import (
         PkgHoldPlugin,
         PkgRepoPriorityPlugin,
@@ -329,6 +330,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FactsNetworkPlugin(),
         FactsPackagesPlugin(),
         FactsServicesPlugin(),
+        PlatformFactsPlugin(),
         WaitTcpPlugin(),
         WaitCommandPlugin(),
         WaitFilePlugin(),

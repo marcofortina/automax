@@ -4106,6 +4106,37 @@ with:
   path: /tmp/automax-demo
 ```
 
+## platform
+
+### `platform.facts`
+
+Collect portable Linux backend facts for package, service, network, resolver and trust-store operations.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: platform.facts
+with:
+  sudo: true
+```
+
 ## process
 
 ### `process.kill`

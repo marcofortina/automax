@@ -3394,3 +3394,15 @@ def test_mail_send_is_controller_side_and_masks_password_in_renderers():
     assert "super-secret" not in preview
     assert "password is intentionally not rendered" in rendered
     assert "mail-plan" == plugin.diff_preview(params, context)[0]["kind"]
+
+
+def test_platform_facts_plugin_renders_backend_detection():
+    from automax.plugins.platform import PlatformFactsPlugin
+
+    assert "platform.facts" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = PlatformFactsPlugin().manual_commands({}, context)[0]
+    assert "package_manager" in command
+    assert "network_backend" in command
+    assert "resolver_backend" in command
+    assert "read-only backend detection" in PlatformFactsPlugin().diff_preview_reason({}, context)
