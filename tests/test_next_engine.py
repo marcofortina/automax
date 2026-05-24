@@ -3480,3 +3480,17 @@ def test_alternatives_set_plugin_renders_cross_distro_commands():
     assert "update-alternatives --set java /usr/bin/java-21" in command
     assert "alternatives --set java /usr/bin/java-21" in command
     assert AlternativesSetPlugin().diff_preview({"name": "java", "path": "/usr/bin/java-21"}, context)[0]["kind"] == "alternative-plan"
+
+
+def test_auditd_plugins_render_rules_status_and_reload():
+    from automax.plugins.auditd import AuditdReloadPlugin, AuditdRulePlugin, AuditdStatusPlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in ("auditd.rule", "auditd.status", "auditd.reload"):
+        assert name in names
+    context = _sysops_preview_context()
+    rule_cmd = " && ".join(AuditdRulePlugin().manual_commands({"name": "watch-passwd", "rule": "-w /etc/passwd -p wa -k identity"}, context))
+    assert "/etc/audit/rules.d/watch-passwd.rules" in rule_cmd
+    assert "augenrules --load" in rule_cmd
+    assert AuditdStatusPlugin().manual_commands({}, context)[0] == "sudo -n auditctl -s"
+    assert "augenrules --load" in AuditdReloadPlugin().manual_commands({}, context)[0]
