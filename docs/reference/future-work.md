@@ -237,20 +237,3 @@ pam.validate      # run conservative syntax/readback checks on PAM service files
 
 PAM plugins must always back up service files by default, render exact manual
 commands, and avoid broad template rewrites of `/etc/pam.d/*`.
-
-### fs.remove safety hardening
-
-`fs.remove` is intentionally small today. A future hardening pass should add:
-
-```text
-confirm
-backup_before
-trash_dir
-max_depth
-allowlist / denylist guards
-refuse_root_paths
-require_recursive_for_directories
-```
-
-The goal is to prevent accidental broad deletes while keeping the existing simple
-idempotent behavior for safe paths.

@@ -2978,7 +2978,7 @@ with:
 
 ### `fs.remove`
 
-Remove a remote file or directory when present.
+Remove a remote file or directory with optional backup, trash and path safety guards.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -2989,6 +2989,16 @@ Remove a remote file or directory when present.
 | `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
 | `recursive` | no | `boolean` | `False` | Recurse into directories. |
 | `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
+| `backup_path` | no | `path` |  | Explicit backup path for pre-change file content. |
+| `trash_dir` | no | `path` |  | Remote directory used to move the target instead of deleting it. |
+| `max_depth` | no | `integer` |  | Maximum remote find traversal depth. |
+| `allowlist` | no | `list` |  | List of path prefixes allowed for guarded destructive filesystem operations. |
+| `denylist` | no | `list` |  | List of path prefixes refused for guarded destructive filesystem operations. |
+| `refuse_root_paths` | no | `boolean` | `True` | Refuse high-risk root-level paths such as /, /etc, /usr and /var. |
+| `require_recursive_for_directories` | no | `boolean` | `True` | Fail early when the target is a directory and recursive=true is not set. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `cwd` | no | `path` |  | Remote or local working directory for this operation. |
 
 Result fields:
@@ -3918,7 +3928,7 @@ Ensure an iptables rule is present or absent in a table and chain.
 | `wait` | no | `boolean` | `False` | Wait for the operation to become reachable again when supported. |
 | `save_after` | no | `boolean` | `False` | Persist runtime firewall state after changing a rule. |
 | `dest` | no | `path` |  | Destination path. |
-| `backup_before` | no | `boolean` | `False` | Capture or copy the current configuration before applying a firewall change. |
+| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -5426,7 +5436,7 @@ Validate and apply nftables rules from inline content or a controller file.
 |---|---:|---|---|---|
 | `content` | no | `string` |  | Text content to write. |
 | `src` | no | `path` |  | Source path. |
-| `backup_before` | no | `boolean` | `False` | Capture or copy the current configuration before applying a firewall change. |
+| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
 | `persistent_file` | no | `path` |  | Persistent firewall configuration file to install after validation. |
 | `reload_service` | no | `string` |  | Service name to reload after installing persistent firewall configuration. |
 | `check_only` | no | `boolean` | `False` | Validate the requested change without applying it. |

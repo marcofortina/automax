@@ -352,6 +352,7 @@ tasks:
             with:
               path: /tmp/dest.txt
               force: true
+              confirm: true
           - id: tar
             use: archive.tar
             with:
@@ -2672,6 +2673,7 @@ tasks:
               path: /tmp/demo
               recursive: true
               force: true
+              confirm: true
 """,
     )
     inventory = write(
@@ -2698,7 +2700,45 @@ tasks:
     assert "checkpoint=task.t1:step.s1:substep.local" in result.output
     assert "printf ***" in result.output
     assert "super-secret" not in result.output
-    assert "test ! -e /tmp/demo || { rm -rf /tmp/demo" in result.output
+    assert "test ! -e /tmp/demo || { rm -rf -- /tmp/demo" in result.output
+
+
+def test_fs_remove_hardening_requires_confirm_and_renders_guards():
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins.base import PluginValidationError
+    from automax.plugins.fs_remove import FsRemovePlugin
+
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
+    plugin = FsRemovePlugin()
+
+    try:
+        plugin.manual_commands({"path": "/tmp/demo", "recursive": True}, context)
+    except PluginValidationError as exc:
+        assert "confirm=true" in str(exc)
+    else:
+        raise AssertionError("recursive fs.remove must require confirm=true")
+
+    command = plugin.manual_commands({
+        "path": "/tmp/demo",
+        "recursive": True,
+        "force": True,
+        "confirm": True,
+        "backup_before": True,
+        "backup_path": "/tmp/demo.bak",
+        "trash_dir": "/tmp/trash",
+        "max_depth": 2,
+        "allowlist": ["/tmp"],
+    }, context)[0]
+    assert "cp -a -- /tmp/demo /tmp/demo.bak" in command
+    assert "find /tmp/demo -mindepth 3" in command
+    assert "mv -- /tmp/demo /tmp/trash/$(basename -- /tmp/demo).$(date +%Y%m%d%H%M%S)" in command
+
+    try:
+        plugin.manual_commands({"path": "/etc", "confirm": True, "recursive": True}, context)
+    except PluginValidationError as exc:
+        assert "protected root-level path" in str(exc)
+    else:
+        raise AssertionError("protected root-level paths must be refused")
 
 
 def test_commands_render_json_marks_legacy_plugins_available_with_fallback(tmp_path: Path):
@@ -3985,8 +4025,15 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "db.health":
         params["engine"] = "sqlite"
         params["connection"] = {"path": "/tmp/automax.sqlite"}
-    if plugin.name in {"lvm.lv_remove", "lvm.vg_remove", "lvm.pv_remove", "backup.restore", "iptables.restore"}:
+    if plugin.name in {"lvm.lv_remove", "lvm.vg_remove", "lvm.pv_remove", "backup.restore", "iptables.restore", "fs.remove"}:
         params["confirm"] = True
+    if plugin.name == "fs.remove":
+        params["path"] = "/tmp/automax-demo"
+        params["allowlist"] = ["/tmp"]
+        params["denylist"] = ["/etc", "/usr", "/var"]
+        params["max_depth"] = 2
+        params["trash_dir"] = "/tmp/automax-trash"
+        params["backup_path"] = "/tmp/automax-demo.bak"
     if plugin.name == "process.signal":
         params.pop("pid", None)
         params["pattern"] = "automax-demo"

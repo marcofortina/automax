@@ -51,6 +51,7 @@ tasks:
               path: /tmp/automax-macros-extracted
               recursive: true
               force: true
+              confirm: true
 
   - id: services
     targets: group:ssh

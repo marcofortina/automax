@@ -290,4 +290,24 @@ mutation plugins so operators can preview and run them as dedicated steps.
 
 ## Removal guardrails
 
-`fs.remove` removes files or directories. Use it with explicit review, dry-run/manual preview and a preceding backup/restore step when removing operational state.
+`fs.remove` removes files or directories with explicit destructive-operation
+guardrails. Recursive, forced, backup-before, trash-directory or root-guard
+override operations require `confirm: true`. By default, the plugin refuses
+high-risk root-level paths such as `/`, `/etc`, `/usr` and `/var`.
+
+Supported safety controls:
+
+```text
+confirm
+backup_before / backup_path
+trash_dir
+max_depth
+allowlist / denylist
+refuse_root_paths
+require_recursive_for_directories
+```
+
+Use `backup_before` when the target must be copied before removal. Use
+`trash_dir` when operators need a reversible move instead of an immediate
+`rm`. `allowlist` and `denylist` keep cleanup jobs scoped to known-safe path
+prefixes.
