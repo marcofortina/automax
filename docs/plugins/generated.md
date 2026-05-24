@@ -3033,6 +3033,43 @@ with:
   url: https://example.invalid/health
 ```
 
+## iptables
+
+### `iptables.rule`
+
+Ensure an iptables rule is present or absent in a table and chain.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `chain` | yes | `string` |  | Firewall chain name. |
+| `rule` | yes | `string` |  | Firewall action such as allow, deny, reject or limit. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `ipv6` | no | `boolean` | `False` | Use IPv6 command variant when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: iptables.rule
+with:
+  chain: value
+  rule: allow
+```
+
 ## journal
 
 ### `journal.collect`

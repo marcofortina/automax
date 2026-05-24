@@ -3696,3 +3696,14 @@ def test_process_assert_count_plugin_renders_count_assertion():
     assert "pgrep -fc worker" in command
     assert 'test "$actual" -ge 1' in command
     assert 'test "$actual" -le 3' in command
+
+
+def test_iptables_rule_plugin_renders_check_and_update():
+    from automax.plugins.firewall import IptablesRulePlugin
+
+    assert "iptables.rule" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = IptablesRulePlugin().manual_commands({"chain": "INPUT", "rule": "-p tcp --dport 443 -j ACCEPT"}, context)[0]
+    assert "iptables -t filter -C INPUT -p tcp --dport 443 -j ACCEPT" in command
+    assert "iptables -t filter -A INPUT -p tcp --dport 443 -j ACCEPT" in command
+    assert "runtime firewall" in IptablesRulePlugin().diff_preview_reason({}, context)

@@ -104,6 +104,7 @@ hosts.entry
 http.assert
 http.request
 http.wait
+iptables.rule
 journal.collect
 journal.grep
 kernel.boot_param

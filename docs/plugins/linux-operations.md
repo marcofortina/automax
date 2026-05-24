@@ -202,3 +202,7 @@ sudo.rule / sudo.validate
 Destructive plugins such as LVM removal require explicit confirmation parameters.
 Persistent file-oriented operations create backups by default when they replace
 existing configuration files.
+
+## iptables
+
+`iptables.rule` manages legacy iptables/ip6tables runtime rules as a backend separate from firewalld, UFW and nftables.

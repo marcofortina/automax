@@ -227,3 +227,36 @@ class NftablesApplyPlugin(NftablesValidatePlugin):
         command = f"{_sudo(params)}nft -c -f {quote(remote_path)} && {_sudo(params)}nft -f {quote(remote_path)} && rm -f {quote(remote_path)} && echo {CHANGE_MARKER}"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="nftables.apply failed")
+
+class IptablesRulePlugin(BasePlugin):
+    name = "iptables.rule"
+    description = "Ensure an iptables rule is present or absent in a table and chain."
+    required_params = ("chain", "rule")
+    optional_params = ("table", "state", "ipv6", "sudo")
+    opens_remote_session = True
+
+    def _bin(self, params: Dict[str, Any]) -> str:
+        return "ip6tables" if bool(params.get("ipv6", False)) else "iptables"
+
+    def _table(self, params: Dict[str, Any]) -> str:
+        return str(params.get("table", "filter"))
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "iptables.rule changes runtime firewall state; use manual commands for the exact rule operation"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        state = _state(params)
+        binary = self._bin(params)
+        table = self._table(params)
+        chain = str(params["chain"])
+        rule = str(params["rule"])
+        sudo = _sudo(params)
+        check = f"{sudo}{binary} -t {quote(table)} -C {quote(chain)} {rule}"
+        if state == "present":
+            return [f"{check} >/dev/null 2>&1 || {sudo}{binary} -t {quote(table)} -A {quote(chain)} {rule}"]
+        return [f"{check} >/dev/null 2>&1 && {sudo}{binary} -t {quote(table)} -D {quote(chain)} {rule} || true"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.rule failed")

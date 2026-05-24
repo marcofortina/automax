@@ -241,6 +241,8 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "reply_to": {"type": "string", "description": "Email Reply-To address."},
     "attachments": {"type": "list", "description": "Local controller-side attachment paths."},
     "changed": {"type": "boolean", "default": True, "description": "Whether a successful command should be reported as changed."},
+    "ipv6": {"type": "boolean", "default": False, "description": "Use IPv6 command variant when supported."},
+    "chain": {"type": "string", "description": "Firewall chain name."},
 }
 
 OPTIONAL_PARAM_OVERRIDES: dict[str, tuple[str, ...]] = {
