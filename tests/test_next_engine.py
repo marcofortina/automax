@@ -3813,3 +3813,14 @@ def test_cert_install_keypair_plugin_renders_permissions():
     commands = " && ".join(CertInstallKeypairPlugin().manual_commands({"cert": "/tmp/app.crt", "key": "/tmp/app.key", "cert_dest": "/etc/pki/app.crt", "key_dest": "/etc/pki/private/app.key"}, context))
     assert "install -D -m 0644 /tmp/app.crt /etc/pki/app.crt" in commands
     assert "install -D -m 0600 /tmp/app.key /etc/pki/private/app.key" in commands
+
+
+def test_cert_expiry_report_plugin_renders_checkend():
+    from automax.plugins.cert_ops import CertExpiryReportPlugin
+
+    assert "cert.expiry_report" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = CertExpiryReportPlugin().manual_commands({"cert": "/tmp/app.crt", "warning_days": 10}, context)[0]
+    assert "-enddate" in command
+    assert "-checkend 864000" in command
+    assert CertExpiryReportPlugin().supports_check_mode is True

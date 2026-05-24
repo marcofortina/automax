@@ -198,6 +198,7 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "sudo": {"type": "boolean", "default": False, "description": "Run the remote operation through sudo -n when supported."},
     "system": {"type": "boolean", "default": False, "description": "Create a system user or group."},
     "timeout": {"type": "number", "description": "Operation timeout in seconds."},
+    "warning_days": {"type": "integer", "default": 30, "description": "Certificate expiry warning window in days."},
     "test_only": {"type": "boolean", "default": False, "description": "Validate without applying when supported."},
     "type": {"type": "string", "description": "Path type filter: path, file, directory, dir, symlink or any."},
     "uid": {"type": "integer", "description": "Numeric user id."},

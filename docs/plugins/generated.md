@@ -1028,6 +1028,37 @@ with:
 
 ## cert
 
+### `cert.expiry_report`
+
+Report certificate expiry and optionally fail inside a warning window.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `warning_days` | no | `integer` | `30` | Certificate expiry warning window in days. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cert.expiry_report
+with:
+  cert: value
+```
+
 ### `cert.generate_csr`
 
 Generate a CSR from an existing private key using openssl.

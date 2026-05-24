@@ -112,3 +112,25 @@ class CertInstallKeypairPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="cert.install_keypair failed")
+
+class CertExpiryReportPlugin(BasePlugin):
+    name = "cert.expiry_report"
+    description = "Report certificate expiry and optionally fail inside a warning window."
+    required_params = ("cert",)
+    optional_params = ("warning_days", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "cert.expiry_report is a read-only certificate expiry inspection"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        seconds = int(params.get("warning_days", 30)) * 86400
+        return [f"{_sudo(params)}openssl x509 -in {quote(params['cert'])} -noout -enddate && {_sudo(params)}openssl x509 -in {quote(params['cert'])} -noout -checkend {seconds}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cert.expiry_report failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)

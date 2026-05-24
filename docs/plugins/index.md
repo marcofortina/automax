@@ -47,6 +47,7 @@ block.partition
 block.partition_rescan
 block.rescan
 block.wipe_signatures
+cert.expiry_report
 cert.generate_csr
 cert.install_keypair
 cert.self_signed
