@@ -126,6 +126,14 @@ install CA certificates, enforce private-key permissions and validate certificat
 expiry windows. File-changing operations include preview data and backups where
 applicable.
 
+
+## Package locks and pinning
+
+Use `pkg.hold`, `pkg.unhold`, `pkg.version_pin` and `pkg.repo_priority` to lock
+packages, pin versions and manage repository priorities across supported package
+managers. File-backed pinning and priority files are previewable and backed up by
+default.
+
 ## Recovery workflow
 
 All Linux operation macros should be used with the operator recovery commands:

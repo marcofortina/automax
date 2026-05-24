@@ -3320,3 +3320,20 @@ def test_pki_plugins_install_permissions_and_expiry_preview():
     assert "chmod 0600" in " && ".join(PkiKeyPermissionsPlugin().manual_commands({"path": "/etc/pki/private/key.pem", "mode": "0600"}, context))
     assert "openssl x509 -checkend" in PkiCertExpiryAssertPlugin().manual_commands({"path": "/etc/pki/cert.pem", "min_days": 10}, context)[0]
     assert PkiCaInstallPlugin().diff_preview({"dest": "/tmp/ca.crt", "content": "CERT"}, context)[0]["kind"] == "pki-plan"
+
+
+def test_package_pinning_plugins_render_locks_and_priorities():
+    from automax.plugins.pkg_pinning import PkgHoldPlugin, PkgRepoPriorityPlugin, PkgUnholdPlugin, PkgVersionPinPlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in ("pkg.hold", "pkg.unhold", "pkg.version_pin", "pkg.repo_priority"):
+        assert name in names
+
+    context = _sysops_preview_context()
+    assert PkgHoldPlugin().manual_commands({"name": "nginx", "manager": "apt"}, context)[0] == "sudo -n apt-mark hold nginx"
+    assert PkgUnholdPlugin().manual_commands({"name": "nginx", "manager": "apt"}, context)[0] == "sudo -n apt-mark unhold nginx"
+    pin = PkgVersionPinPlugin().manual_commands({"name": "nginx", "version": "1.24*"}, context)[0]
+    assert "Pin: version 1.24*" in pin
+    assert "cp -p" in pin
+    priority = PkgRepoPriorityPlugin().diff_preview({"name": "stable", "priority": 900}, context)[0]
+    assert priority["kind"] == "repo-priority-plan"

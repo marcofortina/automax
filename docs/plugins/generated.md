@@ -3255,6 +3255,40 @@ with:
 
 ## pkg
 
+### `pkg.hold`
+
+Hold or lock package versions with the native package manager.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | no | `string` |  | Package, user or group name. |
+| `packages` | no | `list` |  | Package names for package-manager operations. |
+| `manager` | no | `string` | `auto` | Package manager: auto, apt, dnf, yum, zypper or pacman. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pkg.hold
+with:
+  name: nginx
+  packages:
+    - curl
+```
+
 ### `pkg.install`
 
 Install packages on a remote target.
@@ -3499,6 +3533,77 @@ with:
   name: nginx
 ```
 
+### `pkg.repo_priority`
+
+Install package repository priority or pinning configuration.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `priority` | yes | `integer` |  | Package repository or pin priority. |
+| `manager` | no | `string` | `auto` | Package manager: auto, apt, dnf, yum, zypper or pacman. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `content` | no | `string` |  | Text content to write. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pkg.repo_priority
+with:
+  name: nginx
+  priority: 1001
+```
+
+### `pkg.unhold`
+
+Remove package holds or version locks.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | no | `string` |  | Package, user or group name. |
+| `packages` | no | `list` |  | Package names for package-manager operations. |
+| `manager` | no | `string` | `auto` | Package manager: auto, apt, dnf, yum, zypper or pacman. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pkg.unhold
+with:
+  name: nginx
+  packages:
+    - curl
+```
+
 ### `pkg.update_cache`
 
 Refresh package manager metadata.
@@ -3565,6 +3670,43 @@ with:
   name: nginx
   packages:
     - curl
+```
+
+### `pkg.version_pin`
+
+Create an explicit package version pin/preference file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `version` | yes | `string` |  | Package version to pin. |
+| `manager` | no | `string` | `auto` | Package manager: auto, apt, dnf, yum, zypper or pacman. |
+| `priority` | no | `integer` |  | Package repository or pin priority. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: pkg.version_pin
+with:
+  name: nginx
+  version: 1.2.3*
 ```
 
 ## pki

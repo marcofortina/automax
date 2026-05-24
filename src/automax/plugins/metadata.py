@@ -183,6 +183,9 @@ PARAMETERS: dict[str, dict[str, Any]] = {
 
     "min_days": {"type": "integer", "default": 30, "description": "Minimum remaining certificate validity in days."},
     "update_trust": {"type": "boolean", "default": True, "description": "Refresh the system trust store after installing a CA certificate."},
+
+    "version": {"type": "string", "description": "Package version to pin."},
+    "priority": {"type": "integer", "description": "Package repository or pin priority."},
     "changed": {"type": "boolean", "default": True, "description": "Whether a successful command should be reported as changed."},
 }
 
@@ -395,6 +398,9 @@ SAMPLE_VALUES: dict[str, Any] = {
 
     "min_days": 30,
     "update_trust": True,
+
+    "version": "1.2.3*",
+    "priority": 1001,
     "changed": True,
 }
 

@@ -110,6 +110,7 @@ network.vlan
 nftables.apply
 nftables.validate
 pam.limits
+pkg.hold
 pkg.install
 pkg.key.add
 pkg.key.remove
@@ -117,8 +118,11 @@ pkg.query
 pkg.remove
 pkg.repo.add
 pkg.repo.remove
+pkg.repo_priority
+pkg.unhold
 pkg.update_cache
 pkg.upgrade
+pkg.version_pin
 pki.ca_install
 pki.cert_expiry_assert
 pki.key_permissions

@@ -216,6 +216,12 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PkiCertExpiryAssertPlugin,
         PkiKeyPermissionsPlugin,
     )
+    from automax.plugins.pkg_pinning import (
+        PkgHoldPlugin,
+        PkgRepoPriorityPlugin,
+        PkgUnholdPlugin,
+        PkgVersionPinPlugin,
+    )
     from automax.plugins.local_command import LocalCommandPlugin
     from automax.plugins.multipath import (
         MultipathFlushPlugin,
@@ -435,6 +441,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PkiCaInstallPlugin(),
         PkiKeyPermissionsPlugin(),
         PkiCertExpiryAssertPlugin(),
+        PkgHoldPlugin(),
+        PkgUnholdPlugin(),
+        PkgVersionPinPlugin(),
+        PkgRepoPriorityPlugin(),
         ArchiveTarPlugin(),
         ArchiveUntarPlugin(),
         ArchiveCompressPlugin(),
