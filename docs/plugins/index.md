@@ -17,6 +17,7 @@ automax plugins list
 Current builtin plugins:
 
 ```text
+alternatives.set
 apparmor.profile
 apparmor.reload
 apparmor.status
@@ -31,6 +32,9 @@ assert.disk
 assert.file
 assert.path
 assert.tcp
+auditd.reload
+auditd.rule
+auditd.status
 block.facts
 block.identity
 block.mkfs
@@ -58,6 +62,8 @@ firewalld.port
 firewalld.reload
 firewalld.rich_rule
 firewalld.service
+fs.acl
+fs.attr
 fs.cd
 fs.chmod
 fs.chown
@@ -67,6 +73,7 @@ fs.find
 fs.line
 fs.mkdir
 fs.move
+fs.quota
 fs.read
 fs.remove
 fs.replace
@@ -91,6 +98,7 @@ http.request
 http.wait
 journal.collect
 journal.grep
+kernel.boot_param
 kernel.module.load
 kernel.module.persist
 kernel.module.unload
@@ -100,9 +108,14 @@ log.export
 log.grep
 lvm.lv_extend
 lvm.lv_present
+lvm.lv_remove
 lvm.pv_present
+lvm.pv_remove
 lvm.resizefs
+lvm.snapshot
+lvm.thin_pool
 lvm.vg_present
+lvm.vg_remove
 mail.send
 mount.absent
 mount.present
@@ -134,15 +147,23 @@ pkg.version_pin
 pki.ca_install
 pki.cert_expiry_assert
 pki.key_permissions
+platform.facts
 process.kill
 process.wait
 remote.command
 resolver.config
+resolver.facts
 selinux.boolean
 selinux.context
+selinux.fcontext
 selinux.mode
+selinux.port
 selinux.restorecon
 ssh.authorized_key
+ssh.config
+ssh.known_hosts
+sudo.rule
+sudo.validate
 sudoers.dropin
 swap.absent
 swap.present
@@ -163,6 +184,10 @@ systemctl.start
 systemctl.status
 systemctl.stop
 systemctl.unmask
+systemd.sysusers
+systemd.timer
+systemd.tmpfiles
+systemd.unit
 transfer.download
 transfer.sync
 transfer.upload

@@ -171,3 +171,34 @@ plans, while runtime-only/read-only operations emit explicit reasons. Examples
 include fstab plans for `swap.present` / `swap.absent`, PAM append plans for
 `pam.limits`, hostname and download plans, and runtime explanations for
 `block.rescan`, `udev.reload`, `multipath.reload` and `system.reboot`.
+
+## Enterprise system operations
+
+Automax also includes higher-level Linux operations for enterprise-style host
+preparation and recovery workflows. These plugins are still plain Automax
+substeps: they support operator previews, copy/pasteable command rendering, and
+backup/validation guards where the underlying operation changes persistent host
+configuration.
+
+Useful families include:
+
+```text
+platform.facts
+resolver.facts
+pkg.version_pin / pkg.repo_priority
+network.interface / network.route / network.bond / network.vlan with persist/backend
+pki.ca_install with trust_store=system
+lvm.snapshot / lvm.thin_pool / lvm.lv_remove / lvm.vg_remove / lvm.pv_remove
+fs.acl / fs.attr / fs.quota
+systemd.unit / systemd.timer / systemd.tmpfiles / systemd.sysusers
+alternatives.set
+auditd.rule / auditd.status / auditd.reload
+ssh.config / ssh.known_hosts / ssh.authorized_key
+selinux.port / selinux.fcontext
+kernel.boot_param
+sudo.rule / sudo.validate
+```
+
+Destructive plugins such as LVM removal require explicit confirmation parameters.
+Persistent file-oriented operations create backups by default when they replace
+existing configuration files.
