@@ -53,6 +53,7 @@ facts.network
 facts.os
 facts.packages
 facts.services
+findmnt.assert
 firewalld.port
 firewalld.reload
 firewalld.rich_rule
@@ -69,6 +70,7 @@ fs.move
 fs.read
 fs.remove
 fs.replace
+fs.resize
 fs.stat
 fs.symlink.create
 fs.symlink.remove
@@ -99,6 +101,7 @@ lvm.resizefs
 lvm.vg_present
 mount.absent
 mount.present
+mount.remount
 multipath.flush
 multipath.reload
 multipath.status

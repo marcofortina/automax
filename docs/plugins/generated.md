@@ -1268,6 +1268,40 @@ with:
   sudo: true
 ```
 
+## findmnt
+
+### `findmnt.assert`
+
+Assert a mountpoint, source, fstype or options using findmnt.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `src` | no | `path` |  | Source path. |
+| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `opts` | no | `string` | `defaults` | Mount options. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: findmnt.assert
+with:
+  path: /tmp/automax-demo
+```
+
 ## firewalld
 
 ### `firewalld.port`
@@ -1799,6 +1833,39 @@ with:
   path: /tmp/automax-demo
   pattern: KEY=.*
   replacement: KEY=new-value
+```
+
+### `fs.resize`
+
+Resize a filesystem using the appropriate platform tool.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.resize
+with:
+  device: /dev/sdb
+  fstype: xfs
 ```
 
 ### `fs.stat`
@@ -2872,6 +2939,37 @@ with:
   opts: defaults,noatime
   persist: true
   sudo: true
+```
+
+### `mount.remount`
+
+Remount an already mounted filesystem with desired options.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `opts` | no | `string` | `defaults` | Mount options. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: mount.remount
+with:
+  path: /tmp/automax-demo
 ```
 
 ## multipath

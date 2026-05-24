@@ -3337,3 +3337,17 @@ def test_package_pinning_plugins_render_locks_and_priorities():
     assert "cp -p" in pin
     priority = PkgRepoPriorityPlugin().diff_preview({"name": "stable", "priority": 900}, context)[0]
     assert priority["kind"] == "repo-priority-plan"
+
+
+def test_advanced_mount_plugins_render_remount_resize_and_findmnt():
+    from automax.plugins.mounts_extra import FindmntAssertPlugin, FsResizePlugin, MountRemountPlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in ("mount.remount", "fs.resize", "findmnt.assert"):
+        assert name in names
+
+    context = _sysops_preview_context()
+    assert MountRemountPlugin().manual_commands({"path": "/data", "opts": "rw,noatime"}, context)[0] == "sudo -n mount -o remount,rw,noatime /data"
+    assert "xfs_growfs" in FsResizePlugin().manual_commands({"device": "/dev/vg/data", "fstype": "xfs", "path": "/data"}, context)[0]
+    assert "findmnt -rn" in FindmntAssertPlugin().manual_commands({"path": "/data", "fstype": "xfs"}, context)[0]
+    assert FsResizePlugin().diff_preview({"device": "/dev/vg/data", "fstype": "ext4"}, context)[0]["kind"] == "filesystem-plan"

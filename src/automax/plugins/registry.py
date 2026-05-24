@@ -222,6 +222,11 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PkgUnholdPlugin,
         PkgVersionPinPlugin,
     )
+    from automax.plugins.mounts_extra import (
+        FindmntAssertPlugin,
+        FsResizePlugin,
+        MountRemountPlugin,
+    )
     from automax.plugins.local_command import LocalCommandPlugin
     from automax.plugins.multipath import (
         MultipathFlushPlugin,
@@ -445,6 +450,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PkgUnholdPlugin(),
         PkgVersionPinPlugin(),
         PkgRepoPriorityPlugin(),
+        MountRemountPlugin(),
+        FsResizePlugin(),
+        FindmntAssertPlugin(),
         ArchiveTarPlugin(),
         ArchiveUntarPlugin(),
         ArchiveCompressPlugin(),

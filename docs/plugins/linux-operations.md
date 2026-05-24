@@ -134,6 +134,13 @@ packages, pin versions and manage repository priorities across supported package
 managers. File-backed pinning and priority files are previewable and backed up by
 default.
 
+
+## Advanced mounts and filesystem resizing
+
+Use `mount.remount`, `fs.resize` and `findmnt.assert` to remount filesystems,
+grow supported filesystems and assert current mount state with `findmnt`. Runtime
+operations provide state previews and manual recovery commands.
+
 ## Recovery workflow
 
 All Linux operation macros should be used with the operator recovery commands:
