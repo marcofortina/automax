@@ -2701,7 +2701,7 @@ tasks:
     assert "test ! -e /tmp/demo || { rm -rf /tmp/demo" in result.output
 
 
-def test_commands_render_json_marks_unavailable_plugins(tmp_path: Path):
+def test_commands_render_json_marks_legacy_plugins_available_with_fallback(tmp_path: Path):
     job = write(
         tmp_path / "job.yaml",
         """
@@ -2742,8 +2742,9 @@ tasks:
 
     assert result.exit_code == 0, result.output
     payload = json.loads(result.output)
-    assert payload["nodes"][0]["available"] is False
-    assert payload["nodes"][0]["commands"] == []
+    assert payload["nodes"][0]["available"] is True
+    assert payload["nodes"][0]["commands"]
+    assert "stat /tmp/demo" in payload["nodes"][0]["commands"][0]
 
 
 def test_vars_render_prints_target_context_and_masks_secrets(tmp_path: Path):
@@ -3024,7 +3025,7 @@ def test_archive_compress_rejects_unknown_auto_suffix():
         ArchiveCompressPlugin().validate({"source": "/tmp/app.log", "dest": "/tmp/app.log.raw"})
 
 
-def test_plan_diff_json_lists_unavailable_plugins_with_reason(tmp_path: Path):
+def test_plan_diff_json_lists_legacy_operation_plan_preview(tmp_path: Path):
     job = write(
         tmp_path / "job.yaml",
         """
@@ -3053,12 +3054,13 @@ tasks:
 
     assert result.exit_code == 0, result.output
     payload = json.loads(result.output)
-    assert payload["diffs"][0]["available"] is False
+    assert payload["diffs"][0]["available"] is True
     assert payload["diffs"][0]["plugin"] == "fs.stat"
-    assert "deterministic file diff" in payload["diffs"][0]["reason"]
+    assert payload["diffs"][0]["kind"] == "operation-plan"
+    assert "stat /tmp/demo" in payload["diffs"][0]["diff"]
 
 
-def test_commands_render_json_includes_unavailable_reason(tmp_path: Path):
+def test_commands_render_json_includes_legacy_fallback_commands(tmp_path: Path):
     job = write(
         tmp_path / "job.yaml",
         """
@@ -3087,8 +3089,9 @@ tasks:
 
     assert result.exit_code == 0, result.output
     payload = json.loads(result.output)
-    assert payload["nodes"][0]["available"] is False
-    assert "manual command" in payload["nodes"][0]["reason"]
+    assert payload["nodes"][0]["available"] is True
+    assert payload["nodes"][0]["commands"]
+    assert "stat /tmp/demo" in payload["nodes"][0]["commands"][0]
 
 
 def test_storage_and_linux_ops_plugins_are_registered():
@@ -3824,3 +3827,190 @@ def test_cert_expiry_report_plugin_renders_checkend():
     assert "-enddate" in command
     assert "-checkend 864000" in command
     assert CertExpiryReportPlugin().supports_check_mode is True
+
+
+def _audit_sample_value(name: str):
+    values = {
+        "acl": "u:demo:rwx",
+        "archive": "/tmp/automax-demo.tar.gz",
+        "attrs": "i",
+        "body": "ok",
+        "ca_file": "/tmp/ca.crt",
+        "cert": "/tmp/server.crt",
+        "cert_dest": "/etc/ssl/certs/server.crt",
+        "chain": "/tmp/chain.pem",
+        "command": "true",
+        "confirm": True,
+        "content": "# managed by automax\n",
+        "database": "postgres",
+        "dest": "/tmp/automax-dest",
+        "device": "/dev/sdb",
+        "engine": "sqlite",
+        "entries": [{"domain": "*", "type": "soft", "item": "nofile", "value": 1024}],
+        "fstype": "ext4",
+        "host": "127.0.0.1",
+        "ip": "127.0.0.1",
+        "key": "/tmp/server.key",
+        "key_dest": "/etc/ssl/private/server.key",
+        "label": "gpt",
+        "line": "managed=yes",
+        "max_percent": 90,
+        "mode": "0644",
+        "mountpoint": "/tmp",
+        "name": "demo",
+        "names": ["demo.local"],
+        "partitions": [{"number": 1, "name": "data", "start": "1MiB", "end": "100%"}],
+        "password": "secret",
+        "path": "/tmp/automax-demo",
+        "pattern": "automax-demo",
+        "port": 22,
+        "priority": 900,
+        "profile": "sssd",
+        "protocol": "tcp",
+        "query": "SELECT 1",
+        "replacement": "replacement",
+        "rich_rule": "rule family=ipv4 service name=ssh accept",
+        "rule": "-A INPUT -p tcp --dport 22 -j ACCEPT",
+        "schedule": "* * * * *",
+        "selinux_type": "var_t",
+        "servers": ["pool.ntp.org"],
+        "service": "sshd.service",
+        "settings": {"PermitRootLogin": "no"},
+        "size": "1G",
+        "smtp_host": "127.0.0.1",
+        "source": "/dev/vg0/data",
+        "src": "README.md",
+        "state": "present",
+        "subject": "/CN=automax-demo",
+        "target": "demo",
+        "to": ["ops@example.invalid"],
+        "type": "file",
+        "url": "https://example.invalid/health",
+        "user": "demo",
+        "value": "1",
+        "variables": {"DEMO": "1"},
+        "version": "1.0",
+        "vg": "vg0",
+        "vlan_id": 100,
+    }
+    if name == "from":
+        return "automax@example.invalid"
+    return values.get(name, "demo")
+
+
+def _audit_sample_params(plugin) -> dict[str, object]:
+    params = {name: _audit_sample_value(name) for name in plugin.required_params}
+    # Include optional values required by conservative renderers while keeping samples safe.
+    for name in plugin.optional_params:
+        if name in {"connection", "checks", "packages", "rules", "files", "features", "headers", "search", "options", "excludes", "ssh_options", "groups", "env", "values", "attachments", "cc", "bcc"}:
+            continue
+        if name in {"sudo", "force", "backup", "reload", "permanent", "validate", "persist", "runtime", "create", "recursive", "ignore_missing", "test_only", "dry_run", "compress"}:
+            params[name] = True
+        elif name in {"port", "connect_timeout", "timeout", "interval", "expected_status", "status", "warning_days", "min_days", "max_percent", "count", "min_count", "max_count", "block_soft", "block_hard", "inode_soft", "inode_hard", "uid", "gid", "smtp_port", "strip_components", "days", "delay", "connect_timeout"}:
+            params[name] = 1 if name not in {"port", "smtp_port", "expected_status", "status", "max_percent"} else (22 if name in {"port", "smtp_port"} else (200 if name in {"expected_status", "status"} else 90))
+        elif name in {"manager"}:
+            params[name] = "auto"
+        elif name in {"backend"}:
+            params[name] = "runtime"
+        elif name in {"protocol"}:
+            params[name] = "tcp"
+        elif name in {"state"}:
+            params[name] = "present"
+        elif name in {"compression"}:
+            params[name] = "gzip"
+        elif name in {"direction"}:
+            params[name] = "upload"
+        elif name in {"output"}:
+            params[name] = "dict"
+        elif name in {"checksum"}:
+            params[name] = "sha256"
+        elif name in {"fetch"}:
+            params[name] = "all"
+        elif name in {"success_rc"}:
+            params[name] = [0]
+        elif name in {"encoding"}:
+            params[name] = "utf-8"
+        elif name in {"query_params"}:
+            params[name] = []
+        elif name in {"statements"}:
+            params[name] = ["SELECT 1"]
+        elif name in {"connection"}:
+            params[name] = {"path": "/tmp/automax.sqlite"}
+        elif name not in params:
+            params[name] = _audit_sample_value(name)
+    # Plugin-specific safe corrections.
+    if plugin.name.startswith("db."):
+        params.setdefault("connection", {"path": "/tmp/automax.sqlite"})
+    if plugin.name == "db.health":
+        params["engine"] = "sqlite"
+        params["connection"] = {"path": "/tmp/automax.sqlite"}
+    if plugin.name in {"lvm.lv_remove", "lvm.vg_remove", "lvm.pv_remove", "backup.restore", "iptables.restore"}:
+        params["confirm"] = True
+    if plugin.name == "process.signal":
+        params.pop("pid", None)
+        params["pattern"] = "automax-demo"
+    if plugin.name == "process.kill":
+        params.pop("pid", None)
+        params["pattern"] = "automax-demo"
+    if plugin.name == "process.wait":
+        params.pop("pid", None)
+        params["pattern"] = "automax-demo"
+    if plugin.name == "mail.send":
+        params["from"] = "automax@example.invalid"
+        params["to"] = ["ops@example.invalid"]
+    if plugin.name == "cron.entry":
+        params["schedule"] = "* * * * *"
+        params["command"] = "true"
+    if plugin.name == "nftables.apply" or plugin.name == "nftables.validate":
+        params["content"] = "flush ruleset\n"
+    if plugin.name == "pki.ca_install":
+        params["name"] = "automax-demo"
+        params["content"] = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----\n"
+    if plugin.name == "selinux.mode":
+        params["state"] = "enforcing"
+    if plugin.name == "fs.attr":
+        params["attrs"] = "i"
+    if plugin.name == "fs.chown":
+        params["owner"] = "demo"
+    if plugin.name == "fs.quota":
+        params["type"] = "user"
+    if plugin.name == "ufw.rule":
+        params["rule"] = "allow 22/tcp"
+    if plugin.name == "network.dns":
+        params["backend"] = "plain-file"
+    if plugin.name == "resolver.config":
+        params["backend"] = "plain-file"
+    if plugin.name in {"network.interface", "network.bond", "network.vlan"}:
+        params["state"] = "up"
+    if plugin.name == "backup.restore":
+        params["archive"] = False
+    return params
+
+
+def test_all_builtin_plugins_have_operator_preview_manual_commands_and_dry_run():
+    context = _sysops_preview_context()
+    registry = AutomaxEngine().plugin_registry
+    failures: list[str] = []
+    for name in registry.names():
+        plugin = registry.get(name)
+        params = _audit_sample_params(plugin)
+        try:
+            commands = plugin.manual_commands(params, context)
+            if not commands or not all(isinstance(command, str) and command.strip() for command in commands):
+                failures.append(f"{name}: empty manual_commands")
+        except Exception as exc:  # pragma: no cover - assertion collects all offenders
+            failures.append(f"{name}: manual_commands raised {exc!r}")
+        try:
+            preview = plugin.diff_preview(params, context)
+            reason = plugin.diff_preview_reason(params, context)
+            if not preview and not reason:
+                failures.append(f"{name}: no diff_preview and no diff_preview_reason")
+        except Exception as exc:  # pragma: no cover - assertion collects all offenders
+            failures.append(f"{name}: diff_preview raised {exc!r}")
+        try:
+            dry_run = plugin.dry_run(params, context)
+            if not dry_run.ok or dry_run.changed:
+                failures.append(f"{name}: dry_run not safe/unchanged")
+        except Exception as exc:  # pragma: no cover - assertion collects all offenders
+            failures.append(f"{name}: dry_run raised {exc!r}")
+    assert not failures, "\n" + "\n".join(failures)

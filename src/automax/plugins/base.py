@@ -72,32 +72,38 @@ class BasePlugin(ABC):
             )
 
     def dry_run(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        """Default dry-run implementation."""
+        """Default dry-run implementation with operator preview data."""
+        from automax.plugins.manual_preview import fallback_dry_run_data
+
         return PluginResult.success(
             changed=False,
             message=f"dry-run: {self.name}",
-            data={"params": params},
+            data=fallback_dry_run_data(self.name, params, context),
         )
 
     def diff_preview(
         self, params: Dict[str, Any], context: ExecutionContext
     ) -> list[Dict[str, Any]]:
-        """Return safe unified diff previews for file-oriented plugins."""
-        return []
+        """Return safe previews for plugins without a dedicated file diff renderer."""
+        from automax.plugins.manual_preview import fallback_diff_preview
+
+        return fallback_diff_preview(self.name, params, context)
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        """Explain why a deterministic diff preview is not available."""
-        return "plugin does not provide a deterministic file diff preview"
+        """Explain that the generic preview is an operation plan, not a file diff."""
+        return f"{self.name} uses a generic operation-plan preview because it has no deterministic file diff"
 
     def manual_commands(
         self, params: Dict[str, Any], context: ExecutionContext
     ) -> list[str]:
         """Return copy/pasteable shell commands for manual recovery."""
-        return []
+        from automax.plugins.manual_preview import fallback_manual_commands
+
+        return fallback_manual_commands(self.name, params, context)
 
     def manual_commands_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        """Explain why a copy/pasteable manual command is not available."""
-        return "plugin does not provide a deterministic manual command renderer"
+        """Explain whether a dedicated or generic manual renderer is used."""
+        return f"{self.name} uses the generic legacy manual command renderer"
 
     @abstractmethod
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
