@@ -206,3 +206,4 @@ existing configuration files.
 ## iptables
 
 `iptables.rule` manages legacy iptables/ip6tables runtime rules as a backend separate from firewalld, UFW and nftables.
+`iptables.save` exports the current runtime ruleset to an explicit persistent file.

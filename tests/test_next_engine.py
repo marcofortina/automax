@@ -3707,3 +3707,13 @@ def test_iptables_rule_plugin_renders_check_and_update():
     assert "iptables -t filter -C INPUT -p tcp --dport 443 -j ACCEPT" in command
     assert "iptables -t filter -A INPUT -p tcp --dport 443 -j ACCEPT" in command
     assert "runtime firewall" in IptablesRulePlugin().diff_preview_reason({}, context)
+
+
+def test_iptables_save_plugin_renders_ruleset_export():
+    from automax.plugins.firewall import IptablesSavePlugin
+
+    assert "iptables.save" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = IptablesSavePlugin().manual_commands({"dest": "/etc/iptables/rules.v4"}, context)[0]
+    assert "iptables-save" in command
+    assert "/etc/iptables/rules.v4" in command

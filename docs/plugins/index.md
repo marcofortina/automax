@@ -105,6 +105,7 @@ http.assert
 http.request
 http.wait
 iptables.rule
+iptables.save
 journal.collect
 journal.grep
 kernel.boot_param

@@ -260,3 +260,23 @@ class IptablesRulePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.rule failed")
+
+class IptablesSavePlugin(BasePlugin):
+    name = "iptables.save"
+    description = "Save current iptables or ip6tables rules to a persistent file."
+    required_params = ("dest",)
+    optional_params = ("ipv6", "sudo")
+    opens_remote_session = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "iptables.save writes the current kernel firewall ruleset to a file"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        binary = "ip6tables-save" if bool(params.get("ipv6", False)) else "iptables-save"
+        dest = str(params["dest"])
+        return [f"{_sudo(params)}mkdir -p $(dirname {quote(dest)}) && {_sudo(params)}{binary} | {_sudo(params)}tee {quote(dest)} >/dev/null"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.save failed")
