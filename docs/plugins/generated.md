@@ -5874,6 +5874,43 @@ with:
   settings: value
 ```
 
+### `ssh.keygen`
+
+Generate an SSH keypair on a remote target with idempotent overwrite protection.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
+| `bits` | no | `integer` |  | Key size in bits when supported by the selected key type. |
+| `comment` | no | `string` |  | User account comment or GECOS field. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: ssh.keygen
+with:
+  path: /tmp/automax-demo
+```
+
 ### `ssh.known_hosts`
 
 Ensure a known_hosts entry exists or is removed on a remote target.

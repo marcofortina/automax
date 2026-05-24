@@ -126,3 +126,44 @@ class SshKnownHostsPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="ssh.known_hosts failed")
+
+
+class SshKeygenPlugin(BasePlugin):
+    name = "ssh.keygen"
+    description = "Generate an SSH keypair on a remote target with idempotent overwrite protection."
+    required_params = ("path",)
+    optional_params = ("type", "bits", "comment", "force", "sudo", "owner", "group", "mode")
+    opens_remote_session = True
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        self.validate(params)
+        key_type = str(params.get("type", "ed25519"))
+        lines = [f"ssh-keygen -t {key_type} -f {params['path']}\n", f"public key: {params['path']}.pub\n"]
+        return _diff(str(params["path"]), "".join(lines), "ssh-keygen-plan")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        path = str(params["path"])
+        key_type = str(params.get("type", "ed25519"))
+        comment = str(params.get("comment", "automax"))
+        sudo = _sudo(params)
+        force = bool(params.get("force", False))
+        bits = f" -b {quote(params['bits'])}" if params.get("bits") else ""
+        mode = str(params.get("mode", "0600"))
+        commands = [
+            f"{sudo}install -d -m 0700 \"$(dirname {quote(path)})\"",
+            f"if test -e {quote(path)}; then {'sudo -n rm -f ' + quote(path) + ' ' + quote(path + '.pub') if force and sudo else 'rm -f ' + quote(path) + ' ' + quote(path + '.pub') if force else 'echo ' + quote('ssh key already exists: ' + path) + '; exit 0'}; fi",
+            f"{sudo}ssh-keygen -q -t {quote(key_type)}{bits} -f {quote(path)} -N '' -C {quote(comment)}",
+            f"{sudo}chmod {quote(mode)} {quote(path)}",
+        ]
+        owner = params.get("owner")
+        group = params.get("group")
+        if owner or group:
+            spec = f"{owner or ''}:{group or ''}"
+            commands.append(f"{sudo}chown {quote(spec)} {quote(path)} {quote(path + '.pub')}")
+        commands.append(f"printf '%s\n' {quote(CHANGE_MARKER)}")
+        return [" && ".join(commands)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.keygen failed", data={"path": str(params["path"]), "public_key": str(params["path"]) + ".pub"})

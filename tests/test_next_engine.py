@@ -3565,6 +3565,20 @@ def test_ssh_config_and_known_hosts_plugins_render_safe_changes():
     assert "ssh-ed25519" in known
 
 
+def test_ssh_keygen_plugin_renders_secret_free_key_generation():
+    from automax.plugins.ssh_ops import SshKeygenPlugin
+
+    assert "ssh.keygen" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    plugin = SshKeygenPlugin()
+    command = plugin.manual_commands({"path": "/home/deploy/.ssh/id_ed25519", "type": "ed25519", "owner": "deploy", "group": "deploy", "sudo": True}, context)[0]
+    assert "ssh-keygen -q -t ed25519" in command
+    assert "-N ''" in command
+    assert "/home/deploy/.ssh/id_ed25519.pub" in command
+    assert "chown deploy:deploy" in command
+    assert "ssh-keygen-plan" == plugin.diff_preview({"path": "/home/deploy/.ssh/id_ed25519"}, context)[0]["kind"]
+
+
 def test_selinux_port_and_fcontext_plugins_render_persistent_rules():
     from automax.plugins.security_modules import SelinuxFcontextPlugin, SelinuxPortPlugin
 
