@@ -58,3 +58,30 @@ class AlternativesGetPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="alternatives.get failed", data={"name": str(params["name"])})
+
+
+class AlternativesListPlugin(BasePlugin):
+    name = "alternatives.list"
+    description = "List known system alternatives across update-alternatives or alternatives implementations."
+    required_params = ()
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "alternatives.list is a read-only alternatives inventory query"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        sudo = _sudo(params)
+        return [
+            "if command -v update-alternatives >/dev/null 2>&1; then "
+            f"{sudo}update-alternatives --get-selections; "
+            "elif command -v alternatives >/dev/null 2>&1; then "
+            "for path in /var/lib/alternatives/* /var/lib/dpkg/alternatives/*; do [ -f \"$path\" ] && basename \"$path\"; done | sort -u; "
+            "else echo 'no alternatives command found' >&2; exit 1; fi"
+        ]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        names = [line.split()[0] for line in out.splitlines() if line.strip()] if rc == 0 else []
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="alternatives.list failed", data={"names": names})

@@ -3523,6 +3523,19 @@ def test_alternatives_get_plugin_renders_read_only_query():
     assert "read-only" in plugin.diff_preview_reason({"name": "java"}, context)
 
 
+def test_alternatives_list_plugin_renders_read_only_inventory():
+    from automax.plugins.alternatives import AlternativesListPlugin
+
+    assert "alternatives.list" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    plugin = AlternativesListPlugin()
+    command = plugin.manual_commands({}, context)[0]
+    assert "update-alternatives --get-selections" in command
+    assert "/var/lib/alternatives" in command
+    assert plugin.supports_check_mode is True
+    assert "read-only" in plugin.diff_preview_reason({}, context)
+
+
 def test_auditd_plugins_render_rules_status_and_reload():
     from automax.plugins.auditd import AuditdReloadPlugin, AuditdRulePlugin, AuditdStatusPlugin
 

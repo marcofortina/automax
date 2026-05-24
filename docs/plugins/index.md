@@ -18,6 +18,7 @@ Current builtin plugins:
 
 ```text
 alternatives.get
+alternatives.list
 alternatives.set
 apparmor.profile
 apparmor.reload
