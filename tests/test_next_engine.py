@@ -4099,3 +4099,18 @@ def test_network_advanced_plugins_render_manual_commands():
     assert "ip route show" in registry.get("network.route_assert").manual_commands({"dest": "default", "gateway": "192.0.2.1"}, context)[0]
     assert "nameserver" in " && ".join(registry.get("network.dns_assert").manual_commands({"nameservers": ["192.0.2.53"]}, context))
     assert "nc -z" in registry.get("network.port_check").manual_commands({"host": "example.com", "port": 443}, context)[0]
+
+
+def test_storage_readback_plugins_render_manual_commands():
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins.registry import build_builtin_registry
+
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
+    registry = build_builtin_registry()
+
+    assert "pvs --reportformat json" in registry.get("lvm.facts").manual_commands({"sudo": False}, context)[0]
+    assert "/dev/vg0/lv0" in registry.get("lvm.lv_assert").manual_commands({"vg": "vg0", "name": "lv0", "sudo": False}, context)[0]
+    assert "findmnt --json" in registry.get("mount.facts").manual_commands({}, context)[0]
+    assert "findmnt --verify" in registry.get("fstab.validate").manual_commands({"sudo": False}, context)[0]
+    assert "swapon --show" in registry.get("swap.status").manual_commands({}, context)[0]
+    assert "blkid /dev/sda1" in registry.get("blkid.assert").manual_commands({"device": "/dev/sda1", "sudo": False}, context)[0]

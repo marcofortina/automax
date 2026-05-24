@@ -21,3 +21,9 @@ with explicit review and backup/restore planning.
 `mount.present` and `mount.absent` manage active mounts. `fstab.entry` manages
 persistent boot-time mount configuration. Keep runtime mount state and `/etc/fstab`
 state explicit in jobs so reboot behavior is visible during review.
+
+## Storage readback and assertions
+
+Use `lvm.facts`, `lvm.lv_assert`, `mount.facts`, `fstab.validate`,
+`swap.status` and `blkid.assert` for storage prechecks and postchecks before and
+after LVM, mount, swap and block-device operations.

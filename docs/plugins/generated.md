@@ -848,6 +848,41 @@ with:
   path: /tmp/automax-demo
 ```
 
+## blkid
+
+### `blkid.assert`
+
+Assert block-device identity fields reported by blkid.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `label` | no | `string` |  | Disk label, filesystem label or partition label. |
+| `uuid` | no | `string` |  | Filesystem or block-device UUID. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: blkid.assert
+with:
+  device: /dev/sdb
+```
+
 ## block
 
 ### `block.facts`
@@ -2966,6 +3001,37 @@ with:
   sudo: true
 ```
 
+### `fstab.validate`
+
+Validate fstab syntax and optionally dry-run mount resolution.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `file` | no | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fstab.validate
+with:
+  file: /etc/sysctl.d/99-automax.conf
+  sudo: true
+```
+
 ## group
 
 ### `group.create`
@@ -3989,6 +4055,71 @@ with:
 
 ## lvm
 
+### `lvm.facts`
+
+Collect LVM PV, VG and LV facts from a target.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `vg` | no | `string` |  | LVM volume group name. |
+| `name` | no | `string` |  | Package, user or group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: lvm.facts
+with:
+  vg: vg_app
+  name: nginx
+```
+
+### `lvm.lv_assert`
+
+Assert that an LVM logical volume exists and optionally matches a requested size.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `vg` | yes | `string` |  | LVM volume group name. |
+| `name` | yes | `string` |  | Package, user or group name. |
+| `size` | no | `string` |  | Size such as 16G for file-backed swap. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: lvm.lv_assert
+with:
+  vg: vg_app
+  name: nginx
+```
+
 ### `lvm.lv_extend`
 
 Extend an LVM logical volume, optionally resizing the filesystem.
@@ -4407,6 +4538,37 @@ Example:
 use: mount.absent
 with:
   path: /tmp/automax-demo
+```
+
+### `mount.facts`
+
+Collect mounted filesystem facts with findmnt.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: mount.facts
+with:
+  path: /tmp/automax-demo
+  sudo: true
 ```
 
 ### `mount.present`
@@ -6757,6 +6919,37 @@ Example:
 use: swap.present
 with:
   path: /tmp/automax-demo
+```
+
+### `swap.status`
+
+Report active swap devices and optionally assert one path is active.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: swap.status
+with:
+  path: /tmp/automax-demo
+  sudo: true
 ```
 
 ## sysctl

@@ -42,6 +42,7 @@ backup.directory
 backup.file
 backup.restore
 backup.verify
+blkid.assert
 block.facts
 block.identity
 block.mkfs
@@ -103,6 +104,7 @@ fs.symlink.remove
 fs.template
 fs.write
 fstab.entry
+fstab.validate
 group.create
 group.exists
 group.remove
@@ -132,6 +134,8 @@ local.command
 log.export
 log.grep
 login.defs
+lvm.facts
+lvm.lv_assert
 lvm.lv_extend
 lvm.lv_present
 lvm.lv_remove
@@ -144,6 +148,7 @@ lvm.vg_present
 lvm.vg_remove
 mail.send
 mount.absent
+mount.facts
 mount.present
 mount.remount
 multipath.flush
@@ -211,6 +216,7 @@ sudo.validate
 sudoers.dropin
 swap.absent
 swap.present
+swap.status
 sysctl.get
 sysctl.persist
 sysctl.reload

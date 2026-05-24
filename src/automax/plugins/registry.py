@@ -343,6 +343,14 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     from automax.plugins.sudo_ops import SudoRulePlugin, SudoValidatePlugin
     from automax.plugins.ssh_ops import SshConfigPlugin, SshKeygenPlugin, SshKnownHostsPlugin
     from automax.plugins.systemd_resources import SystemdSysusersPlugin, SystemdTimerPlugin, SystemdTmpfilesPlugin, SystemdUnitPlugin
+    from automax.plugins.storage_readback import (
+        BlkidAssertPlugin,
+        FstabValidatePlugin,
+        LvmFactsPlugin,
+        LvmLvAssertPlugin,
+        MountFactsPlugin,
+        SwapStatusPlugin,
+    )
     from automax.plugins.systemctl import (
         SystemctlDaemonReloadPlugin,
         SystemctlDisablePlugin,
@@ -541,6 +549,8 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         LvmPvPresentPlugin(),
         LvmVgPresentPlugin(),
         LvmLvPresentPlugin(),
+        LvmFactsPlugin(),
+        LvmLvAssertPlugin(),
         LvmLvExtendPlugin(),
         LvmSnapshotPlugin(),
         LvmThinPoolPlugin(),
@@ -570,6 +580,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PkgVersionPinPlugin(),
         PkgRepoPriorityPlugin(),
         MountRemountPlugin(),
+        MountFactsPlugin(),
+        FstabValidatePlugin(),
+        SwapStatusPlugin(),
+        BlkidAssertPlugin(),
         FsResizePlugin(),
         FindmntAssertPlugin(),
         LogGrepPlugin(),
