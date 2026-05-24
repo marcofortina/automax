@@ -3443,3 +3443,16 @@ def test_lvm_extra_plugins_render_destructive_and_snapshot_operations():
     assert "lvremove -y" in LvmLvRemovePlugin().manual_commands({"path": "/dev/vg0/old", "confirm": True}, context)[0]
     assert "vgremove -y" in LvmVgRemovePlugin().manual_commands({"name": "oldvg", "confirm": True}, context)[0]
     assert "pvremove" in LvmPvRemovePlugin().manual_commands({"device": "/dev/sdb", "confirm": True}, context)[0]
+
+
+def test_filesystem_acl_attr_quota_plugins_render_safe_commands():
+    from automax.plugins.fs_system import FsAclPlugin, FsAttrPlugin, FsQuotaPlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in ("fs.acl", "fs.attr", "fs.quota"):
+        assert name in names
+    context = _sysops_preview_context()
+    assert "getfacl" in " && ".join(FsAclPlugin().manual_commands({"path": "/data", "acl": "u:app:rwx"}, context))
+    assert "setfacl" in " && ".join(FsAclPlugin().manual_commands({"path": "/data", "acl": "u:app:rwx"}, context))
+    assert "chattr +i" in FsAttrPlugin().manual_commands({"path": "/data/file", "attrs": "i"}, context)[0]
+    assert "setquota -u app" in FsQuotaPlugin().manual_commands({"target": "app", "mountpoint": "/data"}, context)[0]

@@ -1444,6 +1444,76 @@ with:
 
 ## fs
 
+### `fs.acl`
+
+Ensure or remove POSIX ACL entries with getfacl backup support.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `acl` | yes | `string` |  | POSIX ACL entry accepted by setfacl. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `recursive` | no | `boolean` | `False` | Recurse into directories. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_path` | no | `path` |  | Explicit backup path for pre-change file content. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.acl
+with:
+  path: /tmp/automax-demo
+  acl: value
+```
+
+### `fs.attr`
+
+Set or clear Linux filesystem attributes with chattr.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `attrs` | yes | `string` |  | Linux filesystem attribute flags accepted by chattr. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `recursive` | no | `boolean` | `False` | Recurse into directories. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.attr
+with:
+  path: /tmp/automax-demo
+  attrs: value
+```
+
 ### `fs.cd`
 
 Set current remote working directory for the active step.
@@ -1732,6 +1802,43 @@ use: fs.move
 with:
   src: /tmp/source
   dest: /tmp/dest
+```
+
+### `fs.quota`
+
+Set user or group filesystem quotas with setquota.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `target` | yes | `string` |  | Quota target user or group. |
+| `mountpoint` | yes | `path` |  | Mounted filesystem path. |
+| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
+| `block_soft` | no | `integer` | `0` | Soft block quota. |
+| `block_hard` | no | `integer` | `0` | Hard block quota. |
+| `inode_soft` | no | `integer` | `0` | Soft inode quota. |
+| `inode_hard` | no | `integer` | `0` | Hard inode quota. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.quota
+with:
+  target: value
+  mountpoint: value
 ```
 
 ### `fs.read`
