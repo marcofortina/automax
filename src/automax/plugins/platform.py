@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin
-from automax.plugins.remote_utils import exec_remote, quote
+from automax.plugins.remote_utils import exec_remote
 
 
 def _sudo(params: Dict[str, Any]) -> str:

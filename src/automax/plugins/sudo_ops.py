@@ -9,7 +9,7 @@ from difflib import unified_diff
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin, PluginValidationError
+from automax.plugins.base import BasePlugin
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote
 
 

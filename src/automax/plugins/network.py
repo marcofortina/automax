@@ -44,7 +44,7 @@ def _backup_cmd(path: str, params: Dict[str, Any]) -> str:
 
 
 def _write_file_cmd(path: str, content: str, mode: str, params: Dict[str, Any]) -> str:
-    temp = f"/tmp/automax-net.$$"
+    temp = "/tmp/automax-net.$$"
     return " && ".join([
         f"cat > {temp} <<'EOF'\n{content}EOF",
         _backup_cmd(path, params),

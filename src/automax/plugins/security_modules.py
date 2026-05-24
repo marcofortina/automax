@@ -175,7 +175,6 @@ class SelinuxPortPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         state = str(params.get("state", "present"))
-        target = f"{params['protocol']} {params['port']}"
         if state == "present":
             return [f"{_sudo(params)}semanage port -a -t {quote(params['selinux_type'])} -p {quote(params['protocol'])} {quote(params['port'])} 2>/dev/null || {_sudo(params)}semanage port -m -t {quote(params['selinux_type'])} -p {quote(params['protocol'])} {quote(params['port'])}"]
         if state == "absent":
