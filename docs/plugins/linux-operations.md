@@ -148,6 +148,13 @@ Use `log.grep`, `journal.collect`, `journal.grep` and `log.export` to inspect
 logs, grep journal output and emit stdout suitable for artifact capture. These
 macros are read-oriented and document why no file diff is emitted.
 
+
+## Controller-side mail notifications
+
+Use `mail.send` to send SMTP notifications from the Automax controller. It does
+not open a remote SSH session, it never renders SMTP passwords in manual command
+output, and attachments are read from local controller paths.
+
 ## Recovery workflow
 
 All Linux operation macros should be used with the operator recovery commands:

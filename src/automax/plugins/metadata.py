@@ -191,6 +191,17 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "since": {"type": "string", "description": "Start time for journalctl queries."},
     "until": {"type": "string", "description": "End time for journalctl queries."},
     "lines": {"type": "integer", "default": 200, "description": "Number of log or journal lines to collect."},
+
+    "subject": {"type": "string", "description": "Email subject line."},
+    "smtp_host": {"type": "string", "description": "SMTP server host used by the Automax controller."},
+    "smtp_port": {"type": "integer", "default": 587, "description": "SMTP server port."},
+    "starttls": {"type": "boolean", "default": True, "description": "Use STARTTLS before SMTP authentication."},
+    "ssl": {"type": "boolean", "default": False, "description": "Use implicit TLS for SMTP."},
+    "username": {"type": "string", "description": "SMTP username; prefer values rendered from secrets."},
+    "cc": {"type": "list", "description": "Email CC recipients."},
+    "bcc": {"type": "list", "description": "Email BCC recipients."},
+    "reply_to": {"type": "string", "description": "Email Reply-To address."},
+    "attachments": {"type": "list", "description": "Local controller-side attachment paths."},
     "changed": {"type": "boolean", "default": True, "description": "Whether a successful command should be reported as changed."},
 }
 
@@ -411,6 +422,17 @@ SAMPLE_VALUES: dict[str, Any] = {
     "since": "1 hour ago",
     "until": "now",
     "lines": 200,
+
+    "subject": "Automax notification",
+    "smtp_host": "smtp.example.com",
+    "smtp_port": 587,
+    "starttls": True,
+    "ssl": False,
+    "username": "automax@example.com",
+    "cc": ["ops-cc@example.com"],
+    "bcc": ["audit@example.com"],
+    "reply_to": "ops@example.com",
+    "attachments": ["/tmp/report.txt"],
     "changed": True,
 }
 

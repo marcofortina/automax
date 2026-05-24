@@ -3009,6 +3009,54 @@ with:
     - /dev/sdb
 ```
 
+## mail
+
+### `mail.send`
+
+Send an email from the Automax controller through SMTP.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `smtp_host` | yes | `string` |  | SMTP server host used by the Automax controller. |
+| `from` | yes | `string` |  | Source address for firewall rules. |
+| `to` | yes | `string` |  | Destination address for firewall rules. |
+| `subject` | yes | `string` |  | Email subject line. |
+| `smtp_port` | no | `integer` | `587` | SMTP server port. |
+| `starttls` | no | `boolean` | `True` | Use STARTTLS before SMTP authentication. |
+| `ssl` | no | `boolean` | `False` | Use implicit TLS for SMTP. |
+| `username` | no | `string` |  | SMTP username; prefer values rendered from secrets. |
+| `password` | no | `string` |  | Plaintext password; prefer password_hash when possible. |
+| `body` | no | `string` |  | Raw HTTP request body. |
+| `cc` | no | `list` |  | Email CC recipients. |
+| `bcc` | no | `list` |  | Email BCC recipients. |
+| `reply_to` | no | `string` |  | Email Reply-To address. |
+| `attachments` | no | `list` |  | Local controller-side attachment paths. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: mail.send
+with:
+  smtp_host: smtp.example.com
+  from: 10.0.0.0/8
+  to: any
+  subject: Automax notification
+```
+
 ## mount
 
 ### `mount.absent`

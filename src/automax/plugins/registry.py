@@ -233,6 +233,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         LogExportPlugin,
         LogGrepPlugin,
     )
+    from automax.plugins.mail import MailSendPlugin
     from automax.plugins.local_command import LocalCommandPlugin
     from automax.plugins.multipath import (
         MultipathFlushPlugin,
@@ -463,6 +464,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         JournalCollectPlugin(),
         JournalGrepPlugin(),
         LogExportPlugin(),
+        MailSendPlugin(),
         ArchiveTarPlugin(),
         ArchiveUntarPlugin(),
         ArchiveCompressPlugin(),

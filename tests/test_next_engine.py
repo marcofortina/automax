@@ -3366,3 +3366,27 @@ def test_log_and_journal_plugins_render_queries_and_exports():
     assert "| grep -- ERROR" in JournalGrepPlugin().manual_commands({"pattern": "ERROR"}, context)[0]
     assert "tail -n 100" in LogExportPlugin().manual_commands({"files": ["/var/log/app.log"], "lines": 100}, context)[0]
     assert "artifact capture" in LogExportPlugin().diff_preview_reason({}, context)
+
+
+def test_mail_send_is_controller_side_and_masks_password_in_renderers():
+    from automax.plugins.mail import MailSendPlugin
+
+    assert "mail.send" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    params = {
+        "smtp_host": "smtp.example.com",
+        "smtp_port": 587,
+        "from": "automax@example.com",
+        "to": ["ops@example.com"],
+        "subject": "Job failed",
+        "username": "automax",
+        "password": "super-secret",
+    }
+    plugin = MailSendPlugin()
+    assert plugin.opens_remote_session is False
+    rendered = plugin.manual_commands(params, context)[0]
+    preview = plugin.diff_preview(params, context)[0]["diff"]
+    assert "super-secret" not in rendered
+    assert "super-secret" not in preview
+    assert "password is intentionally not rendered" in rendered
+    assert "mail-plan" == plugin.diff_preview(params, context)[0]["kind"]

@@ -103,6 +103,7 @@ lvm.lv_present
 lvm.pv_present
 lvm.resizefs
 lvm.vg_present
+mail.send
 mount.absent
 mount.present
 mount.remount
