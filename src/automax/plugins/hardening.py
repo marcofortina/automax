@@ -100,3 +100,41 @@ class LoginDefsPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="login.defs failed")
+
+class PasswordPolicyPlugin(BasePlugin):
+    name = "password.policy"
+    description = "Install a pwquality password policy drop-in."
+    required_params = ("name", "settings")
+    optional_params = ("path", "backup", "backup_suffix", "sudo")
+    opens_remote_session = True
+
+    def _path(self, params: Dict[str, Any]) -> str:
+        name = str(params["name"])
+        if not name.endswith(".conf"):
+            name += ".conf"
+        return str(params.get("path", f"/etc/security/pwquality.conf.d/{name}"))
+
+    def _content(self, params: Dict[str, Any]) -> str:
+        settings = params.get("settings")
+        if not isinstance(settings, dict) or not settings:
+            raise PluginValidationError("password.policy settings must be a non-empty mapping")
+        return "# Managed by automax\n" + _settings_content(settings, " = ")
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        return _diff(self._path(params), self._content(params), "password-policy-plan")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        path = self._path(params)
+        content = self._content(params)
+        sudo = _sudo(params)
+        tmp = "/tmp/automax-pwquality.$$"
+        commands = [f"cat > {tmp} <<'EOF'\n{content}EOF"]
+        if bool(params.get("backup", True)):
+            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
+        commands.extend([f"{sudo}install -D -m 0644 {tmp} {quote(path)}", f"rm -f {tmp}"])
+        return commands
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="password.policy failed")

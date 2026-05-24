@@ -3751,3 +3751,14 @@ def test_login_defs_plugin_renders_key_updates():
     assert "/etc/login.defs" in commands
     assert "PASS_MAX_DAYS 90" in commands
     assert LoginDefsPlugin().diff_preview({"settings": {"PASS_MAX_DAYS": 90}}, context)[0]["kind"] == "login-defs-plan"
+
+
+def test_password_policy_plugin_renders_pwquality_dropin():
+    from automax.plugins.hardening import PasswordPolicyPlugin
+
+    assert "password.policy" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    commands = " && ".join(PasswordPolicyPlugin().manual_commands({"name": "10-hardening", "settings": {"minlen": 14}}, context))
+    assert "/etc/security/pwquality.conf.d/10-hardening.conf" in commands
+    assert "minlen = 14" in commands
+    assert PasswordPolicyPlugin().diff_preview({"name": "10-hardening", "settings": {"minlen": 14}}, context)[0]["kind"] == "password-policy-plan"

@@ -143,6 +143,7 @@ network.vlan
 nftables.apply
 nftables.validate
 pam.limits
+password.policy
 pkg.hold
 pkg.install
 pkg.key.add

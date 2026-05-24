@@ -77,3 +77,4 @@ These plugins run on the remote target through SSH.
 
 `sshd.config` installs server-side SSH hardening drop-ins and validates them with `sshd -t` before reload.
 `login.defs` manages account-aging defaults in `/etc/login.defs` with backup.
+`password.policy` installs pwquality drop-ins for password complexity policy.
