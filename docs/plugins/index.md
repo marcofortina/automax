@@ -74,6 +74,7 @@ fs.cd
 fs.chmod
 fs.chown
 fs.copy
+fs.disk_usage_assert
 fs.exists
 fs.find
 fs.line

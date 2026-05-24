@@ -3644,3 +3644,14 @@ def test_fs_bind_mount_plugin_renders_runtime_and_persistent_commands():
     assert "mount --bind /srv/data /mnt/data" in rendered
     assert "/etc/fstab" in rendered
     assert FsBindMountPlugin().diff_preview({"src": "/srv/data", "dest": "/mnt/data"}, context)[0]["kind"] == "bind-mount-plan"
+
+
+def test_fs_disk_usage_assert_plugin_renders_df_check():
+    from automax.plugins.fs_advanced import FsDiskUsageAssertPlugin
+
+    assert "fs.disk_usage_assert" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = FsDiskUsageAssertPlugin().manual_commands({"path": "/", "max_percent": 90}, context)[0]
+    assert "df -P /" in command
+    assert 'test "$usage" -le 90' in command
+    assert FsDiskUsageAssertPlugin().supports_check_mode is True

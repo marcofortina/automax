@@ -224,6 +224,7 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "priority": {"type": "integer", "description": "Package repository or pin priority."},
 
     "max_count": {"type": "integer", "description": "Maximum number of matching log lines."},
+    "max_percent": {"type": "integer", "description": "Maximum allowed percentage."},
     "since": {"type": "string", "description": "Start time for journalctl queries."},
     "until": {"type": "string", "description": "End time for journalctl queries."},
     "lines": {"type": "integer", "default": 200, "description": "Number of log or journal lines to collect."},
@@ -257,6 +258,7 @@ DEFAULT_RESULT_FIELDS = {
 
 RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
     "fs.bind_mount": {"data.path": "Bind mount target path when returned by the implementation."},
+    "fs.disk_usage_assert": {"stdout": "df assertion output."},
     "fs.exists": {"data.exists": "Boolean path existence result.", "data.path": "Checked remote path."},
     "fs.stat": {"data.exists": "Boolean path existence result.", "data.size": "Path size in bytes.", "data.mode": "POSIX mode.", "data.owner": "Owner name.", "data.group": "Group name."},
     "fs.read": {"stdout": "Remote file content.", "data.path": "Read remote path."},

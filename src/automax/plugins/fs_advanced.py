@@ -63,3 +63,24 @@ class FsBindMountPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="fs.bind_mount failed")
+
+class FsDiskUsageAssertPlugin(BasePlugin):
+    name = "fs.disk_usage_assert"
+    description = "Assert that filesystem block usage is below a maximum percentage."
+    required_params = ("path", "max_percent")
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "fs.disk_usage_assert is a read-only df assertion"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [f"usage=$({_sudo(params)}df -P {quote(params['path'])} | awk 'NR==2 {{gsub(/%/, \"\", $5); print $5}}'); test \"$usage\" -le {quote(params['max_percent'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.disk_usage_assert failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)

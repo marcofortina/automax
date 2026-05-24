@@ -285,3 +285,4 @@ mutation plugins so operators can preview and run them as dedicated steps.
 `backup.verify` validates checksum sidecars as a read-only post-backup or pre-restore gate.
 
 `fs.bind_mount` manages runtime bind mounts and optional `/etc/fstab` persistence.
+`fs.disk_usage_assert` is a read-only disk usage gate for preflight checks.
