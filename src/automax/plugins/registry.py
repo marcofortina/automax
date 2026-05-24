@@ -307,6 +307,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SelinuxModePlugin,
         SelinuxRestoreconPlugin,
     )
+    from automax.plugins.ssh_ops import SshConfigPlugin, SshKnownHostsPlugin
     from automax.plugins.systemd_resources import SystemdSysusersPlugin, SystemdTimerPlugin, SystemdTmpfilesPlugin, SystemdUnitPlugin
     from automax.plugins.systemctl import (
         SystemctlDaemonReloadPlugin,
@@ -403,6 +404,8 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         GroupRemovePlugin(),
         GroupExistsPlugin(),
         SshAuthorizedKeyPlugin(),
+        SshConfigPlugin(),
+        SshKnownHostsPlugin(),
         SudoersDropinPlugin(),
         ProcessKillPlugin(),
         ProcessWaitPlugin(),

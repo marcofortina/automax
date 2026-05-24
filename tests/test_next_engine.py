@@ -3494,3 +3494,18 @@ def test_auditd_plugins_render_rules_status_and_reload():
     assert "augenrules --load" in rule_cmd
     assert AuditdStatusPlugin().manual_commands({}, context)[0] == "sudo -n auditctl -s"
     assert "augenrules --load" in AuditdReloadPlugin().manual_commands({}, context)[0]
+
+
+def test_ssh_config_and_known_hosts_plugins_render_safe_changes():
+    from automax.plugins.ssh_ops import SshConfigPlugin, SshKnownHostsPlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in ("ssh.config", "ssh.known_hosts"):
+        assert name in names
+    context = _sysops_preview_context()
+    server = " && ".join(SshConfigPlugin().manual_commands({"name": "10-hardening", "scope": "server", "settings": {"PermitRootLogin": "no"}}, context))
+    assert "/etc/ssh/sshd_config.d/10-hardening.conf" in server
+    assert "sshd -t" in server
+    known = SshKnownHostsPlugin().manual_commands({"host": "server.example.com", "key": "ssh-ed25519 AAAA"}, context)[0]
+    assert "known_hosts" in known
+    assert "ssh-ed25519" in known

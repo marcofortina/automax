@@ -4914,6 +4914,81 @@ with:
   sudo: true
 ```
 
+### `ssh.config`
+
+Install SSH client or sshd config drop-ins with backup and optional reload.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `settings` | yes | `mapping` |  | SSH client or server settings. |
+| `scope` | no | `string` | `step` | Environment scope: step, user, global or file. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `match` | no | `string` |  | SSH Match clause. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: ssh.config
+with:
+  name: nginx
+  settings: value
+```
+
+### `ssh.known_hosts`
+
+Ensure a known_hosts entry exists or is removed on a remote target.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `host` | yes | `string` |  | Hostname or IP address to check from the controller. |
+| `key` | no | `string` |  | SSH public key line. |
+| `port` | no | `integer` |  | TCP port number. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: ssh.known_hosts
+with:
+  host: 127.0.0.1
+```
+
 ## sudoers
 
 ### `sudoers.dropin`

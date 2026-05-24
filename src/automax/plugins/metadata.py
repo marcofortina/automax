@@ -48,6 +48,8 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "block_hard": {"type": "integer", "default": 0, "description": "Hard block quota."},
     "inode_soft": {"type": "integer", "default": 0, "description": "Soft inode quota."},
     "inode_hard": {"type": "integer", "default": 0, "description": "Hard inode quota."},
+    "settings": {"type": "mapping", "description": "SSH client or server settings."},
+    "match": {"type": "string", "description": "SSH Match clause."},
     "command": {"type": "string", "description": "Command line to execute."},
     "comment": {"type": "string", "description": "User account comment or GECOS field."},
     "commit": {"type": "boolean", "default": True, "description": "Commit the database transaction on success; false rolls it back."},
