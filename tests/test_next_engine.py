@@ -3514,14 +3514,18 @@ def test_lvm_extra_plugins_render_destructive_and_snapshot_operations():
 
 
 def test_filesystem_acl_attr_quota_plugins_render_safe_commands():
-    from automax.plugins.fs_system import FsAclPlugin, FsAttrPlugin, FsQuotaPlugin
+    from automax.plugins.fs_system import FsAclAssertPlugin, FsAclGetPlugin, FsAclPlugin, FsAclRestorePlugin, FsAttrPlugin, FsQuotaPlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("fs.acl", "fs.attr", "fs.quota"):
+    for name in ("fs.acl", "fs.acl.get", "fs.acl.assert", "fs.acl.restore", "fs.attr", "fs.quota"):
         assert name in names
     context = _sysops_preview_context()
     assert "getfacl" in " && ".join(FsAclPlugin().manual_commands({"path": "/data", "acl": "u:app:rwx"}, context))
     assert "setfacl" in " && ".join(FsAclPlugin().manual_commands({"path": "/data", "acl": "u:app:rwx"}, context))
+    assert "getfacl -p /data" in FsAclGetPlugin().manual_commands({"path": "/data"}, context)[0]
+    assert "grep -Fx -- u:app:rwx" in FsAclAssertPlugin().manual_commands({"path": "/data", "acl": "u:app:rwx"}, context)[0]
+    assert "setfacl --restore=/tmp/data.acl" in FsAclRestorePlugin().manual_commands({"file": "/tmp/data.acl"}, context)[0]
+    assert "setfacl --test --restore=/tmp/data.acl" in FsAclRestorePlugin().manual_commands({"file": "/tmp/data.acl", "test_only": True}, context)[0]
     assert "chattr +i" in FsAttrPlugin().manual_commands({"path": "/data/file", "attrs": "i"}, context)[0]
     assert "setquota -u app" in FsQuotaPlugin().manual_commands({"target": "app", "mountpoint": "/data"}, context)[0]
 
@@ -4056,6 +4060,8 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["content"] = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----\n"
     if plugin.name == "selinux.mode":
         params["state"] = "enforcing"
+    if plugin.name in {"fs.acl", "fs.acl.assert"}:
+        params["acl"] = "u:app:rwx"
     if plugin.name == "fs.attr":
         params["attrs"] = "i"
     if plugin.name == "fs.chown":

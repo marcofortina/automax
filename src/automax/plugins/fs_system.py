@@ -103,3 +103,88 @@ class FsQuotaPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="fs.quota failed")
+
+
+def _acl_entries(value: Any) -> list[str]:
+    if isinstance(value, (list, tuple)):
+        return [str(item) for item in value]
+    return [str(value)]
+
+
+class FsAclGetPlugin(BasePlugin):
+    name = "fs.acl.get"
+    description = "Read POSIX ACL entries with getfacl."
+    required_params = ("path",)
+    optional_params = ("recursive", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        recursive = " -R" if bool(params.get("recursive", False)) else ""
+        return [f"{_sudo(params)}getfacl -p{recursive} {quote(params['path'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.acl.get failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"acl": out, "path": params["path"]})
+
+
+class FsAclAssertPlugin(BasePlugin):
+    name = "fs.acl.assert"
+    description = "Assert that POSIX ACL entries are present or absent."
+    required_params = ("path", "acl")
+    optional_params = ("state", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        self.validate(params)
+        desired = "\n".join(f"{params.get('state', 'present')} {entry}" for entry in _acl_entries(params["acl"])) + "\n"
+        return _diff(str(params["path"]), desired, "acl-assert-plan")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        state = str(params.get("state", "present"))
+        if state not in {"present", "absent"}:
+            raise PluginValidationError("fs.acl.assert state must be present or absent")
+        commands = []
+        acl_source = f"{_sudo(params)}getfacl -cp {quote(params['path'])}"
+        for entry in _acl_entries(params["acl"]):
+            grep_cmd = f"{acl_source} | grep -Fx -- {quote(entry)} >/dev/null"
+            if state == "present":
+                commands.append(grep_cmd)
+            else:
+                commands.append(f"! {grep_cmd}")
+        return commands
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        command = " && ".join(self.manual_commands(params, context))
+        rc, out, err = exec_remote(context, command)
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.acl.assert failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"path": params["path"], "acl": _acl_entries(params["acl"])})
+
+
+class FsAclRestorePlugin(BasePlugin):
+    name = "fs.acl.restore"
+    description = "Restore POSIX ACL entries from a getfacl backup file."
+    required_params = ("file",)
+    optional_params = ("test_only", "sudo")
+    opens_remote_session = True
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        self.validate(params)
+        return _diff(str(params["file"]), "setfacl --restore\n", "acl-restore-plan")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        test = " --test" if bool(params.get("test_only", False)) else ""
+        return [f"{_sudo(params)}setfacl{test} --restore={quote(params['file'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        command = self.manual_commands(params, context)[0]
+        rc, out, err = exec_remote(context, command)
+        stdout = out if bool(params.get("test_only", False)) else f"{out}\n{CHANGE_MARKER}\n"
+        return result_from_remote(rc=rc, stdout=stdout if rc == 0 else out, stderr=err, message="fs.acl.restore failed", data={"file": params["file"]})

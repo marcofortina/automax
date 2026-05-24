@@ -2483,6 +2483,101 @@ with:
   acl: value
 ```
 
+### `fs.acl.assert`
+
+Assert that POSIX ACL entries are present or absent.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `acl` | yes | `string` |  | POSIX ACL entry accepted by setfacl. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.acl.assert
+with:
+  path: /tmp/automax-demo
+  acl: value
+```
+
+### `fs.acl.get`
+
+Read POSIX ACL entries with getfacl.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `recursive` | no | `boolean` | `False` | Recurse into directories. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.acl.get
+with:
+  path: /tmp/automax-demo
+```
+
+### `fs.acl.restore`
+
+Restore POSIX ACL entries from a getfacl backup file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `file` | yes | `path` |  | Remote configuration file path. |
+| `test_only` | no | `boolean` | `False` | Validate without applying when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.acl.restore
+with:
+  file: /etc/sysctl.d/99-automax.conf
+```
+
 ### `fs.attr`
 
 Set or clear Linux filesystem attributes with chattr.

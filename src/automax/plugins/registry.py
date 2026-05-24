@@ -163,7 +163,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     from automax.plugins.fs_copy import FsCopyPlugin
     from automax.plugins.fs_mkdir import FsMkdirPlugin
     from automax.plugins.fs_remove import FsRemovePlugin
-    from automax.plugins.fs_system import FsAclPlugin, FsAttrPlugin, FsQuotaPlugin
+    from automax.plugins.fs_system import FsAclAssertPlugin, FsAclGetPlugin, FsAclPlugin, FsAclRestorePlugin, FsAttrPlugin, FsQuotaPlugin
     from automax.plugins.fs_extra import (
         FsExistsPlugin,
         FsFindPlugin,
@@ -549,6 +549,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsChownPlugin(),
         FsChmodPlugin(),
         FsAclPlugin(),
+        FsAclGetPlugin(),
+        FsAclAssertPlugin(),
+        FsAclRestorePlugin(),
         FsBindMountPlugin(),
         FsDiskUsageAssertPlugin(),
         FsInodeUsageAssertPlugin(),

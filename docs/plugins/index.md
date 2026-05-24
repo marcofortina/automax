@@ -89,6 +89,9 @@ firewalld.service
 firewalld.status
 firewalld.zone
 fs.acl
+fs.acl.assert
+fs.acl.get
+fs.acl.restore
 fs.attr
 fs.bind_mount
 fs.cd
