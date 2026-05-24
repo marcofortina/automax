@@ -195,9 +195,14 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     from automax.plugins.lvm import (
         LvmLvExtendPlugin,
         LvmLvPresentPlugin,
+        LvmLvRemovePlugin,
         LvmPvPresentPlugin,
+        LvmPvRemovePlugin,
         LvmResizeFsPlugin,
+        LvmSnapshotPlugin,
+        LvmThinPoolPlugin,
         LvmVgPresentPlugin,
+        LvmVgRemovePlugin,
     )
     from automax.plugins.network import (
         NetworkBondPlugin,
@@ -444,7 +449,12 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         LvmVgPresentPlugin(),
         LvmLvPresentPlugin(),
         LvmLvExtendPlugin(),
+        LvmSnapshotPlugin(),
+        LvmThinPoolPlugin(),
+        LvmLvRemovePlugin(),
         LvmResizeFsPlugin(),
+        LvmVgRemovePlugin(),
+        LvmPvRemovePlugin(),
         NetworkInterfacePlugin(),
         NetworkRoutePlugin(),
         NetworkBondPlugin(),

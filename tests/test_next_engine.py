@@ -3429,3 +3429,17 @@ def test_resolver_backend_aware_plugins_render_safe_backends():
     nm = " && ".join(ResolverConfigPlugin().manual_commands({"backend": "networkmanager", "nm_connection": "eth0", "nameservers": ["192.0.2.53"]}, context))
     assert "nmcli connection modify eth0" in nm
     assert ResolverConfigPlugin().diff_preview({"backend": "resolvconf", "nameservers": ["192.0.2.53"]}, context)[0]["kind"] == "resolver-plan"
+
+
+def test_lvm_extra_plugins_render_destructive_and_snapshot_operations():
+    from automax.plugins.lvm import LvmLvRemovePlugin, LvmPvRemovePlugin, LvmSnapshotPlugin, LvmThinPoolPlugin, LvmVgRemovePlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in ("lvm.snapshot", "lvm.lv_remove", "lvm.vg_remove", "lvm.pv_remove", "lvm.thin_pool"):
+        assert name in names
+    context = _sysops_preview_context()
+    assert "lvcreate -s" in LvmSnapshotPlugin().manual_commands({"vg": "vg0", "source": "/dev/vg0/data", "name": "snap", "size": "1G"}, context)[0]
+    assert "--type thin-pool" in LvmThinPoolPlugin().manual_commands({"vg": "vg0", "name": "pool", "size": "10G"}, context)[0]
+    assert "lvremove -y" in LvmLvRemovePlugin().manual_commands({"path": "/dev/vg0/old", "confirm": True}, context)[0]
+    assert "vgremove -y" in LvmVgRemovePlugin().manual_commands({"name": "oldvg", "confirm": True}, context)[0]
+    assert "pvremove" in LvmPvRemovePlugin().manual_commands({"device": "/dev/sdb", "confirm": True}, context)[0]

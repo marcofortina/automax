@@ -2911,6 +2911,38 @@ with:
   size: 16G
 ```
 
+### `lvm.lv_remove`
+
+Remove an LVM logical volume with an explicit confirm flag.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `confirm` | yes | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: lvm.lv_remove
+with:
+  path: /tmp/automax-demo
+  confirm: value
+```
+
 ### `lvm.pv_present`
 
 Ensure a block device is initialized as an LVM physical volume.
@@ -2940,6 +2972,39 @@ Example:
 use: lvm.pv_present
 with:
   device: /dev/sdb
+```
+
+### `lvm.pv_remove`
+
+Remove LVM physical-volume metadata with an explicit confirm flag.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `confirm` | yes | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: lvm.pv_remove
+with:
+  device: /dev/sdb
+  confirm: value
 ```
 
 ### `lvm.resizefs`
@@ -2975,6 +3040,78 @@ with:
   fstype: xfs
 ```
 
+### `lvm.snapshot`
+
+Create an idempotent LVM snapshot logical volume.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `vg` | yes | `string` |  | LVM volume group name. |
+| `source` | yes | `path` |  | Remote source path to archive. |
+| `name` | yes | `string` |  | Package, user or group name. |
+| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: lvm.snapshot
+with:
+  vg: vg_app
+  source: /var/log/app
+  name: nginx
+  size: 16G
+```
+
+### `lvm.thin_pool`
+
+Ensure an LVM thin pool exists.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `vg` | yes | `string` |  | LVM volume group name. |
+| `name` | yes | `string` |  | Package, user or group name. |
+| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
+| `metadata_size` | no | `string` |  | LVM thin-pool metadata size. |
+| `chunksize` | no | `string` |  | LVM thin-pool chunk size. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: lvm.thin_pool
+with:
+  vg: vg_app
+  name: nginx
+  size: 16G
+```
+
 ### `lvm.vg_present`
 
 Ensure an LVM volume group exists and contains the requested PV devices.
@@ -3007,6 +3144,38 @@ with:
   name: nginx
   devices:
     - /dev/sdb
+```
+
+### `lvm.vg_remove`
+
+Remove an LVM volume group with an explicit confirm flag.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `confirm` | yes | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: lvm.vg_remove
+with:
+  name: nginx
+  confirm: value
 ```
 
 ## mail
