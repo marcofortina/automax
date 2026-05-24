@@ -213,3 +213,4 @@ existing configuration files.
 
 `cert.generate_csr` creates CSRs from existing keys using openssl.
 `cert.self_signed` generates self-signed certificates from existing private keys.
+`cert.verify_chain` performs read-only openssl chain verification.

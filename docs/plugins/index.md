@@ -49,6 +49,7 @@ block.rescan
 block.wipe_signatures
 cert.generate_csr
 cert.self_signed
+cert.verify_chain
 chrony.servers
 chrony.sources_assert
 cron.entry

@@ -1099,6 +1099,39 @@ with:
   subject: Automax notification
 ```
 
+### `cert.verify_chain`
+
+Verify a certificate chain against a CA bundle with openssl verify.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `ca_file` | yes | `path` |  | CA bundle file path. |
+| `untrusted` | no | `path` |  | Untrusted intermediate certificate chain file. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cert.verify_chain
+with:
+  cert: value
+  ca_file: value
+```
+
 ## chrony
 
 ### `chrony.servers`

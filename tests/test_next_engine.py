@@ -3793,3 +3793,13 @@ def test_cert_self_signed_plugin_renders_openssl_x509_req():
     command = CertSelfSignedPlugin().manual_commands({"key": "/tmp/app.key", "cert": "/tmp/app.crt", "subject": "/CN=app", "days": 30}, context)[0]
     assert "openssl req -x509" in command
     assert "-days 30" in command
+
+
+def test_cert_verify_chain_plugin_renders_read_only_verify():
+    from automax.plugins.cert_ops import CertVerifyChainPlugin
+
+    assert "cert.verify_chain" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = CertVerifyChainPlugin().manual_commands({"cert": "/tmp/app.crt", "ca_file": "/tmp/ca.crt"}, context)[0]
+    assert "openssl verify -CAfile /tmp/ca.crt /tmp/app.crt" in command
+    assert CertVerifyChainPlugin().supports_check_mode is True

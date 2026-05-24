@@ -54,3 +54,25 @@ class CertSelfSignedPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="cert.self_signed failed")
+
+class CertVerifyChainPlugin(BasePlugin):
+    name = "cert.verify_chain"
+    description = "Verify a certificate chain against a CA bundle with openssl verify."
+    required_params = ("cert", "ca_file")
+    optional_params = ("untrusted", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "cert.verify_chain is a read-only certificate chain verification"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        untrusted = f" -untrusted {quote(params['untrusted'])}" if params.get("untrusted") else ""
+        return [f"{_sudo(params)}openssl verify -CAfile {quote(params['ca_file'])}{untrusted} {quote(params['cert'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cert.verify_chain failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
