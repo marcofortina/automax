@@ -17,6 +17,7 @@ from automax.plugins.base import BasePlugin
 
 PARAMETERS: dict[str, dict[str, Any]] = {
     "allow_replace_non_symlink": {"type": "boolean", "default": False, "description": "Allow force replacement when the destination exists and is not a symlink."},
+    "algorithm": {"type": "string", "default": "sha256", "description": "Fingerprint or checksum algorithm name."},
     "append": {"type": "boolean", "default": False, "description": "Append supplementary groups instead of replacing the user group list."},
     "apply": {"type": "boolean", "default": False, "description": "Apply a generated system resource immediately after installation."},
     "archive": {"type": "path", "description": "Remote archive path to extract."},
@@ -202,6 +203,7 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "warning_days": {"type": "integer", "default": 30, "description": "Certificate expiry warning window in days."},
     "test_only": {"type": "boolean", "default": False, "description": "Validate without applying when supported."},
     "type": {"type": "string", "description": "Path type filter: path, file, directory, dir, symlink or any."},
+    "types": {"type": "list", "description": "SSH key types or other typed values accepted by the plugin."},
     "uid": {"type": "integer", "description": "Numeric user id."},
     "uuid": {"type": "string", "description": "Filesystem or block-device UUID."},
     "unlock": {"type": "boolean", "default": False, "description": "Unlock the remote user account."},
@@ -318,6 +320,7 @@ RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
 
 SAMPLE_VALUES: dict[str, Any] = {
     "allow_replace_non_symlink": False,
+    "algorithm": "sha256",
     "append": True,
     "archive": "/tmp/app.tar.gz",
     "body": "payload",
@@ -453,6 +456,7 @@ SAMPLE_VALUES: dict[str, Any] = {
     "system": True,
     "timeout": 60,
     "type": "file",
+    "types": ["ed25519"],
     "uid": 2000,
     "uuid": "11111111-2222-3333-4444-555555555555",
     "unlock": True,

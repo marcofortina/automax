@@ -6589,6 +6589,38 @@ with:
   sudo: true
 ```
 
+### `ssh.authorized_key_absent`
+
+Remove one SSH authorized_keys line for a remote user.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `boolean` | `False` | Use systemctl --user instead of the system manager. |
+| `key` | yes | `string` |  | SSH public key line. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: ssh.authorized_key_absent
+with:
+  user: false
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+```
+
 ### `ssh.config`
 
 Install SSH client or sshd config drop-ins with backup and optional reload.
@@ -6625,6 +6657,70 @@ use: ssh.config
 with:
   name: nginx
   settings: value
+```
+
+### `ssh.fingerprint`
+
+Read an SSH public or private key fingerprint with ssh-keygen.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `algorithm` | no | `string` | `sha256` | Fingerprint or checksum algorithm name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: ssh.fingerprint
+with:
+  path: /tmp/automax-demo
+```
+
+### `ssh.host_keygen`
+
+Generate missing OpenSSH host keys on a remote target.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `types` | no | `list` |  | SSH key types or other typed values accepted by the plugin. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: ssh.host_keygen
+with:
+  types:
+    - ed25519
+  force: true
 ```
 
 ### `ssh.keygen`
@@ -6701,6 +6797,38 @@ with:
   host: 127.0.0.1
 ```
 
+### `ssh.public_key`
+
+Derive or read an SSH public key from a private key path.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `dest` | no | `path` |  | Destination path. |
+| `overwrite` | no | `boolean` | `False` | Replace an existing destination when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: ssh.public_key
+with:
+  path: /tmp/automax-demo
+```
+
 ## sshd
 
 ### `sshd.config`
@@ -6737,6 +6865,36 @@ use: sshd.config
 with:
   name: nginx
   settings: value
+```
+
+### `sshd.validate`
+
+Validate sshd configuration with sshd -t.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `config` | no | `path` |  | OpenSSL configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: sshd.validate
+with:
+  sudo: true
 ```
 
 ## sudo

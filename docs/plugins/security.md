@@ -26,3 +26,9 @@ known-host pinning and authorized key installation.
 
 Use `sudoers.dropin` for raw sudoers drop-ins, `sudo.rule` for structured sudoers
 rules, and `sudo.validate` before relying on a sudoers change.
+
+## SSH operational checks
+
+Use `ssh.fingerprint`, `ssh.public_key`, `ssh.host_keygen`,
+`ssh.authorized_key_absent` and `sshd.validate` to make SSH key and daemon
+operations auditable before and after access-control changes.

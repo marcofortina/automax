@@ -207,10 +207,15 @@ selinux.mode
 selinux.port
 selinux.restorecon
 ssh.authorized_key
+ssh.authorized_key_absent
 ssh.config
+ssh.fingerprint
+ssh.host_keygen
 ssh.keygen
 ssh.known_hosts
+ssh.public_key
 sshd.config
+sshd.validate
 sudo.rule
 sudo.validate
 sudoers.dropin

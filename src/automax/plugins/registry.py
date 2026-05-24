@@ -341,7 +341,16 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SelinuxRestoreconPlugin,
     )
     from automax.plugins.sudo_ops import SudoRulePlugin, SudoValidatePlugin
-    from automax.plugins.ssh_ops import SshConfigPlugin, SshKeygenPlugin, SshKnownHostsPlugin
+    from automax.plugins.ssh_ops import (
+        SshAuthorizedKeyAbsentPlugin,
+        SshConfigPlugin,
+        SshFingerprintPlugin,
+        SshHostKeygenPlugin,
+        SshKeygenPlugin,
+        SshKnownHostsPlugin,
+        SshPublicKeyPlugin,
+        SshdValidatePlugin,
+    )
     from automax.plugins.systemd_resources import SystemdSysusersPlugin, SystemdTimerPlugin, SystemdTmpfilesPlugin, SystemdUnitPlugin
     from automax.plugins.storage_readback import (
         BlkidAssertPlugin,
@@ -484,6 +493,11 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SshConfigPlugin(),
         SshKeygenPlugin(),
         SshKnownHostsPlugin(),
+        SshFingerprintPlugin(),
+        SshPublicKeyPlugin(),
+        SshHostKeygenPlugin(),
+        SshAuthorizedKeyAbsentPlugin(),
+        SshdValidatePlugin(),
         SudoersDropinPlugin(),
         SudoRulePlugin(),
         SudoValidatePlugin(),

@@ -4114,3 +4114,17 @@ def test_storage_readback_plugins_render_manual_commands():
     assert "findmnt --verify" in registry.get("fstab.validate").manual_commands({"sudo": False}, context)[0]
     assert "swapon --show" in registry.get("swap.status").manual_commands({}, context)[0]
     assert "blkid /dev/sda1" in registry.get("blkid.assert").manual_commands({"device": "/dev/sda1", "sudo": False}, context)[0]
+
+
+def test_ssh_security_plugins_render_manual_commands():
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins.registry import build_builtin_registry
+
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
+    registry = build_builtin_registry()
+
+    assert "ssh-keygen -lf" in registry.get("ssh.fingerprint").manual_commands({"path": "/tmp/id.pub", "sudo": False}, context)[0]
+    assert "ssh-keygen -y" in registry.get("ssh.public_key").manual_commands({"path": "/tmp/id", "sudo": False}, context)[0]
+    assert "ssh-keygen -A" in registry.get("ssh.host_keygen").manual_commands({"sudo": False}, context)[0]
+    assert "authorized_keys" in registry.get("ssh.authorized_key_absent").manual_commands({"user": "deploy", "key": "ssh-ed25519 AAA demo", "sudo": False}, context)[0]
+    assert "sshd -t" in registry.get("sshd.validate").manual_commands({}, context)[0]
