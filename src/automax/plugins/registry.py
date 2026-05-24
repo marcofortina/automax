@@ -191,6 +191,13 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SwapPresentPlugin,
         SystemRebootPlugin,
     )
+    from automax.plugins.lvm import (
+        LvmLvExtendPlugin,
+        LvmLvPresentPlugin,
+        LvmPvPresentPlugin,
+        LvmResizeFsPlugin,
+        LvmVgPresentPlugin,
+    )
     from automax.plugins.local_command import LocalCommandPlugin
     from automax.plugins.multipath import (
         MultipathFlushPlugin,
@@ -393,6 +400,11 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         EnvSetPlugin(),
         SystemRebootPlugin(),
         DownloadFilePlugin(),
+        LvmPvPresentPlugin(),
+        LvmVgPresentPlugin(),
+        LvmLvPresentPlugin(),
+        LvmLvExtendPlugin(),
+        LvmResizeFsPlugin(),
         ArchiveTarPlugin(),
         ArchiveUntarPlugin(),
         ArchiveCompressPlugin(),

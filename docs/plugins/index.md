@@ -88,6 +88,11 @@ kernel.module.persist
 kernel.module.unload
 limits.dropin
 local.command
+lvm.lv_extend
+lvm.lv_present
+lvm.pv_present
+lvm.resizefs
+lvm.vg_present
 mount.absent
 mount.present
 multipath.flush
@@ -157,6 +162,7 @@ wait.file
 wait.path
 wait.process
 wait.tcp
+
 ```
 
 ## Manuals by category

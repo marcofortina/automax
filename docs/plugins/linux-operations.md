@@ -94,6 +94,14 @@ wait/assert substeps to validate that SSH and services are back.
 wget, supports SHA256 verification, backs up an existing destination by default,
 and can install mode/owner/group metadata.
 
+
+## LVM storage
+
+Use `lvm.pv_present`, `lvm.vg_present`, `lvm.lv_present`, `lvm.lv_extend`
+and `lvm.resizefs` for physical volumes, volume groups, logical volumes and
+filesystem growth. These macros expose deterministic manual commands and
+structured `plan --diff` previews before applying storage changes.
+
 ## Recovery workflow
 
 All Linux operation macros should be used with the operator recovery commands:

@@ -163,6 +163,9 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "user": {"type": "boolean", "default": False, "description": "Use systemctl --user instead of the system manager."},
     "validate_tls": {"type": "boolean", "default": True, "description": "Validate TLS certificates for HTTPS requests."},
     "values": {"type": "mapping", "description": "Additional template values exposed as values.*."},
+
+    "vg": {"type": "string", "description": "LVM volume group name."},
+    "resizefs": {"type": "boolean", "default": True, "description": "Resize the filesystem along with the block/LVM operation."},
     "changed": {"type": "boolean", "default": True, "description": "Whether a successful command should be reported as changed."},
 }
 
@@ -355,6 +358,9 @@ SAMPLE_VALUES: dict[str, Any] = {
     "user": False,
     "validate_tls": True,
     "values": {"app_name": "demo"},
+
+    "vg": "vg_app",
+    "resizefs": True,
     "changed": True,
 }
 

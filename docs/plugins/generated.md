@@ -2490,6 +2490,178 @@ with:
   changed: false
 ```
 
+## lvm
+
+### `lvm.lv_extend`
+
+Extend an LVM logical volume, optionally resizing the filesystem.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `vg` | yes | `string` |  | LVM volume group name. |
+| `name` | yes | `string` |  | Package, user or group name. |
+| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
+| `resizefs` | no | `boolean` | `True` | Resize the filesystem along with the block/LVM operation. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: lvm.lv_extend
+with:
+  vg: vg_app
+  name: nginx
+  size: 16G
+```
+
+### `lvm.lv_present`
+
+Ensure an LVM logical volume exists, optionally formatting it when newly created.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `vg` | yes | `string` |  | LVM volume group name. |
+| `name` | yes | `string` |  | Package, user or group name. |
+| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
+| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `resizefs` | no | `boolean` | `True` | Resize the filesystem along with the block/LVM operation. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: lvm.lv_present
+with:
+  vg: vg_app
+  name: nginx
+  size: 16G
+```
+
+### `lvm.pv_present`
+
+Ensure a block device is initialized as an LVM physical volume.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: lvm.pv_present
+with:
+  device: /dev/sdb
+```
+
+### `lvm.resizefs`
+
+Resize a filesystem after a block or LVM volume change.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: lvm.resizefs
+with:
+  device: /dev/sdb
+  fstype: xfs
+```
+
+### `lvm.vg_present`
+
+Ensure an LVM volume group exists and contains the requested PV devices.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `devices` | yes | `list` |  | Block devices to inspect. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: lvm.vg_present
+with:
+  name: nginx
+  devices:
+    - /dev/sdb
+```
+
 ## mount
 
 ### `mount.absent`

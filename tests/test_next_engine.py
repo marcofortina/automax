@@ -3223,3 +3223,47 @@ def test_linux_ops_diff_previews_cover_persistent_and_runtime_operations():
 
     assert "read-only facts collector" in BlockFactsPlugin().diff_preview_reason({}, context)
     assert "runtime udev rules" in UdevReloadPlugin().diff_preview_reason({}, context)
+
+
+def _sysops_preview_context() -> ExecutionContext:
+    return ExecutionContext(
+        run_id="test-run",
+        dry_run=True,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="node1", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+
+
+def test_lvm_plugins_render_manual_commands_and_previews():
+    from automax.plugins.lvm import (
+        LvmLvExtendPlugin,
+        LvmLvPresentPlugin,
+        LvmPvPresentPlugin,
+        LvmResizeFsPlugin,
+        LvmVgPresentPlugin,
+    )
+
+    names = AutomaxEngine().plugin_registry.names()
+    for name in (
+        "lvm.pv_present",
+        "lvm.vg_present",
+        "lvm.lv_present",
+        "lvm.lv_extend",
+        "lvm.resizefs",
+    ):
+        assert name in names
+
+    context = _sysops_preview_context()
+    assert "pvcreate" in LvmPvPresentPlugin().manual_commands({"device": "/dev/sdb"}, context)[0]
+    assert "vgcreate" in " && ".join(LvmVgPresentPlugin().manual_commands({"name": "vg_app", "devices": ["/dev/sdb"]}, context))
+    lv = LvmLvPresentPlugin().manual_commands({"vg": "vg_app", "name": "data", "size": "10G", "resizefs": True}, context)
+    assert any("lvcreate" in command for command in lv)
+    assert "lvextend -r" in LvmLvExtendPlugin().manual_commands({"vg": "vg_app", "name": "data", "size": "20G"}, context)[0]
+    assert "resize2fs" in LvmResizeFsPlugin().manual_commands({"device": "/dev/vg_app/data", "fstype": "ext4"}, context)[0]
+    assert LvmLvPresentPlugin().diff_preview({"vg": "vg_app", "name": "data", "size": "10G"}, context)[0]["kind"] == "lvm-plan"
