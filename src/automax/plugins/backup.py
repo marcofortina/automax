@@ -54,3 +54,37 @@ class BackupFilePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="backup.file failed")
+
+class BackupDirectoryPlugin(BasePlugin):
+    name = "backup.directory"
+    description = "Create a compressed tar backup of a remote directory."
+    required_params = ("src", "dest")
+    optional_params = ("compression", "checksum", "sudo")
+    opens_remote_session = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "backup.directory creates a tar artifact; use manual commands for exact archive and checksum steps"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        src = str(params["src"]).rstrip("/")
+        dest = str(params["dest"])
+        compression = str(params.get("compression", "gzip"))
+        if compression not in {"none", "gzip", "bzip2", "xz"}:
+            raise PluginValidationError("compression must be none, gzip, bzip2 or xz")
+        flags = {"none": "cf", "gzip": "czf", "bzip2": "cjf", "xz": "cJf"}[compression]
+        sudo = _sudo(params)
+        return [
+            " && ".join(
+                [
+                    f"test -d {quote(src)}",
+                    f"{sudo}mkdir -p $(dirname {quote(dest)})",
+                    f"{sudo}tar -{flags} {quote(dest)} -C {quote(str(__import__('pathlib').PurePosixPath(src).parent))} {quote(str(__import__('pathlib').PurePosixPath(src).name))}",
+                    _checksum_cmd(dest, params),
+                ]
+            )
+        ]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="backup.directory failed")

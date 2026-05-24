@@ -3599,3 +3599,13 @@ def test_backup_file_plugin_renders_copy_and_checksum():
     assert "cp -a /etc/hosts /backup/hosts" in command
     assert "sha256sum /backup/hosts" in command
     assert "backup artifact" in BackupFilePlugin().diff_preview_reason({}, context)
+
+
+def test_backup_directory_plugin_renders_tar_and_checksum():
+    from automax.plugins.backup import BackupDirectoryPlugin
+
+    assert "backup.directory" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = BackupDirectoryPlugin().manual_commands({"src": "/etc", "dest": "/backup/etc.tar.gz"}, context)[0]
+    assert "tar -czf /backup/etc.tar.gz" in command
+    assert "sha256sum /backup/etc.tar.gz" in command

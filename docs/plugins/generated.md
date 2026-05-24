@@ -618,6 +618,40 @@ with:
 
 ## backup
 
+### `backup.directory`
+
+Create a compressed tar backup of a remote directory.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: backup.directory
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+```
+
 ### `backup.file`
 
 Create a timestampable backup copy of a remote file.
