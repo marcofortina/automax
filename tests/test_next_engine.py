@@ -3318,6 +3318,9 @@ def test_pki_plugins_install_permissions_and_expiry_preview():
     context = _sysops_preview_context()
     ca = PkiCaInstallPlugin().manual_commands({"dest": "/usr/local/share/ca-certificates/demo.crt", "content": "CERT"}, context)[0]
     assert "update-ca-certificates" in ca
+    auto_ca = PkiCaInstallPlugin().manual_commands({"name": "company", "trust_store": "system", "content": "CERT"}, context)[0]
+    assert "/usr/local/share/ca-certificates/company.crt" in auto_ca
+    assert "/etc/pki/ca-trust/source/anchors/company.crt" in auto_ca
     assert "cp -p" in ca
     assert "chmod 0600" in " && ".join(PkiKeyPermissionsPlugin().manual_commands({"path": "/etc/pki/private/key.pem", "mode": "0600"}, context))
     assert "openssl x509 -checkend" in PkiCertExpiryAssertPlugin().manual_commands({"path": "/etc/pki/cert.pem", "min_days": 10}, context)[0]

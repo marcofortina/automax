@@ -32,30 +32,55 @@ def _diff(path: str, content: str, kind: str) -> list[Dict[str, Any]]:
 
 class PkiCaInstallPlugin(BasePlugin):
     name = "pki.ca_install"
-    description = "Install a CA certificate into the system trust store and optionally refresh trust."
-    required_params = ("dest",)
-    optional_params = ("src", "content", "mode", "owner", "group", "backup", "backup_suffix", "update_trust", "sudo", "encoding")
+    description = "Install a CA certificate into an explicit path or a distro-native system trust store."
+    required_params: tuple[str, ...] = ()
+    optional_params = ("dest", "name", "trust_store", "src", "content", "mode", "owner", "group", "backup", "backup_suffix", "update_trust", "sudo", "encoding")
     opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        _content(params)
+        if not params.get("dest") and not params.get("name"):
+            raise PluginValidationError("pki.ca_install requires dest or name")
+
+    def _dest(self, params: Dict[str, Any], flavor: str = "debian") -> str:
+        if params.get("dest"):
+            return str(params["dest"])
+        name = str(params["name"])
+        filename = name if name.endswith(".crt") else f"{name}.crt"
+        if flavor == "redhat":
+            return f"/etc/pki/ca-trust/source/anchors/{filename}"
+        return f"/usr/local/share/ca-certificates/{filename}"
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         self.validate(params)
-        return _diff(str(params["dest"]), _content(params), "pki-plan")
+        if str(params.get("trust_store", "explicit")) == "system" and not params.get("dest"):
+            return _diff("system trust store", _content(params), "pki-plan")
+        return _diff(self._dest(params), _content(params), "pki-plan")
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        self.validate(params)
+    def _install_cmd(self, params: Dict[str, Any], dest: str) -> str:
         content = _content(params)
-        dest = str(params["dest"])
         sudo = _sudo(params)
         temp = "/tmp/automax-ca.$$"
         commands = [f"cat > {temp} <<'EOF'\n{content}\nEOF"]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(dest)} || {sudo}cp -p {quote(dest)} {quote(dest + str(params.get('backup_suffix', '.bak')))}")
-        commands.append(f"{sudo}install -m {quote(params.get('mode', '0644'))} {temp} {quote(dest)}")
+        commands.append(f"{sudo}install -D -m {quote(params.get('mode', '0644'))} {temp} {quote(dest)}")
         if params.get("owner") or params.get("group"):
             owner = str(params.get("owner", ""))
             group = str(params.get("group", ""))
             commands.append(f"{sudo}chown {quote(owner + ':' + group)} {quote(dest)}")
         commands.append(f"rm -f {temp}")
+        return " && ".join(commands)
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        sudo = _sudo(params)
+        if str(params.get("trust_store", "explicit")) == "system" and not params.get("dest"):
+            deb = self._install_cmd(params, self._dest(params, "debian")) + f" && {sudo}update-ca-certificates"
+            rh = self._install_cmd(params, self._dest(params, "redhat")) + f" && {sudo}update-ca-trust extract"
+            return [f"if command -v update-ca-certificates >/dev/null 2>&1; then {deb}; elif command -v update-ca-trust >/dev/null 2>&1; then {rh}; else echo 'no supported system CA trust store found' >&2; exit 1; fi"]
+        commands = [self._install_cmd(params, self._dest(params))]
         if bool(params.get("update_trust", True)):
             commands.append(f"if command -v update-ca-certificates >/dev/null 2>&1; then {sudo}update-ca-certificates; elif command -v update-ca-trust >/dev/null 2>&1; then {sudo}update-ca-trust extract; fi")
         return [" && ".join(commands)]

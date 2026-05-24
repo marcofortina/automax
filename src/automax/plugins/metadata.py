@@ -190,6 +190,7 @@ PARAMETERS: dict[str, dict[str, Any]] = {
 
     "min_days": {"type": "integer", "default": 30, "description": "Minimum remaining certificate validity in days."},
     "update_trust": {"type": "boolean", "default": True, "description": "Refresh the system trust store after installing a CA certificate."},
+    "trust_store": {"type": "string", "default": "explicit", "description": "Trust-store mode: explicit path or system auto path."},
 
     "version": {"type": "string", "description": "Package version to pin."},
     "priority": {"type": "integer", "description": "Package repository or pin priority."},

@@ -4023,7 +4023,7 @@ with:
 
 ### `pki.ca_install`
 
-Install a CA certificate into the system trust store and optionally refresh trust.
+Install a CA certificate into an explicit path or a distro-native system trust store.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -4031,7 +4031,9 @@ Install a CA certificate into the system trust store and optionally refresh trus
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `dest` | yes | `path` |  | Destination path. |
+| `dest` | no | `path` |  | Destination path. |
+| `name` | no | `string` |  | Package, user or group name. |
+| `trust_store` | no | `string` | `explicit` | Trust-store mode: explicit path or system auto path. |
 | `src` | no | `path` |  | Source path. |
 | `content` | no | `string` |  | Text content to write. |
 | `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
@@ -4058,6 +4060,7 @@ Example:
 use: pki.ca_install
 with:
   dest: /tmp/dest
+  name: nginx
 ```
 
 ### `pki.cert_expiry_assert`
