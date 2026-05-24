@@ -23,6 +23,8 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "body": {"type": "string", "description": "Raw HTTP request body."},
     "baseurl": {"type": "string", "description": "Repository base URL for package manager repository files."},
     "enabled": {"type": "boolean", "default": True, "description": "Whether a repository or persistent resource is enabled."},
+    "checks": {"type": "list", "description": "Health checks to run."},
+    "engine": {"type": "string", "description": "Database engine such as sqlite, postgres, mysql or oracle."},
     "gpgcheck": {"type": "boolean", "default": True, "description": "Whether repository GPG checking is enabled."},
     "gpgkey": {"type": "string", "description": "Repository GPG key URL or path."},
 
@@ -251,6 +253,7 @@ RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
     "fs.stat": {"data.exists": "Boolean path existence result.", "data.size": "Path size in bytes.", "data.mode": "POSIX mode.", "data.owner": "Owner name.", "data.group": "Group name."},
     "fs.read": {"stdout": "Remote file content.", "data.path": "Read remote path."},
     "fs.template": {"data.src": "Rendered template path.", "data.dest": "Remote destination path"},
+    "db.health": {"data.engine": "Database engine checked.", "data.checks": "Boolean check results.", "data.latency_ms": "Measured health-check duration in milliseconds."},
     "db.sqlite.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
     "db.postgres.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
     "db.mysql.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},

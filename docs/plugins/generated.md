@@ -996,6 +996,43 @@ with:
 
 ## db
 
+### `db.health`
+
+Run read-only controller-side database health checks.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `engine` | yes | `string` |  | Database engine such as sqlite, postgres, mysql or oracle. |
+| `connection` | no | `mapping` |  | Database connection mapping; values may be rendered from vars or secrets. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `checks` | no | `list` |  | Health checks to run. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `output` | no | `string` | `rows` | Database output format: rows, scalar, json or none. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.engine`: Database engine checked.
+- `data.checks`: Boolean check results.
+- `data.latency_ms`: Measured health-check duration in milliseconds.
+
+Example:
+
+```yaml
+use: db.health
+with:
+  engine: value
+```
+
 ### `db.mysql.query`
 
 Run MySQL/MariaDB queries or statements from the controller.

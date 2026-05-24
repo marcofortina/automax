@@ -153,6 +153,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     )
     from automax.plugins.cron import CronEntryPlugin, CronFilePlugin
     from automax.plugins.db import (
+        DbHealthPlugin,
         DbMysqlQueryPlugin,
         DbOracleQueryPlugin,
         DbPostgresQueryPlugin,
@@ -335,6 +336,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         HttpRequestPlugin(),
         HttpAssertPlugin(),
         HttpWaitPlugin(),
+        DbHealthPlugin(),
         DbSqliteQueryPlugin(),
         DbPostgresQueryPlugin(),
         DbMysqlQueryPlugin(),

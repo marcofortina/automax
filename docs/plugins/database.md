@@ -130,3 +130,24 @@ Add a new module under `automax.plugins.db`, subclass `DatabaseQueryPlugin`, and
 register the canonical plugin in `build_builtin_registry()` or load it through an
 external plugin path. The shared base already handles statement validation,
 output shaping and common result metadata.
+
+
+## Database health checks
+
+`db.health` is a read-only controller-side health check plugin for the existing
+SQLite, PostgreSQL, MySQL/MariaDB and Oracle database families. It is intended
+for precheck and postcheck gates, not for application queries.
+
+Example:
+
+```yaml
+use: db.health
+with:
+  engine: sqlite
+  connection:
+    path: /var/lib/app/app.sqlite
+  checks: [connect, select, version, integrity]
+```
+
+Passwords are never rendered in manual commands; external database command
+examples use masked placeholders.

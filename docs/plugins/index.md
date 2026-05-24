@@ -46,6 +46,7 @@ chrony.servers
 chrony.sources_assert
 cron.entry
 cron.file
+db.health
 db.mysql.query
 db.oracle.query
 db.postgres.query

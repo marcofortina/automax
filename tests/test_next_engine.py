@@ -658,10 +658,35 @@ def test_fs_template_supports_explicit_values():
 
 
 
+def test_database_health_plugin_runs_sqlite_read_only_checks(tmp_path: Path):
+    plugin = AutomaxEngine().plugin_registry.get("db.health")
+    context = _sysops_preview_context()
+    database = tmp_path / "health.sqlite"
+    sqlite3 = pytest.importorskip("sqlite3")
+    conn = sqlite3.connect(database)
+    conn.execute("CREATE TABLE demo (id INTEGER PRIMARY KEY)")
+    conn.commit()
+    conn.close()
+
+    result = plugin.execute(
+        {"engine": "sqlite", "connection": {"path": str(database)}, "checks": ["connect", "select", "version", "integrity"]},
+        context,
+    )
+
+    assert result.ok, result.stderr
+    assert result.changed is False
+    assert result.data["engine"] == "sqlite"
+    assert result.data["checks"]["select"] is True
+    assert result.data["integrity"] == "ok"
+    assert "sqlite3 -readonly" in plugin.manual_commands({"engine": "sqlite", "connection": {"path": str(database)}}, context)[0]
+    assert "read-only" in plugin.diff_preview_reason({"engine": "sqlite", "connection": {"path": str(database)}}, context)
+
+
 def test_database_plugins_are_registered():
     names = AutomaxEngine().plugin_registry.names()
 
     for name in (
+        "db.health",
         "db.sqlite.query",
         "db.postgres.query",
         "db.mysql.query",
