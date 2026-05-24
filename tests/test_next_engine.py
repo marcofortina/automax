@@ -3609,3 +3609,15 @@ def test_backup_directory_plugin_renders_tar_and_checksum():
     command = BackupDirectoryPlugin().manual_commands({"src": "/etc", "dest": "/backup/etc.tar.gz"}, context)[0]
     assert "tar -czf /backup/etc.tar.gz" in command
     assert "sha256sum /backup/etc.tar.gz" in command
+
+
+def test_backup_restore_plugin_requires_confirmation_and_renders_restore():
+    from automax.plugins.backup import BackupRestorePlugin
+
+    assert "backup.restore" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    with pytest.raises(PluginValidationError):
+        BackupRestorePlugin().manual_commands({"src": "/backup/hosts", "dest": "/etc/hosts"}, context)
+    command = BackupRestorePlugin().manual_commands({"src": "/backup/hosts", "dest": "/etc/hosts", "confirm": True}, context)[0]
+    assert "cp -a /backup/hosts /etc/hosts" in command
+    assert "confirm=true" in BackupRestorePlugin().diff_preview_reason({}, context)

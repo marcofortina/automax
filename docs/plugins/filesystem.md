@@ -280,3 +280,5 @@ remote commands are prefixed with `cd <path> &&` where supported.
 `backup.file` creates an explicit remote backup copy and checksum before risky
 maintenance operations. `backup.directory` creates compressed tar archives with optional checksums. Backup operations are intentionally separate from file
 mutation plugins so operators can preview and run them as dedicated steps.
+
+`backup.restore` restores an explicit file or archive backup and requires `confirm: true`.

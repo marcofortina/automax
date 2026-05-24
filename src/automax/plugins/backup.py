@@ -88,3 +88,36 @@ class BackupDirectoryPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="backup.directory failed")
+
+class BackupRestorePlugin(BasePlugin):
+    name = "backup.restore"
+    description = "Restore a remote file or tar archive from an explicit backup artifact."
+    required_params = ("src", "dest", "confirm")
+    optional_params = ("archive", "backup", "backup_suffix", "sudo")
+    opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        if params.get("confirm") is not True:
+            raise PluginValidationError("backup.restore requires confirm: true")
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "backup.restore is a destructive restore operation guarded by confirm=true"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        src = str(params["src"])
+        dest = str(params["dest"])
+        sudo = _sudo(params)
+        commands = [f"test -e {quote(src)}"]
+        if bool(params.get("backup", True)):
+            commands.append(f"test ! -e {quote(dest)} || {sudo}cp -a {quote(dest)} {quote(dest + str(params.get('backup_suffix', '.pre-restore')))}")
+        if bool(params.get("archive", False)):
+            commands.extend([f"{sudo}mkdir -p {quote(dest)}", f"{sudo}tar -xf {quote(src)} -C {quote(dest)}"])
+        else:
+            commands.extend([f"{sudo}mkdir -p $(dirname {quote(dest)})", f"{sudo}cp -a {quote(src)} {quote(dest)}"])
+        return [" && ".join(commands)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="backup.restore failed")

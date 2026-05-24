@@ -103,7 +103,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         BlockWipeSignaturesPlugin,
     )
     from automax.plugins.alternatives import AlternativesSetPlugin
-    from automax.plugins.backup import BackupDirectoryPlugin, BackupFilePlugin
+    from automax.plugins.backup import BackupDirectoryPlugin, BackupFilePlugin, BackupRestorePlugin
     from automax.plugins.auditd import AuditdReloadPlugin, AuditdRulePlugin, AuditdStatusPlugin
     from automax.plugins.archive import (
         ArchiveCompressPlugin,
@@ -337,6 +337,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         AlternativesSetPlugin(),
         BackupFilePlugin(),
         BackupDirectoryPlugin(),
+        BackupRestorePlugin(),
         HttpRequestPlugin(),
         HttpAssertPlugin(),
         HttpWaitPlugin(),

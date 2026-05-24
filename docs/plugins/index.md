@@ -37,6 +37,7 @@ auditd.rule
 auditd.status
 backup.directory
 backup.file
+backup.restore
 block.facts
 block.identity
 block.mkfs
