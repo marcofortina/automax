@@ -18,7 +18,10 @@ def _sudo(params: Dict[str, Any]) -> str:
 
 
 def _manager(params: Dict[str, Any]) -> str:
-    return str(params.get("manager", "auto"))
+    manager = str(params.get("manager", "auto"))
+    if manager not in {"auto", "apt", "dnf", "yum", "zypper"}:
+        raise PluginValidationError("manager must be auto, apt, dnf, yum or zypper")
+    return manager
 
 
 def _packages(params: Dict[str, Any]) -> list[str]:
@@ -32,6 +35,21 @@ def _packages(params: Dict[str, Any]) -> list[str]:
 
 def _diff(path: str, content: str, kind: str) -> list[Dict[str, Any]]:
     return [{"path": path, "kind": kind, "diff": "".join(unified_diff([], content.splitlines(keepends=True), fromfile=f"{path} (current)", tofile=f"{path} (desired)"))}]
+
+
+def _auto_manager_script(commands: Dict[str, str]) -> str:
+    checks = []
+    if "apt" in commands:
+        checks.append(f"if command -v apt-mark >/dev/null 2>&1; then {commands['apt']};")
+    if "dnf" in commands:
+        checks.append(f"elif command -v dnf >/dev/null 2>&1; then {commands['dnf']};")
+    if "yum" in commands:
+        checks.append(f"elif command -v yum >/dev/null 2>&1; then {commands['yum']};")
+    if "zypper" in commands:
+        checks.append(f"elif command -v zypper >/dev/null 2>&1; then {commands['zypper']};")
+    checks.append("else echo 'no supported package manager found' >&2; exit 1; fi")
+    script = " ".join(checks)
+    return script.replace("if elif", "if")
 
 
 class PkgHoldPlugin(BasePlugin):
@@ -48,13 +66,15 @@ class PkgHoldPlugin(BasePlugin):
         packages = " ".join(quote(item) for item in _packages(params))
         manager = _manager(params)
         sudo = _sudo(params)
-        if manager == "apt":
-            return [f"{sudo}apt-mark hold {packages}"]
-        if manager in {"dnf", "yum"}:
-            return [f"{sudo}{manager} versionlock add {packages}"]
-        if manager == "zypper":
-            return [f"{sudo}zypper addlock {packages}"]
-        return [f"if command -v apt-mark >/dev/null 2>&1; then {sudo}apt-mark hold {packages}; elif command -v dnf >/dev/null 2>&1; then {sudo}dnf versionlock add {packages}; elif command -v yum >/dev/null 2>&1; then {sudo}yum versionlock add {packages}; elif command -v zypper >/dev/null 2>&1; then {sudo}zypper addlock {packages}; else echo 'no supported package lock manager found' >&2; exit 1; fi"]
+        commands = {
+            "apt": f"{sudo}apt-mark hold {packages}",
+            "dnf": f"command -v dnf >/dev/null 2>&1 && {sudo}dnf versionlock add {packages}",
+            "yum": f"command -v yum >/dev/null 2>&1 && {sudo}yum versionlock add {packages}",
+            "zypper": f"{sudo}zypper addlock {packages}",
+        }
+        if manager == "auto":
+            return [_auto_manager_script(commands)]
+        return [commands[manager]]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -69,50 +89,64 @@ class PkgUnholdPlugin(PkgHoldPlugin):
         packages = " ".join(quote(item) for item in _packages(params))
         manager = _manager(params)
         sudo = _sudo(params)
-        if manager == "apt":
-            return [f"{sudo}apt-mark unhold {packages}"]
-        if manager in {"dnf", "yum"}:
-            return [f"{sudo}{manager} versionlock delete {packages}"]
-        if manager == "zypper":
-            return [f"{sudo}zypper removelock {packages}"]
-        return [f"if command -v apt-mark >/dev/null 2>&1; then {sudo}apt-mark unhold {packages}; elif command -v dnf >/dev/null 2>&1; then {sudo}dnf versionlock delete {packages}; elif command -v yum >/dev/null 2>&1; then {sudo}yum versionlock delete {packages}; elif command -v zypper >/dev/null 2>&1; then {sudo}zypper removelock {packages}; else echo 'no supported package lock manager found' >&2; exit 1; fi"]
+        commands = {
+            "apt": f"{sudo}apt-mark unhold {packages}",
+            "dnf": f"command -v dnf >/dev/null 2>&1 && {sudo}dnf versionlock delete {packages}",
+            "yum": f"command -v yum >/dev/null 2>&1 && {sudo}yum versionlock delete {packages}",
+            "zypper": f"{sudo}zypper removelock {packages}",
+        }
+        if manager == "auto":
+            return [_auto_manager_script(commands)]
+        return [commands[manager]]
 
 
 class PkgVersionPinPlugin(BasePlugin):
     name = "pkg.version_pin"
-    description = "Create an explicit package version pin/preference file."
+    description = "Pin a package version using the native package-manager mechanism."
     required_params = ("name", "version")
     optional_params = ("manager", "priority", "file", "backup", "backup_suffix", "sudo")
     opens_remote_session = True
 
-    def _path(self, params: Dict[str, Any]) -> str:
+    def _apt_path(self, params: Dict[str, Any]) -> str:
         if params.get("file"):
             return str(params["file"])
         return f"/etc/apt/preferences.d/automax-{params['name']}"
 
-    def _content(self, params: Dict[str, Any]) -> str:
-        manager = _manager(params)
-        if manager not in {"auto", "apt"}:
-            return f"# Managed by automax\n# {manager} version pin: {params['name']} {params['version']}\n"
+    def _apt_content(self, params: Dict[str, Any]) -> str:
         priority = int(params.get("priority", 1001))
         return f"Package: {params['name']}\nPin: version {params['version']}\nPin-Priority: {priority}\n"
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         self.validate(params)
-        return _diff(self._path(params), self._content(params), "package-pin-plan")
+        manager = _manager(params)
+        if manager in {"auto", "apt"}:
+            return _diff(self._apt_path(params), self._apt_content(params), "package-pin-plan")
+        return _diff("package-versionlock", f"{manager}: {params['name']}-{params['version']}\n", "package-pin-plan")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        path = self._path(params)
-        content = self._content(params)
+        manager = _manager(params)
         sudo = _sudo(params)
+        name = str(params["name"])
+        version = str(params["version"])
+        lock_spec = quote(f"{name}-{version}")
+        zypper_spec = quote(f"{name}={version}")
+        apt_path = self._apt_path(params)
+        apt_content = self._apt_content(params)
         temp = "/tmp/automax-pkg-pin.$$"
-        commands = [f"cat > {temp} <<'EOF'\n{content}EOF"]
+        apt_commands = [f"cat > {temp} <<'EOF'\n{apt_content}EOF"]
         if bool(params.get("backup", True)):
-            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")
-        commands.append(f"rm -f {temp}")
-        return [" && ".join(commands)]
+            apt_commands.append(f"test ! -e {quote(apt_path)} || {sudo}cp -p {quote(apt_path)} {quote(apt_path + str(params.get('backup_suffix', '.bak')))}")
+        apt_commands.extend([f"{sudo}install -m 0644 {temp} {quote(apt_path)}", f"rm -f {temp}"])
+        commands = {
+            "apt": " && ".join(apt_commands),
+            "dnf": f"command -v dnf >/dev/null 2>&1 && {sudo}dnf versionlock add {lock_spec}",
+            "yum": f"command -v yum >/dev/null 2>&1 && {sudo}yum versionlock add {lock_spec}",
+            "zypper": f"{sudo}zypper addlock {zypper_spec}",
+        }
+        if manager == "auto":
+            return [_auto_manager_script(commands)]
+        return [commands[manager]]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -121,9 +155,9 @@ class PkgVersionPinPlugin(BasePlugin):
 
 class PkgRepoPriorityPlugin(BasePlugin):
     name = "pkg.repo_priority"
-    description = "Install package repository priority or pinning configuration."
+    description = "Install package repository priority or pinning configuration for apt, dnf/yum or zypper."
     required_params = ("name", "priority")
-    optional_params = ("manager", "file", "content", "backup", "backup_suffix", "sudo")
+    optional_params = ("manager", "file", "content", "baseurl", "enabled", "gpgcheck", "gpgkey", "backup", "backup_suffix", "sudo")
     opens_remote_session = True
 
     def _path(self, params: Dict[str, Any]) -> str:
@@ -132,12 +166,33 @@ class PkgRepoPriorityPlugin(BasePlugin):
         manager = _manager(params)
         if manager in {"dnf", "yum"}:
             return f"/etc/yum.repos.d/{params['name']}.repo"
+        if manager == "zypper":
+            return f"/etc/zypp/repos.d/{params['name']}.repo"
         return f"/etc/apt/preferences.d/{params['name']}-priority"
 
     def _content(self, params: Dict[str, Any]) -> str:
         if params.get("content"):
             return str(params["content"])
-        return f"Package: *\nPin: release o={params['name']}\nPin-Priority: {params['priority']}\n"
+        manager = _manager(params)
+        if manager in {"auto", "apt"}:
+            return f"Package: *\nPin: release o={params['name']}\nPin-Priority: {params['priority']}\n"
+        if manager in {"dnf", "yum", "zypper"}:
+            if not params.get("baseurl"):
+                raise PluginValidationError(f"pkg.repo_priority with manager={manager} requires content or baseurl")
+            enabled = int(bool(params.get("enabled", True)))
+            gpgcheck = int(bool(params.get("gpgcheck", True)))
+            lines = [
+                f"[{params['name']}]\n",
+                f"name={params['name']}\n",
+                f"baseurl={params['baseurl']}\n",
+                f"enabled={enabled}\n",
+                f"gpgcheck={gpgcheck}\n",
+                f"priority={params['priority']}\n",
+            ]
+            if params.get("gpgkey"):
+                lines.append(f"gpgkey={params['gpgkey']}\n")
+            return "".join(lines)
+        raise PluginValidationError("unsupported package manager")
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         self.validate(params)

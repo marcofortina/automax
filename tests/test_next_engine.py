@@ -3334,8 +3334,13 @@ def test_package_pinning_plugins_render_locks_and_priorities():
     pin = PkgVersionPinPlugin().manual_commands({"name": "nginx", "version": "1.24*"}, context)[0]
     assert "Pin: version 1.24*" in pin
     assert "cp -p" in pin
+    dnf_pin = PkgVersionPinPlugin().manual_commands({"name": "nginx", "version": "1.24.0", "manager": "dnf"}, context)[0]
+    assert "dnf versionlock add nginx-1.24.0" in dnf_pin
     priority = PkgRepoPriorityPlugin().diff_preview({"name": "stable", "priority": 900}, context)[0]
     assert priority["kind"] == "repo-priority-plan"
+    redhat_priority = PkgRepoPriorityPlugin().manual_commands({"name": "internal", "priority": 10, "manager": "dnf", "baseurl": "https://repo.example.com/rhel"}, context)[0]
+    assert "priority=10" in redhat_priority
+    assert "/etc/yum.repos.d/internal.repo" in redhat_priority
 
 
 def test_advanced_mount_plugins_render_remount_resize_and_findmnt():

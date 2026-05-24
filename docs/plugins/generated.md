@@ -3823,7 +3823,7 @@ with:
 
 ### `pkg.repo_priority`
 
-Install package repository priority or pinning configuration.
+Install package repository priority or pinning configuration for apt, dnf/yum or zypper.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -3836,6 +3836,10 @@ Install package repository priority or pinning configuration.
 | `manager` | no | `string` | `auto` | Package manager: auto, apt, dnf, yum, zypper or pacman. |
 | `file` | no | `path` |  | Remote configuration file path. |
 | `content` | no | `string` |  | Text content to write. |
+| `baseurl` | no | `string` |  | Repository base URL for package manager repository files. |
+| `enabled` | no | `boolean` | `True` | Whether a repository or persistent resource is enabled. |
+| `gpgcheck` | no | `boolean` | `True` | Whether repository GPG checking is enabled. |
+| `gpgkey` | no | `string` |  | Repository GPG key URL or path. |
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
@@ -3962,7 +3966,7 @@ with:
 
 ### `pkg.version_pin`
 
-Create an explicit package version pin/preference file.
+Pin a package version using the native package-manager mechanism.
 
 - Remote session: `true`
 - Dry-run support: `true`

@@ -20,6 +20,10 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "append": {"type": "boolean", "default": False, "description": "Append supplementary groups instead of replacing the user group list."},
     "archive": {"type": "path", "description": "Remote archive path to extract."},
     "body": {"type": "string", "description": "Raw HTTP request body."},
+    "baseurl": {"type": "string", "description": "Repository base URL for package manager repository files."},
+    "enabled": {"type": "boolean", "default": True, "description": "Whether a repository or persistent resource is enabled."},
+    "gpgcheck": {"type": "boolean", "default": True, "description": "Whether repository GPG checking is enabled."},
+    "gpgkey": {"type": "string", "description": "Repository GPG key URL or path."},
 
     "devices": {"type": "list", "description": "Block devices to inspect."},
     "udev": {"type": "boolean", "default": True, "description": "Include udev properties when collecting facts."},
