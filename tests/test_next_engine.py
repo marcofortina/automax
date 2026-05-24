@@ -3409,3 +3409,20 @@ def test_platform_facts_plugin_renders_backend_detection():
     assert "network_backend" in command
     assert "resolver_backend" in command
     assert "read-only backend detection" in PlatformFactsPlugin().diff_preview_reason({}, context)
+
+
+def test_resolver_backend_aware_plugins_render_safe_backends():
+    from automax.plugins.linux_ops import ResolverConfigPlugin, ResolverFactsPlugin
+
+    names = AutomaxEngine().plugin_registry.names()
+    assert "resolver.facts" in names
+    assert "resolver.config" in names
+    context = _sysops_preview_context()
+    facts = ResolverFactsPlugin().manual_commands({}, context)[0]
+    assert "backend=" in facts
+    resolved = ResolverConfigPlugin().manual_commands({"backend": "systemd-resolved", "nameservers": ["192.0.2.53"]}, context)[0]
+    assert "/etc/systemd/resolved.conf.d/99-automax.conf" in resolved
+    assert "systemctl restart systemd-resolved" in resolved
+    nm = " && ".join(ResolverConfigPlugin().manual_commands({"backend": "networkmanager", "nm_connection": "eth0", "nameservers": ["192.0.2.53"]}, context))
+    assert "nmcli connection modify eth0" in nm
+    assert ResolverConfigPlugin().diff_preview({"backend": "resolvconf", "nameservers": ["192.0.2.53"]}, context)[0]["kind"] == "resolver-plan"

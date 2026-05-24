@@ -3313,6 +3313,7 @@ Configure DNS resolver settings using the backend-aware resolver implementation.
 | `search` | no | `list` |  | Resolver search domains. |
 | `options` | no | `list` |  | Resolver options. |
 | `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `nm_connection` | no | `string` |  | NetworkManager connection profile used for persistent DNS changes. |
 | `force` | no | `boolean` | `False` | Force the operation when supported. |
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
@@ -4268,7 +4269,7 @@ with:
 
 ### `resolver.config`
 
-Manage resolver configuration safely, refusing unmanaged /etc/resolv.conf ownership mismatches by default.
+Manage DNS resolver settings safely using explicit plain-file, systemd-resolved, NetworkManager or resolvconf backends.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -4281,6 +4282,7 @@ Manage resolver configuration safely, refusing unmanaged /etc/resolv.conf owners
 | `search` | no | `list` |  | Resolver search domains. |
 | `options` | no | `list` |  | Resolver options. |
 | `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `nm_connection` | no | `string` |  | NetworkManager connection profile used for persistent DNS changes. |
 | `force` | no | `boolean` | `False` | Force the operation when supported. |
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
@@ -4303,6 +4305,35 @@ with:
   backend: auto
   nameservers:
     - 192.0.2.53
+```
+
+### `resolver.facts`
+
+Detect the active DNS resolver backend without changing resolver configuration.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: resolver.facts
+with:
+  sudo: true
 ```
 
 ## selinux

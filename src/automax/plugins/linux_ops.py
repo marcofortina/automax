@@ -257,48 +257,154 @@ class HostnameSetPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="hostname.set failed")
 
 
-class ResolverConfigPlugin(BasePlugin):
-    name = "resolver.config"
-    description = "Manage resolver configuration safely, refusing unmanaged /etc/resolv.conf ownership mismatches by default."
+class ResolverFactsPlugin(BasePlugin):
+    name = "resolver.facts"
+    description = "Detect the active DNS resolver backend without changing resolver configuration."
     required_params: tuple[str, ...] = ()
-    optional_params = ("backend", "nameservers", "search", "options", "path", "force", "backup", "backup_suffix", "sudo")
+    optional_params = ("sudo",)
     opens_remote_session = True
+    supports_check_mode = True
 
-    def _content(self, params: Dict[str, Any]) -> str:
-        lines = ["# Managed by automax\n"]
-        for ns in params.get("nameservers", []) or []:
-            lines.append(f"nameserver {ns}\n")
-        search = params.get("search", []) or []
-        if isinstance(search, str):
-            search = [search]
-        if search:
-            lines.append("search " + " ".join(str(item) for item in search) + "\n")
-        for option in params.get("options", []) or []:
-            lines.append(f"options {option}\n")
-        return "".join(lines)
-
-    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
-        path = str(params.get("path", "/etc/resolv.conf"))
-        return _lines_diff(path, self._content(params).splitlines(keepends=True))
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "resolver.facts is read-only resolver backend detection and does not change files"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        content = self._content(params)
-        backend = str(params.get("backend", "auto"))
-        path = str(params.get("path", "/etc/resolv.conf"))
-        sudo = _sudo(params)
-        temp = "/tmp/automax-resolver.$$"
-        guard = ""
-        if backend == "auto" and not bool(params.get("force", False)):
-            guard = "if [ -L /etc/resolv.conf ]; then echo 'refusing to manage symlinked /etc/resolv.conf without backend or force' >&2; exit 1; fi && "
-        commands = [f"cat > {temp} <<'EOF'\n{content}EOF"]
-        if bool(params.get("backup", True)):
-            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        commands.append(f"{guard}{sudo}install -m 0644 {temp} {quote(path)}")
-        commands.append(f"rm -f {temp}")
-        return [" && ".join(commands)]
+        script = '''
+set -eu
+backend=plain-file
+path=/etc/resolv.conf
+target=
+if [ -L "$path" ]; then
+  target=$(readlink -f "$path" || true)
+  case "$target" in
+    *systemd/resolve*) backend=systemd-resolved ;;
+    *NetworkManager*) backend=networkmanager ;;
+    *) backend=symlink ;;
+  esac
+elif [ -d /etc/resolvconf ]; then backend=resolvconf
+elif command -v resolvectl >/dev/null 2>&1; then backend=systemd-resolved
+elif command -v nmcli >/dev/null 2>&1; then backend=networkmanager
+fi
+printf 'backend=%s\npath=%s\ntarget=%s\n' "$backend" "$path" "$target"
+'''
+        return [f"sh -s <<'SH'\n{script}\nSH"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="resolver.facts failed")
+        data = {}
+        for line in out.splitlines():
+            if "=" in line:
+                key, value = line.split("=", 1)
+                data[key] = value
+        return PluginResult.success(changed=False, stdout=out, stderr=err, data=data)
+
+
+class ResolverConfigPlugin(BasePlugin):
+    name = "resolver.config"
+    description = "Manage DNS resolver settings safely using explicit plain-file, systemd-resolved, NetworkManager or resolvconf backends."
+    required_params: tuple[str, ...] = ()
+    optional_params = ("backend", "nameservers", "search", "options", "path", "nm_connection", "force", "backup", "backup_suffix", "sudo")
+    opens_remote_session = True
+
+    def _nameservers(self, params: Dict[str, Any]) -> list[str]:
+        values = params.get("nameservers", []) or []
+        if isinstance(values, str):
+            values = [values]
+        return [str(value) for value in values]
+
+    def _search(self, params: Dict[str, Any]) -> list[str]:
+        values = params.get("search", []) or []
+        if isinstance(values, str):
+            values = [values]
+        return [str(value) for value in values]
+
+    def _options(self, params: Dict[str, Any]) -> list[str]:
+        values = params.get("options", []) or []
+        if isinstance(values, str):
+            values = [values]
+        return [str(value) for value in values]
+
+    def _content(self, params: Dict[str, Any]) -> str:
+        lines = ["# Managed by automax\n"]
+        for ns in self._nameservers(params):
+            lines.append(f"nameserver {ns}\n")
+        search = self._search(params)
+        if search:
+            lines.append("search " + " ".join(search) + "\n")
+        for option in self._options(params):
+            lines.append(f"options {option}\n")
+        return "".join(lines)
+
+    def _resolved_content(self, params: Dict[str, Any]) -> str:
+        lines = ["# Managed by automax\n", "[Resolve]\n"]
+        if self._nameservers(params):
+            lines.append("DNS=" + " ".join(self._nameservers(params)) + "\n")
+        if self._search(params):
+            lines.append("Domains=" + " ".join(self._search(params)) + "\n")
+        return "".join(lines)
+
+    def _backend(self, params: Dict[str, Any]) -> str:
+        backend = str(params.get("backend", "plain-file"))
+        if backend == "auto":
+            raise PluginValidationError("resolver.config requires an explicit backend for persistent changes")
+        if backend not in {"plain-file", "systemd-resolved", "networkmanager", "resolvconf"}:
+            raise PluginValidationError("resolver backend must be plain-file, systemd-resolved, networkmanager or resolvconf")
+        return backend
+
+    def _path_for_backend(self, params: Dict[str, Any]) -> str:
+        backend = self._backend(params)
+        if params.get("path"):
+            return str(params["path"])
+        if backend == "systemd-resolved":
+            return "/etc/systemd/resolved.conf.d/99-automax.conf"
+        if backend == "resolvconf":
+            return "/etc/resolvconf/resolv.conf.d/head"
+        return "/etc/resolv.conf"
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        backend = self._backend(params)
+        if backend == "networkmanager":
+            desired = f"connection={params.get('nm_connection', '<required>')} dns={','.join(self._nameservers(params))} search={','.join(self._search(params))}"
+            return _state_diff("NetworkManager DNS", "current connection DNS", desired, "resolver-plan")
+        content = self._resolved_content(params) if backend == "systemd-resolved" else self._content(params)
+        return _lines_diff(self._path_for_backend(params), content.splitlines(keepends=True), "resolver-plan")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        backend = self._backend(params)
+        sudo = _sudo(params)
+        if backend == "networkmanager":
+            connection = params.get("nm_connection")
+            if not connection:
+                raise PluginValidationError("resolver.config backend=networkmanager requires nm_connection")
+            dns = " ".join(self._nameservers(params))
+            search = " ".join(self._search(params))
+            commands = [f"{sudo}nmcli connection modify {quote(connection)} ipv4.ignore-auto-dns yes"]
+            if dns:
+                commands.append(f"{sudo}nmcli connection modify {quote(connection)} ipv4.dns {quote(dns)}")
+            if search:
+                commands.append(f"{sudo}nmcli connection modify {quote(connection)} ipv4.dns-search {quote(search)}")
+            commands.append(f"{sudo}nmcli connection up {quote(connection)}")
+            return commands
+        path = self._path_for_backend(params)
+        content = self._resolved_content(params) if backend == "systemd-resolved" else self._content(params)
+        temp = "/tmp/automax-resolver.$$"
+        commands = [f"cat > {temp} <<'EOF'\n{content}EOF"]
+        if backend == "plain-file" and not bool(params.get("force", False)):
+            commands.append("if [ -L /etc/resolv.conf ]; then echo 'refusing to manage symlinked /etc/resolv.conf with backend=plain-file' >&2; exit 1; fi")
+        if bool(params.get("backup", True)):
+            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
+        commands.append(f"{sudo}install -D -m 0644 {temp} {quote(path)}")
+        commands.append(f"rm -f {temp}")
+        if backend == "systemd-resolved":
+            commands.append(f"{sudo}systemctl restart systemd-resolved")
+        if backend == "resolvconf":
+            commands.append(f"{sudo}resolvconf -u")
+        return [" && ".join(commands)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
         return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="resolver.config failed")
 
 
