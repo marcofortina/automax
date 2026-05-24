@@ -4155,3 +4155,18 @@ def test_cron_readback_plugins_render_manual_commands():
     assert "crontab -l" in registry.get("cron.list").manual_commands({}, context)[0]
     assert "/etc/cron.d/demo" in registry.get("cron.absent").manual_commands({"name": "demo", "sudo": False}, context)[0]
     assert "awk" in registry.get("cron.validate").manual_commands({"path": "/tmp/cron"}, context)[0]
+
+
+def test_transfer_upload_download_metadata_include_safety_options():
+    from automax.plugins.registry import build_builtin_registry
+
+    registry = build_builtin_registry()
+    upload = registry.get("transfer.upload").metadata()
+    download = registry.get("transfer.download").metadata()
+    upload_params = {parameter["name"] for parameter in upload["parameters"]}
+    download_params = {parameter["name"] for parameter in download["parameters"]}
+
+    for name in {"checksum", "overwrite", "backup_existing", "backup_suffix", "preserve_times", "mode", "owner", "group"}:
+        assert name in upload_params
+    for name in {"checksum", "overwrite", "backup_existing", "backup_suffix", "preserve_times", "mode", "owner", "group"}:
+        assert name in download_params

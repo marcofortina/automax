@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from pathlib import Path, PurePosixPath
 import subprocess
+import hashlib
+import os
 import stat
 from typing import Any, Dict
 
@@ -35,35 +37,89 @@ def _mkdir_remote(context: ExecutionContext, path: str) -> None:
     exec_remote(context, f"mkdir -p {quote(path)}")
 
 
-def _upload_file(context: ExecutionContext, sftp, src: Path, dest: str) -> None:
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _assert_checksum(path: Path, expected: str) -> None:
+    actual = _sha256_file(path)
+    if actual.lower() != str(expected).lower():
+        raise PluginValidationError(f"checksum mismatch for {path}: expected {expected}, got {actual}")
+
+
+def _remote_backup_command(path: str, suffix: str) -> str:
+    return f"test ! -e {quote(path)} || cp -a {quote(path)} {quote(path + suffix)}"
+
+
+def _remote_exists(context: ExecutionContext, path: str) -> bool:
+    rc, _, _ = exec_remote(context, f"test -e {quote(path)}")
+    return rc == 0
+
+
+def _remote_safe_prepare(context: ExecutionContext, dest: str, params: Dict[str, Any]) -> None:
+    if bool(params.get("backup_existing", False)):
+        exec_remote(context, _remote_backup_command(dest, str(params.get("backup_suffix", ".bak"))))
+    if not bool(params.get("overwrite", True)) and _remote_exists(context, dest):
+        raise PluginValidationError(f"destination already exists: {dest}")
+
+
+def _remote_apply_attrs(context: ExecutionContext, path: str, params: Dict[str, Any], *, recursive: bool = False) -> None:
+    commands = []
+    recurse = " -R" if recursive else ""
+    if params.get("mode"):
+        commands.append(f"chmod{recurse} {quote(params['mode'])} {quote(path)}")
+    if params.get("owner") or params.get("group"):
+        spec = f"{params.get('owner', '')}:{params.get('group', '')}"
+        commands.append(f"chown{recurse} {quote(spec)} {quote(path)}")
+    if commands:
+        exec_remote(context, " && ".join(commands))
+
+
+def _upload_file(context: ExecutionContext, sftp, src: Path, dest: str, *, preserve_times: bool = False) -> None:
     _mkdir_remote(context, _remote_parent(dest))
     sftp.put(str(src), dest)
+    if preserve_times:
+        stat_result = src.stat()
+        sftp.utime(dest, (stat_result.st_atime, stat_result.st_mtime))
 
 
-def _upload_dir(context: ExecutionContext, sftp, src: Path, dest: str) -> None:
+def _upload_dir(context: ExecutionContext, sftp, src: Path, dest: str, *, preserve_times: bool = False) -> None:
     _mkdir_remote(context, dest)
     for item in src.iterdir():
         remote_item = str(PurePosixPath(dest) / item.name)
         if item.is_dir():
-            _upload_dir(context, sftp, item, remote_item)
+            _upload_dir(context, sftp, item, remote_item, preserve_times=preserve_times)
         else:
-            _upload_file(context, sftp, item, remote_item)
+            _upload_file(context, sftp, item, remote_item, preserve_times=preserve_times)
+    if preserve_times:
+        stat_result = src.stat()
+        sftp.utime(dest, (stat_result.st_atime, stat_result.st_mtime))
 
 
-def _download_file(sftp, src: str, dest: Path) -> None:
+def _download_file(sftp, src: str, dest: Path, *, preserve_times: bool = False) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
+    attrs = sftp.stat(src)
     sftp.get(src, str(dest))
+    if preserve_times:
+        os.utime(dest, (attrs.st_atime, attrs.st_mtime))
 
 
-def _download_dir(sftp, src: str, dest: Path) -> None:
+def _download_dir(sftp, src: str, dest: Path, *, preserve_times: bool = False) -> None:
     dest.mkdir(parents=True, exist_ok=True)
+    attrs = sftp.stat(src)
     for entry in sftp.listdir_attr(src):
         remote_item = str(PurePosixPath(src) / entry.filename)
         local_item = dest / entry.filename
         if stat.S_ISDIR(entry.st_mode):
-            _download_dir(sftp, remote_item, local_item)
+            _download_dir(sftp, remote_item, local_item, preserve_times=preserve_times)
         else:
-            _download_file(sftp, remote_item, local_item)
+            _download_file(sftp, remote_item, local_item, preserve_times=preserve_times)
+    if preserve_times:
+        os.utime(dest, (attrs.st_atime, attrs.st_mtime))
 
 
 class TransferUploadPlugin(BasePlugin):
@@ -72,7 +128,7 @@ class TransferUploadPlugin(BasePlugin):
     name = "transfer.upload"
     description = "Upload a local file or directory to a remote target."
     required_params = ("src", "dest")
-    optional_params = ("recursive", "sudo", "mode", "owner", "group")
+    optional_params = ("recursive", "sudo", "mode", "owner", "group", "checksum", "overwrite", "backup_existing", "backup_suffix", "preserve_times")
     opens_remote_session = True
 
     def validate(self, params: Dict[str, Any]) -> None:
@@ -84,16 +140,24 @@ class TransferUploadPlugin(BasePlugin):
             raise PluginValidationError("transfer.upload requires recursive=true for directories")
         if src.is_dir() and bool(params.get("sudo", False)):
             raise PluginValidationError("transfer.upload sudo=true is supported only for files")
+        if params.get("checksum") and src.is_dir():
+            raise PluginValidationError("transfer.upload checksum is supported only for files")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         src = Path(str(params["src"])).expanduser()
         dest = str(params["dest"])
+        if params.get("checksum"):
+            _assert_checksum(src, str(params["checksum"]))
         if src.is_file() and bool(params.get("sudo", False)):
+            _remote_safe_prepare(context, dest, params)
             remote_tmp = f"/tmp/automax-upload-{context.run_id}-{src.name}"
             sftp = _sftp(context)
             try:
                 sftp.put(str(src), remote_tmp)
+                if bool(params.get("preserve_times", False)):
+                    stat_result = src.stat()
+                    sftp.utime(remote_tmp, (stat_result.st_atime, stat_result.st_mtime))
             finally:
                 sftp.close()
             rc, out, err = install_uploaded_file(
@@ -112,12 +176,16 @@ class TransferUploadPlugin(BasePlugin):
 
         sftp = _sftp(context)
         try:
+            _remote_safe_prepare(context, dest, params)
             if src.is_dir():
-                _upload_dir(context, sftp, src, dest)
+                _upload_dir(context, sftp, src, dest, preserve_times=bool(params.get("preserve_times", False)))
             else:
-                _upload_file(context, sftp, src, dest)
+                _upload_file(context, sftp, src, dest, preserve_times=bool(params.get("preserve_times", False)))
         finally:
             sftp.close()
+        if params.get("checksum"):
+            exec_remote(context, f"sha256sum {quote(dest)} | awk '{{print $1}}' | grep -Fx -- {quote(params['checksum'])}")
+        _remote_apply_attrs(context, dest, params, recursive=src.is_dir())
         return PluginResult.success(changed=True, data={"src": str(src), "dest": dest})
 
 
@@ -127,24 +195,40 @@ class TransferDownloadPlugin(BasePlugin):
     name = "transfer.download"
     description = "Download a remote file or directory to the controller."
     required_params = ("src", "dest")
-    optional_params = ("recursive",)
+    optional_params = ("recursive", "checksum", "overwrite", "backup_existing", "backup_suffix", "mode", "owner", "group", "preserve_times")
     opens_remote_session = True
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         src = str(params["src"])
         dest = Path(str(params["dest"])).expanduser()
+        if dest.exists():
+            if bool(params.get("backup_existing", False)):
+                backup_dest = dest.with_name(dest.name + str(params.get("backup_suffix", ".bak")))
+                if dest.is_dir():
+                    import shutil
+                    if backup_dest.exists():
+                        shutil.rmtree(backup_dest)
+                    shutil.copytree(dest, backup_dest)
+                else:
+                    backup_dest.write_bytes(dest.read_bytes())
+            if not bool(params.get("overwrite", True)):
+                raise PluginValidationError(f"destination already exists: {dest}")
         sftp = _sftp(context)
         try:
             attrs = sftp.stat(src)
             if stat.S_ISDIR(attrs.st_mode):
                 if not bool(params.get("recursive", False)):
                     raise PluginValidationError("transfer.download requires recursive=true for directories")
-                _download_dir(sftp, src, dest)
+                _download_dir(sftp, src, dest, preserve_times=bool(params.get("preserve_times", False)))
             else:
-                _download_file(sftp, src, dest)
+                _download_file(sftp, src, dest, preserve_times=bool(params.get("preserve_times", False)))
         finally:
             sftp.close()
+        if params.get("checksum"):
+            _assert_checksum(dest, str(params["checksum"]))
+        if params.get("mode"):
+            dest.chmod(int(str(params["mode"]), 8))
         return PluginResult.success(changed=True, data={"src": src, "dest": str(dest)})
 
 
@@ -172,6 +256,9 @@ class TransferSyncPlugin(BasePlugin):
             _upload_dir(context, sftp, src, dest)
         finally:
             sftp.close()
+        if params.get("checksum"):
+            exec_remote(context, f"sha256sum {quote(dest)} | awk '{{print $1}}' | grep -Fx -- {quote(params['checksum'])}")
+        _remote_apply_attrs(context, dest, params, recursive=src.is_dir())
         return PluginResult.success(changed=True, data={"src": str(src), "dest": dest})
 
 

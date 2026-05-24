@@ -8118,6 +8118,14 @@ Download a remote file or directory to the controller.
 | `src` | yes | `path` |  | Source path. |
 | `dest` | yes | `path` |  | Destination path. |
 | `recursive` | no | `boolean` | `False` | Recurse into directories. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `overwrite` | no | `boolean` | `False` | Replace an existing destination when supported. |
+| `backup_existing` | no | `boolean` | `False` | Create a backup of an existing destination before replacing it. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `preserve_times` | no | `boolean` | `False` | Preserve source access and modification timestamps when transferring files. |
 
 Result fields:
 
@@ -8231,6 +8239,11 @@ Upload a local file or directory to a remote target.
 | `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
 | `owner` | no | `string` |  | Remote file owner. |
 | `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `overwrite` | no | `boolean` | `False` | Replace an existing destination when supported. |
+| `backup_existing` | no | `boolean` | `False` | Create a backup of an existing destination before replacing it. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `preserve_times` | no | `boolean` | `False` | Preserve source access and modification timestamps when transferring files. |
 
 Result fields:
 

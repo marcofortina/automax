@@ -66,3 +66,10 @@ with:
 
 The preview path is rsync-native: use `dry_run: true` or job dry-run mode to
 render a copy/pasteable `rsync --dry-run` command before applying changes.
+
+## Transfer safeguards
+
+`transfer.upload` and `transfer.download` support checksum validation,
+`overwrite`, `backup_existing`, `backup_suffix`, timestamp preservation and file
+mode handling. Directory uploads can also receive recursive owner/group/mode
+application after transfer.
