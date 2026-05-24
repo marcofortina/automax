@@ -1026,6 +1026,43 @@ with:
   device: /dev/sdb
 ```
 
+## cert
+
+### `cert.generate_csr`
+
+Generate a CSR from an existing private key using openssl.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `key` | yes | `string` |  | SSH public key line. |
+| `dest` | yes | `path` |  | Destination path. |
+| `subject` | yes | `string` |  | Email subject line. |
+| `config` | no | `path` |  | OpenSSL configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: cert.generate_csr
+with:
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+  dest: /tmp/dest
+  subject: Automax notification
+```
+
 ## chrony
 
 ### `chrony.servers`

@@ -208,3 +208,7 @@ existing configuration files.
 `iptables.rule` manages legacy iptables/ip6tables runtime rules as a backend separate from firewalld, UFW and nftables.
 `iptables.save` exports the current runtime ruleset to an explicit persistent file.
 `iptables.restore` loads an explicit ruleset file and requires `confirm: true` unless `test_only: true`.
+
+## Certificate operations
+
+`cert.generate_csr` creates CSRs from existing keys using openssl.

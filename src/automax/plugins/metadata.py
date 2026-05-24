@@ -56,6 +56,8 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "runas": {"type": "string", "default": "ALL", "description": "sudoers run-as field."},
     "commands": {"type": "list", "description": "Allowed sudo command list or ALL."},
     "nopassword": {"type": "boolean", "default": False, "description": "Whether to include NOPASSWD."},
+    "cert": {"type": "path", "description": "Certificate path."},
+    "config": {"type": "path", "description": "OpenSSL configuration file path."},
     "command": {"type": "string", "description": "Command line to execute."},
     "comment": {"type": "string", "description": "User account comment or GECOS field."},
     "commit": {"type": "boolean", "default": True, "description": "Commit the database transaction on success; false rolls it back."},

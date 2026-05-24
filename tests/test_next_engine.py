@@ -3773,3 +3773,13 @@ def test_authselect_profile_plugin_renders_profile_selection():
     assert "authselect select sssd with-faillock" in command
     assert "--backup=automax" in command
     assert "authselect" in AuthselectProfilePlugin().diff_preview_reason({}, context)
+
+
+def test_cert_generate_csr_plugin_renders_openssl_req():
+    from automax.plugins.cert_ops import CertGenerateCsrPlugin
+
+    assert "cert.generate_csr" in AutomaxEngine().plugin_registry.names()
+    context = _sysops_preview_context()
+    command = CertGenerateCsrPlugin().manual_commands({"key": "/etc/pki/tls/private/app.key", "dest": "/tmp/app.csr", "subject": "/CN=app"}, context)[0]
+    assert "openssl req -new" in command
+    assert "-subj /CN=app" in command
