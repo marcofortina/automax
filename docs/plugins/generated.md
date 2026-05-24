@@ -2253,7 +2253,10 @@ Manage a firewalld port rule.
 | `zone` | no | `string` |  | firewalld zone name. |
 | `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
 | `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
+| `runtime` | no | `boolean` | `True` | Apply the change to the running system. |
 | `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `reload_mode` | no | `string` | `none` | Firewall reload behavior: none, reload or complete-reload. |
+| `query_only` | no | `boolean` | `False` | Query rule state without changing it. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -2322,7 +2325,10 @@ Manage a firewalld rich rule.
 | `zone` | no | `string` |  | firewalld zone name. |
 | `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
 | `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
+| `runtime` | no | `boolean` | `True` | Apply the change to the running system. |
 | `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `reload_mode` | no | `string` | `none` | Firewall reload behavior: none, reload or complete-reload. |
+| `query_only` | no | `boolean` | `False` | Query rule state without changing it. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -2356,7 +2362,10 @@ Manage a firewalld service rule.
 | `zone` | no | `string` |  | firewalld zone name. |
 | `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
 | `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
+| `runtime` | no | `boolean` | `True` | Apply the change to the running system. |
 | `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `reload_mode` | no | `string` | `none` | Firewall reload behavior: none, reload or complete-reload. |
+| `query_only` | no | `boolean` | `False` | Query rule state without changing it. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -3904,6 +3913,12 @@ Ensure an iptables rule is present or absent in a table and chain.
 | `table` | no | `string` |  | Routing table name or number. |
 | `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
 | `ipv6` | no | `boolean` | `False` | Use IPv6 command variant when supported. |
+| `position` | no | `integer` |  | Insertion position for ordered firewall rule backends. |
+| `comment` | no | `string` |  | User account comment or GECOS field. |
+| `wait` | no | `boolean` | `False` | Wait for the operation to become reachable again when supported. |
+| `save_after` | no | `boolean` | `False` | Persist runtime firewall state after changing a rule. |
+| `dest` | no | `path` |  | Destination path. |
+| `backup_before` | no | `boolean` | `False` | Capture or copy the current configuration before applying a firewall change. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -5411,6 +5426,10 @@ Validate and apply nftables rules from inline content or a controller file.
 |---|---:|---|---|---|
 | `content` | no | `string` |  | Text content to write. |
 | `src` | no | `path` |  | Source path. |
+| `backup_before` | no | `boolean` | `False` | Capture or copy the current configuration before applying a firewall change. |
+| `persistent_file` | no | `path` |  | Persistent firewall configuration file to install after validation. |
+| `reload_service` | no | `string` |  | Service name to reload after installing persistent firewall configuration. |
+| `check_only` | no | `boolean` | `False` | Validate the requested change without applying it. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:

@@ -4170,3 +4170,20 @@ def test_transfer_upload_download_metadata_include_safety_options():
         assert name in upload_params
     for name in {"checksum", "overwrite", "backup_existing", "backup_suffix", "preserve_times", "mode", "owner", "group"}:
         assert name in download_params
+
+
+def test_firewall_lifecycle_options_render_manual_commands():
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins.registry import build_builtin_registry
+
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
+    registry = build_builtin_registry()
+
+    firewalld = registry.get("firewalld.port").manual_commands({"port": 443, "runtime": True, "query_only": True, "sudo": False}, context)[0]
+    assert "--query-port=443/tcp" in firewalld
+    iptables = registry.get("iptables.rule").manual_commands({"chain": "INPUT", "rule": "-p tcp --dport 22 -j ACCEPT", "position": 1, "comment": "ssh", "wait": 5, "save_after": True, "sudo": False}, context)[0]
+    assert "-I INPUT 1" in iptables
+    assert "--comment ssh" in iptables
+    assert "iptables-save" in iptables
+    nft = registry.get("nftables.apply").metadata()
+    assert {"backup_before", "persistent_file", "reload_service", "check_only"}.issubset({parameter["name"] for parameter in nft["parameters"]})

@@ -40,3 +40,11 @@ precheck and postcheck readback. Use `nftables.list` and `nftables.export` to
 inspect or archive the active nftables ruleset. Use `iptables.list`,
 `iptables.policy` and `iptables.chain` to inspect legacy iptables state before
 and after runtime rule changes.
+
+## Lifecycle safeguards
+
+`firewalld.*` operations expose explicit runtime/permanent selection,
+`query_only` readback and `reload_mode`. `iptables.rule` supports ordered
+insertion, comments, `-w` wait handling, pre-change backups and `save_after`.
+`nftables.apply` supports check-only validation, pre-apply backup, persistent
+ruleset installation and service reload.
