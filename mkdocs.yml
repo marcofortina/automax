@@ -93,6 +93,7 @@ nav:
     - Filesystem: plugins/filesystem.md
     - Archive: plugins/archive.md
     - Package Manager: plugins/package-manager.md
+    - Linux Operations: plugins/linux-operations.md
     - Systemctl: plugins/systemctl.md
     - Users, Groups and Processes: plugins/users-groups-processes.md
     - Transfer: plugins/transfer.md
