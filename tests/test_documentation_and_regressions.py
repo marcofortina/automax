@@ -4,8 +4,11 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import re
+import subprocess
+import sys
 
 import pytest
 from click.testing import CliRunner
@@ -21,6 +24,35 @@ def write(path: Path, content: str) -> Path:
     path.write_text(content, encoding="utf-8")
     return path
 
+
+
+def test_python_m_cli_entrypoint_does_not_emit_runpy_warning():
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(Path("src").resolve())
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-W",
+            "error::RuntimeWarning",
+            "-m",
+            "automax.cli.cli",
+            "--help",
+        ],
+        cwd=Path.cwd(),
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "RuntimeWarning" not in result.stderr
+
+
+def test_cli_package_exports_cli_main_lazily():
+    from automax.cli import cli_main
+
+    assert callable(cli_main)
 
 def test_plugin_metadata_sample_formatter_is_python39_safe():
     from automax.plugins.metadata import _format_sample_value
