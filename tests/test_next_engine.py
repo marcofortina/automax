@@ -4408,7 +4408,9 @@ def test_fs_write_template_metadata_exposes_atomic_option():
         assert "atomic" in params
 
 
-def test_capability_requirements_are_derived_from_selected_job(tmp_path: Path):
+def test_capability_requirements_are_derived_from_selected_job(tmp_path: Path, monkeypatch):
+    from automax.core.os_detect import TargetOS
+
     job = write(
         tmp_path / "job.yaml",
         """
@@ -4436,6 +4438,11 @@ tasks:
 """,
     )
     inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+    monkeypatch.setattr(
+        AutomaxEngine,
+        "_detect_os_for_plan",
+        lambda self, plan, secrets: {"controller": TargetOS(id="ubuntu", id_like=("debian",), family="debian", package_manager="apt")},
+    )
 
     payload = AutomaxEngine().capability_requirements_job(job_path=str(job), inventory_path=str(inventory))
 
@@ -4493,6 +4500,58 @@ def test_capability_and_redaction_plugins_render_safe_previews():
     assert not leaked.ok
 
 
+
+def test_capability_requirements_cli_detects_os_without_flag(tmp_path: Path, monkeypatch):
+    from automax.core.os_detect import TargetOS
+
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: cli-caps
+tasks:
+  - id: ops
+    targets: all
+    steps:
+      - id: packages
+        substeps:
+          - id: install
+            use: pkg.install
+            with:
+              packages: [curl]
+              manager: auto
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  node:\n    host: 127.0.0.1\n")
+
+    monkeypatch.setattr(
+        AutomaxEngine,
+        "_detect_os_for_plan",
+        lambda self, plan, secrets: {"node": TargetOS(id="ubuntu", id_like=("debian",), family="debian", package_manager="apt")},
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "capabilities",
+            "requirements",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--format",
+            "json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["targets"][0]["os"]["family"] == "debian"
+    assert "apt-get" in payload["targets"][0]["tools"]
+
+
 def test_capability_requirements_filter_tools_by_detected_os(tmp_path: Path, monkeypatch):
     from automax.core.os_detect import TargetOS
 
@@ -4534,7 +4593,7 @@ tasks:
         lambda plan, secrets: {"node": TargetOS(id="ubuntu", id_like=("debian",), family="debian", package_manager="apt")},
     )
 
-    payload = engine.capability_requirements_job(job_path=str(job), inventory_path=str(inventory), detect_os=True)
+    payload = engine.capability_requirements_job(job_path=str(job), inventory_path=str(inventory))
 
     target = payload["targets"][0]
     assert target["os"]["family"] == "debian"

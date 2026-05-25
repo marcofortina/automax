@@ -977,7 +977,6 @@ def capabilities() -> None:
 @click.option("--tags", multiple=True, help="Show requirements for substeps matching one of these tags.")
 @click.option("--skip-tags", multiple=True, help="Hide requirements for substeps matching one of these tags.")
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
-@click.option("--detect-os", is_flag=True, help="Detect target OS and filter requirements for each OS family.")
 @click.option(
     "--format",
     "output_format",
@@ -997,7 +996,6 @@ def capability_requirements(
     tags: tuple[str, ...],
     skip_tags: tuple[str, ...],
     plugin_path: tuple[str, ...],
-    detect_os: bool,
     output_format: str,
 ) -> None:
     """Render tool requirements derived from the selected job plan."""
@@ -1012,7 +1010,6 @@ def capability_requirements(
             tags=_split_selectors(tags),
             skip_tags=_split_selectors(skip_tags),
             cli_vars=_parse_vars(cli_vars),
-            detect_os=detect_os,
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc

@@ -239,10 +239,10 @@ and `group.member_absent`. Removing a group member requires `confirm: true`.
 
 ## OS-aware job-scoped capability preflight
 
-Automax can derive remote command dependencies from the selected job plan and render per-target checks. With `--detect-os`, Automax first reads `/etc/os-release` on each target, classifies it as DEBIAN-like or RHEL-like, filters backend-specific plugins for that OS family, and reports OS-mismatched plugins as skipped requirements instead of requiring irrelevant tools.
+Automax can derive remote command dependencies from the selected job plan and render per-target checks. Automax first reads `/etc/os-release` on each target, classifies it as DEBIAN-like or RHEL-like, filters backend-specific plugins for that OS family, and reports OS-mismatched plugins as skipped requirements instead of requiring irrelevant tools.
 
 ```bash
-automax capabilities requirements --job jobs/site.yaml --inventory inventory/prod.yaml --detect-os
+automax capabilities requirements --job jobs/site.yaml --inventory inventory/prod.yaml
 ```
 
 Normal `automax run` performs this OS detection and capability preflight implicitly before executing selected substeps. The older `--preflight-capabilities` flag remains accepted for compatibility, but the preflight is now the default for normal runs that require remote tools.

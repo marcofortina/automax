@@ -799,7 +799,6 @@ class AutomaxEngine:
         tags: Iterable[str] = (),
         skip_tags: Iterable[str] = (),
         cli_vars: Optional[Dict[str, Any]] = None,
-        detect_os: bool = False,
     ) -> Dict[str, Any]:
         """Return job-scoped remote capability requirements from the selected plan."""
         resolved = self.resolve_job_context(
@@ -813,12 +812,11 @@ class AutomaxEngine:
             skip_tags=skip_tags,
             cli_vars=cli_vars,
         )
-        os_by_target = self._detect_os_for_plan(resolved.plan, resolved.secrets) if detect_os else {}
+        os_by_target = self._detect_os_for_plan(resolved.plan, resolved.secrets)
         requirements = collect_requirements(self.iter_rendered_plan_items(resolved, dry_run=True), os_by_target)
         return {
             "job": self._job_name(resolved.job),
             "mode": "capability-requirements",
-            "detect_os": detect_os,
             "targets": [requirements[name] for name in sorted(requirements)],
             "target_count": len(requirements),
             "tool_count": len({tool for item in requirements.values() for tool in item["tools"]}),
