@@ -20,6 +20,7 @@ import click
 
 from automax import __version__
 from automax.core.engine import AutomaxEngine, AutomaxError
+from automax.core.capabilities import package_for_tool
 from automax.core.inventory import Inventory, InventoryError, load_inventory_document
 from automax.core.known_hosts import KnownHostsError, scan_known_hosts, write_known_hosts
 from automax.core.plugin_docs import render_plugin_reference
@@ -121,12 +122,23 @@ def _echo_vars_payload(payload: Dict[str, Any], output_format: str) -> None:
             click.echo(f"    {node['node_id']} {node['plugin']}")
 
 
+def _package_for_display(tool: str, target: Dict[str, Any]) -> str | None:
+    family = target.get("os", {}).get("family", "unknown")
+    return package_for_tool(tool, family)
+
+
 def _echo_capabilities_payload(payload: Dict[str, Any], output_format: str) -> None:
     if output_format == "json":
         click.echo(json.dumps(payload, indent=2, sort_keys=True))
         return
     click.echo(f"Job: {payload['job']}")
-    click.echo(f"Targets: {payload['target_count']}  Tools: {payload['tool_count']}  Packages: {payload.get('package_count', 0)}")
+    click.echo(
+        f"Targets: {payload['target_count']}  "
+        f"Tools: {payload['tool_count']}  "
+        f"Packages: {payload.get('package_count', 0)}  "
+        f"Missing tools: {payload.get('missing_tool_count', 0)}  "
+        f"Missing packages: {payload.get('missing_package_count', 0)}"
+    )
     for target in payload["targets"]:
         click.echo(f"Target {target['target']} {target['host']} os={target.get('os', {}).get('family', 'unknown')} id={target.get('os', {}).get('id', 'unknown')}")
         if target.get("skipped_plugins"):
@@ -134,42 +146,101 @@ def _echo_capabilities_payload(payload: Dict[str, Any], output_format: str) -> N
             for skipped in target["skipped_plugins"]:
                 click.echo(f"    {skipped['plugin']}: {skipped['reason']}")
         if target.get("packages"):
-            click.echo("  packages:")
+            click.echo("  required packages:")
             for package in target["packages"]:
                 click.echo(f"    {package}")
+        if "missing_tools" in target:
+            if target.get("missing_tools"):
+                click.echo("  missing tools:")
+                for tool in target["missing_tools"]:
+                    package = _package_for_display(tool, target)
+                    suffix = f" -> package {package}" if package else " -> package unknown"
+                    click.echo(f"    {tool}{suffix}")
+            else:
+                click.echo("  missing tools: none")
+            if target.get("missing_packages"):
+                click.echo("  missing packages:")
+                for package in target["missing_packages"]:
+                    click.echo(f"    {package}")
+            else:
+                click.echo("  missing packages: none")
+            if target.get("unresolved_tools"):
+                click.echo("  unresolved tools:")
+                for tool in target["unresolved_tools"]:
+                    click.echo(f"    {tool}")
         if not target["tools"]:
             click.echo("  - no external tool requirements detected")
             continue
         for tool in target["tools"]:
             plugins = ", ".join(target["plugins"].get(tool, []))
-            click.echo(f"  {tool}: {plugins}")
+            state = ""
+            if tool in set(target.get("missing_tools", [])):
+                state = " [missing]"
+            elif "present_tools" in target:
+                state = " [present]"
+            click.echo(f"  {tool}{state}: {plugins}")
         click.echo("  preflight commands:")
         for command in target["commands"]:
             click.echo(f"    {command}")
+
+
+def _format_csv(values: Iterable[str]) -> str:
+    values = list(values)
+    return ", ".join(values) if values else "none"
+
+
+def _echo_capability_install_event(event: Dict[str, Any]) -> None:
+    kind = event.get("event")
+    if kind == "job":
+        click.echo(f"Job: {event['job']}")
+        return
+    target = event.get("target", "-")
+    host = event.get("host", "-")
+    os_family = event.get("os", {}).get("family", "unknown")
+    if kind == "target-check":
+        click.echo(f"[CHECK] {target} {host} os={os_family}: checking required tools")
+        return
+    if kind == "target-missing":
+        missing_tools = event.get("missing_tools", [])
+        packages = event.get("packages", [])
+        unresolved = event.get("unresolved_tools", [])
+        if missing_tools:
+            click.echo(f"[MISSING] {target}: tools={_format_csv(missing_tools)}")
+        else:
+            click.echo(f"[OK] {target}: all required tools already present")
+        if packages:
+            click.echo(f"[PLAN] {target}: install packages={_format_csv(packages)}")
+        if unresolved:
+            click.echo(f"[WARN] {target}: unresolved tools={_format_csv(unresolved)}")
+        return
+    if kind == "target-install":
+        click.echo(f"[INSTALL] {target}: packages={_format_csv(event.get('packages', []))}")
+        return
+    if kind == "target-done":
+        status = "OK" if event.get("ok") else "FAILED"
+        changed = "changed=true" if event.get("changed") else "changed=false"
+        click.echo(f"[{status}] {target} {host} os={os_family} rc={event.get('rc', 0)} {changed}")
 
 
 def _echo_capability_install_payload(payload: Dict[str, Any], output_format: str) -> None:
     if output_format == "json":
         click.echo(json.dumps(payload, indent=2, sort_keys=True))
         return
-    click.echo(f"Job: {payload['job']}")
+    ok_targets = sum(1 for target in payload["targets"] if target["ok"])
+    failed_targets = len(payload["targets"]) - ok_targets
+    changed_targets = sum(1 for target in payload["targets"] if target["changed"])
+    click.echo("Summary:")
+    click.echo(f"  targets: {len(payload['targets'])}")
+    click.echo(f"  ok: {ok_targets}")
+    click.echo(f"  failed: {failed_targets}")
+    click.echo(f"  changed: {changed_targets}")
     for target in payload["targets"]:
-        status = "OK" if target["ok"] else "FAILED"
-        click.echo(f"[{status}] {target['target']} {target['host']} os={target['os']['family']} rc={target['rc']}")
-        if target["missing_tools"]:
-            click.echo("  missing tools:")
-            for tool in target["missing_tools"]:
-                click.echo(f"    {tool}")
-        if target["packages"]:
-            click.echo("  installed packages:")
-            for package in target["packages"]:
-                click.echo(f"    {package}")
-        if target["unresolved_tools"]:
-            click.echo("  unresolved tools:")
-            for tool in target["unresolved_tools"]:
-                click.echo(f"    {tool}")
+        if target["stdout"]:
+            click.echo(f"  {target['target']} stdout:")
+            for line in target["stdout"].splitlines():
+                click.echo(f"    {line}")
         if target["stderr"]:
-            click.echo("  stderr:")
+            click.echo(f"  {target['target']} stderr:")
             for line in target["stderr"].splitlines():
                 click.echo(f"    {line}")
 
@@ -1098,6 +1169,7 @@ def capability_requirements(
             tags=_split_selectors(tags),
             skip_tags=_split_selectors(skip_tags),
             cli_vars=_parse_vars(cli_vars),
+            check_missing=output_format == "text",
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc
@@ -1147,6 +1219,7 @@ def capability_install(
             skip_tags=_split_selectors(skip_tags),
             cli_vars=_parse_vars(cli_vars),
             sudo_password_env=sudo_password_env,
+            progress_callback=_echo_capability_install_event if output_format == "text" else None,
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc

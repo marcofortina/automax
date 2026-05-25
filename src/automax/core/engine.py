@@ -20,7 +20,7 @@ import re
 from threading import Lock
 import time
 import uuid
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional
 
 from automax.core.capabilities import collect_requirements, package_for_tool, plugin_os_mismatch
 from automax.core.inventory import Inventory, load_inventory_document
@@ -841,6 +841,7 @@ class AutomaxEngine:
         tags: Iterable[str] = (),
         skip_tags: Iterable[str] = (),
         cli_vars: Optional[Dict[str, Any]] = None,
+        check_missing: bool = False,
     ) -> Dict[str, Any]:
         """Return job-scoped remote capability requirements from the selected plan."""
         resolved = self.resolve_job_context(
@@ -856,6 +857,8 @@ class AutomaxEngine:
         )
         os_by_target = self._detect_os_for_plan(resolved.plan, resolved.secrets)
         requirements = collect_requirements(self.iter_rendered_plan_items(resolved, dry_run=True), os_by_target)
+        if check_missing:
+            self._annotate_missing_capabilities(requirements, resolved.plan)
         return {
             "job": self._job_name(resolved.job),
             "mode": "capability-requirements",
@@ -863,6 +866,8 @@ class AutomaxEngine:
             "target_count": len(requirements),
             "tool_count": len({tool for item in requirements.values() for tool in item["tools"]}),
             "package_count": len({package for item in requirements.values() for package in item.get("packages", [])}),
+            "missing_tool_count": len({tool for item in requirements.values() for tool in item.get("missing_tools", [])}),
+            "missing_package_count": len({package for item in requirements.values() for package in item.get("missing_packages", [])}),
         }
 
     def install_capability_requirements_job(
@@ -878,6 +883,7 @@ class AutomaxEngine:
         skip_tags: Iterable[str] = (),
         cli_vars: Optional[Dict[str, Any]] = None,
         sudo_password_env: str | None = None,
+        progress_callback: Callable[[Dict[str, Any]], None] | None = None,
     ) -> Dict[str, Any]:
         """Install missing target packages required by the selected job plan."""
         resolved = self.resolve_job_context(
@@ -896,17 +902,30 @@ class AutomaxEngine:
         sudo_password = os.environ.get(sudo_password_env) if sudo_password_env else None
         targets = []
         ok = True
+        emit = progress_callback or (lambda event: None)
+        emit({"event": "job", "job": self._job_name(resolved.job)})
         for target_name in sorted(requirements):
             entry = requirements[target_name]
             target = next(item["target"] for item in resolved.plan if item["target"].name == target_name)
+            emit({"event": "target-check", "target": target_name, "host": entry["host"], "os": entry["os"]})
             missing_tools = self._missing_tools(target, entry["tools"])
-            packages = sorted({package for tool in missing_tools if (package := package_for_tool(tool, entry["os"]["family"]))})
-            unresolved = sorted(tool for tool in missing_tools if package_for_tool(tool, entry["os"]["family"]) is None)
+            packages = self._packages_for_tools(missing_tools, entry["os"]["family"])
+            unresolved = self._unresolved_tools(missing_tools, entry["os"]["family"])
+            emit({
+                "event": "target-missing",
+                "target": target_name,
+                "host": entry["host"],
+                "os": entry["os"],
+                "missing_tools": missing_tools,
+                "packages": packages,
+                "unresolved_tools": unresolved,
+            })
             rc = 0
             stdout = ""
             stderr = ""
             changed = False
             if packages:
+                emit({"event": "target-install", "target": target_name, "host": entry["host"], "os": entry["os"], "packages": packages})
                 rc, stdout, stderr = self._install_packages_for_os(
                     target=target,
                     os_family=entry["os"]["family"],
@@ -916,6 +935,17 @@ class AutomaxEngine:
                 changed = rc == 0
             target_ok = rc == 0 and not unresolved
             ok = ok and target_ok
+            emit({
+                "event": "target-done",
+                "target": target_name,
+                "host": entry["host"],
+                "os": entry["os"],
+                "rc": rc,
+                "ok": target_ok,
+                "changed": changed,
+                "packages": packages,
+                "unresolved_tools": unresolved,
+            })
             targets.append(
                 {
                     "target": target_name,
@@ -1306,6 +1336,26 @@ class AutomaxEngine:
             "family": os_info.family,
             "package_manager": os_info.package_manager,
         }
+
+    def _plan_target_by_name(self, plan: Iterable[Dict[str, Any]], target_name: str) -> Target:
+        return next(item["target"] for item in plan if item["target"].name == target_name)
+
+    def _packages_for_tools(self, tools: Iterable[str], os_family: str) -> list[str]:
+        return sorted({package for tool in tools if (package := package_for_tool(tool, os_family))})
+
+    def _unresolved_tools(self, tools: Iterable[str], os_family: str) -> list[str]:
+        return sorted(tool for tool in tools if package_for_tool(tool, os_family) is None)
+
+    def _annotate_missing_capabilities(self, requirements: Dict[str, Dict[str, Any]], plan: Iterable[Dict[str, Any]]) -> None:
+        for target_name in sorted(requirements):
+            entry = requirements[target_name]
+            target = self._plan_target_by_name(plan, target_name)
+            missing_tools = self._missing_tools(target, entry["tools"])
+            missing_set = set(missing_tools)
+            entry["present_tools"] = sorted(tool for tool in entry["tools"] if tool not in missing_set)
+            entry["missing_tools"] = missing_tools
+            entry["missing_packages"] = self._packages_for_tools(missing_tools, entry["os"]["family"])
+            entry["unresolved_tools"] = self._unresolved_tools(missing_tools, entry["os"]["family"])
 
     def _missing_tools(self, target: Target, tools: Iterable[str]) -> list[str]:
         if not tools:

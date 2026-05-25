@@ -4658,6 +4658,121 @@ tasks:
     assert payload["targets"][0]["packages"] == ["acl", "zip"]
 
 
+def test_capability_requirements_text_reports_missing_tools_and_packages(tmp_path: Path, monkeypatch):
+    from automax.core.os_detect import TargetOS
+
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: missing-caps
+ tasks:
+""".replace("\n tasks:", "\ntasks:") + """
+  - id: ops
+    targets: all
+    steps:
+      - id: fs
+        substeps:
+          - id: acl
+            use: fs.acl.restore
+            with:
+              file: /tmp/acls.txt
+          - id: zip
+            use: archive.zip
+            with:
+              source: /tmp/src
+              dest: /tmp/a.zip
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  node:\n    host: 127.0.0.1\n")
+    monkeypatch.setattr(
+        AutomaxEngine,
+        "_detect_os_for_plan",
+        lambda self, plan, secrets: {"node": TargetOS(id="ubuntu", id_like=("debian",), family="debian", package_manager="apt")},
+    )
+    monkeypatch.setattr(AutomaxEngine, "_missing_tools", lambda self, target, tools: ["setfacl", "zip"])
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "capabilities",
+            "requirements",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Missing tools: 2" in result.output
+    assert "Missing packages: 2" in result.output
+    assert "setfacl -> package acl" in result.output
+    assert "zip -> package zip" in result.output
+    assert "setfacl [missing]: fs.acl.restore" in result.output
+
+
+def test_capability_install_text_streams_progress(tmp_path: Path, monkeypatch):
+    from automax.core.os_detect import TargetOS
+
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: install-progress
+ tasks:
+""".replace("\n tasks:", "\ntasks:") + """
+  - id: ops
+    targets: all
+    steps:
+      - id: fs
+        substeps:
+          - id: acl
+            use: fs.acl.restore
+            with:
+              file: /tmp/acls.txt
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  node:\n    host: 127.0.0.1\n")
+    monkeypatch.setattr(
+        AutomaxEngine,
+        "_detect_os_for_plan",
+        lambda self, plan, secrets: {"node": TargetOS(id="ubuntu", id_like=("debian",), family="debian", package_manager="apt")},
+    )
+    monkeypatch.setattr(AutomaxEngine, "_missing_tools", lambda self, target, tools: ["setfacl"])
+
+    def fake_install(self, *, target, os_family, packages, sudo_password):
+        assert packages == ["acl"]
+        return 0, "installed", ""
+
+    monkeypatch.setattr(AutomaxEngine, "_install_packages_for_os", fake_install)
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "capabilities",
+            "install",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "[CHECK] node 127.0.0.1 os=debian: checking required tools" in result.output
+    assert "[MISSING] node: tools=setfacl" in result.output
+    assert "[PLAN] node: install packages=acl" in result.output
+    assert "[INSTALL] node: packages=acl" in result.output
+    assert "[OK] node 127.0.0.1 os=debian rc=0 changed=true" in result.output
+    assert "Summary:" in result.output
+    assert result.output.index("[MISSING] node") < result.output.index("[INSTALL] node")
+
+
 def test_os_info_inventory_reports_release_details(tmp_path: Path, monkeypatch):
     from automax.core.os_detect import TargetOS
 
