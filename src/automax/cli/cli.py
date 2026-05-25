@@ -174,6 +174,47 @@ def _echo_capability_install_payload(payload: Dict[str, Any], output_format: str
                 click.echo(f"    {line}")
 
 
+def _echo_os_info_payload(payload: Dict[str, Any], output_format: str) -> None:
+    if output_format == "json":
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    click.echo(f"Inventory: {payload['inventory']}")
+    click.echo(f"Targets: {payload['target_count']}")
+    for target in payload["targets"]:
+        os_info = target["os"]
+        pretty = os_info.get("pretty_name") or os_info.get("name") or os_info.get("id") or "unknown"
+        version = os_info.get("version_id") or os_info.get("version") or "-"
+        codename = os_info.get("version_codename") or "-"
+        id_like = ",".join(os_info.get("id_like") or []) or "-"
+        user = target.get("user") or "-"
+        click.echo(
+            f"Target {target['target']} {target['host']}:{target['port']} "
+            f"user={user} os={pretty} family={os_info.get('family', 'unknown')} "
+            f"id={os_info.get('id', 'unknown')} version={version} codename={codename} "
+            f"id_like={id_like} pkg={os_info.get('package_manager', 'unknown')}"
+        )
+
+
+def _os_info_payload(
+    *,
+    inventory_path: str,
+    vars_path: str | None,
+    secrets_path: str | None,
+    cli_vars: tuple[str, ...],
+    limit: tuple[str, ...],
+    exclude: tuple[str, ...],
+    plugin_path: tuple[str, ...],
+) -> Dict[str, Any]:
+    return _engine(plugin_path).os_info_inventory(
+        inventory_path=inventory_path,
+        vars_path=vars_path,
+        secrets_path=secrets_path,
+        limit=_split_selectors(limit),
+        exclude=_split_selectors(exclude),
+        cli_vars=_parse_vars(cli_vars),
+    )
+
+
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(version=__version__, prog_name="Automax")
 def cli() -> None:
@@ -963,6 +1004,53 @@ def check_secrets(
     if not payload["ok"]:
         raise click.ClickException("one or more secrets failed checks")
 
+
+
+@cli.group()
+def os() -> None:
+    """Inspect target operating-system facts."""
+
+
+@os.command("info")
+@click.option("--inventory", "inventory_path", required=True, type=click.Path(exists=True), help="External inventory YAML path.")
+@click.option("--vars", "vars_path", type=click.Path(exists=True), help="External variables YAML path.")
+@click.option("--secrets", "secrets_path", type=click.Path(exists=True), help="External secrets YAML path.")
+@click.option("--var", "cli_vars", multiple=True, help="Override variable, format KEY=VALUE.")
+@click.option("--limit", multiple=True, help="Limit targets. Accepts server, group or group:name.")
+@click.option("--exclude", multiple=True, help="Exclude targets. Accepts server, group or group:name.")
+@click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    show_default=True,
+    help="Output format.",
+)
+def os_info(
+    inventory_path: str,
+    vars_path: str | None,
+    secrets_path: str | None,
+    cli_vars: tuple[str, ...],
+    limit: tuple[str, ...],
+    exclude: tuple[str, ...],
+    plugin_path: tuple[str, ...],
+    output_format: str,
+) -> None:
+    """Detect OS release facts for selected inventory targets."""
+    try:
+        payload = _os_info_payload(
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            cli_vars=cli_vars,
+            limit=limit,
+            exclude=exclude,
+            plugin_path=plugin_path,
+        )
+    except (AutomaxError, ValueError, RuntimeError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _echo_os_info_payload(payload, output_format)
 
 
 @cli.group()

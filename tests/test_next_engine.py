@@ -4656,3 +4656,71 @@ tasks:
     assert installs == [("node", "debian", ["acl", "zip"], None)]
     assert payload["targets"][0]["missing_tools"] == ["setfacl", "zip"]
     assert payload["targets"][0]["packages"] == ["acl", "zip"]
+
+
+def test_os_info_inventory_reports_release_details(tmp_path: Path, monkeypatch):
+    from automax.core.os_detect import TargetOS
+
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        """
+servers:
+  node:
+    host: 127.0.0.1
+    ssh:
+      user: ubuntu
+""",
+    )
+    engine = AutomaxEngine()
+    monkeypatch.setattr(
+        engine,
+        "_detect_os_for_targets",
+        lambda targets, secrets: {
+            "node": TargetOS(
+                id="ubuntu",
+                id_like=("debian",),
+                name="Ubuntu",
+                pretty_name="Ubuntu 24.04.2 LTS",
+                version="24.04.2 LTS (Noble Numbat)",
+                version_id="24.04",
+                version_codename="noble",
+                family="debian",
+                package_manager="apt",
+            )
+        },
+    )
+
+    payload = engine.os_info_inventory(inventory_path=str(inventory))
+
+    assert payload["mode"] == "os-info"
+    assert payload["target_count"] == 1
+    target = payload["targets"][0]
+    assert target["target"] == "node"
+    assert target["user"] == "ubuntu"
+    assert target["os"]["pretty_name"] == "Ubuntu 24.04.2 LTS"
+    assert target["os"]["version_codename"] == "noble"
+    assert target["os"]["family"] == "debian"
+
+
+def test_os_info_cli_json_output(tmp_path: Path, monkeypatch):
+    from automax.core.os_detect import TargetOS
+
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  node:\n    host: 127.0.0.1\n")
+    monkeypatch.setattr(
+        AutomaxEngine,
+        "_detect_os_for_targets",
+        lambda self, targets, secrets: {
+            "node": TargetOS(id="debian", id_like=(), pretty_name="Debian GNU/Linux 12", version_id="12", family="debian", package_manager="apt")
+        },
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        ["os", "info", "--inventory", str(inventory), "--format", "json"],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["mode"] == "os-info"
+    assert payload["targets"][0]["os"]["id"] == "debian"
+    assert payload["targets"][0]["os"]["pretty_name"] == "Debian GNU/Linux 12"

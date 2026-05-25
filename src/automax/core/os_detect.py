@@ -14,7 +14,11 @@ class TargetOS:
 
     id: str = "unknown"
     id_like: tuple[str, ...] = ()
+    name: str = ""
+    pretty_name: str = ""
+    version: str = ""
     version_id: str = ""
+    version_codename: str = ""
     family: str = "unknown"
     package_manager: str = "unknown"
 
@@ -52,7 +56,11 @@ def parse_os_release(text: str) -> TargetOS:
     return TargetOS(
         id=os_id,
         id_like=id_like,
+        name=values.get("NAME", ""),
+        pretty_name=values.get("PRETTY_NAME", ""),
+        version=values.get("VERSION", ""),
         version_id=values.get("VERSION_ID", ""),
+        version_codename=values.get("VERSION_CODENAME", values.get("UBUNTU_CODENAME", "")),
         family=family,
         package_manager=package_manager,
     )

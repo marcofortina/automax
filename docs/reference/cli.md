@@ -104,6 +104,20 @@ automax runs show <run-id> --server web01
 automax runs show <run-id> --json
 ```
 
+
+## OS information
+
+Detect operating-system release facts for inventory targets before capability
+planning or dependency installation:
+
+```bash
+automax os info --inventory inventory.yaml
+automax os info --inventory inventory.yaml --limit web --format=json
+```
+
+The output includes `ID`, `ID_LIKE`, pretty release name, version, codename,
+normalized family (`debian`, `rhel` or `unknown`) and package manager.
+
 ## Inventory inspection
 
 Show the inventory targets selected by a specific job:

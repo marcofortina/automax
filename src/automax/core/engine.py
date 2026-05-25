@@ -787,6 +787,48 @@ class AutomaxEngine:
             "nodes": rows,
         }
 
+    def os_info_inventory(
+        self,
+        *,
+        inventory_path: str,
+        vars_path: str | None = None,
+        secrets_path: str | None = None,
+        limit: Iterable[str] = (),
+        exclude: Iterable[str] = (),
+        cli_vars: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Detect and report operating-system facts for inventory targets."""
+        vars_document = load_yaml_file(vars_path, required=False) if vars_path else {}
+        secrets_document = load_yaml_file(secrets_path, required=False) if secrets_path else {}
+        secrets = self.secret_manager.resolve_all(
+            secrets_document,
+            base_dir=self._path_parent(secrets_path),
+        )
+        variables = self._merge_variables(vars_document, cli_vars or {})
+        context = {"vars": variables, "secrets": secrets}
+        inventory_document = load_inventory_document(inventory_path, context)
+        inventory = Inventory(inventory_document, context)
+        targets = inventory.select("all", limit=list(limit), exclude=list(exclude))
+        os_by_target = self._detect_os_for_targets(targets, secrets)
+        rows = []
+        for target in targets:
+            os_info = os_by_target[target.name]
+            rows.append(
+                {
+                    "target": target.name,
+                    "host": target.host,
+                    "port": target.port,
+                    "user": target.user,
+                    "os": self._os_to_mapping(os_info),
+                }
+            )
+        return {
+            "mode": "os-info",
+            "inventory": str(Path(inventory_path).expanduser()),
+            "target_count": len(rows),
+            "targets": rows,
+        }
+
     def capability_requirements_job(
         self,
         *,
@@ -1233,8 +1275,13 @@ class AutomaxEngine:
 
     def _detect_os_for_plan(self, plan: List[Dict[str, Any]], secrets: Dict[str, Any]) -> Dict[str, TargetOS]:
         """Detect target OS once per target before capability preflight or install."""
+        targets = {item["target"].name: item["target"] for item in plan}.values()
+        return self._detect_os_for_targets(targets, secrets)
+
+    def _detect_os_for_targets(self, targets: Iterable[Target], secrets: Dict[str, Any]) -> Dict[str, TargetOS]:
+        """Detect operating-system facts once for each target."""
         detected: Dict[str, TargetOS] = {}
-        for target in {item["target"].name: item["target"] for item in plan}.values():
+        for target in targets:
             with self.ssh_manager.connect(target) as client:
                 _stdin, stdout, stderr = client.exec_command(DETECT_OS_COMMAND)
                 rc = stdout.channel.recv_exit_status()
@@ -1251,7 +1298,11 @@ class AutomaxEngine:
         return {
             "id": os_info.id,
             "id_like": list(os_info.id_like),
+            "name": os_info.name,
+            "pretty_name": os_info.pretty_name,
+            "version": os_info.version,
             "version_id": os_info.version_id,
+            "version_codename": os_info.version_codename,
             "family": os_info.family,
             "package_manager": os_info.package_manager,
         }
