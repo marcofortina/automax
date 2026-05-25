@@ -1543,6 +1543,8 @@ class AutomaxEngine:
                     print(
                         f"[{status}] {target.name} {node_id} rc={result.rc} {self._mask_text(result.message, secrets)}".rstrip()
                     )
+                    if not result.ok:
+                        self._print_result_failure_details(result, secrets)
             if not result.ok:
                 return 1
         return 0
@@ -1681,8 +1683,56 @@ class AutomaxEngine:
             step_state=step_state,
         )
         if dry_run:
-            return plugin.dry_run(params, context)
-        return plugin.execute(params, context)
+            result = plugin.dry_run(params, context)
+        else:
+            result = plugin.execute(params, context)
+        return self._attach_manual_commands(result, plugin, params, context)
+
+    def _attach_manual_commands(
+        self,
+        result: PluginResult,
+        plugin: Any,
+        params: Dict[str, Any],
+        context: ExecutionContext,
+    ) -> PluginResult:
+        """Attach rendered operator commands to the result for state and failure output."""
+        data = dict(result.data)
+        try:
+            commands = plugin.manual_commands(params, context)
+        except Exception as exc:  # pragma: no cover - defensive diagnostics only
+            data.setdefault("manual_commands_error", str(exc))
+        else:
+            if commands:
+                data.setdefault("commands", list(commands))
+        result.data = data
+        return result
+
+    def _print_result_failure_details(self, result: PluginResult, secrets: Dict[str, Any]) -> None:
+        """Print actionable failed-substep diagnostics without exposing secrets."""
+        commands = result.data.get("commands")
+        if commands:
+            print("  commands:")
+            for command in commands:
+                print(f"    $ {self._mask_text(str(command), secrets)}")
+        elif result.data.get("manual_commands_error"):
+            print(f"  commands: <unavailable: {self._mask_text(str(result.data['manual_commands_error']), secrets)}>")
+        else:
+            print("  commands: <none>")
+        self._print_stream_details("stdout", result.stdout, secrets)
+        self._print_stream_details("stderr", result.stderr, secrets)
+
+    def _print_stream_details(self, label: str, value: str, secrets: Dict[str, Any]) -> None:
+        text = self._mask_text(value or "", secrets)
+        if not text:
+            print(f"  {label}: <empty>")
+            return
+        limit = 12000
+        truncated = len(text) > limit
+        if truncated:
+            text = text[:limit] + f"\n... <truncated {len(text) - limit} chars>"
+        print(f"  {label}:")
+        for line in text.splitlines() or [""]:
+            print(f"    {line}")
 
     def _is_condition_true(self, condition: Any, context: Dict[str, Any]) -> bool:
         if condition is None:

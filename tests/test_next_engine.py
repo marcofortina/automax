@@ -1347,6 +1347,43 @@ tasks:
     assert "substep.good" not in shown.output
 
 
+
+def test_failed_text_run_prints_command_stdout_and_stderr(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: failure-diagnostics
+tasks:
+  - id: inspect
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: bad
+            use: local.command
+            with:
+              command: "printf 'visible-out\n'; printf 'visible-err\n' >&2; exit 7"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  controller:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        ["run", "--job", str(job), "--inventory", str(inventory), "--state-dir", str(tmp_path / "runs")],
+    )
+
+    assert result.exit_code == 1, result.output
+    assert "[FAILED] controller task.inspect:step.local:substep.bad rc=7 local command failed" in result.output
+    assert "  commands:" in result.output
+    assert "printf 'visible-out" in result.output
+    assert "  stdout:" in result.output
+    assert "    visible-out" in result.output
+    assert "  stderr:" in result.output
+    assert "    visible-err" in result.output
+
 def test_runs_show_json_includes_summary_and_filtered_nodes(tmp_path: Path):
     job = write(
         tmp_path / "job.yaml",

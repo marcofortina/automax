@@ -144,6 +144,29 @@ The backup is created only when the replacement actually changes the file.
 replacement, count and backup target instead of pretending to know the final
 remote diff.
 
+## Failed substep diagnostics
+
+When a text run substep fails, Automax prints the rendered operator command plus
+masked stdout and stderr immediately below the failed status line. This makes a
+failed lab or production run actionable without first opening the SQLite state or
+re-rendering the command manually.
+
+Example:
+
+```text
+[FAILED] web01 task.deploy:step.install:substep.restart rc=1 remote command failed
+  commands:
+    $ sudo -n systemctl restart nginx
+  stdout: <empty>
+  stderr:
+    Job for nginx.service failed because the control process exited with error code.
+```
+
+The same redaction policy used for persisted run state is applied to command,
+stdout and stderr diagnostics before printing. Successful substeps keep the
+compact one-line output; use `automax commands render` when every command needs
+to be displayed before execution.
+
 ## Render manual recovery commands
 
 When a job fails, render copy/pasteable commands for the same selected substeps:
