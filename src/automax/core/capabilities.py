@@ -9,6 +9,8 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable
 
+from automax.core.os_detect import TargetOS
+
 
 @dataclass(frozen=True)
 class CapabilityRequirement:
@@ -70,8 +72,6 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "iptables.restore": ("iptables-restore",),
     "iptables.rule": ("iptables",),
     "iptables.save": ("iptables-save",),
-    "kernel.boot_param": ("grubby",),
-    "kernel.boot_param_absent": ("grubby",),
     "lvm.facts": ("pvs", "vgs", "lvs"),
     "lvm.lv_assert": ("lvs",),
     "lvm.lv_present": ("lvcreate", "lvs"),
@@ -90,16 +90,9 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "nftables.rollback_file": ("nft",),
     "nftables.ruleset_assert": ("nft",),
     "nftables.validate": ("nft",),
-    "pam.authselect": ("authselect",),
     "pam.validate": ("awk",),
-    "pkg.clean": ("apt-get", "dnf", "yum", "zypper", "pacman"),
-    "pkg.hold": ("apt-mark", "dnf", "yum", "zypper"),
-    "pkg.owner": ("dpkg-query", "rpm", "pacman"),
     "pkg.pin": ("install",),
     "pkg.repo_priority": ("install",),
-    "pkg.unhold": ("apt-mark", "dnf", "yum", "zypper"),
-    "pkg.verify": ("dpkg", "rpm", "pacman"),
-    "pkg.version_assert": ("dpkg-query", "rpm", "pacman"),
     "ssh.fingerprint": ("ssh-keygen",),
     "ssh.host_keygen": ("ssh-keygen",),
     "ssh.keygen": ("ssh-keygen",),
@@ -124,6 +117,20 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "udev.test": ("udevadm",),
     "udev.trigger": ("udevadm",),
     "udev.validate": ("udevadm",),
+}
+
+DEBIAN_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
+    "pkg.clean": ("apt-get",),
+    "pkg.hold": ("apt-mark",),
+    "pkg.owner": ("dpkg-query",),
+    "pkg.query": ("dpkg-query",),
+    "pkg.unhold": ("apt-mark",),
+    "pkg.verify": ("dpkg",),
+    "pkg.version_assert": ("dpkg-query",),
+    "pkg.update_cache": ("apt-get",),
+    "pkg.install": ("apt-get", "dpkg-query"),
+    "pkg.remove": ("apt-get", "dpkg-query"),
+    "pkg.upgrade": ("apt-get",),
     "ufw.delete": ("ufw",),
     "ufw.disable": ("ufw",),
     "ufw.enable": ("ufw",),
@@ -132,15 +139,42 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "ufw.status": ("ufw",),
 }
 
+RHEL_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
+    "authselect.profile": ("authselect",),
+    "kernel.boot_param": ("grubby",),
+    "kernel.boot_param_absent": ("grubby",),
+    "pam.authselect": ("authselect",),
+    "pkg.clean": ("rpm",),
+    "pkg.hold": ("rpm",),
+    "pkg.owner": ("rpm",),
+    "pkg.query": ("rpm",),
+    "pkg.unhold": ("rpm",),
+    "pkg.verify": ("rpm",),
+    "pkg.version_assert": ("rpm",),
+    "pkg.update_cache": ("rpm",),
+    "pkg.install": ("rpm",),
+    "pkg.remove": ("rpm",),
+    "pkg.upgrade": ("rpm",),
+}
+
 PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "archive.": ("tar", "unzip", "zip", "gzip"),
-    "firewalld.": ("firewall-cmd",),
     "fs.attr": ("chattr",),
     "kernel.module.": ("modprobe", "lsmod"),
     "mount.": ("mount",),
     "process.": ("pgrep",),
     "systemctl.": ("systemctl",),
     "systemd.": ("systemctl",),
+}
+
+DEBIAN_PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
+    "apparmor.": ("apparmor_parser",),
+    "ufw.": ("ufw",),
+}
+
+RHEL_PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
+    "firewalld.": ("firewall-cmd",),
+    "selinux.": ("semanage",),
 }
 
 PARAM_TOOL_REQUIREMENTS: Dict[tuple[str, str], tuple[str, ...]] = {
@@ -152,45 +186,246 @@ PARAM_TOOL_REQUIREMENTS: Dict[tuple[str, str], tuple[str, ...]] = {
     ("archive.unzip", "checksum"): ("sha256sum",),
 }
 
+DEBIAN_PACKAGES: Dict[str, str] = {
+    "aa-complain": "apparmor-utils",
+    "aa-disable": "apparmor-utils",
+    "aa-enforce": "apparmor-utils",
+    "aa-status": "apparmor-utils",
+    "apparmor_parser": "apparmor",
+    "apt-get": "apt",
+    "apt-mark": "apt",
+    "auditctl": "auditd",
+    "ausearch": "auditd",
+    "awk": "mawk",
+    "blkid": "util-linux",
+    "chattr": "e2fsprogs",
+    "chronyc": "chrony",
+    "crontab": "cron",
+    "curl": "curl",
+    "dpkg": "dpkg",
+    "dpkg-query": "dpkg",
+    "find": "findutils",
+    "findmnt": "util-linux",
+    "getfacl": "acl",
+    "gzip": "gzip",
+    "install": "coreutils",
+    "ip6tables": "iptables",
+    "iptables": "iptables",
+    "iptables-restore": "iptables",
+    "iptables-save": "iptables",
+    "lsmod": "kmod",
+    "lvcreate": "lvm2",
+    "lvremove": "lvm2",
+    "lvs": "lvm2",
+    "modprobe": "kmod",
+    "mount": "mount",
+    "nc": "netcat-openbsd",
+    "nft": "nftables",
+    "openssl": "openssl",
+    "pgrep": "procps",
+    "pvcreate": "lvm2",
+    "pvremove": "lvm2",
+    "pvs": "lvm2",
+    "rsync": "rsync",
+    "setfacl": "acl",
+    "sha256sum": "coreutils",
+    "ssh-keygen": "openssh-client",
+    "sshd": "openssh-server",
+    "sudo": "sudo",
+    "swapon": "util-linux",
+    "sysctl": "procps",
+    "systemctl": "systemd",
+    "tar": "tar",
+    "timedatectl": "systemd",
+    "udevadm": "udev",
+    "ufw": "ufw",
+    "unzip": "unzip",
+    "update-alternatives": "dpkg",
+    "vgcreate": "lvm2",
+    "vgremove": "lvm2",
+    "vgs": "lvm2",
+    "visudo": "sudo",
+    "zip": "zip",
+}
 
-def plugin_tools(plugin_name: str, params: Dict[str, Any] | None = None) -> tuple[str, ...]:
-    """Return best-effort remote tools required by one plugin invocation."""
+RHEL_PACKAGES: Dict[str, str] = {
+    "auditctl": "audit",
+    "ausearch": "audit",
+    "authselect": "authselect",
+    "awk": "gawk",
+    "blkid": "util-linux",
+    "chattr": "e2fsprogs",
+    "chronyc": "chrony",
+    "crontab": "cronie",
+    "curl": "curl",
+    "dnf": "dnf",
+    "firewall-cmd": "firewalld",
+    "find": "findutils",
+    "findmnt": "util-linux",
+    "getfacl": "acl",
+    "grubby": "grubby",
+    "gzip": "gzip",
+    "install": "coreutils",
+    "ip6tables": "iptables",
+    "iptables": "iptables",
+    "iptables-restore": "iptables",
+    "iptables-save": "iptables",
+    "lsmod": "kmod",
+    "lvcreate": "lvm2",
+    "lvremove": "lvm2",
+    "lvs": "lvm2",
+    "modprobe": "kmod",
+    "mount": "util-linux",
+    "nc": "nmap-ncat",
+    "nft": "nftables",
+    "openssl": "openssl",
+    "pgrep": "procps-ng",
+    "pvcreate": "lvm2",
+    "pvremove": "lvm2",
+    "pvs": "lvm2",
+    "restorecon": "policycoreutils",
+    "rpm": "rpm",
+    "rsync": "rsync",
+    "semanage": "policycoreutils-python-utils",
+    "setfacl": "acl",
+    "sha256sum": "coreutils",
+    "ssh-keygen": "openssh-clients",
+    "sshd": "openssh-server",
+    "sudo": "sudo",
+    "swapon": "util-linux",
+    "sysctl": "procps-ng",
+    "systemctl": "systemd",
+    "tar": "tar",
+    "timedatectl": "systemd",
+    "udevadm": "systemd-udev",
+    "unzip": "unzip",
+    "update-alternatives": "chkconfig",
+    "vgcreate": "lvm2",
+    "vgremove": "lvm2",
+    "vgs": "lvm2",
+    "visudo": "sudo",
+    "yum": "yum",
+    "zip": "zip",
+}
+
+DEBIAN_ONLY_PREFIXES = ("apparmor.", "ufw.")
+RHEL_ONLY_PREFIXES = ("firewalld.", "selinux.")
+DEBIAN_ONLY_EXACT = frozenset[str]()
+RHEL_ONLY_EXACT = frozenset({"authselect.profile", "kernel.boot_param", "kernel.boot_param_absent", "pam.authselect"})
+
+
+def plugin_os_mismatch(plugin_name: str, os_family: str | None, params: Dict[str, Any] | None = None) -> str | None:
+    """Return a warning reason when a backend plugin does not match the target OS family."""
     params = params or {}
+    if not os_family or os_family == "unknown":
+        return None
+    manager = str(params.get("manager", "auto"))
+    if plugin_name.startswith("pkg."):
+        if os_family == "debian" and manager in {"dnf", "yum", "zypper", "pacman"}:
+            return f"{plugin_name} manager={manager} does not match DEBIAN-like target"
+        if os_family == "rhel" and manager in {"apt", "apt-get", "zypper", "pacman"}:
+            return f"{plugin_name} manager={manager} does not match RHEL-like target"
+    if os_family == "debian" and (plugin_name in RHEL_ONLY_EXACT or plugin_name.startswith(RHEL_ONLY_PREFIXES)):
+        return f"{plugin_name} is RHEL-like only; target is DEBIAN-like"
+    if os_family == "rhel" and (plugin_name in DEBIAN_ONLY_EXACT or plugin_name.startswith(DEBIAN_ONLY_PREFIXES)):
+        return f"{plugin_name} is DEBIAN-like only; target is RHEL-like"
+    return None
+
+
+def plugin_tools(plugin_name: str, params: Dict[str, Any] | None = None, os_family: str | None = None) -> tuple[str, ...]:
+    """Return remote tools required by one plugin invocation for one OS family."""
+    params = params or {}
+    if plugin_os_mismatch(plugin_name, os_family, params):
+        return ()
     tools: set[str] = set(EXACT_TOOL_REQUIREMENTS.get(plugin_name, ()))
     for prefix, prefix_tools in PREFIX_TOOL_REQUIREMENTS.items():
         if plugin_name.startswith(prefix):
             tools.update(prefix_tools)
+    if os_family == "debian":
+        tools.update(DEBIAN_TOOL_REQUIREMENTS.get(plugin_name, ()))
+        for prefix, prefix_tools in DEBIAN_PREFIX_TOOL_REQUIREMENTS.items():
+            if plugin_name.startswith(prefix):
+                tools.update(prefix_tools)
+    elif os_family == "rhel":
+        tools.update(RHEL_TOOL_REQUIREMENTS.get(plugin_name, ()))
+        for prefix, prefix_tools in RHEL_PREFIX_TOOL_REQUIREMENTS.items():
+            if plugin_name.startswith(prefix):
+                tools.update(prefix_tools)
+    else:
+        tools.update(DEBIAN_TOOL_REQUIREMENTS.get(plugin_name, ()))
+        tools.update(RHEL_TOOL_REQUIREMENTS.get(plugin_name, ()))
+        for prefix, prefix_tools in {**DEBIAN_PREFIX_TOOL_REQUIREMENTS, **RHEL_PREFIX_TOOL_REQUIREMENTS}.items():
+            if plugin_name.startswith(prefix):
+                tools.update(prefix_tools)
     for (name, param), param_tools in PARAM_TOOL_REQUIREMENTS.items():
         if plugin_name == name and params.get(param):
             tools.update(param_tools)
+    manager = str(params.get("manager", "auto"))
+    if plugin_name.startswith("pkg.") and os_family in {"debian", "rhel"}:
+        if os_family == "debian" and manager in {"dnf", "yum"}:
+            return ()
+        if os_family == "rhel" and manager in {"apt", "apt-get"}:
+            return ()
     return tuple(sorted(tools))
 
 
-def collect_requirements(items: Iterable[Dict[str, Any]]) -> dict[str, Dict[str, Any]]:
+def package_for_tool(tool: str, os_family: str) -> str | None:
+    """Return the package that should provide a tool on the requested OS family."""
+    if os_family == "debian":
+        return DEBIAN_PACKAGES.get(tool)
+    if os_family == "rhel":
+        return RHEL_PACKAGES.get(tool)
+    return None
+
+
+def collect_requirements(
+    items: Iterable[Dict[str, Any]],
+    os_by_target: Dict[str, TargetOS] | None = None,
+) -> dict[str, Dict[str, Any]]:
     """Aggregate capability requirements by target from rendered plan items."""
+    os_by_target = os_by_target or {}
     targets: dict[str, Dict[str, Any]] = {}
     for item in items:
         target = item["target"]
+        os_info = os_by_target.get(target.name, TargetOS())
         entry = targets.setdefault(
             target.name,
             {
                 "target": target.name,
                 "host": target.host,
+                "os": os_info,
                 "tools": set(),
                 "plugins": defaultdict(set),
+                "skipped_plugins": [],
             },
         )
-        tools = plugin_tools(str(item["plugin_name"]), item.get("params", {}))
+        plugin_name = str(item["plugin_name"])
+        mismatch = plugin_os_mismatch(plugin_name, os_info.family, item.get("params", {}))
+        if mismatch:
+            entry["skipped_plugins"].append({"plugin": plugin_name, "reason": mismatch})
+            continue
+        tools = plugin_tools(plugin_name, item.get("params", {}), os_info.family)
         entry["tools"].update(tools)
         for tool in tools:
-            entry["plugins"][tool].add(str(item["plugin_name"]))
+            entry["plugins"][tool].add(plugin_name)
     normalized: dict[str, Dict[str, Any]] = {}
     for name, entry in targets.items():
+        os_info = entry["os"]
+        tools = sorted(entry["tools"])
         normalized[name] = {
             "target": entry["target"],
             "host": entry["host"],
-            "tools": sorted(entry["tools"]),
+            "os": {
+                "id": os_info.id,
+                "id_like": list(os_info.id_like),
+                "version_id": os_info.version_id,
+                "family": os_info.family,
+                "package_manager": os_info.package_manager,
+            },
+            "tools": tools,
+            "packages": sorted({package for tool in tools if (package := package_for_tool(tool, os_info.family))}),
             "plugins": {tool: sorted(plugins) for tool, plugins in sorted(entry["plugins"].items())},
-            "commands": [f"command -v {tool}" for tool in sorted(entry["tools"])],
+            "commands": [f"command -v {tool}" for tool in tools],
+            "skipped_plugins": sorted(entry["skipped_plugins"], key=lambda item: item["plugin"]),
         }
     return normalized

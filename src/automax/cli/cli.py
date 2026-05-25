@@ -126,9 +126,17 @@ def _echo_capabilities_payload(payload: Dict[str, Any], output_format: str) -> N
         click.echo(json.dumps(payload, indent=2, sort_keys=True))
         return
     click.echo(f"Job: {payload['job']}")
-    click.echo(f"Targets: {payload['target_count']}  Tools: {payload['tool_count']}")
+    click.echo(f"Targets: {payload['target_count']}  Tools: {payload['tool_count']}  Packages: {payload.get('package_count', 0)}")
     for target in payload["targets"]:
-        click.echo(f"Target {target['target']} {target['host']}")
+        click.echo(f"Target {target['target']} {target['host']} os={target.get('os', {}).get('family', 'unknown')} id={target.get('os', {}).get('id', 'unknown')}")
+        if target.get("skipped_plugins"):
+            click.echo("  skipped OS-mismatched plugins:")
+            for skipped in target["skipped_plugins"]:
+                click.echo(f"    {skipped['plugin']}: {skipped['reason']}")
+        if target.get("packages"):
+            click.echo("  packages:")
+            for package in target["packages"]:
+                click.echo(f"    {package}")
         if not target["tools"]:
             click.echo("  - no external tool requirements detected")
             continue
@@ -138,6 +146,32 @@ def _echo_capabilities_payload(payload: Dict[str, Any], output_format: str) -> N
         click.echo("  preflight commands:")
         for command in target["commands"]:
             click.echo(f"    {command}")
+
+
+def _echo_capability_install_payload(payload: Dict[str, Any], output_format: str) -> None:
+    if output_format == "json":
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    click.echo(f"Job: {payload['job']}")
+    for target in payload["targets"]:
+        status = "OK" if target["ok"] else "FAILED"
+        click.echo(f"[{status}] {target['target']} {target['host']} os={target['os']['family']} rc={target['rc']}")
+        if target["missing_tools"]:
+            click.echo("  missing tools:")
+            for tool in target["missing_tools"]:
+                click.echo(f"    {tool}")
+        if target["packages"]:
+            click.echo("  installed packages:")
+            for package in target["packages"]:
+                click.echo(f"    {package}")
+        if target["unresolved_tools"]:
+            click.echo("  unresolved tools:")
+            for tool in target["unresolved_tools"]:
+                click.echo(f"    {tool}")
+        if target["stderr"]:
+            click.echo("  stderr:")
+            for line in target["stderr"].splitlines():
+                click.echo(f"    {line}")
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
@@ -175,7 +209,7 @@ def _apply_common_options(function):
 @click.option("--lock", is_flag=True, help="Acquire job/target locks before executing.")
 @click.option("--lock-scope", type=click.Choice(["job", "target", "both"]), default="both", show_default=True, help="Lock job, targets or both.")
 @click.option("--lock-timeout", type=float, default=0.0, show_default=True, help="Seconds to wait for locks.")
-@click.option("--preflight-capabilities", is_flag=True, help="Check remote tools required by the selected job before execution.")
+@click.option("--preflight-capabilities", is_flag=True, help="Compatibility flag; capability preflight is implicit for normal runs.")
 @click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", show_default=True, help="Output format for the final run summary.")
 def run(
     job_path: str,
@@ -943,6 +977,7 @@ def capabilities() -> None:
 @click.option("--tags", multiple=True, help="Show requirements for substeps matching one of these tags.")
 @click.option("--skip-tags", multiple=True, help="Hide requirements for substeps matching one of these tags.")
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option("--detect-os", is_flag=True, help="Detect target OS and filter requirements for each OS family.")
 @click.option(
     "--format",
     "output_format",
@@ -962,6 +997,7 @@ def capability_requirements(
     tags: tuple[str, ...],
     skip_tags: tuple[str, ...],
     plugin_path: tuple[str, ...],
+    detect_os: bool,
     output_format: str,
 ) -> None:
     """Render tool requirements derived from the selected job plan."""
@@ -976,10 +1012,62 @@ def capability_requirements(
             tags=_split_selectors(tags),
             skip_tags=_split_selectors(skip_tags),
             cli_vars=_parse_vars(cli_vars),
+            detect_os=detect_os,
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc
     _echo_capabilities_payload(payload, output_format)
+
+
+@capabilities.command("install")
+@_apply_common_options
+@click.option("--limit", multiple=True, help="Limit targets. Accepts server, group or group:name.")
+@click.option("--exclude", multiple=True, help="Exclude targets. Accepts server, group or group:name.")
+@click.option("--tags", multiple=True, help="Install dependencies for substeps matching one of these tags.")
+@click.option("--skip-tags", multiple=True, help="Skip substeps matching one of these tags.")
+@click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option("--sudo-password-env", help="Environment variable containing sudo password for sudo -S installs.")
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    show_default=True,
+    help="Output format.",
+)
+def capability_install(
+    job_path: str,
+    inventory_path: str,
+    vars_path: str | None,
+    secrets_path: str | None,
+    cli_vars: tuple[str, ...],
+    limit: tuple[str, ...],
+    exclude: tuple[str, ...],
+    tags: tuple[str, ...],
+    skip_tags: tuple[str, ...],
+    plugin_path: tuple[str, ...],
+    sudo_password_env: str | None,
+    output_format: str,
+) -> None:
+    """Install missing packages for job-scoped capability requirements."""
+    try:
+        payload = _engine(plugin_path).install_capability_requirements_job(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=_split_selectors(limit),
+            exclude=_split_selectors(exclude),
+            tags=_split_selectors(tags),
+            skip_tags=_split_selectors(skip_tags),
+            cli_vars=_parse_vars(cli_vars),
+            sudo_password_env=sudo_password_env,
+        )
+    except (AutomaxError, ValueError, RuntimeError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    _echo_capability_install_payload(payload, output_format)
+    if not payload["ok"]:
+        raise click.ClickException("one or more targets could not install all missing capability packages")
 
 
 @cli.group()

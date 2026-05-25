@@ -237,12 +237,24 @@ User and group readback/assertion plugins include `user.facts`,
 `user.shell_assert`, `user.home_assert`, `user.groups_assert`, `group.members`
 and `group.member_absent`. Removing a group member requires `confirm: true`.
 
-## Job-scoped capability preflight
+## OS-aware job-scoped capability preflight
 
-Automax can derive remote command dependencies from the selected job plan and render per-target checks. This keeps dependency preflight scoped to the actual plugins that will run, rather than requiring broad host assumptions.
+Automax can derive remote command dependencies from the selected job plan and render per-target checks. With `--detect-os`, Automax first reads `/etc/os-release` on each target, classifies it as DEBIAN-like or RHEL-like, filters backend-specific plugins for that OS family, and reports OS-mismatched plugins as skipped requirements instead of requiring irrelevant tools.
 
 ```bash
-automax capabilities requirements --job jobs/site.yaml --inventory inventory/prod.yaml
+automax capabilities requirements --job jobs/site.yaml --inventory inventory/prod.yaml --detect-os
 ```
 
-Use job-level `preflight.capabilities: true` or the `automax run --preflight-capabilities` flag to make the run fail early when required remote tools are missing.
+Normal `automax run` performs this OS detection and capability preflight implicitly before executing selected substeps. The older `--preflight-capabilities` flag remains accepted for compatibility, but the preflight is now the default for normal runs that require remote tools.
+
+Missing dependencies can be installed per target from the OS-aware requirement plan:
+
+```bash
+export AUTOMAX_SUDO_PASSWORD='...'
+automax capabilities install \
+  --job jobs/site.yaml \
+  --inventory inventory/prod.yaml \
+  --sudo-password-env AUTOMAX_SUDO_PASSWORD
+```
+
+Only packages for tools that are actually missing on each target are installed. OS-mismatched plugins are not installed for that target.

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
+import os
+import shlex
 from copy import deepcopy
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
@@ -20,10 +22,11 @@ import time
 import uuid
 from typing import Any, Dict, Iterable, List, Optional
 
-from automax.core.capabilities import collect_requirements
+from automax.core.capabilities import collect_requirements, package_for_tool, plugin_os_mismatch
 from automax.core.inventory import Inventory, load_inventory_document
 from automax.core.job_views import build_job_view
 from automax.core.locks import LockManager
+from automax.core.os_detect import DETECT_OS_COMMAND, TargetOS, parse_os_release
 from automax.core.redaction import iter_secret_texts, redact_mapping, redact_text
 from automax.core.models import ExecutionContext, NodeStatus, PluginResult, Target
 from automax.core.secrets import SecretManager
@@ -160,8 +163,12 @@ class AutomaxEngine:
                 self._print_plan(run_id, plan, output_format=output_format)
                 return 0
 
-            if preflight_capabilities or bool(job.get("preflight", {}).get("capabilities", False)):
-                self._run_capability_preflight(job=job, plan=plan, variables=variables, secrets=secrets)
+            variables = dict(variables)
+            os_by_target: Dict[str, TargetOS] = {}
+            if not dry_run and self._plan_requires_capability_preflight(job=job, plan=plan, variables=variables, secrets=secrets):
+                os_by_target = self._detect_os_for_plan(plan, secrets)
+                variables["__automax_os_by_target"] = {name: self._os_to_mapping(info) for name, info in os_by_target.items()}
+                self._run_capability_preflight(job=job, plan=plan, variables=variables, secrets=secrets, os_by_target=os_by_target)
                 store.record_event("capability_preflight_ok", payload={"targets": len({item["target"].name for item in plan})})
 
             lock_manager = LockManager.for_state_dir(state_dir) if lock else None
@@ -792,6 +799,7 @@ class AutomaxEngine:
         tags: Iterable[str] = (),
         skip_tags: Iterable[str] = (),
         cli_vars: Optional[Dict[str, Any]] = None,
+        detect_os: bool = False,
     ) -> Dict[str, Any]:
         """Return job-scoped remote capability requirements from the selected plan."""
         resolved = self.resolve_job_context(
@@ -805,13 +813,89 @@ class AutomaxEngine:
             skip_tags=skip_tags,
             cli_vars=cli_vars,
         )
-        requirements = collect_requirements(self.iter_rendered_plan_items(resolved, dry_run=True))
+        os_by_target = self._detect_os_for_plan(resolved.plan, resolved.secrets) if detect_os else {}
+        requirements = collect_requirements(self.iter_rendered_plan_items(resolved, dry_run=True), os_by_target)
         return {
             "job": self._job_name(resolved.job),
             "mode": "capability-requirements",
+            "detect_os": detect_os,
             "targets": [requirements[name] for name in sorted(requirements)],
             "target_count": len(requirements),
             "tool_count": len({tool for item in requirements.values() for tool in item["tools"]}),
+            "package_count": len({package for item in requirements.values() for package in item.get("packages", [])}),
+        }
+
+    def install_capability_requirements_job(
+        self,
+        *,
+        job_path: str,
+        inventory_path: str,
+        vars_path: str | None = None,
+        secrets_path: str | None = None,
+        limit: Iterable[str] = (),
+        exclude: Iterable[str] = (),
+        tags: Iterable[str] = (),
+        skip_tags: Iterable[str] = (),
+        cli_vars: Optional[Dict[str, Any]] = None,
+        sudo_password_env: str | None = None,
+    ) -> Dict[str, Any]:
+        """Install missing target packages required by the selected job plan."""
+        resolved = self.resolve_job_context(
+            job_path=job_path,
+            inventory_path=inventory_path,
+            vars_path=vars_path,
+            secrets_path=secrets_path,
+            limit=limit,
+            exclude=exclude,
+            tags=tags,
+            skip_tags=skip_tags,
+            cli_vars=cli_vars,
+        )
+        os_by_target = self._detect_os_for_plan(resolved.plan, resolved.secrets)
+        requirements = collect_requirements(self.iter_rendered_plan_items(resolved, dry_run=True), os_by_target)
+        sudo_password = os.environ.get(sudo_password_env) if sudo_password_env else None
+        targets = []
+        ok = True
+        for target_name in sorted(requirements):
+            entry = requirements[target_name]
+            target = next(item["target"] for item in resolved.plan if item["target"].name == target_name)
+            missing_tools = self._missing_tools(target, entry["tools"])
+            packages = sorted({package for tool in missing_tools if (package := package_for_tool(tool, entry["os"]["family"]))})
+            unresolved = sorted(tool for tool in missing_tools if package_for_tool(tool, entry["os"]["family"]) is None)
+            rc = 0
+            stdout = ""
+            stderr = ""
+            changed = False
+            if packages:
+                rc, stdout, stderr = self._install_packages_for_os(
+                    target=target,
+                    os_family=entry["os"]["family"],
+                    packages=packages,
+                    sudo_password=sudo_password,
+                )
+                changed = rc == 0
+            target_ok = rc == 0 and not unresolved
+            ok = ok and target_ok
+            targets.append(
+                {
+                    "target": target_name,
+                    "host": entry["host"],
+                    "os": entry["os"],
+                    "missing_tools": missing_tools,
+                    "packages": packages,
+                    "unresolved_tools": unresolved,
+                    "changed": changed,
+                    "ok": target_ok,
+                    "rc": rc,
+                    "stdout": self._mask_text(stdout, resolved.secrets),
+                    "stderr": self._mask_text(stderr, resolved.secrets),
+                }
+            )
+        return {
+            "job": self._job_name(resolved.job),
+            "mode": "capability-install",
+            "ok": ok,
+            "targets": targets,
         }
 
     def validate(
@@ -1126,6 +1210,100 @@ class AutomaxEngine:
             raise AutomaxError("job plan is empty after target/tag filtering")
         return plan
 
+    def _plan_requires_capability_preflight(
+        self,
+        *,
+        job: Dict[str, Any],
+        plan: List[Dict[str, Any]],
+        variables: Dict[str, Any],
+        secrets: Dict[str, Any],
+    ) -> bool:
+        resolved = ResolvedJobContext(
+            job_path="",
+            inventory_path="",
+            vars_path=None,
+            secrets_path=None,
+            documents={},
+            job=job,
+            inventory=None,  # type: ignore[arg-type]
+            variables=variables,
+            secrets=secrets,
+            plan=plan,
+        )
+        requirements = collect_requirements(self.iter_rendered_plan_items(resolved, dry_run=True))
+        return any(item["tools"] for item in requirements.values())
+
+    def _detect_os_for_plan(self, plan: List[Dict[str, Any]], secrets: Dict[str, Any]) -> Dict[str, TargetOS]:
+        """Detect target OS once per target before capability preflight or install."""
+        detected: Dict[str, TargetOS] = {}
+        for target in {item["target"].name: item["target"] for item in plan}.values():
+            with self.ssh_manager.connect(target) as client:
+                _stdin, stdout, stderr = client.exec_command(DETECT_OS_COMMAND)
+                rc = stdout.channel.recv_exit_status()
+                out = stdout.read().decode("utf-8", errors="replace")
+                err = stderr.read().decode("utf-8", errors="replace")
+            if rc != 0 or not out.strip():
+                detail = self._mask_text((out + "\n" + err).strip(), secrets)
+                raise AutomaxError(f"OS detection failed for {target.name}: {detail}")
+            detected[target.name] = parse_os_release(out)
+        return detected
+
+    @staticmethod
+    def _os_to_mapping(os_info: TargetOS) -> Dict[str, Any]:
+        return {
+            "id": os_info.id,
+            "id_like": list(os_info.id_like),
+            "version_id": os_info.version_id,
+            "family": os_info.family,
+            "package_manager": os_info.package_manager,
+        }
+
+    def _missing_tools(self, target: Target, tools: Iterable[str]) -> list[str]:
+        if not tools:
+            return []
+        command = "missing=0; " + " ".join(
+            f"command -v {tool} >/dev/null 2>&1 || {{ echo {tool}; missing=1; }};"
+            for tool in sorted(set(tools))
+        ) + " exit 0"
+        with self.ssh_manager.connect(target) as client:
+            _stdin, stdout, _stderr = client.exec_command(command)
+            stdout.channel.recv_exit_status()
+            out = stdout.read().decode("utf-8", errors="replace")
+        return sorted({line.strip() for line in out.splitlines() if line.strip()})
+
+    def _install_packages_for_os(
+        self,
+        *,
+        target: Target,
+        os_family: str,
+        packages: list[str],
+        sudo_password: str | None,
+    ) -> tuple[int, str, str]:
+        if not packages:
+            return 0, "", ""
+        package_args = " ".join(shlex.quote(package) for package in packages)
+        sudo = "sudo -n"
+        if sudo_password:
+            sudo = f"printf '%s\\n' {shlex.quote(sudo_password)} | sudo -S"
+        if os_family == "debian":
+            command = (
+                f"{sudo} apt-get update && "
+                f"{sudo} env DEBIAN_FRONTEND=noninteractive apt-get install -y {package_args}"
+            )
+        elif os_family == "rhel":
+            command = (
+                f"if command -v dnf >/dev/null 2>&1; then {sudo} dnf install -y {package_args}; "
+                f"else {sudo} yum install -y {package_args}; fi"
+            )
+        else:
+            return 2, "", f"unsupported OS family for dependency install: {os_family}"
+        with self.ssh_manager.connect(target) as client:
+            _stdin, stdout, stderr = client.exec_command(command, get_pty=bool(sudo_password))
+            rc = stdout.channel.recv_exit_status()
+            out = stdout.read().decode("utf-8", errors="replace")
+            err = stderr.read().decode("utf-8", errors="replace")
+        return rc, out, err
+
     def _run_capability_preflight(
         self,
         *,
@@ -1133,6 +1311,7 @@ class AutomaxEngine:
         plan: List[Dict[str, Any]],
         variables: Dict[str, Any],
         secrets: Dict[str, Any],
+        os_by_target: Dict[str, TargetOS] | None = None,
     ) -> None:
         """Check remote tools required by the selected job before executing it."""
         rendered_items = []
@@ -1149,7 +1328,7 @@ class AutomaxEngine:
             plan=plan,
         )
         rendered_items.extend(self.iter_rendered_plan_items(resolved, dry_run=True))
-        requirements = collect_requirements(rendered_items)
+        requirements = collect_requirements(rendered_items, os_by_target or {})
         for target_name, entry in requirements.items():
             tools = entry["tools"]
             if not tools:
@@ -1665,6 +1844,10 @@ class AutomaxEngine:
         params = rendered_substep.get("with", rendered_substep.get("params", {})) or {}
         plugin = self.plugin_registry.get(str(plugin_name))
         plugin.validate(params)
+        target_os = effective_vars.get("__automax_os_by_target", {}).get(target.name, {})
+        os_family = target_os.get("family") if isinstance(target_os, dict) else None
+        if mismatch := plugin_os_mismatch(str(plugin_name), os_family, params):
+            return PluginResult.warning_result(message=mismatch, data={"os_mismatch": mismatch})
 
         context = ExecutionContext(
             run_id=run_id,

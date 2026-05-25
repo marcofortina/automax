@@ -103,7 +103,7 @@ paths.
 
 ## Capability preflight and redaction policy
 
-Use `capabilities requirements` to derive remote tool requirements from the selected job plan before execution. Use `--preflight-capabilities` on `automax run`, or set `preflight.capabilities: true` in the job, to make Automax check required remote executables before running selected substeps.
+Use `capabilities requirements --detect-os` to derive remote tool requirements from the selected job plan after detecting each target OS family. Normal `automax run` performs the same OS-aware capability preflight implicitly before executing remote tools. Use `capabilities install --sudo-password-env ENV_NAME` to install only missing dependency packages for the selected job and target OS.
 
 The explicit capability plugins are:
 

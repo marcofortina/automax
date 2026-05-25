@@ -4491,3 +4491,109 @@ def test_capability_and_redaction_plugins_render_safe_previews():
     assert "password=***" in redacted.data["redacted"]
     leaked = registry.get("secret.redact_assert").execute({"text": "value=super-secret-token"}, context)
     assert not leaked.ok
+
+
+def test_capability_requirements_filter_tools_by_detected_os(tmp_path: Path, monkeypatch):
+    from automax.core.os_detect import TargetOS
+
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: os-capabilities
+tasks:
+  - id: ops
+    targets: all
+    steps:
+      - id: firewall
+        substeps:
+          - id: firewalld
+            use: firewalld.port
+            with:
+              port: 8443
+          - id: ufw
+            use: ufw.rule
+            with:
+              rule: allow
+              port: 8443
+              protocol: tcp
+          - id: pkg
+            use: pkg.install
+            with:
+              packages: [curl]
+              manager: auto
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  node:\n    host: 127.0.0.1\n")
+    engine = AutomaxEngine()
+    monkeypatch.setattr(
+        engine,
+        "_detect_os_for_plan",
+        lambda plan, secrets: {"node": TargetOS(id="ubuntu", id_like=("debian",), family="debian", package_manager="apt")},
+    )
+
+    payload = engine.capability_requirements_job(job_path=str(job), inventory_path=str(inventory), detect_os=True)
+
+    target = payload["targets"][0]
+    assert target["os"]["family"] == "debian"
+    assert "apt-get" in target["tools"]
+    assert "ufw" in target["tools"]
+    assert "firewall-cmd" not in target["tools"]
+    assert any(item["plugin"] == "firewalld.port" for item in target["skipped_plugins"])
+
+
+def test_capability_install_maps_only_missing_tools_to_packages(tmp_path: Path, monkeypatch):
+    from automax.core.os_detect import TargetOS
+
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: install-caps
+tasks:
+  - id: ops
+    targets: all
+    steps:
+      - id: fs
+        substeps:
+          - id: acl
+            use: fs.acl.restore
+            with:
+              file: /tmp/acls.txt
+          - id: zip
+            use: archive.zip
+            with:
+              source: /tmp/src
+              dest: /tmp/a.zip
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  node:\n    host: 127.0.0.1\n")
+    engine = AutomaxEngine()
+    installs = []
+    monkeypatch.setattr(
+        engine,
+        "_detect_os_for_plan",
+        lambda plan, secrets: {"node": TargetOS(id="ubuntu", id_like=("debian",), family="debian", package_manager="apt")},
+    )
+    monkeypatch.setattr(engine, "_missing_tools", lambda target, tools: ["setfacl", "zip"])
+
+    def fake_install(*, target, os_family, packages, sudo_password):
+        installs.append((target.name, os_family, packages, sudo_password))
+        return 0, "installed", ""
+
+    monkeypatch.setattr(engine, "_install_packages_for_os", fake_install)
+
+    payload = engine.install_capability_requirements_job(
+        job_path=str(job),
+        inventory_path=str(inventory),
+        sudo_password_env=None,
+    )
+
+    assert payload["ok"] is True
+    assert installs == [("node", "debian", ["acl", "zip"], None)]
+    assert payload["targets"][0]["missing_tools"] == ["setfacl", "zip"]
+    assert payload["targets"][0]["packages"] == ["acl", "zip"]
