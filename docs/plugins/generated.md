@@ -2631,6 +2631,8 @@ Run SQLite queries or statements from the controller.
 | `output` | no | `string` | `rows` | Database output format: rows, scalar, json or none. |
 | `fetch` | no | `string` | `all` | Database fetch mode: all, one or none. |
 | `commit` | no | `boolean` | `True` | Commit the database transaction on success; false rolls it back. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `database` | no | `path` |  | SQLite database path or database name, depending on the plugin. |
 
 Result fields:
 

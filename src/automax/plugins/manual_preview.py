@@ -116,7 +116,8 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
     if plugin_name.startswith("db.") and plugin_name.endswith(".query"):
         conn = _db_connection(params)
         if plugin_name == "db.sqlite.query":
-            return [f"sqlite3 {_q(conn.get('path', params.get('path', 'database.sqlite')))} '{_db_query(params)};'"]
+            database = conn.get("path") or conn.get("database") or params.get("path") or params.get("database") or "database.sqlite"
+            return [f"sqlite3 {_q(database)} '{_db_query(params)};'"]
         if plugin_name == "db.postgres.query":
             return [f"PGPASSWORD=*** psql -h {_q(conn.get('host', 'localhost'))} -U {_q(conn.get('user', 'postgres'))} -d {_q(conn.get('database', 'postgres'))} -c '{_db_query(params)};'"]
         if plugin_name == "db.mysql.query":

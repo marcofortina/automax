@@ -206,9 +206,10 @@ class SshPublicKeyPlugin(BasePlugin):
         command = f"{_sudo(params)}ssh-keygen -y -f {quote(params['path'])}"
         if not params.get("dest"):
             return [command]
-        redirect = ">" if bool(params.get("overwrite", False)) else ">"
         guard = "" if bool(params.get("overwrite", False)) else f"test ! -e {quote(params['dest'])} && "
-        return [f"{guard}{command} {redirect} {quote(params['dest'])}"]
+        if bool(params.get("sudo", True)):
+            return [f"{guard}{command} | sudo -n tee {quote(params['dest'])} >/dev/null"]
+        return [f"{guard}{command} > {quote(params['dest'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])

@@ -19,6 +19,7 @@ class DbSqliteQueryPlugin(DatabaseQueryPlugin):
 
     name = "db.sqlite.query"
     description = "Run SQLite queries or statements from the controller."
+    optional_params = DatabaseQueryPlugin.optional_params + ("path", "database")
 
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)

@@ -744,6 +744,7 @@ def test_sqlite_database_plugin_executes_transactional_statements(tmp_path: Path
     assert select.ok, select.stderr
     assert select.data["scalar"] == "automax"
     assert select.stdout == "automax"
+    assert plugin.manual_commands({"database": str(database), "query": "SELECT 1"}, context)[0].startswith(f"sqlite3 {database}")
 
 
 def test_database_plugins_validate_job_yaml(tmp_path: Path):
@@ -4233,6 +4234,9 @@ def test_ssh_security_plugins_render_manual_commands():
 
     assert "ssh-keygen -lf" in registry.get("ssh.fingerprint").manual_commands({"path": "/tmp/id.pub", "sudo": False}, context)[0]
     assert "ssh-keygen -y" in registry.get("ssh.public_key").manual_commands({"path": "/tmp/id", "sudo": False}, context)[0]
+    sudo_public_key = registry.get("ssh.public_key").manual_commands({"path": "/tmp/id", "dest": "/root/id.pub"}, context)[0]
+    assert "ssh-keygen -y" in sudo_public_key
+    assert "| sudo -n tee /root/id.pub >/dev/null" in sudo_public_key
     assert "ssh-keygen -A" in registry.get("ssh.host_keygen").manual_commands({"sudo": False}, context)[0]
     assert "authorized_keys" in registry.get("ssh.authorized_key_absent").manual_commands({"user": "deploy", "key": "ssh-ed25519 AAA demo", "sudo": False}, context)[0]
     assert "sshd -t" in registry.get("sshd.validate").manual_commands({}, context)[0]
@@ -4352,6 +4356,14 @@ def test_backup_completeness_plugins_render_manual_commands():
     manifest = registry.get("backup.manifest").manual_commands({"root": "/var/backups", "dest": "/var/backups/manifest.txt", "sudo": False}, context)[0]
     assert "find . -type f" in manifest
     assert "tee /var/backups/manifest.txt" in manifest
+
+    sudo_manifest = registry.get("backup.manifest").manual_commands({"root": "/var/backups", "dest": "/var/backups/manifest.txt"}, context)[0]
+    assert "sudo -n sha256sum" in sudo_manifest
+    assert "sudo -n tee /var/backups/manifest.txt.sha256 >/dev/null" in sudo_manifest
+
+    restore = registry.get("backup.restore").manual_commands({"src": "/var/backups/file.txt", "dest": "/srv/file.txt", "confirm": True}, context)[0]
+    assert "if test -e /srv/file.txt; then sudo -n cp -a /srv/file.txt /srv/file.txt.pre-restore; fi" in restore
+    assert "sudo -n cp -a /var/backups/file.txt /srv/file.txt" in restore
 
     try:
         registry.get("backup.prune").manual_commands({"path": "/var/backups", "keep": 7}, context)

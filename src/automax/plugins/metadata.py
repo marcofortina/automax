@@ -131,6 +131,7 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "untrusted": {"type": "path", "description": "Untrusted intermediate certificate chain file."},
     "ca_file": {"type": "path", "description": "CA bundle file path."},
     "config": {"type": "path", "description": "OpenSSL configuration file path."},
+    "database": {"type": "path", "description": "SQLite database path or database name, depending on the plugin."},
     "command": {"type": "string", "description": "Command line to execute."},
     "comment": {"type": "string", "description": "User account comment or GECOS field."},
     "commit": {"type": "boolean", "default": True, "description": "Commit the database transaction on success; false rolls it back."},

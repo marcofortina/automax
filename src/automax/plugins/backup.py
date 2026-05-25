@@ -22,6 +22,8 @@ def _checksum_cmd(path: str, params: Dict[str, Any]) -> str:
         return "true"
     if checksum != "sha256":
         raise PluginValidationError("checksum must be sha256 or none")
+    if bool(params.get("sudo", True)):
+        return f"sudo -n sha256sum {quote(path)} | sudo -n tee {quote(path + '.sha256')} >/dev/null"
     return f"sha256sum {quote(path)} > {quote(path + '.sha256')}"
 
 
@@ -111,7 +113,7 @@ class BackupRestorePlugin(BasePlugin):
         sudo = _sudo(params)
         commands = [f"test -e {quote(src)}"]
         if bool(params.get("backup", True)):
-            commands.append(f"test ! -e {quote(dest)} || {sudo}cp -a {quote(dest)} {quote(dest + str(params.get('backup_suffix', '.pre-restore')))}")
+            commands.append(f"if test -e {quote(dest)}; then {sudo}cp -a {quote(dest)} {quote(dest + str(params.get('backup_suffix', '.pre-restore')))}; fi")
         if bool(params.get("archive", False)):
             commands.extend([f"{sudo}mkdir -p {quote(dest)}", f"{sudo}tar -xf {quote(src)} -C {quote(dest)}"])
         else:
@@ -179,7 +181,8 @@ class BackupManifestPlugin(BasePlugin):
         find_paths = " ".join(quote(str(item)) for item in paths)
         checksum_command = ""
         if bool(params.get("content_checksums", True)):
-            checksum_command = " | while IFS= read -r file; do sha256sum \"$file\"; done"
+            checksum_tool = f"{sudo}sha256sum"
+            checksum_command = f" | while IFS= read -r file; do {checksum_tool} \"$file\"; done"
         manifest_cmd = (
             f"cd {quote(root)} && "
             f"find {find_paths} -type f -print | LC_ALL=C sort{checksum_command}"
