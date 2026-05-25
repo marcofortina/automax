@@ -14,6 +14,7 @@ from automax.core.models import ExecutionContext, PluginResult
 
 
 CHANGE_MARKER = "__AUTOMAX_CHANGED__"
+SUDO_NON_INTERACTIVE = "sudo -n"
 
 
 def quote(value: Any) -> str:
@@ -33,6 +34,36 @@ def apply_cwd(command: str, context: ExecutionContext, explicit_cwd: str | None 
     return f"cd {quote(cwd)} && {command}"
 
 
+def prepare_sudo_password_command(command: str, sudo_password: str | None) -> tuple[str, str | None]:
+    """Wrap sudo -n commands so sudo can authenticate without consuming command stdin."""
+    if not sudo_password or SUDO_NON_INTERACTIVE not in command:
+        return command, None
+
+    wrapped = f"""set +x
+IFS= read -r automax_sudo_password
+automax_sudo_passfile=$(mktemp /tmp/automax-sudo-pass.XXXXXX)
+automax_sudo_askpass=$(mktemp /tmp/automax-sudo-askpass.XXXXXX)
+trap 'rm -f "$automax_sudo_askpass" "$automax_sudo_passfile"' EXIT
+printf '%s\n' "$automax_sudo_password" > "$automax_sudo_passfile"
+unset automax_sudo_password
+chmod 600 "$automax_sudo_passfile"
+cat > "$automax_sudo_askpass" <<'__AUTOMAX_SUDO_ASKPASS__'
+#!/bin/sh
+cat "$AUTOMAX_SUDO_PASSFILE"
+__AUTOMAX_SUDO_ASKPASS__
+chmod 700 "$automax_sudo_askpass"
+export AUTOMAX_SUDO_PASSFILE="$automax_sudo_passfile" SUDO_ASKPASS="$automax_sudo_askpass"
+sudo() {{
+    if [ "${{1:-}}" = "-n" ]; then
+        shift
+    fi
+    command sudo -A -p '' "$@"
+}}
+{command}
+"""
+    return wrapped, f"{sudo_password}\n"
+
+
 def exec_remote(
     context: ExecutionContext,
     command: str,
@@ -44,11 +75,15 @@ def exec_remote(
     """Execute a command through the active step-scoped SSH connection."""
     if context.ssh_client is None:
         raise RuntimeError("remote plugin requires an SSH session")
-    _, stdout, stderr = context.ssh_client.exec_command(
+    command, sudo_stdin = prepare_sudo_password_command(command, context.sudo_password)
+    stdin, stdout, stderr = context.ssh_client.exec_command(
         command,
         timeout=timeout if timeout is not None else context.command_timeout,
         get_pty=get_pty,
     )
+    if sudo_stdin:
+        stdin.write(sudo_stdin)
+        stdin.channel.shutdown_write()
     rc = stdout.channel.recv_exit_status()
     out = stdout.read().decode(encoding, errors="replace")
     err = stderr.read().decode(encoding, errors="replace")

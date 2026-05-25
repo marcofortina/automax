@@ -100,6 +100,7 @@ class AutomaxEngine:
         lock_scope: str = "both",
         lock_timeout: float = 0,
         preflight_capabilities: bool = False,
+        sudo_password_env: str | None = None,
     ) -> int:
         """Execute a new run from external YAML files."""
         self._validate_output_format(output_format)
@@ -125,6 +126,7 @@ class AutomaxEngine:
         inventory = Inventory(inventory_document, context)
         job = documents["job"]
         self.validate_job(job)
+        sudo_password = self._resolve_sudo_password(sudo_password_env)
 
         run_id = run_id or self._build_run_id(job)
         store = StateStore(state_dir, run_id)
@@ -145,6 +147,7 @@ class AutomaxEngine:
                 "lock_scope": lock_scope,
                 "lock_timeout": lock_timeout,
                 "preflight_capabilities": preflight_capabilities,
+                "sudo_password_env": sudo_password_env,
             },
         )
         store.record_event("job_started", payload={"job": self._job_name(job)})
@@ -194,6 +197,7 @@ class AutomaxEngine:
                     skip_successful=skip_successful,
                     only_failed=only_failed,
                     output_format=output_format,
+                    sudo_password=sudo_password,
                 )
             finally:
                 if lock_manager:
@@ -225,6 +229,7 @@ class AutomaxEngine:
         lock: bool = False,
         lock_scope: str = "both",
         lock_timeout: float = 0,
+        sudo_password_env: str | None = None,
     ) -> int:
         """Resume a previous run using paths stored in the run state."""
         self._validate_output_format(output_format)
@@ -260,6 +265,7 @@ class AutomaxEngine:
             lock=lock,
             lock_scope=lock_scope,
             lock_timeout=lock_timeout,
+            sudo_password_env=sudo_password_env,
         )
 
     def inspect_job(
@@ -899,7 +905,7 @@ class AutomaxEngine:
         )
         os_by_target = self._detect_os_for_plan(resolved.plan, resolved.secrets)
         requirements = collect_requirements(self.iter_rendered_plan_items(resolved, dry_run=True), os_by_target)
-        sudo_password = os.environ.get(sudo_password_env) if sudo_password_env else None
+        sudo_password = self._resolve_sudo_password(sudo_password_env)
         targets = []
         ok = True
         emit = progress_callback or (lambda event: None)
@@ -1370,6 +1376,14 @@ class AutomaxEngine:
             out = stdout.read().decode("utf-8", errors="replace")
         return sorted({line.strip() for line in out.splitlines() if line.strip()})
 
+    @staticmethod
+    def _resolve_sudo_password(sudo_password_env: str | None) -> str | None:
+        if not sudo_password_env:
+            return None
+        if sudo_password_env not in os.environ:
+            raise AutomaxError(f"sudo password environment variable is not set: {sudo_password_env}")
+        return os.environ[sudo_password_env]
+
     def _install_packages_for_os(
         self,
         *,
@@ -1460,6 +1474,7 @@ class AutomaxEngine:
         skip_successful: bool = False,
         only_failed: bool = False,
         output_format: str = "text",
+        sudo_password: str | None = None,
     ) -> int:
         outputs: Dict[str, Any] = {}
         started = from_node is None
@@ -1523,6 +1538,7 @@ class AutomaxEngine:
                 outputs=outputs,
                 strategy=strategy,
                 output_format=output_format,
+                sudo_password=sudo_password,
             )
             for group, group_rc, failed_by_exception in results:
                 if group_rc == 0:
@@ -1583,6 +1599,7 @@ class AutomaxEngine:
         outputs: Dict[str, Any],
         strategy: Dict[str, Any],
         output_format: str,
+        sudo_password: str | None,
     ) -> List[tuple[List[Dict[str, Any]], int, bool]]:
         mode = strategy["mode"]
         if mode == "serial":
@@ -1597,6 +1614,7 @@ class AutomaxEngine:
                     secrets=secrets,
                     outputs=outputs,
                     output_format=output_format,
+                    sudo_password=sudo_password,
                 )
                 for group in groups
             ]
@@ -1613,6 +1631,7 @@ class AutomaxEngine:
                 secrets=secrets,
                 outputs=outputs,
                 output_format=output_format,
+                sudo_password=sudo_password,
             )
 
         if mode == "rolling":
@@ -1632,6 +1651,7 @@ class AutomaxEngine:
                         secrets=secrets,
                         outputs=outputs,
                         output_format=output_format,
+                        sudo_password=sudo_password,
                     )
                 )
                 if pause > 0 and index < len(chunks) - 1:
@@ -1652,6 +1672,7 @@ class AutomaxEngine:
         secrets: Dict[str, Any],
         outputs: Dict[str, Any],
         output_format: str,
+        sudo_password: str | None,
     ) -> List[tuple[List[Dict[str, Any]], int, bool]]:
         results: List[tuple[List[Dict[str, Any]], int, bool]] = []
         for chunk in groups:
@@ -1668,6 +1689,7 @@ class AutomaxEngine:
                         secrets=secrets,
                         outputs=outputs,
                         output_format=output_format,
+                        sudo_password=sudo_password,
                     ): group
                     for group in chunk
                 }
@@ -1687,6 +1709,7 @@ class AutomaxEngine:
         secrets: Dict[str, Any],
         outputs: Dict[str, Any],
         output_format: str,
+        sudo_password: str | None,
     ) -> tuple[List[Dict[str, Any]], int, bool]:
         first = group[0]
         task = first["task"]
@@ -1708,6 +1731,7 @@ class AutomaxEngine:
                         outputs=outputs,
                         ssh_client=ssh_client,
                         output_format=output_format,
+                        sudo_password=sudo_password,
                     )
             else:
                 group_rc = self._execute_step_group(
@@ -1721,6 +1745,7 @@ class AutomaxEngine:
                     outputs=outputs,
                     ssh_client=None,
                     output_format=output_format,
+                    sudo_password=sudo_password,
                 )
             return group, group_rc, False
         except Exception as exc:
@@ -1754,6 +1779,7 @@ class AutomaxEngine:
         outputs: Dict[str, Any],
         ssh_client: Any,
         output_format: str,
+        sudo_password: str | None,
     ) -> int:
         step_state: Dict[str, Any] = {}
         for item in group:
@@ -1785,6 +1811,7 @@ class AutomaxEngine:
                 ssh_client=ssh_client,
                 step_state=step_state,
                 output_format=output_format,
+                sudo_password=sudo_password,
             )
 
             with self._output_lock:
@@ -1845,6 +1872,7 @@ class AutomaxEngine:
         ssh_client: Any,
         step_state: Dict[str, Any],
         output_format: str,
+        sudo_password: str | None,
     ) -> PluginResult:
         """Execute one substep with inherited retry policy and visible retry events."""
         policy = self._resolve_retry_policy(job, task, step, substep)
@@ -1866,6 +1894,7 @@ class AutomaxEngine:
                     outputs=outputs,
                     ssh_client=ssh_client,
                     step_state=step_state,
+                    sudo_password=sudo_password,
                 )
                 result = self._apply_error_policy(job, task, step, substep, result, secrets)
             except Exception as exc:
@@ -1920,6 +1949,7 @@ class AutomaxEngine:
         outputs: Dict[str, Any],
         ssh_client: Any,
         step_state: Dict[str, Any],
+        sudo_password: str | None = None,
     ) -> PluginResult:
         effective_vars = deepcopy(variables)
         effective_vars.update(target.vars)
@@ -1962,6 +1992,7 @@ class AutomaxEngine:
             ssh_client=ssh_client,
             logger=self.logger,
             command_timeout=self._resolve_command_timeout(job, task, step, substep),
+            sudo_password=sudo_password,
             step_state=step_state,
         )
         if dry_run:

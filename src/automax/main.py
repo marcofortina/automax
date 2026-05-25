@@ -27,6 +27,7 @@ def run_automax(
     tags: Iterable[str] = (),
     skip_tags: Iterable[str] = (),
     cli_vars: Optional[Dict[str, Any]] = None,
+    sudo_password_env: str | None = None,
 ) -> int:
     """Run Automax from external job/inventory/vars/secrets files."""
     engine = AutomaxEngine()
@@ -44,4 +45,5 @@ def run_automax(
         tags=tags,
         skip_tags=skip_tags,
         cli_vars=cli_vars,
+        sudo_password_env=sudo_password_env,
     )

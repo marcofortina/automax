@@ -322,6 +322,7 @@ def _apply_common_options(function):
 @click.option("--lock-scope", type=click.Choice(["job", "target", "both"]), default="both", show_default=True, help="Lock job, targets or both.")
 @click.option("--lock-timeout", type=float, default=0.0, show_default=True, help="Seconds to wait for locks.")
 @click.option("--preflight-capabilities", is_flag=True, help="Compatibility flag; capability preflight is implicit for normal runs.")
+@click.option("--sudo-password-env", help="Environment variable containing the sudo password for sudo-enabled remote substeps.")
 @click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", show_default=True, help="Output format for the final run summary.")
 def run(
     job_path: str,
@@ -342,6 +343,7 @@ def run(
     lock_scope: str,
     lock_timeout: float,
     preflight_capabilities: bool,
+    sudo_password_env: str | None,
     output_format: str,
 ) -> None:
     """Run a job from external YAML definitions."""
@@ -381,6 +383,7 @@ def run(
             lock_scope=lock_scope,
             lock_timeout=lock_timeout,
             preflight_capabilities=preflight_capabilities,
+            sudo_password_env=sudo_password_env,
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc
@@ -899,6 +902,7 @@ def doctor(state_dir: str, as_json: bool) -> None:
 @click.option("--lock-scope", type=click.Choice(["job", "target", "both"]), default="both", show_default=True, help="Lock job, targets or both.")
 @click.option("--lock-timeout", type=float, default=0.0, show_default=True, help="Seconds to wait for locks.")
 @click.option("--preflight-capabilities", is_flag=True, help="Check remote tools required by the selected job before execution.")
+@click.option("--sudo-password-env", help="Environment variable containing the sudo password for sudo-enabled remote substeps.")
 @click.option("--format", "output_format", type=click.Choice(["text", "json"]), default="text", show_default=True, help="Output format for the final resume summary.")
 def resume(
     run_id: str,
@@ -917,6 +921,7 @@ def resume(
     lock_scope: str,
     lock_timeout: float,
     preflight_capabilities: bool,
+    sudo_password_env: str | None,
     output_format: str,
 ) -> None:
     """Resume an existing run from failed or explicit checkpoint."""
@@ -934,6 +939,7 @@ def resume(
             skip_successful=skip_successful,
             only_failed=only_failed,
             output_format=output_format,
+            sudo_password_env=sudo_password_env,
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc

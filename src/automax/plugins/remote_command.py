@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin
-from automax.plugins.remote_utils import apply_cwd
+from automax.plugins.remote_utils import apply_cwd, prepare_sudo_password_command
 
 
 class RemoteCommandPlugin(BasePlugin):
@@ -36,14 +36,21 @@ class RemoteCommandPlugin(BasePlugin):
             return PluginResult.failure(message="remote.command requires an SSH session")
 
         command = apply_cwd(str(params["command"]), context, params.get("cwd"))
+        command, sudo_stdin = prepare_sudo_password_command(command, context.sudo_password)
         timeout = params.get("timeout", context.command_timeout)
         stdin, stdout, stderr = context.ssh_client.exec_command(
             command,
             timeout=timeout,
             get_pty=bool(params.get("pty", False)),
         )
+        wrote_stdin = False
+        if sudo_stdin:
+            stdin.write(sudo_stdin)
+            wrote_stdin = True
         if params.get("stdin"):
             stdin.write(str(params["stdin"]))
+            wrote_stdin = True
+        if wrote_stdin:
             stdin.channel.shutdown_write()
 
         rc = stdout.channel.recv_exit_status()

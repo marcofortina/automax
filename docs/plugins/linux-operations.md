@@ -245,7 +245,15 @@ Automax can derive remote command dependencies from the selected job plan and re
 automax capabilities requirements --job jobs/site.yaml --inventory inventory/prod.yaml
 ```
 
-Normal `automax run` performs this OS detection and capability preflight implicitly before executing selected substeps. The older `--preflight-capabilities` flag remains accepted for compatibility, but the preflight is now the default for normal runs that require remote tools.
+Normal `automax run` performs this OS detection and capability preflight implicitly before executing selected substeps. The older `--preflight-capabilities` flag remains accepted for compatibility, but the preflight is now the default for normal runs that require remote tools. If selected substeps use `sudo` and the target account requires a password, run with `--sudo-password-env ENV_NAME` instead of installing a NOPASSWD sudoers drop-in.
+
+```bash
+export AUTOMAX_SUDO_PASSWORD='...'
+automax run \
+  --job jobs/site.yaml \
+  --inventory inventory/prod.yaml \
+  --sudo-password-env AUTOMAX_SUDO_PASSWORD
+```
 
 Missing dependencies can be installed per target from the OS-aware requirement plan:
 

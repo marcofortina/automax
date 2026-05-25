@@ -54,6 +54,13 @@ automax plan --job job.yaml --inventory inventory.yaml --format=json
 automax run --job job.yaml --inventory inventory.yaml --state-dir .automax/runs
 ```
 
+For sudo-enabled remote substeps on targets that require a sudo password, pass the controller-side environment variable name instead of configuring passwordless sudo on the target:
+
+```bash
+export AUTOMAX_SUDO_PASSWORD='...'
+automax run --job job.yaml --inventory inventory.yaml --sudo-password-env AUTOMAX_SUDO_PASSWORD
+```
+
 Preview the selected run without creating run state:
 
 ```bash
@@ -92,6 +99,7 @@ Resume modes:
 automax resume <run-id> --skip-successful
 automax resume <run-id> --only-failed
 automax resume <run-id> --from task.deploy:step.restart:substep.service
+automax resume <run-id> --skip-successful --sudo-password-env AUTOMAX_SUDO_PASSWORD
 ```
 
 ## Runs

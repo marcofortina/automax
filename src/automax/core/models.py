@@ -139,4 +139,5 @@ class ExecutionContext:
     ssh_client: Any = None
     logger: Any = None
     command_timeout: int | None = None
+    sudo_password: str | None = None
     step_state: Dict[str, Any] = field(default_factory=dict)

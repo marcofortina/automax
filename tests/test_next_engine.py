@@ -4408,6 +4408,112 @@ def test_fs_write_template_metadata_exposes_atomic_option():
         assert "atomic" in params
 
 
+def test_prepare_sudo_password_command_uses_askpass_without_embedding_password():
+    from automax.plugins.remote_utils import prepare_sudo_password_command
+
+    command, stdin = prepare_sudo_password_command(
+        "printf data | sudo -n tee /tmp/demo >/dev/null",
+        "secret-pass",
+    )
+
+    assert "printf data | sudo -n tee /tmp/demo" in command
+    assert "command sudo -A -p ''" in command
+    assert "SUDO_ASKPASS" in command
+    assert "secret-pass" not in command
+    assert stdin == "secret-pass\n"
+
+
+def test_cli_run_sudo_password_env_feeds_sudo_enabled_remote_substeps(tmp_path: Path, monkeypatch):
+    from contextlib import contextmanager
+    import automax.cli.cli as cli_module
+
+    class FakeChannel:
+        def shutdown_write(self):
+            pass
+
+        def recv_exit_status(self):
+            return 0
+
+    class FakeStdin:
+        def __init__(self):
+            self.channel = FakeChannel()
+            self.writes: list[str] = []
+
+        def write(self, value):
+            self.writes.append(value)
+
+    class FakeStream:
+        def __init__(self, data: str = ""):
+            self.channel = FakeChannel()
+            self._data = data.encode("utf-8")
+
+        def read(self):
+            return self._data
+
+    class FakeClient:
+        def __init__(self):
+            self.commands: list[dict[str, object]] = []
+            self.stdin = FakeStdin()
+
+        def exec_command(self, command, **kwargs):
+            self.commands.append({"command": command, "kwargs": kwargs})
+            return self.stdin, FakeStream(), FakeStream()
+
+    class FakeSshManager:
+        def __init__(self):
+            self.client = FakeClient()
+
+        @contextmanager
+        def connect(self, target):
+            yield self.client
+
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: sudo-runtime
+tasks:
+  - id: remote
+    targets: all
+    steps:
+      - id: pipe
+        substeps:
+          - id: tee
+            use: remote.command
+            with:
+              command: "printf data | sudo -n tee /tmp/automax-demo >/dev/null"
+""",
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  node:\n    host: 127.0.0.1\n")
+    manager = FakeSshManager()
+    monkeypatch.setenv("AUTOMAX_TEST_SUDO_PASSWORD", "secret-pass")
+    monkeypatch.setattr(cli_module, "_engine", lambda plugin_path=(): AutomaxEngine(ssh_manager=manager))
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--sudo-password-env",
+            "AUTOMAX_TEST_SUDO_PASSWORD",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert len(manager.client.commands) == 1
+    command = str(manager.client.commands[0]["command"])
+    assert "printf data | sudo -n tee /tmp/automax-demo" in command
+    assert "command sudo -A -p ''" in command
+    assert "SUDO_ASKPASS" in command
+    assert "secret-pass" not in command
+    assert manager.client.stdin.writes == ["secret-pass\n"]
+
+
 def test_capability_requirements_are_derived_from_selected_job(tmp_path: Path, monkeypatch):
     from automax.core.os_detect import TargetOS
 

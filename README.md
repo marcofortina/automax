@@ -107,6 +107,13 @@ automax run \
   --state-dir /var/lib/automax/runs
 ```
 
+When selected remote substeps use `sudo` and the target account requires a password, keep sudo authentication explicit instead of configuring NOPASSWD on the target:
+
+```bash
+export AUTOMAX_SUDO_PASSWORD='...'
+automax run --job job.yaml --inventory inventory.yaml --sudo-password-env AUTOMAX_SUDO_PASSWORD
+```
+
 Inspect an existing run:
 
 ```bash
@@ -119,6 +126,8 @@ Resume a failed run:
 
 ```bash
 automax resume <run-id> --state-dir /var/lib/automax/runs
+# If rerun substeps need sudo authentication:
+automax resume <run-id> --state-dir /var/lib/automax/runs --sudo-password-env AUTOMAX_SUDO_PASSWORD
 ```
 
 Resume from an explicit checkpoint:

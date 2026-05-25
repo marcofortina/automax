@@ -83,9 +83,18 @@ automax plan --job job.yaml --inventory inventory.yaml --secrets secrets.yaml
 automax run --job job.yaml --inventory inventory.yaml --secrets secrets.yaml
 ```
 
+If the job uses sudo-enabled remote plugins and the remote account requires a sudo password, export it on the controller and pass only the environment variable name:
+
+```bash
+export AUTOMAX_SUDO_PASSWORD='...'
+automax run --job job.yaml --inventory inventory.yaml --secrets secrets.yaml --sudo-password-env AUTOMAX_SUDO_PASSWORD
+```
+
 If the run fails, inspect and resume:
 
 ```bash
 automax runs show <run-id>
 automax resume <run-id> --skip-successful
+# If resumed substeps need sudo authentication:
+automax resume <run-id> --skip-successful --sudo-password-env AUTOMAX_SUDO_PASSWORD
 ```
