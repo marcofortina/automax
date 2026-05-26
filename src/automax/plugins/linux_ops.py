@@ -574,13 +574,17 @@ class DownloadFilePlugin(BasePlugin):
         sudo = _sudo(params)
         dest = str(params["dest"])
         tmp = f"{dest}.automax-download.$$"
-        commands = [f"curl -fL --retry 3 -o {quote(tmp)} {quote(params['url'])} || wget -O {quote(tmp)} {quote(params['url'])}"]
+        commands = [
+            f"(curl -fsSL --retry 3 -o {quote(tmp)} {quote(params['url'])} || wget -q -O {quote(tmp)} {quote(params['url'])})"
+        ]
         if params.get("checksum"):
             commands.append(f"printf '%s  %s\\n' {quote(params['checksum'])} {quote(tmp)} | sha256sum -c -")
         if bool(params.get("backup", True)):
-            commands.append(f"test ! -e {quote(dest)} || {sudo}cp -p {quote(dest)} {quote(dest + str(params.get('backup_suffix', '.bak')))}")
+            commands.append(
+                f"(test ! -e {quote(dest)} || {sudo}cp -p {quote(dest)} {quote(dest + str(params.get('backup_suffix', '.bak')))})"
+            )
         if not bool(params.get("force", False)):
-            commands.append(f"test ! -e {quote(dest)} || cmp -s {quote(tmp)} {quote(dest)}")
+            commands.append(f"(test ! -e {quote(dest)} || cmp -s {quote(tmp)} {quote(dest)})")
         commands.append(f"{sudo}install {('-m ' + quote(params['mode'])) if params.get('mode') else ''} {quote(tmp)} {quote(dest)}".replace("  ", " "))
         if params.get("owner") or params.get("group"):
             owner = str(params.get("owner", ""))

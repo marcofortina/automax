@@ -3324,8 +3324,11 @@ def test_linux_ops_manual_commands_cover_resolver_env_download_and_sysctl():
     env = EnvSetPlugin().manual_commands({"variables": {"APP_HOME": "/opt/app"}}, context)[0]
     assert env == "export APP_HOME=/opt/app"
     download = DownloadFilePlugin().manual_commands({"url": "https://example.invalid/file.rpm", "dest": "/tmp/file.rpm"}, context)
-    assert "curl -fL" in download[0]
-    assert "wget -O" in download[0]
+    assert "curl -fsSL" in download[0]
+    assert "wget -q -O" in download[0]
+    assert download[0].startswith("(") and download[0].endswith(")")
+    assert download[1].startswith("(test ! -e ")
+    assert download[2].startswith("(test ! -e ")
     assert SysctlReloadPlugin().manual_commands({"file": "/etc/sysctl.conf", "sudo": True}, context) == ["sudo -n sysctl -p /etc/sysctl.conf"]
 
 
