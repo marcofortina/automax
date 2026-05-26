@@ -11,7 +11,9 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from automax.cli.cli import cli
+import automax.cli.cli as cli_module
+
+cli = cli_module.cli
 from automax.core.engine import AutomaxEngine
 from automax.core.models import ExecutionContext, Target
 from automax.core.state import StateStore
@@ -4491,7 +4493,6 @@ def test_prepare_sudo_password_command_uses_askpass_without_embedding_password()
 
 def test_cli_run_sudo_password_env_feeds_sudo_enabled_remote_substeps(tmp_path: Path, monkeypatch):
     from contextlib import contextmanager
-    import automax.cli.cli as cli_module
 
     class FakeChannel:
         def shutdown_write(self):
