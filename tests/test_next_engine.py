@@ -4177,7 +4177,9 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "fs.quota":
         params["type"] = "user"
     if plugin.name == "ufw.rule":
-        params["rule"] = "allow 22/tcp"
+        params["rule"] = "allow"
+        params["port"] = 22
+        params["protocol"] = "tcp"
     if plugin.name == "apparmor.profile_assert":
         params["state"] = "enforce"
     if plugin.name == "auditd.backlog_assert":
@@ -4244,9 +4246,11 @@ def test_firewall_readback_plugins_render_manual_commands():
     assert "firewall-cmd --zone=public --list-all" in registry.get("firewalld.zone").manual_commands({"zone": "public", "permanent": False}, context)[0]
     assert "nft -a list ruleset" in registry.get("nftables.list").manual_commands({"handle": True}, context)[0]
     assert "nft list ruleset" in registry.get("nftables.export").manual_commands({"dest": "/tmp/rules.nft", "sudo": False}, context)[0]
-    assert "iptables -t filter -L -n INPUT" in registry.get("iptables.list").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
+    assert "iptables -t filter -L INPUT -n" in registry.get("iptables.list").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
     assert "iptables -t filter -S INPUT" in registry.get("iptables.policy").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
-    assert "iptables -t filter -L -n INPUT" in registry.get("iptables.chain").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
+    assert "iptables -t filter -L INPUT -n" in registry.get("iptables.chain").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
+    assert "ufw allow 18080/tcp" == registry.get("ufw.rule").manual_commands({"rule": "allow", "port": 18080, "protocol": "tcp", "sudo": False}, context)[0]
+    assert "ufw allow from 10.0.0.0/8 to any port 22 proto tcp" == registry.get("ufw.rule").manual_commands({"rule": "allow", "from": "10.0.0.0/8", "port": 22, "protocol": "tcp", "sudo": False}, context)[0]
 
 
 def test_package_inspection_plugins_render_manual_commands():

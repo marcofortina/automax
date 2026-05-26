@@ -202,22 +202,38 @@ class UfwRulePlugin(BasePlugin):
         super().validate(params)
         if str(params["rule"]) not in {"allow", "deny", "reject", "limit"}:
             raise PluginValidationError("ufw.rule rule must be allow, deny, reject or limit")
+        if params.get("protocol") and not params.get("port"):
+            raise PluginValidationError("ufw.rule protocol requires port")
         _state(params)
+
+    def _rule_parts(self, params: Dict[str, Any]) -> list[str]:
+        parts = [str(params["rule"])]
+        if params.get("from") or params.get("to"):
+            parts.extend(["from", str(params.get("from") or "any")])
+            parts.extend(["to", str(params.get("to") or "any")])
+            if params.get("port"):
+                parts.extend(["port", str(params["port"])])
+                if params.get("protocol"):
+                    parts.extend(["proto", str(params["protocol"])])
+        elif params.get("port"):
+            port = str(params["port"])
+            protocol = params.get("protocol")
+            parts.append(f"{port}/{protocol}" if protocol else port)
+        if params.get("comment"):
+            parts.extend(["comment", str(params["comment"])])
+        return parts
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        rule_args = " ".join(quote(part) for part in self._rule_parts(params))
+        if str(params.get("state", "present")) == "absent":
+            return [f"{_sudo(params)}ufw --force delete {rule_args}"]
+        return [f"{_sudo(params)}ufw {rule_args}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         state = str(params.get("state", "present"))
-        parts = [str(params["rule"])]
-        if params.get("from"):
-            parts.extend(["from", str(params["from"])])
-        if params.get("to"):
-            parts.extend(["to", str(params["to"])])
-        if params.get("port"):
-            parts.extend(["port", str(params["port"])])
-        if params.get("protocol"):
-            parts.extend(["proto", str(params["protocol"])])
-        if params.get("comment"):
-            parts.extend(["comment", str(params["comment"])])
+        parts = self._rule_parts(params)
         rule_args = " ".join(quote(part) for part in parts)
         grep_text = " ".join(parts[: min(len(parts), 6)])
         if state == "present":
@@ -470,16 +486,17 @@ class IptablesListPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         table = str(params.get("table", "filter"))
-        flags = "-S"
         if bool(params.get("numeric", True)) or bool(params.get("verbose", False)):
-            extra = []
+            parts = [f"{_sudo(params)}{self._bin(params)}", "-t", quote(table), "-L"]
+            if params.get("chain"):
+                parts.append(quote(params["chain"]))
             if bool(params.get("numeric", True)):
-                extra.append("-n")
+                parts.append("-n")
             if bool(params.get("verbose", False)):
-                extra.append("-v")
-            flags = "-L " + " ".join(extra)
+                parts.append("-v")
+            return [" ".join(parts)]
         chain = f" {quote(params['chain'])}" if params.get("chain") else ""
-        return [f"{_sudo(params)}{self._bin(params)} -t {quote(table)} {flags}{chain}"]
+        return [f"{_sudo(params)}{self._bin(params)} -t {quote(table)} -S{chain}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
