@@ -1,0 +1,145 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-fs
+tasks:
+- id: fs
+  description: Check-mode catalog for fs plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - fs
+  steps:
+  - id: catalog
+    substeps:
+    - id: fs_acl
+      use: fs.acl
+      with:
+        path: /tmp/automax-demo
+        acl: u:ubuntu:rw
+    - id: fs_acl_assert
+      use: fs.acl.assert
+      with:
+        path: /tmp/automax-demo
+        acl: u:ubuntu:rw
+    - id: fs_acl_get
+      use: fs.acl.get
+      with:
+        path: /tmp/automax-demo
+    - id: fs_acl_restore
+      use: fs.acl.restore
+      with:
+        file: /etc/sysctl.d/99-automax.conf
+    - id: fs_attr
+      use: fs.attr
+      with:
+        path: /tmp/automax-demo
+        attrs: +i
+    - id: fs_bind_mount
+      use: fs.bind_mount
+      with:
+        src: /tmp/source
+        dest: /tmp/dest
+    - id: fs_cd
+      use: fs.cd
+      with:
+        path: /tmp/automax-demo
+    - id: fs_chmod
+      use: fs.chmod
+      with:
+        path: /tmp/automax-demo
+        mode: 420
+    - id: fs_chown
+      use: fs.chown
+      with:
+        path: /tmp/automax-demo
+        owner: ubuntu
+    - id: fs_copy
+      use: fs.copy
+      with:
+        src: /tmp/source
+        dest: /tmp/dest
+    - id: fs_disk_usage_assert
+      use: fs.disk_usage_assert
+      with:
+        path: /tmp
+        max_percent: 99
+    - id: fs_exists
+      use: fs.exists
+      with:
+        path: /tmp/automax-demo
+    - id: fs_find
+      use: fs.find
+      with:
+        path: /tmp/automax-demo
+    - id: fs_inode_usage_assert
+      use: fs.inode_usage_assert
+      with:
+        path: /tmp
+        max_percent: 99
+    - id: fs_line
+      use: fs.line
+      with:
+        path: /tmp/automax-demo
+        line: KEY=value
+    - id: fs_mkdir
+      use: fs.mkdir
+      with:
+        path: /tmp/automax-demo
+    - id: fs_move
+      use: fs.move
+      with:
+        src: /tmp/source
+        dest: /tmp/dest
+    - id: fs_quota
+      use: fs.quota
+      with:
+        target: automax_smoke_user
+        mountpoint: /
+    - id: fs_read
+      use: fs.read
+      with:
+        path: /tmp/automax-demo
+    - id: fs_remove
+      use: fs.remove
+      with:
+        path: /tmp/automax-demo
+        confirm: true
+    - id: fs_replace
+      use: fs.replace
+      with:
+        path: /tmp/automax-demo
+        pattern: KEY=.*
+        replacement: KEY=new-value
+    - id: fs_resize
+      use: fs.resize
+      with:
+        device: /dev/sdb
+        fstype: xfs
+    - id: fs_stat
+      use: fs.stat
+      with:
+        path: /tmp/automax-demo
+    - id: fs_symlink_create
+      use: fs.symlink.create
+      with:
+        src: /tmp/source
+        dest: /tmp/dest
+    - id: fs_symlink_remove
+      use: fs.symlink.remove
+      with:
+        path: /tmp/automax-demo
+    - id: fs_template
+      use: fs.template
+      with:
+        src: ./templates/app.conf.j2
+        dest: /etc/myapp/app.conf
+        mode: '0644'
+        sudo: true
+    - id: fs_write
+      use: fs.write
+      with:
+        path: /tmp/automax-demo
+        content: managed by automax

@@ -1,0 +1,28 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-chrony
+tasks:
+- id: chrony
+  description: Check-mode catalog for chrony plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - chrony
+  steps:
+  - id: catalog
+    substeps:
+    - id: chrony_servers
+      use: chrony.servers
+      with:
+        servers:
+        - time.example.com
+    - id: chrony_sources_assert
+      use: chrony.sources_assert
+      with:
+        sudo: true
+    - id: chrony_tracking_assert
+      use: chrony.tracking_assert
+      with: {}

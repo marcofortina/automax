@@ -1,0 +1,21 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-capability
+tasks:
+- id: capability
+  description: Check-mode catalog for capability plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - capability
+  steps:
+  - id: catalog
+    substeps:
+    - id: capability_assert
+      use: capability.assert
+      with:
+        tools:
+        - sh

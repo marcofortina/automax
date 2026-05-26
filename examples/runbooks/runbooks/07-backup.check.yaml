@@ -1,0 +1,65 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-backup
+tasks:
+- id: backup
+  description: Check-mode catalog for backup plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - backup
+  steps:
+  - id: catalog
+    substeps:
+    - id: backup_directory
+      use: backup.directory
+      with:
+        src: /tmp/source
+        dest: /tmp/dest
+    - id: backup_file
+      use: backup.file
+      with:
+        src: /tmp/source
+        dest: /tmp/dest
+    - id: backup_manifest
+      use: backup.manifest
+      with:
+        root: /tmp/automax-demo
+        dest: /tmp/automax-manifest.txt
+    - id: backup_prune
+      use: backup.prune
+      with:
+        path: /tmp/automax-demo
+        confirm: true
+        keep: 1
+        patterns:
+        - '*.old'
+    - id: backup_restore
+      use: backup.restore
+      with:
+        src: /tmp/source
+        dest: /tmp/dest
+        confirm: true
+    - id: backup_restore_preview
+      use: backup.restore_preview
+      with:
+        src: /tmp/source
+        dest: /tmp/dest
+    - id: backup_restore_verify
+      use: backup.restore_verify
+      with:
+        src: /tmp/source
+        dest: /tmp/dest
+    - id: backup_rotate
+      use: backup.rotate
+      with:
+        path: /tmp/automax-demo
+        keep: 1
+        confirm: true
+    - id: backup_verify
+      use: backup.verify
+      with:
+        path: /tmp/automax-demo

@@ -1,0 +1,20 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-findmnt
+tasks:
+- id: findmnt
+  description: Check-mode catalog for findmnt plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - findmnt
+  steps:
+  - id: catalog
+    substeps:
+    - id: findmnt_assert
+      use: findmnt.assert
+      with:
+        path: /tmp/automax-demo

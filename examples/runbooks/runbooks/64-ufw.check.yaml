@@ -1,0 +1,46 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-ufw
+tasks:
+- id: ufw
+  description: Check-mode catalog for ufw plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - ufw
+  steps:
+  - id: catalog
+    substeps:
+    - id: ufw_delete
+      use: ufw.delete
+      with:
+        rule: allow
+        confirm: true
+    - id: ufw_disable
+      use: ufw.disable
+      with:
+        sudo: true
+    - id: ufw_enable
+      use: ufw.enable
+      with:
+        sudo: true
+    - id: ufw_reset
+      use: ufw.reset
+      with:
+        sudo: true
+        confirm: true
+    - id: ufw_rule
+      use: ufw.rule
+      with:
+        rule: allow
+        port: 22
+        protocol: tcp
+        from: 10.0.0.0/8
+        sudo: true
+    - id: ufw_status
+      use: ufw.status
+      with:
+        sudo: true

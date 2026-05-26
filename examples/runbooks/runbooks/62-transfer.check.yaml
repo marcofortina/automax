@@ -1,0 +1,36 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-transfer
+tasks:
+- id: transfer
+  description: Check-mode catalog for transfer plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - transfer
+  steps:
+  - id: catalog
+    substeps:
+    - id: transfer_download
+      use: transfer.download
+      with:
+        src: /tmp/source
+        dest: /tmp/dest
+    - id: transfer_rsync
+      use: transfer.rsync
+      with:
+        src: /tmp/source
+        dest: /tmp/dest
+    - id: transfer_sync
+      use: transfer.sync
+      with:
+        src: '{{ vars.automax_controller_fixture_root | default("controller-fixtures")}}/source-dir'
+        dest: /tmp/automax-demo
+    - id: transfer_upload
+      use: transfer.upload
+      with:
+        src: '{{ vars.automax_controller_fixture_root | default("controller-fixtures")}}/source.txt'
+        dest: /tmp/automax-demo/source.txt

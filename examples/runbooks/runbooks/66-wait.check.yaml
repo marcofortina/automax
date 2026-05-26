@@ -1,0 +1,37 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-wait
+tasks:
+- id: wait
+  description: Check-mode catalog for wait plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - wait
+  steps:
+  - id: catalog
+    substeps:
+    - id: wait_command
+      use: wait.command
+      with:
+        command: echo automax
+    - id: wait_file
+      use: wait.file
+      with:
+        path: /tmp/automax-demo
+    - id: wait_path
+      use: wait.path
+      with:
+        path: /tmp/automax-demo
+    - id: wait_process
+      use: wait.process
+      with:
+        pattern: KEY=.*
+    - id: wait_tcp
+      use: wait.tcp
+      with:
+        host: 127.0.0.1
+        port: 22

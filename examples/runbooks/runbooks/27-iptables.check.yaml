@@ -1,0 +1,58 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-iptables
+tasks:
+- id: iptables
+  description: Check-mode catalog for iptables plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - iptables
+  steps:
+  - id: catalog
+    substeps:
+    - id: iptables_chain
+      use: iptables.chain
+      with:
+        chain: INPUT
+    - id: iptables_counter_assert
+      use: iptables.counter_assert
+      with:
+        chain: INPUT
+    - id: iptables_delete
+      use: iptables.delete
+      with:
+        chain: INPUT
+        rule: -p tcp --dport 18080 -j ACCEPT
+        confirm: true
+    - id: iptables_exists_assert
+      use: iptables.exists_assert
+      with:
+        chain: INPUT
+        rule: -p tcp --dport 18080 -j ACCEPT
+    - id: iptables_list
+      use: iptables.list
+      with:
+        table: main
+    - id: iptables_policy
+      use: iptables.policy
+      with:
+        chain: INPUT
+        policy: ACCEPT
+    - id: iptables_restore
+      use: iptables.restore
+      with:
+        src: /tmp/source
+        confirm: true
+    - id: iptables_rule
+      use: iptables.rule
+      with:
+        chain: INPUT
+        rule: -p tcp --dport 18080 -j ACCEPT
+    - id: iptables_save
+      use: iptables.save
+      with:
+        dest: /tmp/dest

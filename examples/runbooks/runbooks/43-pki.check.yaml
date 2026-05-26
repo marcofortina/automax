@@ -1,0 +1,33 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-pki
+tasks:
+- id: pki
+  description: Check-mode catalog for pki plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - pki
+  steps:
+  - id: catalog
+    substeps:
+    - id: pki_ca_install
+      use: pki.ca_install
+      with:
+        dest: /tmp/automax-ca.crt
+        content: '-----BEGIN CERTIFICATE-----
+
+          -----END CERTIFICATE-----
+
+          '
+    - id: pki_cert_expiry_assert
+      use: pki.cert_expiry_assert
+      with:
+        path: /tmp/automax-demo
+    - id: pki_key_permissions
+      use: pki.key_permissions
+      with:
+        path: /tmp/automax-demo

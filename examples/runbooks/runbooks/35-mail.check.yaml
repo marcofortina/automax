@@ -1,0 +1,23 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-mail
+tasks:
+- id: mail
+  description: Check-mode catalog for mail plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - mail
+  steps:
+  - id: catalog
+    substeps:
+    - id: mail_send
+      use: mail.send
+      with:
+        smtp_host: smtp.example.com
+        from: 10.0.0.0/8
+        to: any
+        subject: Automax notification

@@ -1,0 +1,48 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-udev
+tasks:
+- id: udev
+  description: Check-mode catalog for udev plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - udev
+  steps:
+  - id: catalog
+    substeps:
+    - id: udev_facts
+      use: udev.facts
+      with:
+        device: /dev/sdb
+    - id: udev_reload
+      use: udev.reload
+      with:
+        sudo: true
+    - id: udev_rule
+      use: udev.rule
+      with:
+        path: /tmp/99-automax.rules
+        content: '# automax
+
+          '
+    - id: udev_settle
+      use: udev.settle
+      with:
+        timeout: 60
+    - id: udev_test
+      use: udev.test
+      with:
+        device: /dev/sdb
+    - id: udev_trigger
+      use: udev.trigger
+      with:
+        subsystem: block
+        action: change
+    - id: udev_validate
+      use: udev.validate
+      with:
+        file: /etc/sysctl.d/99-automax.conf

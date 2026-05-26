@@ -1,0 +1,10 @@
+# Relative to examples/runbooks when commands are launched from this directory.
+# The helper scripts override this with an absolute path.
+automax_controller_fixture_root: controller-fixtures
+automax_lab_root: /tmp/automax-smoke
+automax_lab_acl_user: ubuntu
+# Optional placeholder used by storage-related check previews only.
+# Per-plugin files in runbooks/ are intended for --check mode.
+automax_lab_disk: /dev/disk/by-id/REPLACE_ME_EMPTY_5GB_DISK
+automax_lab_confirm_destroy: "no"
+deploy_public_key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example

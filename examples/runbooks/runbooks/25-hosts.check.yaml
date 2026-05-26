@@ -1,0 +1,23 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-hosts
+tasks:
+- id: hosts
+  description: Check-mode catalog for hosts plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - hosts
+  steps:
+  - id: catalog
+    substeps:
+    - id: hosts_entry
+      use: hosts.entry
+      with:
+        ip: 192.0.2.10
+        names:
+        - app1.example.com
+        - app1

@@ -1,0 +1,38 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-group
+tasks:
+- id: group
+  description: Check-mode catalog for group plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - group
+  steps:
+  - id: catalog
+    substeps:
+    - id: group_create
+      use: group.create
+      with:
+        name: nginx
+    - id: group_exists
+      use: group.exists
+      with:
+        name: nginx
+    - id: group_member_absent
+      use: group.member_absent
+      with:
+        user: deploy
+        group: app
+        confirm: true
+    - id: group_members
+      use: group.members
+      with:
+        group: app
+    - id: group_remove
+      use: group.remove
+      with:
+        name: nginx

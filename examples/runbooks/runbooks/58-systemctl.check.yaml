@@ -1,0 +1,65 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-systemctl
+tasks:
+- id: systemctl
+  description: Check-mode catalog for systemctl plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - systemctl
+  steps:
+  - id: catalog
+    substeps:
+    - id: systemctl_daemon_reload
+      use: systemctl.daemon_reload
+      with:
+        sudo: true
+        user: deploy
+    - id: systemctl_disable
+      use: systemctl.disable
+      with:
+        service: sshd
+    - id: systemctl_enable
+      use: systemctl.enable
+      with:
+        service: sshd
+    - id: systemctl_is_active
+      use: systemctl.is_active
+      with:
+        service: sshd
+    - id: systemctl_is_enabled
+      use: systemctl.is_enabled
+      with:
+        service: sshd
+    - id: systemctl_mask
+      use: systemctl.mask
+      with:
+        service: sshd
+    - id: systemctl_reload
+      use: systemctl.reload
+      with:
+        service: sshd
+    - id: systemctl_restart
+      use: systemctl.restart
+      with:
+        service: sshd
+    - id: systemctl_start
+      use: systemctl.start
+      with:
+        service: sshd
+    - id: systemctl_status
+      use: systemctl.status
+      with:
+        service: sshd
+    - id: systemctl_stop
+      use: systemctl.stop
+      with:
+        service: sshd
+    - id: systemctl_unmask
+      use: systemctl.unmask
+      with:
+        service: sshd

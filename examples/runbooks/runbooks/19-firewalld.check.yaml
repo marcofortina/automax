@@ -1,0 +1,69 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-firewalld
+tasks:
+- id: firewalld
+  description: Check-mode catalog for firewalld plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - firewalld
+  steps:
+  - id: catalog
+    substeps:
+    - id: firewalld_forward_port
+      use: firewalld.forward_port
+      with:
+        port: 2222
+        to_port: 22
+    - id: firewalld_icmp_block
+      use: firewalld.icmp_block
+      with:
+        icmp_type: echo-request
+    - id: firewalld_list
+      use: firewalld.list
+      with:
+        zone: public
+        permanent: true
+    - id: firewalld_masquerade
+      use: firewalld.masquerade
+      with:
+        zone: public
+        state: present
+    - id: firewalld_port
+      use: firewalld.port
+      with:
+        port: 443
+        protocol: tcp
+        zone: public
+        state: present
+        permanent: true
+        reload: true
+        sudo: true
+    - id: firewalld_reload
+      use: firewalld.reload
+      with:
+        sudo: true
+    - id: firewalld_rich_rule
+      use: firewalld.rich_rule
+      with:
+        rich_rule: rule family=ipv4 source address=10.0.0.0/8 service name=ssh accept
+    - id: firewalld_service
+      use: firewalld.service
+      with:
+        service: sshd
+    - id: firewalld_source
+      use: firewalld.source
+      with:
+        source: /var/log/app
+    - id: firewalld_status
+      use: firewalld.status
+      with:
+        sudo: true
+    - id: firewalld_zone
+      use: firewalld.zone
+      with:
+        zone: public

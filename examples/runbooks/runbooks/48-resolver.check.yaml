@@ -1,0 +1,26 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-resolver
+tasks:
+- id: resolver
+  description: Check-mode catalog for resolver plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - resolver
+  steps:
+  - id: catalog
+    substeps:
+    - id: resolver_config
+      use: resolver.config
+      with:
+        backend: auto
+        nameservers:
+        - 192.0.2.53
+    - id: resolver_facts
+      use: resolver.facts
+      with:
+        sudo: true

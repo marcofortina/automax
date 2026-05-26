@@ -1,0 +1,56 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-ssh
+tasks:
+- id: ssh
+  description: Check-mode catalog for ssh plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - ssh
+  steps:
+  - id: catalog
+    substeps:
+    - id: ssh_authorized_key
+      use: ssh.authorized_key
+      with:
+        user: deploy
+        key: '{{ vars.deploy_public_key }}'
+        state: present
+        sudo: true
+    - id: ssh_authorized_key_absent
+      use: ssh.authorized_key_absent
+      with:
+        user: deploy
+        key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+    - id: ssh_config
+      use: ssh.config
+      with:
+        name: automax
+        settings:
+          Host: automax
+    - id: ssh_fingerprint
+      use: ssh.fingerprint
+      with:
+        path: /tmp/automax-demo
+    - id: ssh_host_keygen
+      use: ssh.host_keygen
+      with:
+        types:
+        - ed25519
+        force: true
+    - id: ssh_keygen
+      use: ssh.keygen
+      with:
+        path: /tmp/automax-demo
+    - id: ssh_known_hosts
+      use: ssh.known_hosts
+      with:
+        host: 127.0.0.1
+    - id: ssh_public_key
+      use: ssh.public_key
+      with:
+        path: /tmp/automax-demo

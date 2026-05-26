@@ -1,0 +1,38 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-assert
+tasks:
+- id: assert
+  description: Check-mode catalog for assert plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - assert
+  steps:
+  - id: catalog
+    substeps:
+    - id: assert_command
+      use: assert.command
+      with:
+        command: echo automax
+    - id: assert_disk
+      use: assert.disk
+      with:
+        path: /tmp/automax-demo
+        min_free_mb: 1
+    - id: assert_file
+      use: assert.file
+      with:
+        path: /tmp/automax-demo
+    - id: assert_path
+      use: assert.path
+      with:
+        path: /tmp/automax-demo
+    - id: assert_tcp
+      use: assert.tcp
+      with:
+        host: 127.0.0.1
+        port: 22

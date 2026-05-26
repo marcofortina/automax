@@ -1,0 +1,20 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-blkid
+tasks:
+- id: blkid
+  description: Check-mode catalog for blkid plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - blkid
+  steps:
+  - id: catalog
+    substeps:
+    - id: blkid_assert
+      use: blkid.assert
+      with:
+        device: /dev/sdb

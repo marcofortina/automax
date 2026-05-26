@@ -1,0 +1,23 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-sudoers
+tasks:
+- id: sudoers
+  description: Check-mode catalog for sudoers plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - sudoers
+  steps:
+  - id: catalog
+    substeps:
+    - id: sudoers_dropin
+      use: sudoers.dropin
+      with:
+        name: deploy-myapp
+        content: 'deploy ALL=(root) NOPASSWD: /bin/systemctl restart myapp'
+        validate: true
+        sudo: true

@@ -1,0 +1,29 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-multipath
+tasks:
+- id: multipath
+  description: Check-mode catalog for multipath plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - multipath
+  steps:
+  - id: catalog
+    substeps:
+    - id: multipath_flush
+      use: multipath.flush
+      with:
+        name: nginx
+    - id: multipath_reload
+      use: multipath.reload
+      with:
+        sudo: true
+    - id: multipath_status
+      use: multipath.status
+      with:
+        name: nginx
+        expect_paths: 4

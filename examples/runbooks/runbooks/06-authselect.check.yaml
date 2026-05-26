@@ -1,0 +1,20 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-authselect
+tasks:
+- id: authselect
+  description: Check-mode catalog for authselect plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - authselect
+  steps:
+  - id: catalog
+    substeps:
+    - id: authselect_profile
+      use: authselect.profile
+      with:
+        profile: /etc/apparmor.d/usr.sbin.nginx

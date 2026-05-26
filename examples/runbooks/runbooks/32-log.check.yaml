@@ -1,0 +1,26 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-log
+tasks:
+- id: log
+  description: Check-mode catalog for log plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - log
+  steps:
+  - id: catalog
+    substeps:
+    - id: log_export
+      use: log.export
+      with:
+        files:
+        - /etc/pam.d/login
+        service: sshd
+    - id: log_grep
+      use: log.grep
+      with:
+        pattern: KEY=.*

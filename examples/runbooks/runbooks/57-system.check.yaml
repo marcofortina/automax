@@ -1,0 +1,21 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-system
+tasks:
+- id: system
+  description: Check-mode catalog for system plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - system
+  steps:
+  - id: catalog
+    substeps:
+    - id: system_reboot
+      use: system.reboot
+      with:
+        wait: true
+        delay: 3

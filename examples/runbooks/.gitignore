@@ -1,0 +1,3 @@
+# Local lab secrets must not be committed.
+lab-secrets.local.yaml
+*.local.yaml

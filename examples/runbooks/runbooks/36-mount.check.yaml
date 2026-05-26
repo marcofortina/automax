@@ -1,0 +1,48 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-mount
+tasks:
+- id: mount
+  description: Check-mode catalog for mount plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - mount
+  steps:
+  - id: catalog
+    substeps:
+    - id: mount_absent
+      use: mount.absent
+      with:
+        path: /tmp/automax-demo
+    - id: mount_assert
+      use: mount.assert
+      with:
+        path: /tmp/automax-demo
+    - id: mount_facts
+      use: mount.facts
+      with:
+        path: /tmp/automax-demo
+        sudo: true
+    - id: mount_options_assert
+      use: mount.options_assert
+      with:
+        path: /tmp/automax-demo
+        options:
+        - timeout:2
+    - id: mount_present
+      use: mount.present
+      with:
+        src: /dev/vdb1
+        path: /data
+        fstype: xfs
+        opts: defaults,noatime
+        persist: true
+        sudo: true
+    - id: mount_remount
+      use: mount.remount
+      with:
+        path: /tmp/automax-demo

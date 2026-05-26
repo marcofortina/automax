@@ -1,0 +1,20 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-plugin
+tasks:
+- id: plugin
+  description: Check-mode catalog for plugin plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - plugin
+  steps:
+  - id: catalog
+    substeps:
+    - id: plugin_requirements
+      use: plugin.requirements
+      with:
+        plugin: fs.write

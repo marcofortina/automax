@@ -1,0 +1,28 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-timedatectl
+tasks:
+- id: timedatectl
+  description: Check-mode catalog for timedatectl plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - timedatectl
+  steps:
+  - id: catalog
+    substeps:
+    - id: timedatectl_ntp
+      use: timedatectl.ntp
+      with:
+        enabled: true
+    - id: timedatectl_status
+      use: timedatectl.status
+      with:
+        sudo: true
+    - id: timedatectl_timezone
+      use: timedatectl.timezone
+      with:
+        timezone: UTC

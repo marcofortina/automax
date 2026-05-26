@@ -1,0 +1,78 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-block
+tasks:
+- id: block
+  description: Check-mode catalog for block plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - block
+  steps:
+  - id: catalog
+    substeps:
+    - id: block_empty_assert
+      use: block.empty_assert
+      with:
+        device: /dev/sdb
+    - id: block_facts
+      use: block.facts
+      with:
+        devices:
+        - /dev/sdb
+        multipath: false
+    - id: block_fs_assert
+      use: block.fs_assert
+      with:
+        device: /dev/sdb
+        fstype: xfs
+    - id: block_identity
+      use: block.identity
+      with:
+        device: /dev/sdb
+    - id: block_mkfs
+      use: block.mkfs
+      with:
+        device: /dev/sdb
+        fstype: xfs
+    - id: block_mountpoint_assert
+      use: block.mountpoint_assert
+      with:
+        device: /dev/sdb
+        path: /tmp/automax-demo
+    - id: block_not_mounted_assert
+      use: block.not_mounted_assert
+      with:
+        device: /dev/sdb
+    - id: block_partition
+      use: block.partition
+      with:
+        device: /dev/sdb
+        label: gpt
+        partitions:
+        - number: 1
+          name: DATA01
+          start: 1MiB
+          end: 100%
+    - id: block_partition_rescan
+      use: block.partition_rescan
+      with:
+        device: /dev/sdb
+    - id: block_rescan
+      use: block.rescan
+      with:
+        device: /dev/sdb
+        udev_settle: true
+    - id: block_size_assert
+      use: block.size_assert
+      with:
+        device: /dev/sdb
+        size: 16G
+    - id: block_wipe_signatures
+      use: block.wipe_signatures
+      with:
+        device: /dev/sdb
+        force: true

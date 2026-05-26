@@ -1,0 +1,44 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-nftables
+tasks:
+- id: nftables
+  description: Check-mode catalog for nftables plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - nftables
+  steps:
+  - id: catalog
+    substeps:
+    - id: nftables_apply
+      use: nftables.apply
+      with:
+        src: ./firewall/prod.nft
+        sudo: true
+    - id: nftables_export
+      use: nftables.export
+      with:
+        family: inet
+        table: main
+    - id: nftables_list
+      use: nftables.list
+      with:
+        family: inet
+        table: main
+    - id: nftables_rollback_file
+      use: nftables.rollback_file
+      with:
+        file: /etc/sysctl.d/99-automax.conf
+        confirm: true
+    - id: nftables_ruleset_assert
+      use: nftables.ruleset_assert
+      with:
+        fragment: table inet
+    - id: nftables_validate
+      use: nftables.validate
+      with:
+        content: "table inet automax {\n chain input { type filter hook input priority 0; policy accept; }\n}\n"

@@ -1,0 +1,25 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-journal
+tasks:
+- id: journal
+  description: Check-mode catalog for journal plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - journal
+  steps:
+  - id: catalog
+    substeps:
+    - id: journal_collect
+      use: journal.collect
+      with:
+        service: sshd
+        since: 1 hour ago
+    - id: journal_grep
+      use: journal.grep
+      with:
+        pattern: KEY=.*

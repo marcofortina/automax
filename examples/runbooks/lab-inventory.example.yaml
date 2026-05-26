@@ -1,0 +1,28 @@
+# Example only. You can keep using your existing /mnt/data/automax-full-plugin-lab/lab-full-plugin-inventory.yaml.
+servers:
+  lab01:
+    host: 192.168.1.100
+    groups: [ssh, lab]
+    # Optional, but recommended for plugin-smoke-04-storage-destructive.yaml
+    # when each VM has a different /dev/disk/by-id path.
+    # vars:
+    #   automax_lab_disk: /dev/disk/by-id/REPLACE_ME_LAB01_EMPTY_DISK
+    ssh:
+      user: "{{ secrets.ssh_user }}"
+      password: "{{ secrets.ssh_password }}"
+      missing_host_key_policy: reject
+      look_for_keys: false
+      allow_agent: false
+  lab02:
+    host: 192.168.1.101
+    groups: [ssh, lab]
+    # Optional, but recommended for plugin-smoke-04-storage-destructive.yaml
+    # when each VM has a different /dev/disk/by-id path.
+    # vars:
+    #   automax_lab_disk: /dev/disk/by-id/REPLACE_ME_LAB02_EMPTY_DISK
+    ssh:
+      user: "{{ secrets.ssh_user }}"
+      password: "{{ secrets.ssh_password }}"
+      missing_host_key_policy: reject
+      look_for_keys: false
+      allow_agent: false

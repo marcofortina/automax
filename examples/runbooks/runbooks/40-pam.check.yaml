@@ -1,0 +1,91 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-pam
+tasks:
+- id: pam
+  description: Check-mode catalog for pam plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - pam
+  steps:
+  - id: catalog
+    substeps:
+    - id: pam_access
+      use: pam.access
+      with:
+        entries:
+        - domain: appuser
+          type: soft
+          item: nofile
+          value: 1024
+    - id: pam_authselect
+      use: pam.authselect
+      with:
+        profile: /etc/apparmor.d/usr.sbin.nginx
+    - id: pam_backup
+      use: pam.backup
+      with:
+        service: sshd
+    - id: pam_faillock
+      use: pam.faillock
+      with:
+        settings:
+          deny: '5'
+    - id: pam_include_assert
+      use: pam.include_assert
+      with:
+        service: sshd
+        include: common-auth
+    - id: pam_limits
+      use: pam.limits
+      with:
+        files:
+        - /etc/pam.d/login
+    - id: pam_module_assert
+      use: pam.module_assert
+      with:
+        service: sshd
+        module: br_netfilter
+    - id: pam_order_assert
+      use: pam.order_assert
+      with:
+        service: sshd
+        before: pam_permit.so
+        after: pam_deny.so
+    - id: pam_pwhistory
+      use: pam.pwhistory
+      with:
+        settings:
+          remember: '5'
+    - id: pam_restore
+      use: pam.restore
+      with:
+        service: sshd
+        src: /tmp/source
+        confirm: true
+    - id: pam_service_line
+      use: pam.service_line
+      with:
+        service: sshd
+        line: KEY=value
+    - id: pam_stack_facts
+      use: pam.stack_facts
+      with:
+        service: sshd
+        services:
+        - sshd
+    - id: pam_succeed_if
+      use: pam.succeed_if
+      with:
+        service: sshd
+        condition: user ingroup wheel
+    - id: pam_validate
+      use: pam.validate
+      with:
+        service: sshd
+        services:
+        - sshd

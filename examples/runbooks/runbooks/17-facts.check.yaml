@@ -1,0 +1,40 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-facts
+tasks:
+- id: facts
+  description: Check-mode catalog for facts plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - facts
+  steps:
+  - id: catalog
+    substeps:
+    - id: facts_gather
+      use: facts.gather
+      with:
+        subset:
+        - os
+        - network
+        - services
+    - id: facts_network
+      use: facts.network
+      with:
+        sudo: true
+    - id: facts_os
+      use: facts.os
+      with:
+        sudo: true
+    - id: facts_packages
+      use: facts.packages
+      with:
+        manager: auto
+        sudo: true
+    - id: facts_services
+      use: facts.services
+      with:
+        sudo: true

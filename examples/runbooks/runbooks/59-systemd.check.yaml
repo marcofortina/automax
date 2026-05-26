@@ -1,0 +1,36 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-systemd
+tasks:
+- id: systemd
+  description: Check-mode catalog for systemd plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - systemd
+  steps:
+  - id: catalog
+    substeps:
+    - id: systemd_sysusers
+      use: systemd.sysusers
+      with:
+        name: nginx
+        content: managed by automax
+    - id: systemd_timer
+      use: systemd.timer
+      with:
+        name: nginx
+        content: managed by automax
+    - id: systemd_tmpfiles
+      use: systemd.tmpfiles
+      with:
+        name: nginx
+        content: managed by automax
+    - id: systemd_unit
+      use: systemd.unit
+      with:
+        name: nginx
+        content: managed by automax

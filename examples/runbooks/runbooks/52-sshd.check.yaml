@@ -1,0 +1,26 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-sshd
+tasks:
+- id: sshd
+  description: Check-mode catalog for sshd plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - sshd
+  steps:
+  - id: catalog
+    substeps:
+    - id: sshd_config
+      use: sshd.config
+      with:
+        name: automax
+        settings:
+          PasswordAuthentication: 'yes'
+    - id: sshd_validate
+      use: sshd.validate
+      with:
+        sudo: true

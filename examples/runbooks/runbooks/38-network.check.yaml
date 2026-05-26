@@ -1,0 +1,67 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-network
+tasks:
+- id: network
+  description: Check-mode catalog for network plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - network
+  steps:
+  - id: catalog
+    substeps:
+    - id: network_bond
+      use: network.bond
+      with:
+        name: nginx
+        interfaces:
+        - eth1
+        - eth2
+    - id: network_bridge
+      use: network.bridge
+      with:
+        name: nginx
+    - id: network_dns
+      use: network.dns
+      with:
+        backend: auto
+        nameservers:
+        - 192.0.2.53
+    - id: network_dns_assert
+      use: network.dns_assert
+      with:
+        nameservers:
+        - 192.0.2.53
+        search:
+        - example.com
+    - id: network_interface
+      use: network.interface
+      with:
+        name: nginx
+    - id: network_link_assert
+      use: network.link_assert
+      with:
+        name: nginx
+    - id: network_port_check
+      use: network.port_check
+      with:
+        host: 127.0.0.1
+        port: 22
+    - id: network_route
+      use: network.route
+      with:
+        dest: /tmp/dest
+    - id: network_route_assert
+      use: network.route_assert
+      with:
+        dest: /tmp/dest
+    - id: network_vlan
+      use: network.vlan
+      with:
+        name: nginx
+        parent: eth0
+        vlan_id: 100

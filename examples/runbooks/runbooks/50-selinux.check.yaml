@@ -1,0 +1,47 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-selinux
+tasks:
+- id: selinux
+  description: Check-mode catalog for selinux plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - selinux
+  steps:
+  - id: catalog
+    substeps:
+    - id: selinux_boolean
+      use: selinux.boolean
+      with:
+        name: httpd_can_network_connect
+        value: true
+        persist: true
+        sudo: true
+    - id: selinux_context
+      use: selinux.context
+      with:
+        path: /tmp/automax-demo
+        selinux_type: httpd_sys_content_t
+    - id: selinux_fcontext
+      use: selinux.fcontext
+      with:
+        path: /tmp/automax-demo
+        selinux_type: httpd_sys_content_t
+    - id: selinux_mode
+      use: selinux.mode
+      with:
+        state: permissive
+    - id: selinux_port
+      use: selinux.port
+      with:
+        port: 22
+        protocol: tcp
+        selinux_type: httpd_sys_content_t
+    - id: selinux_restorecon
+      use: selinux.restorecon
+      with:
+        path: /tmp/automax-demo

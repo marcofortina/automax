@@ -1,0 +1,54 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-auditd
+tasks:
+- id: auditd
+  description: Check-mode catalog for auditd plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - auditd
+  steps:
+  - id: catalog
+    substeps:
+    - id: auditd_backlog_assert
+      use: auditd.backlog_assert
+      with: {}
+    - id: auditd_reload
+      use: auditd.reload
+      with:
+        sudo: true
+    - id: auditd_rule
+      use: auditd.rule
+      with:
+        name: nginx
+    - id: auditd_rules_facts
+      use: auditd.rules_facts
+      with:
+        sudo: true
+    - id: auditd_search
+      use: auditd.search
+      with:
+        key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+        user: deploy
+    - id: auditd_status
+      use: auditd.status
+      with:
+        sudo: true
+    - id: auditd_syscall
+      use: auditd.syscall
+      with:
+        name: openat
+        syscalls:
+        - openat
+        key: automax
+    - id: auditd_watch
+      use: auditd.watch
+      with:
+        name: automax-watch
+        path: /tmp/automax-demo
+        permissions: rwxa
+        key: automax

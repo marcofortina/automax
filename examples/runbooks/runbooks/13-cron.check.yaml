@@ -1,0 +1,44 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-cron
+tasks:
+- id: cron
+  description: Check-mode catalog for cron plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - cron
+  steps:
+  - id: catalog
+    substeps:
+    - id: cron_absent
+      use: cron.absent
+      with:
+        name: nginx
+    - id: cron_entry
+      use: cron.entry
+      with:
+        name: myapp-health
+        schedule: '*/5 * * * *'
+        user: root
+        command: /usr/local/bin/myapp-healthcheck
+        sudo: true
+    - id: cron_file
+      use: cron.file
+      with:
+        name: automax-smoke
+        content: '* * * * * root /bin/true
+
+          '
+    - id: cron_list
+      use: cron.list
+      with:
+        user: deploy
+        sudo: true
+    - id: cron_validate
+      use: cron.validate
+      with:
+        path: /tmp/automax-demo

@@ -1,0 +1,29 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-alternatives
+tasks:
+- id: alternatives
+  description: Check-mode catalog for alternatives plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - alternatives
+  steps:
+  - id: catalog
+    substeps:
+    - id: alternatives_get
+      use: alternatives.get
+      with:
+        name: nginx
+    - id: alternatives_list
+      use: alternatives.list
+      with:
+        sudo: true
+    - id: alternatives_set
+      use: alternatives.set
+      with:
+        name: nginx
+        path: /tmp/automax-demo

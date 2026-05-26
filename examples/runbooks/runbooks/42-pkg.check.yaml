@@ -1,0 +1,114 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-pkg
+tasks:
+- id: pkg
+  description: Check-mode catalog for pkg plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - pkg
+  steps:
+  - id: catalog
+    substeps:
+    - id: pkg_clean
+      use: pkg.clean
+      with:
+        manager: auto
+        sudo: true
+    - id: pkg_files
+      use: pkg.files
+      with:
+        name: nginx
+    - id: pkg_hold
+      use: pkg.hold
+      with:
+        name: nginx
+        packages:
+        - curl
+    - id: pkg_install
+      use: pkg.install
+      with:
+        name: nginx
+        packages:
+        - curl
+    - id: pkg_key_add
+      use: pkg.key.add
+      with:
+        name: vendor
+        manager: apt
+        url: https://repo.example/key.gpg
+        sudo: true
+    - id: pkg_key_remove
+      use: pkg.key.remove
+      with:
+        name: nginx
+    - id: pkg_owner
+      use: pkg.owner
+      with:
+        path: /tmp/automax-demo
+    - id: pkg_query
+      use: pkg.query
+      with:
+        name: nginx
+        packages:
+        - curl
+    - id: pkg_remove
+      use: pkg.remove
+      with:
+        name: nginx
+        packages:
+        - curl
+        confirm: true
+    - id: pkg_repo_add
+      use: pkg.repo.add
+      with:
+        name: vendor
+        manager: apt
+        repo: deb [signed-by=/etc/apt/keyrings/vendor.gpg] https://repo.example stable main
+        update_cache: true
+        sudo: true
+    - id: pkg_repo_remove
+      use: pkg.repo.remove
+      with:
+        name: nginx
+    - id: pkg_repo_priority
+      use: pkg.repo_priority
+      with:
+        name: nginx
+        priority: 1001
+    - id: pkg_unhold
+      use: pkg.unhold
+      with:
+        name: nginx
+        packages:
+        - curl
+    - id: pkg_update_cache
+      use: pkg.update_cache
+      with:
+        name: nginx
+        packages:
+        - curl
+    - id: pkg_upgrade
+      use: pkg.upgrade
+      with:
+        manager: auto
+    - id: pkg_verify
+      use: pkg.verify
+      with:
+        name: nginx
+        packages:
+        - curl
+    - id: pkg_version_assert
+      use: pkg.version_assert
+      with:
+        name: nginx
+        version: 1.2.3*
+    - id: pkg_version_pin
+      use: pkg.version_pin
+      with:
+        name: nginx
+        version: 1.2.3*
