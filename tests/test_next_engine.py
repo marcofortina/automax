@@ -2941,7 +2941,11 @@ def test_ssh_known_hosts_scan_prints_fingerprints_and_writes_output(tmp_path: Pa
 
         class Completed:
             returncode = 0
-            stdout = "example.com ssh-ed25519 QUJDREVGR0g=\n"
+            stdout = (
+                "example.com ssh-rsa QUJDREVGR0g=\n"
+                "example.com ecdsa-sha2-nistp256 QUJDREVGR0g=\n"
+                "example.com ssh-ed25519 QUJDREVGR0g=\n"
+            )
             stderr = ""
 
         return Completed()
@@ -2964,8 +2968,17 @@ def test_ssh_known_hosts_scan_prints_fingerprints_and_writes_output(tmp_path: Pa
 
     assert result.exit_code == 0, result.output
     assert "Verify these fingerprints" in result.output
-    assert "example.com:22  ssh-ed25519  SHA256:" in result.output
-    assert output.read_text(encoding="utf-8") == "example.com ssh-ed25519 QUJDREVGR0g=\n"
+    assert "Target example.com:22" in result.output
+    assert "  ssh-ed25519" in result.output
+    assert "Wrote known_hosts file:" in result.output
+    assert "Scanned 1 target, 3 host keys." in result.output
+    assert result.output.index("ssh-ed25519") < result.output.index("ecdsa-sha2-nistp256")
+    assert result.output.index("ecdsa-sha2-nistp256") < result.output.index("ssh-rsa")
+    assert output.read_text(encoding="utf-8") == (
+        "example.com ssh-rsa QUJDREVGR0g=\n"
+        "example.com ecdsa-sha2-nistp256 QUJDREVGR0g=\n"
+        "example.com ssh-ed25519 QUJDREVGR0g=\n"
+    )
 
 
 def test_ssh_known_hosts_scan_uses_inventory_selection(tmp_path: Path, monkeypatch):
@@ -3015,6 +3028,7 @@ servers:
     assert result.exit_code == 0, result.output
     payload = json.loads(result.output)
     assert seen_hosts == ["192.0.2.11"]
+    assert payload["entries"][0]["target_name"] == "web01"
     assert payload["entries"][0]["host"] == "192.0.2.11"
     assert payload["entries"][0]["fingerprint"].startswith("SHA256:")
 

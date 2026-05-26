@@ -22,7 +22,7 @@ from automax import __version__
 from automax.core.engine import AutomaxEngine, AutomaxError
 from automax.core.capabilities import package_for_tool
 from automax.core.inventory import Inventory, InventoryError, load_inventory_document
-from automax.core.known_hosts import KnownHostsError, scan_known_hosts, write_known_hosts
+from automax.core.known_hosts import KnownHostEntry, KnownHostsError, scan_known_hosts, write_known_hosts
 from automax.core.plugin_docs import render_plugin_reference
 from automax.core.schema import export_schema
 from automax.core.job_views import render_dot, render_explain_text, render_mermaid, render_runbook_markdown, render_svg
@@ -635,6 +635,7 @@ def scan_known_hosts_command(
             port=port,
         )
         entries = scan_known_hosts(targets, timeout=timeout, key_types=key_types)
+        output_exists = Path(output_path).expanduser().exists() if output_path else False
         written = write_known_hosts(entries, output_path, append=append) if output_path else None
     except (AutomaxError, KnownHostsError, InventoryError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc
@@ -647,11 +648,57 @@ def scan_known_hosts_command(
     if output_format == "json":
         click.echo(json.dumps(payload, indent=2, sort_keys=True))
         return
-    click.echo("Verify these fingerprints over a trusted channel before using the scanned keys:")
+    _echo_known_hosts_scan(entries, written=written, append=append, output_exists=output_exists)
+
+
+def _known_host_key_rank(key_type: str) -> tuple[int, str]:
+    ranks = {
+        "ssh-ed25519": 0,
+        "ecdsa-sha2-nistp256": 1,
+        "ecdsa-sha2-nistp384": 1,
+        "ecdsa-sha2-nistp521": 1,
+        "ssh-rsa": 2,
+    }
+    return (ranks.get(key_type, 10), key_type)
+
+
+def _known_host_target_label(entry: KnownHostEntry) -> str:
+    endpoint = f"{entry.host}:{entry.port}"
+    if entry.target_name == entry.host:
+        return f"Target {endpoint}"
+    return f"Target {entry.target_name} {endpoint}"
+
+
+def _echo_known_hosts_scan(
+    entries: list[KnownHostEntry],
+    *,
+    written: Path | None,
+    append: bool,
+    output_exists: bool,
+) -> None:
+    click.echo(
+        "Scanned SSH host keys. Verify these fingerprints over a trusted channel "
+        "before trusting the generated known_hosts file."
+    )
+    grouped: dict[tuple[str, str, int], list[KnownHostEntry]] = {}
     for entry in entries:
-        click.echo(f"{entry.host}:{entry.port}  {entry.key_type}  {entry.fingerprint}")
+        grouped.setdefault((entry.target_name, entry.host, entry.port), []).append(entry)
+
+    for group_entries in grouped.values():
+        click.echo()
+        click.echo(_known_host_target_label(group_entries[0]))
+        for entry in sorted(group_entries, key=lambda item: _known_host_key_rank(item.key_type)):
+            click.echo(f"  {entry.key_type:<20} {entry.fingerprint}")
+
     if written:
-        click.echo(f"Wrote {written}")
+        action = "Appended to" if append else "Overwrote" if output_exists else "Wrote"
+        click.echo()
+        click.echo(f"{action} known_hosts file: {written}")
+    target_count = len(grouped)
+    key_count = len(entries)
+    target_suffix = "s" if target_count != 1 else ""
+    key_suffix = "s" if key_count != 1 else ""
+    click.echo(f"Scanned {target_count} target{target_suffix}, {key_count} host key{key_suffix}.")
 
 
 def _known_host_targets(

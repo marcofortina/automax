@@ -23,6 +23,7 @@ class KnownHostsError(ValueError):
 class KnownHostEntry:
     """One scanned OpenSSH known_hosts line plus fingerprint metadata."""
 
+    target_name: str
     host: str
     port: int
     key_type: str
@@ -97,6 +98,7 @@ def _parse_known_host_line(line: str, target: Target) -> KnownHostEntry | None:
     key_type = parts[1]
     key_blob = parts[2]
     return KnownHostEntry(
+        target_name=target.name,
         host=target.host,
         port=target.port,
         key_type=key_type,
