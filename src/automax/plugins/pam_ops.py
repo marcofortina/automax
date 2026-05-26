@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote
 
 
 def _sudo(params: Dict[str, Any]) -> str:
@@ -70,7 +70,7 @@ def _state(params: Dict[str, Any]) -> str:
 
 def _install_content_command(path: str, content: str, params: Dict[str, Any], mode: str = "0644") -> list[str]:
     tmp = "/tmp/automax-pam.$$"
-    commands = [f"cat > {tmp} <<'EOF'\n{content}EOF"]
+    commands = [heredoc_to_file(tmp, content)]
     if bool(params.get("backup", True)):
         commands.append(_backup(path, params))
     commands.extend([f"{_sudo(params)}install -D -m {mode} {tmp} {quote(path)}", f"rm -f {tmp}"])

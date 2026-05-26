@@ -12,7 +12,8 @@ import subprocess
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin
+from automax.plugins.base import BasePlugin, PluginValidationError
+from automax.plugins.remote_utils import normalize_env_mapping, render_env_prefix
 
 
 class LocalCommandPlugin(BasePlugin):
@@ -35,11 +36,9 @@ class LocalCommandPlugin(BasePlugin):
             rendered = f"cd {shlex.quote(str(params['cwd']))} && {rendered}"
         if params.get("env"):
             env = params["env"]
-            if isinstance(env, dict):
-                prefix = " ".join(
-                    f"{key}={shlex.quote(str(value))}" for key, value in sorted(env.items())
-                )
-                rendered = f"{prefix} {rendered}"
+            if not isinstance(env, dict):
+                raise PluginValidationError("local.command env must be a mapping")
+            rendered = f"{render_env_prefix(env)} {rendered}"
         return [rendered]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -50,6 +49,10 @@ class LocalCommandPlugin(BasePlugin):
         command = params["command"]
         cwd = params.get("cwd")
         env = params.get("env")
+        if env is not None:
+            if not isinstance(env, dict):
+                raise PluginValidationError("local.command env must be a mapping")
+            env = normalize_env_mapping(env)
         shell = bool(params.get("shell", isinstance(command, str)))
         timeout = params.get("timeout", context.command_timeout)
 

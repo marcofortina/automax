@@ -7,14 +7,18 @@ Remote shell helpers for SSH-backed plugins.
 
 from __future__ import annotations
 
+import re
 import shlex
-from typing import Any, Tuple
+from typing import Any, Mapping, Tuple
+
+from automax.plugins.base import PluginValidationError
 
 from automax.core.models import ExecutionContext, PluginResult
 
 
 CHANGE_MARKER = "__AUTOMAX_CHANGED__"
 SUDO_NON_INTERACTIVE = "sudo -n"
+_ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def quote(value: Any) -> str:
@@ -22,12 +26,59 @@ def quote(value: Any) -> str:
     return shlex.quote(str(value))
 
 
+def validate_env_name(name: Any) -> str:
+    """Validate and normalize a POSIX shell environment variable name."""
+    value = str(name)
+    if not _ENV_NAME_RE.fullmatch(value):
+        raise PluginValidationError(f"invalid environment variable name: {value!r}")
+    return value
+
+
+def normalize_env_mapping(env: Mapping[Any, Any]) -> dict[str, str]:
+    """Return a string-only env mapping after validating all variable names."""
+    return {validate_env_name(name): str(value) for name, value in env.items()}
+
+
+def render_env_prefix(env: Mapping[Any, Any]) -> str:
+    """Render a validated environment prefix for POSIX shell commands."""
+    normalized = normalize_env_mapping(env)
+    return " ".join(f"{name}={quote(value)}" for name, value in sorted(normalized.items()))
+
+
+def _safe_heredoc_parts(content: Any, *, prefix: str) -> tuple[str, str]:
+    text = str(content)
+    delimiter = prefix
+    used_lines = set(text.splitlines())
+    counter = 0
+    while delimiter in used_lines:
+        counter += 1
+        delimiter = f"{prefix}_{counter}"
+    body = text if text.endswith("\n") else text + "\n"
+    return delimiter, body
+
+
+def heredoc_to_file(path: Any, content: Any, *, prefix: str = "AUTOMAX_EOF") -> str:
+    """Render a safe quoted heredoc that writes content to path.
+
+    The delimiter is selected so that content lines cannot terminate the heredoc early.
+    """
+    delimiter, body = _safe_heredoc_parts(content, prefix=prefix)
+    return f"cat > {quote(path)} <<'{delimiter}'\n{body}{delimiter}"
+
+
+def heredoc_to_stdin(command: str, content: Any, *, prefix: str = "AUTOMAX_EOF") -> str:
+    """Render a safe quoted heredoc piped to a shell command."""
+    delimiter, body = _safe_heredoc_parts(content, prefix=prefix)
+    return f"cat <<'{delimiter}' | {command}\n{body}{delimiter}"
+
+
 def apply_cwd(command: str, context: ExecutionContext, explicit_cwd: str | None = None) -> str:
     """Prefix a remote command with the current step environment and working directory."""
     env = context.step_state.get("env") or {}
     if env:
-        prefix = " ".join(f"{name}={quote(value)}" for name, value in sorted(env.items()))
-        command = f"{prefix} {command}"
+        if not isinstance(env, Mapping):
+            raise PluginValidationError("step environment must be a mapping")
+        command = f"{render_env_prefix(env)} {command}"
     cwd = explicit_cwd or context.step_state.get("cwd")
     if not cwd:
         return command

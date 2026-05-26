@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote
 
 
 def _sudo(params: Dict[str, Any]) -> str:
@@ -53,7 +53,7 @@ class SshdConfigPlugin(BasePlugin):
         content = self._content(params)
         sudo = _sudo(params)
         tmp = "/tmp/automax-sshd.$$"
-        commands = [f"cat > {tmp} <<'EOF'\n{content}EOF"]
+        commands = [heredoc_to_file(tmp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.extend([f"{sudo}install -D -m 0644 {tmp} {quote(path)}", f"rm -f {tmp}", f"{sudo}sshd -t"])
@@ -129,7 +129,7 @@ class PasswordPolicyPlugin(BasePlugin):
         content = self._content(params)
         sudo = _sudo(params)
         tmp = "/tmp/automax-pwquality.$$"
-        commands = [f"cat > {tmp} <<'EOF'\n{content}EOF"]
+        commands = [heredoc_to_file(tmp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.extend([f"{sudo}install -D -m 0644 {tmp} {quote(path)}", f"rm -f {tmp}"])

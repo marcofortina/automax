@@ -11,7 +11,7 @@ from typing import Any, Dict
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.linux_ops import ResolverConfigPlugin
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote
 
 
 def _sudo(params: Dict[str, Any]) -> str:
@@ -46,7 +46,7 @@ def _backup_cmd(path: str, params: Dict[str, Any]) -> str:
 def _write_file_cmd(path: str, content: str, mode: str, params: Dict[str, Any]) -> str:
     temp = "/tmp/automax-net.$$"
     return " && ".join([
-        f"cat > {temp} <<'EOF'\n{content}EOF",
+        heredoc_to_file(temp, content),
         _backup_cmd(path, params),
         f"{_sudo(params)}install -D -m {mode} {temp} {quote(path)}",
         f"rm -f {temp}",

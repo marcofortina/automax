@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, normalize_env_mapping, quote, render_env_prefix, result_from_remote
 
 
 def _sudo(params: Dict[str, Any], default: bool = True) -> str:
@@ -42,7 +42,7 @@ def _mapping(params: Dict[str, Any], key: str) -> dict[str, str]:
     raw = params.get(key, {}) or {}
     if not isinstance(raw, dict) or not raw:
         raise PluginValidationError(f"{key} must be a non-empty mapping")
-    return {str(name): str(value) for name, value in raw.items()}
+    return normalize_env_mapping(raw)
 
 
 class SwapPresentPlugin(BasePlugin):
@@ -153,7 +153,7 @@ class LimitsDropinPlugin(BasePlugin):
         path = f"/etc/security/limits.d/{params['name']}.conf"
         sudo = _sudo(params)
         temp = "/tmp/automax-limits.$$"
-        commands = [f"cat > {temp} <<'EOF'\n{content}EOF"]
+        commands = [heredoc_to_file(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")
@@ -390,7 +390,7 @@ class ResolverConfigPlugin(BasePlugin):
         path = self._path_for_backend(params)
         content = self._resolved_content(params) if backend == "systemd-resolved" else self._content(params)
         temp = "/tmp/automax-resolver.$$"
-        commands = [f"cat > {temp} <<'EOF'\n{content}EOF"]
+        commands = [heredoc_to_file(temp, content)]
         if backend == "plain-file" and not bool(params.get("force", False)):
             commands.append("if [ -L /etc/resolv.conf ]; then echo 'refusing to manage symlinked /etc/resolv.conf with backend=plain-file' >&2; exit 1; fi")
         if bool(params.get("backup", True)):
@@ -432,7 +432,7 @@ class ChronyServersPlugin(BasePlugin):
         path = str(params.get("path", "/etc/chrony.d/99-automax.conf"))
         sudo = _sudo(params)
         temp = "/tmp/automax-chrony.$$"
-        commands = [f"cat > {temp} <<'EOF'\n{content}EOF"]
+        commands = [heredoc_to_file(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")
@@ -507,13 +507,12 @@ class EnvSetPlugin(BasePlugin):
         variables = _mapping(params, "variables")
         scope = str(params.get("scope", "step"))
         if scope == "step":
-            exports = " ".join(f"{name}={quote(value)}" for name, value in sorted(variables.items()))
-            return [f"export {exports}"]
+            return [f"export {render_env_prefix(variables)}"]
         content = self._content(params)
         path = self._path(params)
         sudo = _sudo(params, default=scope == "global")
         temp = "/tmp/automax-env.$$"
-        commands = [f"cat > {temp} <<'EOF'\n{content}EOF"]
+        commands = [heredoc_to_file(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")

@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote
 
 
 def _sudo(params: Dict[str, Any]) -> str:
@@ -134,7 +134,7 @@ class PkgVersionPinPlugin(BasePlugin):
         apt_path = self._apt_path(params)
         apt_content = self._apt_content(params)
         temp = "/tmp/automax-pkg-pin.$$"
-        apt_commands = [f"cat > {temp} <<'EOF'\n{apt_content}EOF"]
+        apt_commands = [heredoc_to_file(temp, apt_content)]
         if bool(params.get("backup", True)):
             apt_commands.append(f"test ! -e {quote(apt_path)} || {sudo}cp -p {quote(apt_path)} {quote(apt_path + str(params.get('backup_suffix', '.bak')))}")
         apt_commands.extend([f"{sudo}install -m 0644 {temp} {quote(apt_path)}", f"rm -f {temp}"])
@@ -204,7 +204,7 @@ class PkgRepoPriorityPlugin(BasePlugin):
         content = self._content(params)
         sudo = _sudo(params)
         temp = "/tmp/automax-repo-priority.$$"
-        commands = [f"cat > {temp} <<'EOF'\n{content}EOF"]
+        commands = [heredoc_to_file(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")

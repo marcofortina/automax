@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote
 
 
 def _sudo(params: Dict[str, Any]) -> str:
@@ -52,7 +52,7 @@ class AuditdRulePlugin(BasePlugin):
         path = self._path(params)
         sudo = _sudo(params)
         temp = "/tmp/automax-auditd.$$"
-        commands = [f"cat > {temp} <<'EOF'\n{content}EOF"]
+        commands = [heredoc_to_file(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -D -m 0640 {temp} {quote(path)}")

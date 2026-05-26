@@ -4275,6 +4275,54 @@ def test_transfer_plugins_allow_templated_controller_sources_in_static_validatio
     TransferSyncPlugin().validate({"src": "{{ vars.fixture_root }}/source-dir", "dest": "/tmp/dest"})
     TransferUploadPlugin().validate({"src": "{{ vars.fixture_root }}/source.txt", "dest": "/tmp/dest"})
 
+
+
+def test_shell_helpers_harden_environment_names_and_heredoc_delimiters():
+    from automax.plugins.remote_utils import apply_cwd, heredoc_to_file
+
+    context = ExecutionContext(
+        run_id="test",
+        dry_run=True,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="node", host="host"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+    context.step_state["env"] = {"SAFE_NAME": "ok"}
+    assert apply_cwd("echo ok", context) == "SAFE_NAME=ok echo ok"
+
+    context.step_state["env"] = {"BAD;touch /tmp/pwn": "1"}
+    with pytest.raises(PluginValidationError):
+        apply_cwd("echo ok", context)
+
+    context.step_state["env"] = "BAD=1"
+    with pytest.raises(PluginValidationError):
+        apply_cwd("echo ok", context)
+
+    command = heredoc_to_file("/tmp/demo", "line\nAUTOMAX_EOF\n")
+    assert "<<'AUTOMAX_EOF_1'" in command
+    assert command.endswith("AUTOMAX_EOF_1")
+
+
+def test_env_consuming_plugins_reject_unsafe_environment_names():
+    from automax.plugins.cron import CronEntryPlugin
+    from automax.plugins.linux_ops import EnvSetPlugin
+    from automax.plugins.local_command import LocalCommandPlugin
+
+    with pytest.raises(PluginValidationError):
+        EnvSetPlugin().manual_commands({"variables": {"BAD;touch /tmp/pwn": "1"}}, _sysops_preview_context())
+    with pytest.raises(PluginValidationError):
+        LocalCommandPlugin().manual_commands({"command": "true", "env": {"BAD;touch /tmp/pwn": "1"}}, _sysops_preview_context())
+    with pytest.raises(PluginValidationError):
+        CronEntryPlugin().validate({"name": "demo", "schedule": "* * * * *", "command": "true", "env": {"BAD;touch /tmp/pwn": "1"}})
+    with pytest.raises(PluginValidationError):
+        CronEntryPlugin().validate({"name": "demo", "schedule": "* * * * *", "command": "true", "env": {"SAFE_NAME": "one\ntwo"}})
+
+
 def test_transfer_upload_download_metadata_include_safety_options():
     from automax.plugins.registry import build_builtin_registry
 

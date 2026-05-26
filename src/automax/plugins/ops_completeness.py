@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote
 
 
 def _sudo(params: Dict[str, Any]) -> str:
@@ -271,7 +271,7 @@ class KernelModuleBlacklistPlugin(BasePlugin):
             return [f"test ! -e {quote(path)} || {_sudo(params)}rm -f {quote(path)}"]
         content = f"blacklist {params['module']}\ninstall {params['module']} /bin/false\n"
         tmp = "/tmp/automax-modprobe.$$"
-        cmds = [f"cat > {tmp} <<'EOF'\n{content}EOF"]
+        cmds = [heredoc_to_file(tmp, content)]
         if bool(params.get("backup", True)):
             cmds.append(f"test ! -e {quote(path)} || {_sudo(params)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         cmds.append(f"{_sudo(params)}install -D -m 0644 {tmp} {quote(path)}")
@@ -362,7 +362,7 @@ class SysctlDropinPlugin(BasePlugin):
         return _diff(self._path(params), self._content(params), "sysctl-dropin-plan")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        path=self._path(params); content=self._content(params); tmp="/tmp/automax-sysctl.$$"; cmds=[f"cat > {tmp} <<'EOF'\n{content}EOF"]
+        path=self._path(params); content=self._content(params); tmp="/tmp/automax-sysctl.$$"; cmds=[heredoc_to_file(tmp, content)]
         if bool(params.get("backup", True)):
             cmds.append(f"test ! -e {quote(path)} || {_sudo(params)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix','.bak')))}")
         cmds.append(f"{_sudo(params)}install -D -m 0644 {tmp} {quote(path)}")

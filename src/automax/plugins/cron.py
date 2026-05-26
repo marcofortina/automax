@@ -10,7 +10,7 @@ from typing import Any, Dict
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.file_utils import install_uploaded_file, upload_text_to_temp
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, validate_env_name
 
 
 def _sudo(params: Dict[str, Any]) -> str:
@@ -39,6 +39,13 @@ class CronEntryPlugin(BasePlugin):
         _safe_name(str(params["name"]))
         if str(params.get("state", "present")) not in {"present", "absent"}:
             raise PluginValidationError("cron.entry state must be present or absent")
+        env = params.get("env") or {}
+        if not isinstance(env, dict):
+            raise PluginValidationError("cron.entry env must be a mapping")
+        for key, value in env.items():
+            validate_env_name(key)
+            if "\n" in str(value) or "\r" in str(value):
+                raise PluginValidationError("cron.entry env values must be single-line")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -49,10 +56,8 @@ class CronEntryPlugin(BasePlugin):
             return result_from_remote(rc=rc, stdout=out, stderr=err, message="cron.entry failed")
         env_lines = []
         env = params.get("env") or {}
-        if not isinstance(env, dict):
-            raise PluginValidationError("cron.entry env must be a mapping")
         for key, value in env.items():
-            env_lines.append(f"{key}={value}")
+            env_lines.append(f"{validate_env_name(key)}={value}")
         content = "\n".join(
             [
                 "# Managed by Automax",

@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote
 
 
 def _sudo(params: Dict[str, Any]) -> str:
@@ -62,7 +62,7 @@ class PkiCaInstallPlugin(BasePlugin):
         content = _content(params)
         sudo = _sudo(params)
         temp = "/tmp/automax-ca.$$"
-        commands = [f"cat > {temp} <<'EOF'\n{content}\nEOF"]
+        commands = [heredoc_to_file(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(dest)} || {sudo}cp -p {quote(dest)} {quote(dest + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -D -m {quote(params.get('mode', '0644'))} {temp} {quote(dest)}")

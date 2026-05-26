@@ -11,6 +11,7 @@ from shlex import quote as shell_quote
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext
+from automax.plugins.remote_utils import heredoc_to_file, heredoc_to_stdin
 
 
 def _q(value: Any) -> str:
@@ -165,10 +166,10 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
     if plugin_name.startswith("nftables."):
         if plugin_name == "nftables.validate":
             src = params.get("src")
-            return [f"{sudo}nft -c -f {_q(src)}" if src else f"cat <<'EOF' | {sudo}nft -c -f -\n{params.get('content', '')}\nEOF"]
+            return [f"{sudo}nft -c -f {_q(src)}" if src else heredoc_to_stdin(f"{sudo}nft -c -f -", params.get("content", ""))]
         if plugin_name == "nftables.apply":
             src = params.get("src")
-            return [f"{sudo}nft -f {_q(src)}" if src else f"cat <<'EOF' | {sudo}nft -f -\n{params.get('content', '')}\nEOF"]
+            return [f"{sudo}nft -f {_q(src)}" if src else heredoc_to_stdin(f"{sudo}nft -f -", params.get("content", ""))]
 
     if plugin_name.startswith("pkg."):
         packages = _packages(params)
@@ -235,7 +236,7 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
         if plugin_name == "fs.template":
             return [f"install -D {_q(params.get('src', '/tmp/template'))} {_q(params.get('dest', '/tmp/dest'))}"]
         if plugin_name == "fs.write":
-            return [f"cat > {_q(path)} <<'EOF'\n{params.get('content', '')}\nEOF"]
+            return [heredoc_to_file(path, params.get("content", ""))]
 
     if plugin_name in {"fstab.entry", "mount.present"}:
         return [f"{sudo}mount {_q(params.get('path', path))}"]
