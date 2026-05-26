@@ -85,6 +85,37 @@ def _db_query(params: Dict[str, Any]) -> str:
     return str(query).replace("'", "'\\''")
 
 
+def _groupadd_flags(params: Dict[str, Any]) -> str:
+    flags: list[str] = []
+    if bool(params.get("system", False)):
+        flags.append("--system")
+    if params.get("gid") is not None:
+        flags.extend(["--gid", _q(params["gid"])])
+    return " ".join(flags)
+
+
+def _useradd_flags(params: Dict[str, Any]) -> str:
+    flags: list[str] = []
+    if bool(params.get("system", False)):
+        flags.append("--system")
+    if params.get("uid") is not None:
+        flags.extend(["--uid", _q(params["uid"])])
+    if params.get("group"):
+        flags.extend(["--gid", _q(params["group"])])
+    groups = _list(params.get("groups"))
+    if groups:
+        flags.extend(["--groups", _q(",".join(groups))])
+    if params.get("shell"):
+        flags.extend(["--shell", _q(params["shell"])])
+    if params.get("home"):
+        flags.extend(["--home-dir", _q(params["home"])])
+    if "create_home" in params:
+        flags.append("--create-home" if bool(params.get("create_home")) else "--no-create-home")
+    if params.get("comment"):
+        flags.extend(["--comment", _q(params["comment"])])
+    return " ".join(flags)
+
+
 def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
     """Return deterministic manual commands for legacy plugins that do not override them."""
     sudo = _sudo(params)
@@ -190,7 +221,9 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
 
     if plugin_name.startswith("user."):
         if plugin_name == "user.create":
-            return [f"id -u {_q(name)} >/dev/null 2>&1 || {sudo}useradd {_q(name)}"]
+            flags = _useradd_flags(params)
+            flag_text = f" {flags}" if flags else ""
+            return [f"id -u {_q(name)} >/dev/null 2>&1 || {sudo}useradd{flag_text} {_q(name)}"]
         if plugin_name == "user.remove":
             return [f"{sudo}userdel {'-r ' if params.get('remove_home') else ''}{_q(name)}"]
         if plugin_name == "user.exists":
@@ -206,7 +239,9 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
 
     if plugin_name.startswith("group."):
         if plugin_name == "group.create":
-            return [f"getent group {_q(name)} >/dev/null || {sudo}groupadd {_q(name)}"]
+            flags = _groupadd_flags(params)
+            flag_text = f" {flags}" if flags else ""
+            return [f"getent group {_q(name)} >/dev/null || {sudo}groupadd{flag_text} {_q(name)}"]
         if plugin_name == "group.remove":
             return [f"{sudo}groupdel {_q(name)}"]
         if plugin_name == "group.exists":

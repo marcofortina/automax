@@ -3409,6 +3409,43 @@ def _sysops_preview_context() -> ExecutionContext:
     )
 
 
+def test_user_group_manual_commands_render_identity_flags():
+    from automax.plugins.manual_preview import fallback_manual_commands
+
+    context = ExecutionContext(run_id="run", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node1", host="node1"), vars={}, outputs={}, secrets={})
+
+    group_command = fallback_manual_commands(
+        "group.create",
+        {"name": "oinstall", "gid": 54321, "system": True, "sudo": True},
+        context,
+    )[0]
+    assert group_command == "getent group oinstall >/dev/null || sudo -n groupadd --system --gid 54321 oinstall"
+
+    user_command = fallback_manual_commands(
+        "user.create",
+        {
+            "name": "grid",
+            "uid": 54331,
+            "group": "oinstall",
+            "groups": ["asmadmin", "asmdba"],
+            "shell": "/bin/bash",
+            "home": "/home/grid",
+            "create_home": True,
+            "comment": "Oracle Grid Infrastructure owner",
+            "sudo": True,
+        },
+        context,
+    )[0]
+    assert "useradd" in user_command
+    assert "--uid 54331" in user_command
+    assert "--gid oinstall" in user_command
+    assert "--groups asmadmin,asmdba" in user_command
+    assert "--shell /bin/bash" in user_command
+    assert "--home-dir /home/grid" in user_command
+    assert "--create-home" in user_command
+    assert "--comment 'Oracle Grid Infrastructure owner'" in user_command
+
+
 def test_lvm_plugins_render_manual_commands_and_previews():
     from automax.plugins.lvm import (
         LvmLvExtendPlugin,
