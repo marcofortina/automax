@@ -21,7 +21,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -52,7 +52,9 @@ jobs:
           enablement: true
 
       - name: Build documentation
-        run: mkdocs build --strict --site-dir site
+        run: |
+          mkdocs build --strict --site-dir site
+          touch site/.nojekyll
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
@@ -60,7 +62,6 @@ jobs:
           path: site
 
   deploy:
-    if: github.event_name == 'push'
     needs: build
     runs-on: ubuntu-latest
     environment:
