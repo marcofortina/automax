@@ -11,10 +11,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-
-
-class PluginValidationError(ValueError):
-    """Raised when plugin parameters are invalid."""
+from automax.plugins.validation import PluginValidationError
 
 
 class BasePlugin(ABC):

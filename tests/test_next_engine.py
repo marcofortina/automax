@@ -12,6 +12,7 @@ import pytest
 from click.testing import CliRunner
 
 import automax.cli.cli as cli_module
+import automax.plugins.local_command as local_command
 
 cli = cli_module.cli
 from automax.core.engine import AutomaxEngine
@@ -942,8 +943,6 @@ def test_inherited_command_timeout_reaches_execution_context(tmp_path: Path, mon
 
         return Completed()
 
-    import automax.plugins.local_command as local_command
-
     monkeypatch.setattr(local_command.subprocess, "run", fake_run)
     job = write(
         tmp_path / "job.yaml",
@@ -989,8 +988,6 @@ def test_substep_timeout_overrides_inherited_command_timeout(tmp_path: Path, mon
             stderr = ""
 
         return Completed()
-
-    import automax.plugins.local_command as local_command
 
     monkeypatch.setattr(local_command.subprocess, "run", fake_run)
     job = write(
@@ -4382,12 +4379,10 @@ def test_shell_helpers_harden_environment_names_and_heredoc_delimiters():
 def test_env_consuming_plugins_reject_unsafe_environment_names():
     from automax.plugins.cron import CronEntryPlugin
     from automax.plugins.linux_ops import EnvSetPlugin
-    from automax.plugins.local_command import LocalCommandPlugin
-
     with pytest.raises(PluginValidationError):
         EnvSetPlugin().manual_commands({"variables": {"BAD;touch /tmp/pwn": "1"}}, _sysops_preview_context())
     with pytest.raises(PluginValidationError):
-        LocalCommandPlugin().manual_commands({"command": "true", "env": {"BAD;touch /tmp/pwn": "1"}}, _sysops_preview_context())
+        local_command.LocalCommandPlugin().manual_commands({"command": "true", "env": {"BAD;touch /tmp/pwn": "1"}}, _sysops_preview_context())
     with pytest.raises(PluginValidationError):
         CronEntryPlugin().validate({"name": "demo", "schedule": "* * * * *", "command": "true", "env": {"BAD;touch /tmp/pwn": "1"}})
     with pytest.raises(PluginValidationError):

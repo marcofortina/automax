@@ -11,9 +11,8 @@ import re
 import shlex
 from typing import Any, Mapping, Tuple
 
-from automax.plugins.base import PluginValidationError
-
 from automax.core.models import ExecutionContext, PluginResult
+from automax.plugins.validation import PluginValidationError
 
 
 CHANGE_MARKER = "__AUTOMAX_CHANGED__"
