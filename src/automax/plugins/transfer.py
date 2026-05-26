@@ -20,6 +20,11 @@ from automax.plugins.file_utils import install_uploaded_file
 from automax.plugins.remote_utils import exec_remote, quote
 
 
+def _is_templated_path(value: str) -> bool:
+    """Return true when validation must wait until job rendering."""
+    return "{{" in value or "{%" in value or "{#" in value
+
+
 def _sftp(context: ExecutionContext):
     if context.ssh_client is None:
         raise RuntimeError("transfer plugin requires an SSH session")
@@ -133,7 +138,10 @@ class TransferUploadPlugin(BasePlugin):
 
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
-        src = Path(str(params["src"])).expanduser()
+        src_value = str(params["src"])
+        if _is_templated_path(src_value):
+            return
+        src = Path(src_value).expanduser()
         if not src.exists():
             raise PluginValidationError(f"transfer.upload source not found: {src}")
         if src.is_dir() and not bool(params.get("recursive", False)):
@@ -243,7 +251,10 @@ class TransferSyncPlugin(BasePlugin):
 
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
-        src = Path(str(params["src"])).expanduser()
+        src_value = str(params["src"])
+        if _is_templated_path(src_value):
+            return
+        src = Path(src_value).expanduser()
         if not src.is_dir():
             raise PluginValidationError("transfer.sync source must be a directory")
 

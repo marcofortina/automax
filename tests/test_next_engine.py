@@ -4269,6 +4269,12 @@ def test_cron_readback_plugins_render_manual_commands():
     assert "awk" in registry.get("cron.validate").manual_commands({"path": "/tmp/cron"}, context)[0]
 
 
+def test_transfer_plugins_allow_templated_controller_sources_in_static_validation():
+    from automax.plugins.transfer import TransferSyncPlugin, TransferUploadPlugin
+
+    TransferSyncPlugin().validate({"src": "{{ vars.fixture_root }}/source-dir", "dest": "/tmp/dest"})
+    TransferUploadPlugin().validate({"src": "{{ vars.fixture_root }}/source.txt", "dest": "/tmp/dest"})
+
 def test_transfer_upload_download_metadata_include_safety_options():
     from automax.plugins.registry import build_builtin_registry
 
