@@ -322,6 +322,47 @@ def test_builtin_filesystem_plugins_are_registered():
         assert alias not in output_names
 
 
+
+
+def test_fs_mkdir_manual_commands_render_sudo_owner_group_and_mode():
+    from automax.plugins.fs_mkdir import FsMkdirPlugin
+
+    context = ExecutionContext(
+        run_id="test",
+        dry_run=True,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="node", host="host"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+
+    commands = FsMkdirPlugin().manual_commands(
+        {
+            "path": "/u01/app/grid",
+            "owner": "grid",
+            "group": "oinstall",
+            "mode": "0775",
+            "sudo": True,
+        },
+        context,
+    )
+
+    assert commands == [
+        'test -d /u01/app/grid && '
+        'test "$(stat -c %a /u01/app/grid)" = 0775 && '
+        'test "$(stat -c %U /u01/app/grid)" = grid && '
+        'test "$(stat -c %G /u01/app/grid)" = oinstall || '
+        '{ sudo -n mkdir -p /u01/app/grid && '
+        'sudo -n chmod 0775 /u01/app/grid && '
+        'sudo -n chown grid:oinstall /u01/app/grid; '
+        'echo __AUTOMAX_CHANGED__; }'
+    ]
+
+
 def test_ssh_smoke_script_is_syntax_valid():
     script = Path("scripts/ssh-smoke.sh")
     assert script.exists()

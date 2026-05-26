@@ -20,6 +20,7 @@ class FsMkdirPlugin(BasePlugin):
     name = "fs.mkdir"
     description = "Create a directory with owner/group/mode parameters."
     required_params = ("path",)
+    optional_params = ("mode", "owner", "group", "cwd", "sudo")
     opens_remote_session = True
 
     def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
@@ -36,12 +37,13 @@ class FsMkdirPlugin(BasePlugin):
         if group:
             checks.append(f'test "$(stat -c %G {path})" = {quote(group)}')
 
-        commands = [f"mkdir -p {path}"]
+        sudo = "sudo -n " if bool(params.get("sudo", False)) else ""
+        commands = [f"{sudo}mkdir -p {path}"]
         if mode:
-            commands.append(f"chmod {quote(mode)} {path}")
+            commands.append(f"{sudo}chmod {quote(mode)} {path}")
         if owner or group:
             owner_group = f"{owner or ''}:{group or ''}"
-            commands.append(f"chown {quote(owner_group)} {path}")
+            commands.append(f"{sudo}chown {quote(owner_group)} {path}")
 
         command = (
             " && ".join(checks)
