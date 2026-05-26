@@ -72,10 +72,7 @@ def _echo_diff_payload(payload: Dict[str, Any], output_format: str) -> None:
         click.echo("  - no selected nodes")
 
 
-def _echo_check_payload(payload: Dict[str, Any], output_format: str) -> None:
-    if output_format == "json":
-        click.echo(json.dumps(payload, indent=2, sort_keys=True))
-        return
+def _echo_check_detail(payload: Dict[str, Any]) -> None:
     click.echo(f"Job: {payload['job']}")
     click.echo("Check mode preview:")
     for node in payload["nodes"]:
@@ -89,6 +86,76 @@ def _echo_check_payload(payload: Dict[str, Any], output_format: str) -> None:
         )
     if not payload["nodes"]:
         click.echo("  - no selected nodes")
+
+
+def _echo_check_summary(payload: Dict[str, Any]) -> None:
+    nodes = list(payload["nodes"])
+    click.echo(f"Job: {payload['job']}")
+    click.echo("Mode: check")
+    if not nodes:
+        click.echo("Check preview: no selected nodes")
+        click.echo("Result: OK")
+        return
+
+    target_names = sorted({str(node["target"]) for node in nodes})
+    task_groups: Dict[str, list[Dict[str, Any]]] = {}
+    for node in nodes:
+        task_groups.setdefault(str(node["task_id"]), []).append(node)
+
+    click.echo(f"Targets: {', '.join(target_names)}")
+    click.echo("")
+    click.echo("Check preview:")
+    for task_id, group in task_groups.items():
+        task_targets = {str(node["target"]) for node in group}
+        task_substeps = {str(node["node_id"]) for node in group}
+        failures = sum(1 for node in group if not node["ok"])
+        changed = sum(1 for node in group if node["changed"])
+        status = "FAILED" if failures else "OK"
+        suffix = f" changed={changed}" if changed else ""
+        substep_count = len(task_substeps)
+        target_count = len(task_targets)
+        substep_label = "substep" if substep_count == 1 else "substeps"
+        target_label = "target" if target_count == 1 else "targets"
+        click.echo(
+            f"  {task_id:<20} {substep_count:>3} {substep_label:<8} x "
+            f"{target_count:>2} {target_label:<7} {status}{suffix}"
+        )
+
+    check_support = sum(1 for node in nodes if node["supports_check_mode"])
+    dry_run_support = len(nodes) - check_support
+    changed_count = sum(1 for node in nodes if node["changed"])
+    failure_count = sum(1 for node in nodes if not node["ok"])
+    click.echo("")
+    click.echo("Summary:")
+    click.echo(f"  targets:        {len(target_names)}")
+    click.echo(f"  tasks:          {len(task_groups)}")
+    click.echo(f"  substeps:       {len({str(node['node_id']) for node in nodes})}")
+    click.echo(f"  previews:       {len(nodes)}")
+    click.echo(f"  check support:  {check_support}")
+    click.echo(f"  dry-run support:{dry_run_support:>3}")
+    click.echo(f"  changed:        {changed_count}")
+    click.echo(f"  failures:       {failure_count}")
+
+    if failure_count:
+        click.echo("")
+        click.echo("Failures:")
+        for node in nodes:
+            if not node["ok"]:
+                click.echo(f"  {node['target']} {node['node_id']} {node['plugin']}: {node['message']}")
+
+    result = "OK" if payload["ok"] else "FAILED"
+    click.echo(f"Result: {result}")
+    click.echo("Use --verbose to show per-target substep details.")
+
+
+def _echo_check_payload(payload: Dict[str, Any], output_format: str, *, verbose: bool = True) -> None:
+    if output_format == "json":
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    if verbose:
+        _echo_check_detail(payload)
+        return
+    _echo_check_summary(payload)
 
 
 def _echo_vars_payload(payload: Dict[str, Any], output_format: str) -> None:
@@ -337,6 +404,7 @@ def _apply_common_options(function):
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
 @click.option("--dry-run", is_flag=True, help="Validate and simulate actions without changing targets.")
 @click.option("--check", "check_mode", is_flag=True, help="Render a check-mode preview without creating run state.")
+@click.option("--verbose", is_flag=True, help="Show per-target substep details in check mode.")
 @click.option("--lock", is_flag=True, help="Acquire job/target locks before executing.")
 @click.option("--lock-scope", type=click.Choice(["job", "target", "both"]), default="both", show_default=True, help="Lock job, targets or both.")
 @click.option("--lock-timeout", type=float, default=0.0, show_default=True, help="Seconds to wait for locks.")
@@ -358,6 +426,7 @@ def run(
     plugin_path: tuple[str, ...],
     dry_run: bool,
     check_mode: bool,
+    verbose: bool,
     lock: bool,
     lock_scope: str,
     lock_timeout: float,
@@ -380,7 +449,7 @@ def run(
                 skip_tags=_split_selectors(skip_tags),
                 cli_vars=_parse_vars(cli_vars),
             )
-            _echo_check_payload(payload, output_format)
+            _echo_check_payload(payload, output_format, verbose=verbose)
             if not payload["ok"]:
                 raise click.ClickException("check-mode preview found errors")
             return

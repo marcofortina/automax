@@ -2598,8 +2598,56 @@ tasks:
     )
 
     assert result.exit_code == 0, result.output
-    assert "Check mode preview" in result.output
+    assert "Mode: check" in result.output
+    assert "Targets: controller" in result.output
+    assert "  t1" in result.output
+    assert "1 substep  x  1 target  OK" in result.output
+    assert "Result: OK" in result.output
+    assert "CHECK controller" not in result.output
     assert not state_dir.exists()
+
+
+def test_run_check_verbose_prints_per_target_substeps(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: run-check-verbose
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: echo
+            use: local.command
+            with:
+              command: "printf ok"
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        "servers:\n  controller:\n    host: 127.0.0.1\n",
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--check",
+            "--verbose",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Check mode preview" in result.output
+    assert "CHECK controller task.t1:step.s1:substep.echo local.command" in result.output
 
 
 def test_plan_diff_prints_fs_write_preview_with_masked_secrets(tmp_path: Path):

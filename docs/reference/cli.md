@@ -61,10 +61,13 @@ export AUTOMAX_SUDO_PASSWORD='...'
 automax run --job job.yaml --inventory inventory.yaml --sudo-password-env AUTOMAX_SUDO_PASSWORD
 ```
 
-Preview the selected run without creating run state:
+Preview the selected run without creating run state. By default this prints a
+compact per-task summary; add `--verbose` to show every per-target substep
+preview.
 
 ```bash
 automax run --check --job job.yaml --inventory inventory.yaml
+automax run --check --verbose --job job.yaml --inventory inventory.yaml
 ```
 
 Machine-readable final summary:

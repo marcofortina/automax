@@ -94,9 +94,9 @@ automax plan --check \
   --secrets secrets/prod.yaml
 ```
 
-`automax run --check` prints the same check payload and does not create run
-state. This is useful in CI gates that must verify the plan without touching the
-state directory.
+`automax run --check` does not create run state. It prints a compact per-task
+summary by default for CI and smoke gates; add `--verbose` when you need the full
+per-target substep payload.
 
 ## Preview file diffs
 
