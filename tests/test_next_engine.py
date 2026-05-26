@@ -3429,8 +3429,13 @@ def test_lvm_plugins_render_manual_commands_and_previews():
         assert name in names
 
     context = _sysops_preview_context()
+    assert "sudo -n pvs" in LvmPvPresentPlugin().manual_commands({"device": "/dev/sdb"}, context)[0]
     assert "pvcreate" in LvmPvPresentPlugin().manual_commands({"device": "/dev/sdb"}, context)[0]
-    assert "vgcreate" in " && ".join(LvmVgPresentPlugin().manual_commands({"name": "vg_app", "devices": ["/dev/sdb"]}, context))
+    vg_commands = LvmVgPresentPlugin().manual_commands({"name": "vg_app", "devices": ["/dev/sdb"]}, context)
+    assert "sudo -n vgs" in vg_commands[0]
+    assert "vgcreate" in " && ".join(vg_commands)
+    assert "sudo -n pvs" in vg_commands[1]
+    assert "vgdisplay" not in " && ".join(vg_commands)
     lv = LvmLvPresentPlugin().manual_commands({"vg": "vg_app", "name": "data", "size": "10G", "resizefs": True}, context)
     assert any("lvcreate" in command for command in lv)
     assert "lvextend -r" in LvmLvExtendPlugin().manual_commands({"vg": "vg_app", "name": "data", "size": "20G"}, context)[0]
@@ -3610,8 +3615,11 @@ def test_lvm_extra_plugins_render_destructive_and_snapshot_operations():
     context = _sysops_preview_context()
     assert "lvcreate -s" in LvmSnapshotPlugin().manual_commands({"vg": "vg0", "source": "/dev/vg0/data", "name": "snap", "size": "1G"}, context)[0]
     assert "--type thin-pool" in LvmThinPoolPlugin().manual_commands({"vg": "vg0", "name": "pool", "size": "10G"}, context)[0]
+    assert "sudo -n lvs" in LvmLvRemovePlugin().manual_commands({"path": "/dev/vg0/old", "confirm": True}, context)[0]
     assert "lvremove -y" in LvmLvRemovePlugin().manual_commands({"path": "/dev/vg0/old", "confirm": True}, context)[0]
+    assert "sudo -n vgs" in LvmVgRemovePlugin().manual_commands({"name": "oldvg", "confirm": True}, context)[0]
     assert "vgremove -y" in LvmVgRemovePlugin().manual_commands({"name": "oldvg", "confirm": True}, context)[0]
+    assert "sudo -n pvs" in LvmPvRemovePlugin().manual_commands({"device": "/dev/sdb", "confirm": True}, context)[0]
     assert "pvremove" in LvmPvRemovePlugin().manual_commands({"device": "/dev/sdb", "confirm": True}, context)[0]
 
 
@@ -4287,6 +4295,9 @@ def test_storage_readback_plugins_render_manual_commands():
 
     assert "pvs --reportformat json" in registry.get("lvm.facts").manual_commands({"sudo": False}, context)[0]
     assert "/dev/vg0/lv0" in registry.get("lvm.lv_assert").manual_commands({"vg": "vg0", "name": "lv0", "sudo": False}, context)[0]
+    lv_assert = registry.get("lvm.lv_assert").manual_commands({"vg": "vg0", "name": "lv0", "size": "512M"}, context)[0]
+    assert "grep -Ei" in lv_assert
+    assert "512" in lv_assert
     assert "findmnt --json" in registry.get("mount.facts").manual_commands({}, context)[0]
     assert "findmnt --verify" in registry.get("fstab.validate").manual_commands({"sudo": False}, context)[0]
     assert "swapon --show" in registry.get("swap.status").manual_commands({}, context)[0]

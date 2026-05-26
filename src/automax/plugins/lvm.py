@@ -45,7 +45,7 @@ class LvmPvPresentPlugin(BasePlugin):
         self.validate(params)
         force = " -ff -y" if bool(params.get("force", False)) else ""
         device = quote(params["device"])
-        return [f"pvs --noheadings {device} >/dev/null 2>&1 || {_sudo(params)}pvcreate{force} {device}"]
+        return [f"{_sudo(params)}pvs --noheadings {device} >/dev/null 2>&1 || {_sudo(params)}pvcreate{force} {device}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -70,9 +70,14 @@ class LvmVgPresentPlugin(BasePlugin):
         quoted = " ".join(quote(item) for item in devices)
         sudo = _sudo(params)
         create_force = " -f" if bool(params.get("force", False)) else ""
-        commands = [f"vgs --noheadings {name} >/dev/null 2>&1 || {sudo}vgcreate{create_force} {name} {quoted}"]
+        commands = [f"{sudo}vgs --noheadings {name} >/dev/null 2>&1 || {sudo}vgcreate{create_force} {name} {quoted}"]
         for device in devices:
-            commands.append(f"vgdisplay {name} | grep -F -- {quote(device)} >/dev/null 2>&1 || pvs --noheadings -o vg_name {quote(device)} | grep -Fx {name} >/dev/null 2>&1 || {sudo}vgextend {name} {quote(device)}")
+            quoted_device = quote(device)
+            commands.append(
+                f"{sudo}pvs --noheadings -o vg_name {quoted_device} 2>/dev/null "
+                f"| awk '{{ $1=$1; print }}' | grep -Fx {name} >/dev/null 2>&1 "
+                f"|| {sudo}vgextend {name} {quoted_device}"
+            )
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -101,10 +106,10 @@ class LvmLvPresentPlugin(BasePlugin):
         size = quote(params["size"])
         lv_path = quote(self._lv_path(params))
         sudo = _sudo(params)
-        commands = [f"lvs --noheadings {lv_path} >/dev/null 2>&1 || {sudo}lvcreate -n {name} -L {size} {vg}"]
+        commands = [f"{sudo}lvs --noheadings {lv_path} >/dev/null 2>&1 || {sudo}lvcreate -n {name} -L {size} {vg}"]
         if params.get("fstype"):
             force = " -f" if bool(params.get("force", False)) else ""
-            commands.append(f"blkid {lv_path} >/dev/null 2>&1 || {sudo}mkfs.{quote(params['fstype'])}{force} {lv_path}")
+            commands.append(f"{sudo}blkid {lv_path} >/dev/null 2>&1 || {sudo}mkfs.{quote(params['fstype'])}{force} {lv_path}")
         if bool(params.get("resizefs", False)):
             commands.append(f"{sudo}lvextend -r -L {size} {lv_path}")
         return commands
@@ -183,7 +188,7 @@ class LvmSnapshotPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"lvs --noheadings {quote(self._path(params))} >/dev/null 2>&1 || {_sudo(params)}lvcreate -s -n {quote(params['name'])} -L {quote(params['size'])} {quote(params['source'])}"]
+        return [f"{_sudo(params)}lvs --noheadings {quote(self._path(params))} >/dev/null 2>&1 || {_sudo(params)}lvcreate -s -n {quote(params['name'])} -L {quote(params['size'])} {quote(params['source'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -208,7 +213,7 @@ class LvmLvRemovePlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"lvs --noheadings {quote(params['path'])} >/dev/null 2>&1 && {_sudo(params)}lvremove -y {quote(params['path'])} || true"]
+        return [f"{_sudo(params)}lvs --noheadings {quote(params['path'])} >/dev/null 2>&1 && {_sudo(params)}lvremove -y {quote(params['path'])} || true"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -232,7 +237,7 @@ class LvmVgRemovePlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"vgs --noheadings {quote(params['name'])} >/dev/null 2>&1 && {_sudo(params)}vgremove -y {quote(params['name'])} || true"]
+        return [f"{_sudo(params)}vgs --noheadings {quote(params['name'])} >/dev/null 2>&1 && {_sudo(params)}vgremove -y {quote(params['name'])} || true"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -256,7 +261,7 @@ class LvmPvRemovePlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         force = " -ff" if bool(params.get("force", False)) else ""
-        return [f"pvs --noheadings {quote(params['device'])} >/dev/null 2>&1 && {_sudo(params)}pvremove{force} -y {quote(params['device'])} || true"]
+        return [f"{_sudo(params)}pvs --noheadings {quote(params['device'])} >/dev/null 2>&1 && {_sudo(params)}pvremove{force} -y {quote(params['device'])} || true"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -283,7 +288,7 @@ class LvmThinPoolPlugin(BasePlugin):
         if params.get("chunksize"):
             args.extend(["--chunksize", quote(params["chunksize"])])
         args.append(quote(params["vg"]))
-        return [f"lvs --noheadings {quote(self._path(params))} >/dev/null 2>&1 || {_sudo(params)}{' '.join(args)}"]
+        return [f"{_sudo(params)}lvs --noheadings {quote(self._path(params))} >/dev/null 2>&1 || {_sudo(params)}{' '.join(args)}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])

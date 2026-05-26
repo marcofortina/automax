@@ -5,11 +5,22 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin
 from automax.plugins.remote_utils import exec_remote, quote
+
+
+def _lv_size_filter(size: Any) -> str:
+    requested = str(size).strip()
+    match = re.fullmatch(r"([0-9]+)(?:\.0+)?([kKmMgGtTpPeE])(?:[bB])?", requested)
+    if match:
+        value, unit = match.groups()
+        pattern = rf"^[[:space:]]*{re.escape(value)}(\.0+)?{unit}[[:space:]]*$"
+        return f"grep -Ei -- {quote(pattern)}"
+    return f"grep -F -- {quote(requested)}"
 
 
 def _sudo(params: Dict[str, Any]) -> str:
@@ -54,7 +65,7 @@ class LvmLvAssertPlugin(BasePlugin):
         lv_path = f"/dev/{params['vg']}/{params['name']}"
         command = f"{_sudo(params)}lvs --noheadings -o lv_size {quote(lv_path)}"
         if params.get("size"):
-            command += f" | grep -F -- {quote(params['size'])}"
+            command += f" | {_lv_size_filter(params['size'])}"
         return [command]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
