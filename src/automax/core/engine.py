@@ -1399,14 +1399,16 @@ class AutomaxEngine:
         if sudo_password:
             sudo = f"printf '%s\\n' {shlex.quote(sudo_password)} | sudo -S"
         if os_family == "debian":
+            apt_env = "DEBIAN_FRONTEND=noninteractive APT_LISTCHANGES_FRONTEND=none"
+            apt_opts = "-o Dpkg::Use-Pty=0 -o APT::Color=0"
             command = (
-                f"{sudo} apt-get update && "
-                f"{sudo} env DEBIAN_FRONTEND=noninteractive apt-get install -y {package_args}"
+                f"{sudo} env {apt_env} apt-get {apt_opts} update -qq && "
+                f"{sudo} env {apt_env} apt-get {apt_opts} install -y -qq {package_args}"
             )
         elif os_family == "rhel":
             command = (
-                f"if command -v dnf >/dev/null 2>&1; then {sudo} dnf install -y {package_args}; "
-                f"else {sudo} yum install -y {package_args}; fi"
+                f"if command -v dnf >/dev/null 2>&1; then {sudo} dnf -q install -y {package_args}; "
+                f"else {sudo} yum -q install -y {package_args}; fi"
             )
         else:
             return 2, "", f"unsupported OS family for dependency install: {os_family}"

@@ -103,7 +103,7 @@ paths.
 
 ## Capability preflight and redaction policy
 
-Use `capabilities requirements` to derive remote tool requirements from the selected job plan after detecting each target OS family. Normal `automax run` performs the same OS-aware capability preflight implicitly before executing remote tools. When selected substeps use `sudo`, pass `automax run --sudo-password-env ENV_NAME` so the target account can keep password-protected sudo instead of a NOPASSWD sudoers drop-in. Use `capabilities install --sudo-password-env ENV_NAME` to install only missing dependency packages for the selected job and target OS.
+Use `capabilities requirements` to derive remote tool requirements from the selected job plan after detecting each target OS family. Normal `automax run` performs the same OS-aware capability preflight implicitly before executing remote tools. When selected substeps use `sudo`, pass `automax run --sudo-password-env ENV_NAME` so the target account can keep password-protected sudo instead of a NOPASSWD sudoers drop-in. Use `capabilities install --sudo-password-env ENV_NAME` to install only missing dependency packages for the selected job and target OS; successful package-manager stdout/stderr is suppressed by default and can be shown with `--verbose` for troubleshooting.
 
 The explicit capability plugins are:
 

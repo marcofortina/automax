@@ -289,7 +289,21 @@ def _echo_capability_install_event(event: Dict[str, Any]) -> None:
         click.echo(f"[{status}] {target} {host} os={os_family} rc={event.get('rc', 0)} {changed}")
 
 
-def _echo_capability_install_payload(payload: Dict[str, Any], output_format: str) -> None:
+def _echo_text_stream(label: str, value: str) -> None:
+    click.echo(f"  {label}:")
+    previous_blank = False
+    for raw_line in value.replace("\r", "\n").splitlines():
+        line = raw_line.rstrip()
+        if not line:
+            if previous_blank:
+                continue
+            previous_blank = True
+        else:
+            previous_blank = False
+        click.echo(f"    {line}")
+
+
+def _echo_capability_install_payload(payload: Dict[str, Any], output_format: str, *, verbose: bool = False) -> None:
     if output_format == "json":
         click.echo(json.dumps(payload, indent=2, sort_keys=True))
         return
@@ -301,15 +315,22 @@ def _echo_capability_install_payload(payload: Dict[str, Any], output_format: str
     click.echo(f"  ok: {ok_targets}")
     click.echo(f"  failed: {failed_targets}")
     click.echo(f"  changed: {changed_targets}")
+    suppressed = 0
     for target in payload["targets"]:
+        has_output = bool(target["stdout"] or target["stderr"])
+        show_output = has_output and (verbose or not target["ok"])
+        if has_output and not show_output:
+            suppressed += 1
+            continue
         if target["stdout"]:
-            click.echo(f"  {target['target']} stdout:")
-            for line in target["stdout"].splitlines():
-                click.echo(f"    {line}")
+            _echo_text_stream(f"{target['target']} stdout", target["stdout"])
         if target["stderr"]:
-            click.echo(f"  {target['target']} stderr:")
-            for line in target["stderr"].splitlines():
-                click.echo(f"    {line}")
+            _echo_text_stream(f"{target['target']} stderr", target["stderr"])
+    if suppressed:
+        click.echo(
+            f"Command output suppressed for {suppressed} successful target(s); "
+            "use --verbose to show stdout/stderr."
+        )
 
 
 def _echo_os_info_payload(payload: Dict[str, Any], output_format: str) -> None:
@@ -1325,6 +1346,7 @@ def capability_requirements(
 @click.option("--skip-tags", multiple=True, help="Skip substeps matching one of these tags.")
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
 @click.option("--sudo-password-env", help="Environment variable containing sudo password for sudo -S installs.")
+@click.option("--verbose", is_flag=True, help="Show successful install command stdout/stderr.")
 @click.option(
     "--format",
     "output_format",
@@ -1345,6 +1367,7 @@ def capability_install(
     skip_tags: tuple[str, ...],
     plugin_path: tuple[str, ...],
     sudo_password_env: str | None,
+    verbose: bool,
     output_format: str,
 ) -> None:
     """Install missing packages for job-scoped capability requirements."""
@@ -1364,7 +1387,7 @@ def capability_install(
         )
     except (AutomaxError, ValueError, RuntimeError) as exc:
         raise click.ClickException(str(exc)) from exc
-    _echo_capability_install_payload(payload, output_format)
+    _echo_capability_install_payload(payload, output_format, verbose=verbose)
     if not payload["ok"]:
         raise click.ClickException("one or more targets could not install all missing capability packages")
 

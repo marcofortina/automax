@@ -90,6 +90,25 @@ automax run --job job.yaml --inventory inventory.yaml --from task.install:step.p
 automax run --job job.yaml --inventory inventory.yaml --from task.install:step.packages:substep.nginx
 ```
 
+## Capabilities
+
+Inspect job-scoped remote tool requirements and install only the missing
+dependency packages for the selected job and targets:
+
+```bash
+automax capabilities requirements --job job.yaml --inventory inventory.yaml
+automax capabilities install --job job.yaml --inventory inventory.yaml --sudo-password-env AUTOMAX_SUDO_PASSWORD
+```
+
+`capabilities install` prints live check/plan/install status plus a compact
+summary. Successful install command stdout/stderr is suppressed by default; add
+`--verbose` when troubleshooting package-manager output. `--format=json` keeps
+the full masked stdout/stderr payload for automation.
+
+```bash
+automax capabilities install --job job.yaml --inventory inventory.yaml --verbose
+```
+
 ## Resume
 
 ```bash

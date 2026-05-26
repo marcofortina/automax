@@ -4893,6 +4893,58 @@ tasks:
     assert payload["targets"][0]["packages"] == ["acl", "zip"]
 
 
+def test_capability_install_uses_quiet_package_manager_commands(monkeypatch):
+    from contextlib import contextmanager
+
+    class FakeChannel:
+        def recv_exit_status(self):
+            return 0
+
+    class FakeStream:
+        def __init__(self, data: str = ""):
+            self.channel = FakeChannel()
+            self._data = data.encode("utf-8")
+
+        def read(self):
+            return self._data
+
+    class FakeClient:
+        def __init__(self):
+            self.commands: list[tuple[str, dict[str, object]]] = []
+
+        def exec_command(self, command, **kwargs):
+            self.commands.append((command, kwargs))
+            return object(), FakeStream("ok"), FakeStream()
+
+    class FakeSshManager:
+        def __init__(self):
+            self.client = FakeClient()
+
+        @contextmanager
+        def connect(self, target):
+            yield self.client
+
+    ssh_manager = FakeSshManager()
+    engine = AutomaxEngine(ssh_manager=ssh_manager)
+
+    rc, stdout, stderr = engine._install_packages_for_os(
+        target=Target(name="node", host="127.0.0.1"),
+        os_family="debian",
+        packages=["acl", "zip"],
+        sudo_password="secret-pass",
+    )
+
+    assert rc == 0
+    assert stdout == "ok"
+    assert stderr == ""
+    command, kwargs = ssh_manager.client.commands[0]
+    assert "apt-get -o Dpkg::Use-Pty=0 -o APT::Color=0 update -qq" in command
+    assert "apt-get -o Dpkg::Use-Pty=0 -o APT::Color=0 install -y -qq acl zip" in command
+    assert "DEBIAN_FRONTEND=noninteractive" in command
+    assert "APT_LISTCHANGES_FRONTEND=none" in command
+    assert kwargs == {"get_pty": True}
+
+
 def test_capability_requirements_text_reports_missing_tools_and_packages(tmp_path: Path, monkeypatch):
     from automax.core.os_detect import TargetOS
 
@@ -5005,7 +5057,26 @@ metadata:
     assert "[INSTALL] node: packages=acl" in result.output
     assert "[OK] node 127.0.0.1 os=debian rc=0 changed=true" in result.output
     assert "Summary:" in result.output
+    assert "installed" not in result.output
+    assert "Command output suppressed for 1 successful target(s); use --verbose" in result.output
     assert result.output.index("[MISSING] node") < result.output.index("[INSTALL] node")
+
+    verbose_result = CliRunner().invoke(
+        cli,
+        [
+            "capabilities",
+            "install",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--verbose",
+        ],
+    )
+
+    assert verbose_result.exit_code == 0, verbose_result.output
+    assert "node stdout:" in verbose_result.output
+    assert "installed" in verbose_result.output
 
 
 def test_os_info_inventory_reports_release_details(tmp_path: Path, monkeypatch):
