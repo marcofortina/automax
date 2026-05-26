@@ -249,8 +249,12 @@ def _echo_os_info_payload(payload: Dict[str, Any], output_format: str) -> None:
     if output_format == "json":
         click.echo(json.dumps(payload, indent=2, sort_keys=True))
         return
+    click.echo("Detected operating-system facts.")
+    click.echo("")
     click.echo(f"Inventory: {payload['inventory']}")
     click.echo(f"Targets: {payload['target_count']}")
+
+    summary: dict[str, int] = {}
     for target in payload["targets"]:
         os_info = target["os"]
         pretty = os_info.get("pretty_name") or os_info.get("name") or os_info.get("id") or "unknown"
@@ -258,12 +262,27 @@ def _echo_os_info_payload(payload: Dict[str, Any], output_format: str) -> None:
         codename = os_info.get("version_codename") or "-"
         id_like = ",".join(os_info.get("id_like") or []) or "-"
         user = target.get("user") or "-"
-        click.echo(
-            f"Target {target['target']} {target['host']}:{target['port']} "
-            f"user={user} os={pretty} family={os_info.get('family', 'unknown')} "
-            f"id={os_info.get('id', 'unknown')} version={version} codename={codename} "
-            f"id_like={id_like} pkg={os_info.get('package_manager', 'unknown')}"
-        )
+        family = os_info.get("family") or "unknown"
+        package_manager = os_info.get("package_manager") or "unknown"
+        summary_key = f"{family}/{package_manager}"
+        summary[summary_key] = summary.get(summary_key, 0) + 1
+
+        click.echo("")
+        click.echo(f"Target {target['target']} {target['host']}:{target['port']}")
+        click.echo(f"  user             {user}")
+        click.echo(f"  os               {pretty}")
+        click.echo(f"  family           {family}")
+        click.echo(f"  id               {os_info.get('id') or 'unknown'}")
+        click.echo(f"  version          {version}")
+        click.echo(f"  codename         {codename}")
+        click.echo(f"  id_like          {id_like}")
+        click.echo(f"  package manager  {package_manager}")
+
+    if summary:
+        click.echo("")
+        click.echo("Summary:")
+        for key, count in sorted(summary.items()):
+            click.echo(f"  {key}: {count} target{'s' if count != 1 else ''}")
 
 
 def _os_info_payload(

@@ -5026,3 +5026,58 @@ def test_os_info_cli_json_output(tmp_path: Path, monkeypatch):
     assert payload["mode"] == "os-info"
     assert payload["targets"][0]["os"]["id"] == "debian"
     assert payload["targets"][0]["os"]["pretty_name"] == "Debian GNU/Linux 12"
+
+
+def test_os_info_cli_text_output_groups_details_and_summary(tmp_path: Path, monkeypatch):
+    from automax.core.os_detect import TargetOS
+
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        """
+servers:
+  lab01:
+    host: 192.0.2.10
+    port: 2222
+    ssh:
+      user: ubuntu
+  lab02:
+    host: 192.0.2.11
+    ssh:
+      user: ubuntu
+""",
+    )
+    monkeypatch.setattr(
+        AutomaxEngine,
+        "_detect_os_for_targets",
+        lambda self, targets, secrets: {
+            "lab01": TargetOS(
+                id="ubuntu",
+                id_like=("debian",),
+                pretty_name="Ubuntu 24.04.4 LTS",
+                version_id="24.04",
+                version_codename="noble",
+                family="debian",
+                package_manager="apt",
+            ),
+            "lab02": TargetOS(
+                id="debian",
+                id_like=(),
+                pretty_name="Debian GNU/Linux 12",
+                version_id="12",
+                family="debian",
+                package_manager="apt",
+            ),
+        },
+    )
+
+    result = CliRunner().invoke(cli, ["os", "info", "--inventory", str(inventory)])
+
+    assert result.exit_code == 0, result.output
+    assert "Detected operating-system facts." in result.output
+    assert "Target lab01 192.0.2.10:2222" in result.output
+    assert "  user             ubuntu" in result.output
+    assert "  os               Ubuntu 24.04.4 LTS" in result.output
+    assert "  codename         noble" in result.output
+    assert "Target lab02 192.0.2.11:22" in result.output
+    assert "Summary:" in result.output
+    assert "  debian/apt: 2 targets" in result.output
