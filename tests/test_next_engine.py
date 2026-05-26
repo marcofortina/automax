@@ -3438,6 +3438,11 @@ def test_lvm_plugins_render_manual_commands_and_previews():
     assert "vgdisplay" not in " && ".join(vg_commands)
     lv = LvmLvPresentPlugin().manual_commands({"vg": "vg_app", "name": "data", "size": "10G", "resizefs": True}, context)
     assert any("lvcreate" in command for command in lv)
+    assert "--wipesignatures" not in lv[0]
+    forced_lv = LvmLvPresentPlugin().manual_commands(
+        {"vg": "vg_app", "name": "data", "size": "10G", "force": True}, context
+    )
+    assert "lvcreate -y --wipesignatures y" in forced_lv[0]
     assert "lvextend -r" in LvmLvExtendPlugin().manual_commands({"vg": "vg_app", "name": "data", "size": "20G"}, context)[0]
     assert "resize2fs" in LvmResizeFsPlugin().manual_commands({"device": "/dev/vg_app/data", "fstype": "ext4"}, context)[0]
     assert LvmLvPresentPlugin().diff_preview({"vg": "vg_app", "name": "data", "size": "10G"}, context)[0]["kind"] == "lvm-plan"

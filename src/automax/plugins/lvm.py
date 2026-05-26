@@ -106,7 +106,11 @@ class LvmLvPresentPlugin(BasePlugin):
         size = quote(params["size"])
         lv_path = quote(self._lv_path(params))
         sudo = _sudo(params)
-        commands = [f"{sudo}lvs --noheadings {lv_path} >/dev/null 2>&1 || {sudo}lvcreate -n {name} -L {size} {vg}"]
+        create_force = " -y --wipesignatures y" if bool(params.get("force", False)) else ""
+        commands = [
+            f"{sudo}lvs --noheadings {lv_path} >/dev/null 2>&1 "
+            f"|| {sudo}lvcreate{create_force} -n {name} -L {size} {vg}"
+        ]
         if params.get("fstype"):
             force = " -f" if bool(params.get("force", False)) else ""
             commands.append(f"{sudo}blkid {lv_path} >/dev/null 2>&1 || {sudo}mkfs.{quote(params['fstype'])}{force} {lv_path}")
