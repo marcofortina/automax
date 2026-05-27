@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -77,7 +77,7 @@ class UdevRulePlugin(BasePlugin):
         path = str(params["path"])
         backup_suffix = str(params.get("backup_suffix", ".bak"))
         mode = str(params.get("mode", "0644"))
-        commands = [tempfile_command(temp_var, "udev-rule"), heredoc_to_file_expr(temp, content)]
+        commands = [tempfile_command(temp_var, "udev-rule"), cleanup_trap_command(temp_var), heredoc_to_file_expr(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + backup_suffix)}")
         commands.append(f"{sudo}install -m {quote(mode)} {temp} {quote(path)}")

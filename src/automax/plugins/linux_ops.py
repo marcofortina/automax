@@ -151,7 +151,7 @@ class LimitsDropinPlugin(BasePlugin):
         sudo = sudo_prefix(params, default=True)
         temp_var = "automax_limits_tmp"
         temp = shell_var_ref(temp_var)
-        commands = [tempfile_command(temp_var, "limits"), heredoc_to_file_expr(temp, content)]
+        commands = [tempfile_command(temp_var, "limits"), cleanup_trap_command(temp_var), heredoc_to_file_expr(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")
@@ -389,7 +389,7 @@ class ResolverConfigPlugin(BasePlugin):
         content = self._resolved_content(params) if backend == "systemd-resolved" else self._content(params)
         temp_var = "automax_resolver_tmp"
         temp = shell_var_ref(temp_var)
-        commands = [tempfile_command(temp_var, "resolver"), heredoc_to_file_expr(temp, content)]
+        commands = [tempfile_command(temp_var, "resolver"), cleanup_trap_command(temp_var), heredoc_to_file_expr(temp, content)]
         if backend == "plain-file" and not bool(params.get("force", False)):
             commands.append("if [ -L /etc/resolv.conf ]; then echo 'refusing to manage symlinked /etc/resolv.conf with backend=plain-file' >&2; exit 1; fi")
         if bool(params.get("backup", True)):
@@ -432,7 +432,7 @@ class ChronyServersPlugin(BasePlugin):
         sudo = sudo_prefix(params, default=True)
         temp_var = "automax_chrony_tmp"
         temp = shell_var_ref(temp_var)
-        commands = [tempfile_command(temp_var, "chrony"), heredoc_to_file_expr(temp, content)]
+        commands = [tempfile_command(temp_var, "chrony"), cleanup_trap_command(temp_var), heredoc_to_file_expr(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")
@@ -514,7 +514,7 @@ class EnvSetPlugin(BasePlugin):
         sudo = sudo_prefix(params, default=scope == "global")
         temp_var = "automax_env_tmp"
         temp = shell_var_ref(temp_var)
-        commands = [tempfile_command(temp_var, "env"), heredoc_to_file_expr(temp, content)]
+        commands = [tempfile_command(temp_var, "env"), cleanup_trap_command(temp_var), heredoc_to_file_expr(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")
@@ -579,23 +579,24 @@ class DownloadFilePlugin(BasePlugin):
         tmp = shell_var_ref(tmp_var)
         commands = [
             tempfile_path_command(tmp_var, f"{dest}.automax-download.XXXXXX"),
+            cleanup_trap_command(tmp_var),
             f"(curl -fsSL --retry 3 -o {tmp} {quote(params['url'])} || wget -q -O {tmp} {quote(params['url'])})"
         ]
         if params.get("checksum"):
-            commands.append(f"printf '%s  %s\\n' {quote(params['checksum'])} {quote(tmp)} | sha256sum -c -")
+            commands.append(f"printf '%s  %s\\n' {quote(params['checksum'])} {tmp} | sha256sum -c -")
         if bool(params.get("backup", True)):
             commands.append(
                 f"(test ! -e {quote(dest)} || {sudo}cp -p {quote(dest)} {quote(dest + str(params.get('backup_suffix', '.bak')))})"
             )
         if not bool(params.get("force", False)):
-            commands.append(f"(test ! -e {quote(dest)} || cmp -s {quote(tmp)} {quote(dest)})")
-        commands.append(f"{sudo}install {('-m ' + quote(params['mode'])) if params.get('mode') else ''} {quote(tmp)} {quote(dest)}".replace("  ", " "))
+            commands.append(f"(test ! -e {quote(dest)} || cmp -s {tmp} {quote(dest)})")
+        commands.append(f"{sudo}install {('-m ' + quote(params['mode'])) if params.get('mode') else ''} {tmp} {quote(dest)}".replace("  ", " "))
         if params.get("owner") or params.get("group"):
             owner = str(params.get("owner", ""))
             group = str(params.get("group", ""))
             spec = f"{owner}:{group}" if group else owner
             commands.append(f"{sudo}chown {quote(spec)} {quote(dest)}")
-        commands.append(f"rm -f {quote(tmp)}")
+        commands.append(f"rm -f {tmp}")
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:

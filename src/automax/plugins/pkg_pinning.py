@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -132,7 +132,7 @@ class PkgVersionPinPlugin(BasePlugin):
         apt_content = self._apt_content(params)
         temp_var = "automax_pkg_pin_tmp"
         temp = shell_var_ref(temp_var)
-        apt_commands = [tempfile_command(temp_var, "pkg-pin"), heredoc_to_file_expr(temp, apt_content)]
+        apt_commands = [tempfile_command(temp_var, "pkg-pin"), cleanup_trap_command(temp_var), heredoc_to_file_expr(temp, apt_content)]
         if bool(params.get("backup", True)):
             apt_commands.append(f"test ! -e {quote(apt_path)} || {sudo}cp -p {quote(apt_path)} {quote(apt_path + str(params.get('backup_suffix', '.bak')))}")
         apt_commands.extend([f"{sudo}install -m 0644 {temp} {quote(apt_path)}", f"rm -f {temp}"])
@@ -203,7 +203,7 @@ class PkgRepoPriorityPlugin(BasePlugin):
         sudo = sudo_prefix(params, default=True)
         temp_var = "automax_repo_priority_tmp"
         temp = shell_var_ref(temp_var)
-        commands = [tempfile_command(temp_var, "repo-priority"), heredoc_to_file_expr(temp, content)]
+        commands = [tempfile_command(temp_var, "repo-priority"), cleanup_trap_command(temp_var), heredoc_to_file_expr(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")

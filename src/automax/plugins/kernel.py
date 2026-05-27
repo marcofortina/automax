@@ -348,6 +348,7 @@ rm -f "$tmp"
         tmp_var = "automax_grub_tmp"
         tmp = shell_var_ref(tmp_var)
         commands.append(tempfile_command(tmp_var, "grub"))
+        commands.append(cleanup_trap_command(tmp_var))
         commands.append(
             heredoc_to_stdin(
                 f"{sudo}sh -s -- {quote(path)} {quote(state)} {quote(token)} > {tmp}",

@@ -11,7 +11,7 @@ from typing import Any, Dict
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.file_utils import upload_text_to_temp
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, shell_var_ref, sudo_prefix, tempfile_command
+from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, quote, result_from_remote, shell_var_ref, sudo_prefix, tempfile_command
 
 
 
@@ -317,7 +317,7 @@ class NftablesApplyPlugin(NftablesValidatePlugin):
         if not bool(params.get("check_only", False)):
             if bool(params.get("backup_before", False)):
                 backup_var = "automax_nft_backup"
-                commands.append(f"{tempfile_command(backup_var, 'nftables-backup', suffix='.nft')} && {sudo}nft list ruleset > {shell_var_ref(backup_var)}")
+                commands.append(f"{tempfile_command(backup_var, 'nftables-backup', suffix='.nft')} && {cleanup_trap_command(backup_var)} && {sudo}nft list ruleset > {shell_var_ref(backup_var)}")
             commands.append(f"{sudo}nft -f {quote(remote_path)}")
             if params.get("persistent_file"):
                 dest = str(params["persistent_file"])
@@ -420,7 +420,7 @@ class IptablesRulePlugin(BasePlugin):
         save_binary = "ip6tables-save" if bool(params.get("ipv6", False)) else "iptables-save"
         save_dest = str(params.get("dest") or ("/etc/iptables/rules.v6" if bool(params.get("ipv6", False)) else "/etc/iptables/rules.v4"))
         backup_var = "automax_iptables_backup"
-        backup = f"{tempfile_command(backup_var, 'iptables-backup', suffix='.rules')} && {sudo}{save_binary} > {shell_var_ref(backup_var)} && " if bool(params.get("backup_before", False)) else ""
+        backup = f"{tempfile_command(backup_var, 'iptables-backup', suffix='.rules')} && {cleanup_trap_command(backup_var)} && {sudo}{save_binary} > {shell_var_ref(backup_var)} && " if bool(params.get("backup_before", False)) else ""
         save_after = f" && {sudo}mkdir -p $(dirname {quote(save_dest)}) && {sudo}{save_binary} > {quote(save_dest)}" if bool(params.get("save_after", False)) else ""
         check = f"{sudo}{binary}{wait} -t {quote(table)} -C {quote(chain)} {rule}"
         insert = f"-I {quote(chain)} {quote(params['position'])}" if params.get("position") else f"-A {quote(chain)}"

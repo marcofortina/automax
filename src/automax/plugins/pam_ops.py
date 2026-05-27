@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file_expr, heredoc_to_stdin, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, heredoc_to_stdin, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -68,7 +68,7 @@ def _state(params: Dict[str, Any]) -> str:
 def _install_content_command(path: str, content: str, params: Dict[str, Any], mode: str = "0644") -> list[str]:
     tmp_var = "automax_pam_tmp"
     tmp = shell_var_ref(tmp_var)
-    commands = [tempfile_command(tmp_var, "pam"), heredoc_to_file_expr(tmp, content)]
+    commands = [tempfile_command(tmp_var, "pam"), cleanup_trap_command(tmp_var), heredoc_to_file_expr(tmp, content)]
     if bool(params.get("backup", True)):
         commands.append(_backup(path, params))
     commands.extend([f"{sudo_prefix(params, default=True)}install -D -m {mode} {tmp} {quote(path)}", f"rm -f {tmp}"])

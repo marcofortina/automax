@@ -4433,6 +4433,9 @@ def test_all_builtin_plugins_have_operator_preview_manual_commands_and_dry_run()
             commands = plugin.manual_commands(params, context)
             if not commands or not all(isinstance(command, str) and command.strip() for command in commands):
                 failures.append(f"{name}: empty manual_commands")
+            rendered = "\n".join(commands)
+            if "mktemp" in rendered and "trap 'rm -f" not in rendered:
+                failures.append(f"{name}: mktemp manual_commands without cleanup trap")
         except Exception as exc:  # pragma: no cover - assertion collects all offenders
             failures.append(f"{name}: manual_commands raised {exc!r}")
         try:
