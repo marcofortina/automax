@@ -173,6 +173,12 @@ class AuditdSearchPlugin(_ReadOnlyCommandPlugin):
     name = "auditd.search"
     description = "Search audit events by key, user or time window."
     optional_params = ("key", "user", "start", "end", "sudo")
+    parameter_schema = {
+        "key": {"type": "string", "default": None, "description": "Audit event key."},
+        "user": {"type": "string", "default": None, "description": "Audit user name or numeric UID."},
+        "start": {"type": "string", "default": None, "description": "Audit search start time."},
+        "end": {"type": "string", "default": None, "description": "Audit search end time."},
+    }
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         args = []

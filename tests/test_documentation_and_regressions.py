@@ -663,6 +663,24 @@ def test_plugin_smoke_runbooks_match_archive_decompress_parameters():
 
     assert offenders == []
 
+
+def test_plugin_smoke_runbooks_match_auditd_search_user_schema():
+    from automax.plugins.registry import build_builtin_registry
+
+    plugin = build_builtin_registry().get("auditd.search")
+    plugin.validate({"key": "automax", "user": "deploy", "start": "recent", "end": "now"})
+
+    runbook = yaml.safe_load(Path("examples/runbooks/runbooks/05-auditd.check.yaml").read_text(encoding="utf-8"))
+    search_substeps = [
+        substep
+        for task in runbook.get("tasks", [])
+        for step in task.get("steps", [])
+        for substep in step.get("substeps", [])
+        if substep.get("use") == "auditd.search"
+    ]
+    assert search_substeps
+    assert all(isinstance((substep.get("with") or {}).get("user"), str) for substep in search_substeps)
+
 def test_docs_show_sudo_password_env_for_runs_and_capability_installs():
     docs = "\n".join(
         path.read_text(encoding="utf-8")

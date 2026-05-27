@@ -881,10 +881,10 @@ Search audit events by key, user or time window.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `key` | no | `string` |  | SSH public key line. |
-| `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
-| `start` | no | `boolean` | `False` | Start a service or timer after installing its unit. |
-| `end` | no | `string` |  | End time for an audit search or time window. |
+| `key` | no | `string` |  | Audit event key. |
+| `user` | no | `string` |  | Audit user name or numeric UID. |
+| `start` | no | `string` |  | Audit search start time. |
+| `end` | no | `string` |  | Audit search end time. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
