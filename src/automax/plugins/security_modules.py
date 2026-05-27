@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_stdin, quote, result_from_remote, sudo_prefix
 
 
 
@@ -53,7 +53,11 @@ if [ "$persist" = true ] && [ -e /etc/selinux/config ]; then
 fi
 if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
 '''
-        command = f"{sudo_prefix(params, default=True)}sh -s -- {quote(state)} {quote(str(persist).lower())} <<'SH'\n{script}\nSH"
+        command = heredoc_to_stdin(
+            f"{sudo_prefix(params, default=True)}sh -s -- {quote(state)} {quote(str(persist).lower())}",
+            script,
+            prefix="AUTOMAX_SH",
+        )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="selinux.mode failed")
 

@@ -10,7 +10,7 @@ from typing import Any, Dict
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.file_utils import install_uploaded_file, upload_text_to_temp
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix, validate_env_name
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_stdin, quote, result_from_remote, sudo_prefix, validate_env_name
 
 
 
@@ -165,7 +165,13 @@ awk '
   END { exit bad ? 1 : 0 }
 ' "$file"
 '''
-        return [f"{sudo_prefix(params, default=True)}sh -s -- {quote(params['path'])} <<'SH'\n{script}\nSH"]
+        return [
+            heredoc_to_stdin(
+                f"{sudo_prefix(params, default=True)}sh -s -- {quote(params['path'])}",
+                script,
+                prefix="AUTOMAX_SH",
+            )
+        ]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])

@@ -11,7 +11,7 @@ from typing import Any, Dict
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin
 from automax.plugins.http import HttpAssertPlugin
-from automax.plugins.remote_utils import exec_remote, quote, sudo_prefix
+from automax.plugins.remote_utils import exec_remote, heredoc_to_stdin, quote, sudo_prefix
 
 
 
@@ -31,7 +31,12 @@ class HealthPortPlugin(BasePlugin):
         if bool(params.get("listen", True)):
             return [f"{sudo_prefix(params, default=False)}ss -H -ltn sport = :{port} | grep -q ."]
         host = str(params.get("host", "127.0.0.1"))
-        return [f"python3 - <<'PY'\nimport socket\nsocket.create_connection(({host!r}, {int(params['port'])}), timeout={float(params.get('timeout', 3))}).close()\nPY"]
+        script = (
+            "import socket\n"
+            f"socket.create_connection(({host!r}, {int(params['port'])}), "
+            f"timeout={float(params.get('timeout', 3))}).close()\n"
+        )
+        return [heredoc_to_stdin("python3 -", script, prefix="AUTOMAX_PY")]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)

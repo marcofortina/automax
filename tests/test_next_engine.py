@@ -4522,6 +4522,7 @@ def test_shell_helpers_harden_environment_names_and_heredoc_delimiters():
         apply_cwd,
         heredoc_to_file,
         heredoc_to_file_expr,
+        heredoc_to_stdin,
         shell_var_ref,
         sudo_command,
         sudo_prefix,
@@ -4581,7 +4582,23 @@ def test_shell_helpers_harden_environment_names_and_heredoc_delimiters():
     assert "<<'AUTOMAX_EOF_1'" in command
     assert command.endswith("AUTOMAX_EOF_1")
 
+    command = heredoc_to_stdin("python3 -", "AUTOMAX_PY\n", prefix="AUTOMAX_PY")
+    assert "<<'AUTOMAX_PY_1'" in command
+    assert command.endswith("AUTOMAX_PY_1")
 
+
+
+
+def test_builtin_plugins_use_shared_script_heredoc_helper():
+    offenders = []
+    for path in sorted(Path("src/automax/plugins").glob("*.py")):
+        if path.name == "remote_utils.py":
+            continue
+        content = path.read_text(encoding="utf-8")
+        for token in ("<<'PY'", "<<'SH'"):
+            if token in content:
+                offenders.append(f"{path}:{token}")
+    assert not offenders
 def test_env_consuming_plugins_reject_unsafe_environment_names():
     from automax.plugins.cron import CronEntryPlugin
     from automax.plugins.linux_ops import EnvSetPlugin

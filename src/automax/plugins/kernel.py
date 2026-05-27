@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, shell_var_ref, sudo_prefix, tempfile_command
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_stdin, quote, result_from_remote, shell_var_ref, sudo_prefix, tempfile_command
 
 
 
@@ -99,9 +99,11 @@ if [ "$persist" = true ]; then
 fi
 if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
 '''
-        command = (
+        command = heredoc_to_stdin(
             f"AUTOMAX_SYSCTL_VALUE={quote(value)} {sudo_prefix(params, default=True)}sh -s -- "
-            f"{quote(name)} {quote(value)} {quote(str(runtime).lower())} {quote(str(persist).lower())} {quote(file_path)} <<'SH'\n{script}\nSH"
+            f"{quote(name)} {quote(value)} {quote(str(runtime).lower())} {quote(str(persist).lower())} {quote(file_path)}",
+            script,
+            prefix="AUTOMAX_SH",
         )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="sysctl.set failed", data={"name": name, "value": value})
@@ -185,7 +187,11 @@ if [ "$persist" = true ]; then
 fi
 if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
 '''
-        command = f"{sudo_prefix(params, default=True)}sh -s -- {quote(module)} {quote(str(persist).lower())} {quote(file_path)} <<'SH'\n{script}\nSH"
+        command = heredoc_to_stdin(
+            f"{sudo_prefix(params, default=True)}sh -s -- {quote(module)} {quote(str(persist).lower())} {quote(file_path)}",
+            script,
+            prefix="AUTOMAX_SH",
+        )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.module.load failed")
 
@@ -232,7 +238,11 @@ if [ "$persist" = true ] && [ -e "$file" ]; then
 fi
 if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
 '''
-        command = f"{sudo_prefix(params, default=True)}sh -s -- {quote(module)} {quote(str(persist).lower())} {quote(file_path)} <<'SH'\n{script}\nSH"
+        command = heredoc_to_stdin(
+            f"{sudo_prefix(params, default=True)}sh -s -- {quote(module)} {quote(str(persist).lower())} {quote(file_path)}",
+            script,
+            prefix="AUTOMAX_SH",
+        )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.module.unload failed")
 
@@ -335,7 +345,13 @@ rm -f "$tmp"
         tmp_var = "automax_grub_tmp"
         tmp = shell_var_ref(tmp_var)
         commands.append(tempfile_command(tmp_var, "grub"))
-        commands.append(f"{sudo}sh -s -- {quote(path)} {quote(state)} {quote(token)} <<'SH' > {tmp}\n{script}\nSH")
+        commands.append(
+            heredoc_to_stdin(
+                f"{sudo}sh -s -- {quote(path)} {quote(state)} {quote(token)} > {tmp}",
+                script,
+                prefix="AUTOMAX_SH",
+            )
+        )
         commands.append(f"{sudo}install -m 0644 {tmp} {quote(path)} && rm -f {tmp}")
         if bool(params.get("update_grub", True)):
             commands.append(f"if command -v update-grub >/dev/null 2>&1; then {sudo}update-grub; elif command -v grub2-mkconfig >/dev/null 2>&1; then {sudo}grub2-mkconfig -o /boot/grub2/grub.cfg; fi")

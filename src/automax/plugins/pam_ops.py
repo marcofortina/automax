@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file_expr, heredoc_to_stdin, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -121,7 +121,22 @@ class PamServiceLinePlugin(BasePlugin):
         if _state(params) == "present":
             commands.append(_ensure_line(path, line, params))
         else:
-            commands.append(f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}python3 - <<'PY'\nfrom pathlib import Path\npath = Path({path!r})\nline = {line!r}\nif path.exists():\n    lines = path.read_text().splitlines()\n    path.write_text('\\n'.join(item for item in lines if item != line) + ('\\n' if lines else ''))\nPY")
+            script = (
+                "from pathlib import Path\n"
+                f"path = Path({path!r})\n"
+                f"line = {line!r}\n"
+                "if path.exists():\n"
+                "    lines = path.read_text().splitlines()\n"
+                "    path.write_text('\\n'.join(item for item in lines if item != line) + ('\\n' if lines else ''))\n"
+            )
+            commands.append(
+                f"test ! -e {quote(path)} || "
+                + heredoc_to_stdin(
+                    f"{sudo_prefix(params, default=True)}python3 -",
+                    script,
+                    prefix="AUTOMAX_PY",
+                )
+            )
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:

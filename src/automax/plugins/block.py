@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix, sudo_shell_run_function
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_stdin, quote, result_from_remote, sudo_prefix, sudo_shell_run_function
 
 
 
@@ -253,7 +253,7 @@ if [ "$udev_settle" = "true" ]; then udevadm settle; fi
             if isinstance(flags, str):
                 flags = [flags]
             args.extend([quote(item["number"]), quote(item.get("name", "")), quote(item["start"]), quote(item["end"]), quote(" ".join(str(flag) for flag in flags))])
-        return [f"sh -s -- {' '.join(args)} <<'SH'\n{self._script()}\nSH"]
+        return [heredoc_to_stdin(f"sh -s -- {' '.join(args)}", self._script(), prefix="AUTOMAX_SH")]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])

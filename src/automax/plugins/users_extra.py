@@ -12,7 +12,7 @@ from typing import Any, Dict
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.file_utils import install_uploaded_file, upload_text_to_temp
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_stdin, quote, result_from_remote, sudo_prefix
 
 
 
@@ -187,7 +187,11 @@ fi
 chown -R "$user":"$user" "$ssh_dir" 2>/dev/null || true
 '''
         prefix = sudo_prefix(params, default=True)
-        command = f"{prefix}sh -s -- {quote(user)} {quote(key)} {quote(state)} <<'SH'\n{script}\nSH"
+        command = heredoc_to_stdin(
+            f"{prefix}sh -s -- {quote(user)} {quote(key)} {quote(state)}",
+            script,
+            prefix="AUTOMAX_SH",
+        )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.authorized_key failed")
 
@@ -278,7 +282,14 @@ chmod 600 "$auth_file"
 chown -R "$user":"$user" "$ssh_dir" 2>/dev/null || true
 echo __AUTOMAX_CHANGED__
 '''
-        rc, out, err = exec_remote(context, f"{prefix}sh -s -- {quote(user)} {quote(key)} <<'SH'\n{script}\nSH")
+        rc, out, err = exec_remote(
+            context,
+            heredoc_to_stdin(
+                f"{prefix}sh -s -- {quote(user)} {quote(key)}",
+                script,
+                prefix="AUTOMAX_SH",
+            ),
+        )
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.authorized_key failed")
     return _orig_authorized_key_execute(self, params, context)
 

@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import exec_remote, quote
+from automax.plugins.remote_utils import exec_remote, heredoc_to_stdin, quote
 
 
 def _run_json(context: ExecutionContext, command: str, message: str) -> PluginResult:
@@ -43,7 +43,7 @@ if path.exists():
             facts[key.lower()] = value.strip().strip('"')
 print(json.dumps({'os': facts}, sort_keys=True))
 '''
-        return _run_json(context, f"python3 - <<'PY'\n{script}\nPY", "facts.os failed")
+        return _run_json(context, heredoc_to_stdin("python3 -", script, prefix="AUTOMAX_PY"), "facts.os failed")
 
 
 class FactsNetworkPlugin(BasePlugin):
@@ -69,7 +69,7 @@ except Exception:
         pass
 print(json.dumps({'network': facts}, sort_keys=True))
 '''
-        return _run_json(context, f"python3 - <<'PY'\n{script}\nPY", "facts.network failed")
+        return _run_json(context, heredoc_to_stdin("python3 -", script, prefix="AUTOMAX_PY"), "facts.network failed")
 
 
 class FactsPackagesPlugin(BasePlugin):
@@ -99,7 +99,7 @@ else:
     raise SystemExit('no supported package database found')
 print(json.dumps({'packages': packages, 'manager': manager}, sort_keys=True))
 '''
-        return _run_json(context, f"python3 - {quote(manager)} <<'PY'\n{script}\nPY", "facts.packages failed")
+        return _run_json(context, heredoc_to_stdin(f"python3 - {quote(manager)}", script, prefix="AUTOMAX_PY"), "facts.packages failed")
 
 
 class FactsServicesPlugin(BasePlugin):
@@ -120,7 +120,7 @@ for line in raw.splitlines():
         services.append({'unit': parts[0], 'load': parts[1], 'active': parts[2], 'sub': parts[3], 'description': parts[4] if len(parts) > 4 else ''})
 print(json.dumps({'services': services}, sort_keys=True))
 '''
-        return _run_json(context, f"python3 - <<'PY'\n{script}\nPY", "facts.services failed")
+        return _run_json(context, heredoc_to_stdin("python3 -", script, prefix="AUTOMAX_PY"), "facts.services failed")
 
 
 class FactsGatherPlugin(BasePlugin):

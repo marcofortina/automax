@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, tempfile_path_command, normalize_env_mapping, quote, render_env_prefix, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file_expr, heredoc_to_stdin, shell_var_ref, tempfile_command, tempfile_path_command, normalize_env_mapping, quote, render_env_prefix, result_from_remote, sudo_prefix
 
 
 
@@ -285,7 +285,7 @@ elif command -v nmcli >/dev/null 2>&1; then backend=networkmanager
 fi
 printf 'backend=%s\npath=%s\ntarget=%s\n' "$backend" "$path" "$target"
 '''
-        return [f"sh -s <<'SH'\n{script}\nSH"]
+        return [heredoc_to_stdin("sh -s", script, prefix="AUTOMAX_SH")]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])

@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_stdin, quote, result_from_remote, sudo_prefix
 
 
 
@@ -260,9 +260,12 @@ for item in sorted(set(files), key=lambda p: p.stat().st_mtime, reverse=True)[ke
             if isinstance(pattern_args, str):
                 pattern_args = [pattern_args]
             commands.append(
-                f"{sudo}python3 - {path} {quote(params['keep'])} "
-                + " ".join(quote(item) for item in pattern_args)
-                + f" <<'PY'\n{script}\nPY"
+                heredoc_to_stdin(
+                    f"{sudo}python3 - {path} {quote(params['keep'])} "
+                    + " ".join(quote(item) for item in pattern_args),
+                    script,
+                    prefix="AUTOMAX_PY",
+                )
             )
         return [" && ".join(commands)]
 

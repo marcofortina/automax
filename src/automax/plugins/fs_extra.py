@@ -15,7 +15,7 @@ from automax.core.models import ExecutionContext, PluginResult
 from automax.core.templating import render_template_string
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.file_utils import install_uploaded_file, upload_text_to_temp
-from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, quote, result_from_remote, sudo_command, sudo_prefix, sudo_shell_run_function
+from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, heredoc_to_stdin, quote, result_from_remote, sudo_command, sudo_prefix, sudo_shell_run_function
 
 
 def _content_diff(path: str, content: str) -> str:
@@ -284,10 +284,11 @@ if changed:
     print("__AUTOMAX_CHANGED__")
 '''
         python = sudo_command(params, "python3", default=False)
-        command = (
+        command = heredoc_to_stdin(
             f"{python} - {quote(params['path'])} {quote(params['line'])} "
-            f"{quote(params.get('state', 'present'))} {quote(str(bool(params.get('create', False))))} "
-            f"<<'PY'\n{script}\nPY"
+            f"{quote(params.get('state', 'present'))} {quote(str(bool(params.get('create', False))))}",
+            script,
+            prefix="AUTOMAX_PY",
         )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="fs.line failed")
@@ -362,12 +363,14 @@ if changed_count:
 print(changed_count)
 '''
         python = sudo_command(params, "python3", default=False)
-        return (
+        return heredoc_to_stdin(
             f"{python} - {quote(params['path'])} {quote(params['pattern'])} "
             f"{quote(params['replacement'])} {quote(params.get('count', 0))} "
             f"{quote(str(bool(params.get('backup', False))).lower())} "
             f"{quote(params.get('backup_suffix', '.bak'))} "
-            f"{quote(params.get('backup_path', ''))} <<'PY'\n{script}\nPY"
+            f"{quote(params.get('backup_path', ''))}",
+            script,
+            prefix="AUTOMAX_PY",
         )
 
     def manual_commands(
@@ -455,11 +458,13 @@ else
     echo {CHANGE_MARKER}
 fi
 """
-        command = (
+        command = heredoc_to_stdin(
             f"sh -s -- {quote(params['src'])} {quote(params['dest'])} "
             f"{quote(str(bool(params.get('force', False))).lower())} "
             f"{quote(str(bool(params.get('allow_replace_non_symlink', False))).lower())} "
-            f"{quote(str(bool(params.get('sudo', False))).lower())} <<'SH'\n{script}\nSH"
+            f"{quote(str(bool(params.get('sudo', False))).lower())}",
+            script,
+            prefix="AUTOMAX_SH",
         )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(
@@ -503,9 +508,11 @@ else
     exit 1
 fi
 """
-        command = (
+        command = heredoc_to_stdin(
             f"sh -s -- {quote(params['path'])} "
-            f"{quote(str(bool(params.get('sudo', False))).lower())} <<'SH'\n{script}\nSH"
+            f"{quote(str(bool(params.get('sudo', False))).lower())}",
+            script,
+            prefix="AUTOMAX_SH",
         )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(
@@ -653,7 +660,15 @@ def _fs_replace_validate(self: FsReplacePlugin, params: Dict[str, Any]) -> None:
 
 def _fs_replace_execute(self: FsReplacePlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
     if params.get("match_count_assert") is not None:
-        rc, out, err = exec_remote(context, f"python3 - <<'PY'\nimport pathlib,re\ntext=pathlib.Path({str(params['path'])!r}).read_text()\nprint(len(re.findall({str(params['pattern'])!r}, text)))\nPY")
+        script = (
+            "import pathlib,re\n"
+            f"text=pathlib.Path({str(params['path'])!r}).read_text()\n"
+            f"print(len(re.findall({str(params['pattern'])!r}, text)))\n"
+        )
+        rc, out, err = exec_remote(
+            context,
+            heredoc_to_stdin("python3 -", script, prefix="AUTOMAX_PY"),
+        )
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.replace match-count check failed")
         if int(out.strip() or "0") != int(params["match_count_assert"]):

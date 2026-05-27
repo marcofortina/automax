@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin
-from automax.plugins.remote_utils import exec_remote, sudo_prefix
+from automax.plugins.remote_utils import exec_remote, heredoc_to_stdin, sudo_prefix
 
 
 
@@ -50,7 +50,7 @@ trust_store=unknown
 if has update-ca-certificates; then trust_store=debian-ca-certificates; elif has update-ca-trust; then trust_store=redhat-ca-trust; fi
 printf 'package_manager=%s\nservice_manager=%s\nnetwork_backend=%s\nresolver_backend=%s\ntrust_store=%s\n' "$package_manager" "$service_manager" "$network_backend" "$resolver_backend" "$trust_store"
 '''
-        return [f"{sudo}sh -s <<'SH'\n{script}\nSH"]
+        return [heredoc_to_stdin(f"{sudo}sh -s", script, prefix="AUTOMAX_SH")]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
