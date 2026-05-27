@@ -436,6 +436,28 @@ def test_secret_values_are_masked_in_persisted_result_mapping():
     assert mapped["data"] == {"nested": ["***"]}
 
 
+
+
+def test_plugins_audit_command_reports_builtin_readiness():
+    result = CliRunner().invoke(cli, ["plugins", "audit"])
+
+    assert result.exit_code == 0, result.output
+    assert "Plugin audit:" in result.output
+    assert "Result: OK" in result.output
+
+    json_result = CliRunner().invoke(cli, ["plugins", "audit", "--format", "json"])
+    assert json_result.exit_code == 0, json_result.output
+    payload = json.loads(json_result.output)
+    assert payload["ok"] is True
+    assert payload["failure_count"] == 0
+    assert payload["checked"] > 100
+
+    docs = "\n".join(
+        Path(path).read_text(encoding="utf-8")
+        for path in ["README.md", "docs/reference/cli.md", "docs/concepts/plugin-system.md", "docs/guides/creating-plugins.md"]
+    )
+    assert "automax plugins audit" in docs
+
 def test_plugins_describe_outputs_parameter_metadata():
     runner = CliRunner()
     result = runner.invoke(cli, ["plugins", "describe", "fs.template"])

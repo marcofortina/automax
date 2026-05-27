@@ -222,6 +222,7 @@ automax artifacts path <run-id> --state-dir .automax/runs
 automax plugins list
 automax plugins describe fs.template
 automax plugins describe fs.template --json
+automax plugins audit
 ```
 
 ## Schema export

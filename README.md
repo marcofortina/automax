@@ -186,6 +186,7 @@ The public DSL exposes canonical plugin names only. Run:
 
 ```bash
 automax plugins list
+automax plugins audit
 ```
 
 Current categories:

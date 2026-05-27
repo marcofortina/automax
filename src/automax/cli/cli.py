@@ -29,6 +29,7 @@ from automax.core.job_views import render_dot, render_explain_text, render_merma
 from automax.core.models import NodeStatus, Target
 from automax.core.state import StateStore
 from automax.core.yaml_loader import load_yaml_file
+from automax.plugins.audit import audit_plugin_registry
 from automax.plugins.registry import build_builtin_registry
 
 
@@ -1629,6 +1630,34 @@ def list_plugins(plugin_path: tuple[str, ...], include_aliases: bool) -> None:
     for name in registry.names(include_aliases=include_aliases):
         click.echo(name)
 
+
+
+@plugins.command("audit")
+@click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json"]),
+    default="text",
+    show_default=True,
+    help="Output format.",
+)
+def audit_plugins(plugin_path: tuple[str, ...], output_format: str) -> None:
+    """Audit registered plugins for preview, dry-run and manual recovery coverage."""
+    payload = audit_plugin_registry(build_builtin_registry(plugin_path))
+    if output_format == "json":
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        click.echo("Plugin audit:")
+        click.echo(f"  checked:  {payload['checked']}")
+        click.echo(f"  failures: {payload['failure_count']}")
+        if payload["failures"]:
+            click.echo("Failures:")
+            for failure in payload["failures"]:
+                click.echo(f"  - {failure}")
+        click.echo(f"Result: {'OK' if payload['ok'] else 'FAILED'}")
+    if not payload["ok"]:
+        raise click.exceptions.Exit(1)
 
 
 @plugins.command("describe")

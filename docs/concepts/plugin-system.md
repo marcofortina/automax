@@ -23,6 +23,7 @@ Aliases are intentionally not exposed by `automax plugins list`.
 automax plugins list
 automax plugins describe fs.template
 automax plugins describe fs.template --json
+automax plugins audit
 ```
 
 ## Metadata

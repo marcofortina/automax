@@ -63,6 +63,7 @@ Use `automax plugins describe` to inspect a builtin or externally loaded plugin:
 
 ```bash
 automax plugins describe fs.template
+automax plugins audit --plugin-path ./plugins
 ```
 
 The command prints the canonical name, description, required parameters, optional
