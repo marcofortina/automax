@@ -68,6 +68,12 @@ The helper also accepts the full relative path:
 "$RB/scripts/run-all-checks.sh"
 ```
 
+The default is fail-fast. To collect all failing runbooks in one pass:
+
+```bash
+"$RB/scripts/run-all-checks.sh" --keep-going
+```
+
 The helpers always pass `--sudo-password-env` so password-protected sudo can be tested without installing NOPASSWD sudoers rules. They fail early if the selected sudo password environment variable is unset. Optional overrides:
 
 ```bash

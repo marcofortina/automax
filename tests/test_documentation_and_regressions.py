@@ -628,6 +628,20 @@ def test_runbook_helpers_keep_sudo_password_env_explicit():
         assert '--sudo-password-env "$SUDO_PASSWORD_ENV"' in script
 
 
+
+def test_run_all_checks_supports_optional_keep_going_summary():
+    script = Path("examples/runbooks/scripts/run-all-checks.sh").read_text(encoding="utf-8")
+
+    assert "--keep-going" in script
+    assert "KEEP_GOING=0" in script
+    assert "failed_runbooks=()" in script
+    assert "== run-all summary ==" in script
+    assert 'exit "$rc"' in script
+    assert "failed runbooks:" in script
+
+    readme = Path("examples/runbooks/README.md").read_text(encoding="utf-8")
+    assert '"$RB/scripts/run-all-checks.sh" --keep-going' in readme
+
 def test_plugin_smoke_runbooks_keep_file_modes_as_strings():
     offenders = []
     for runbook_path in sorted(Path("examples/runbooks/runbooks").glob("*.check.yaml")):
