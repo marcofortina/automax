@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, SUDO_NON_INTERACTIVE, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
 
 
 def _sudo(params: Dict[str, Any]) -> str:
@@ -314,7 +314,8 @@ class KernelBootParamAbsentPlugin(BasePlugin):
         if bool(params.get("backup", True)):
             cmds.append(f"test ! -e {quote(path)} || {_sudo(params)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         cmds.append(f"{_sudo(params)}sed -i -E 's/(GRUB_CMDLINE_LINUX[^=]*=\"[^\"]*)\\b{params['param']}\\b ?/\\1/' {quote(path)}")
-        cmds.append("if command -v update-grub >/dev/null 2>&1; then sudo -n update-grub; elif command -v grub2-mkconfig >/dev/null 2>&1; then sudo -n grub2-mkconfig -o /boot/grub2/grub.cfg; fi")
+        sudo = _sudo(params)
+        cmds.append(f"if command -v update-grub >/dev/null 2>&1; then {sudo}update-grub; elif command -v grub2-mkconfig >/dev/null 2>&1; then {sudo}grub2-mkconfig -o /boot/grub2/grub.cfg; fi")
         return cmds
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -449,7 +450,7 @@ class SudoAssertPlugin(_ReadOnlyCommandPlugin):
 class SudoCanRunPlugin(_ReadOnlyCommandPlugin):
     name="sudo.can_run"; description="Assert that a user can run a command via sudo without prompting."; required_params=("user","command"); optional_params=("run_as","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        run_as=f" -u {quote(params.get('run_as'))}" if params.get("run_as") else ""; return [f"{_sudo(params)}sudo -n -l -U {quote(params['user'])}{run_as} {quote(params['command'])}"]
+        run_as=f" -u {quote(params.get('run_as'))}" if params.get("run_as") else ""; return [f"{_sudo(params)}{SUDO_NON_INTERACTIVE} -l -U {quote(params['user'])}{run_as} {quote(params['command'])}"]
 
 
 # Mount/fstab/block safety

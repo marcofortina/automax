@@ -30,6 +30,21 @@ def sudo_command(params: Mapping[str, Any], command: str, *, default: bool = Tru
     return f"{sudo_prefix(params, default=default)}{command}"
 
 
+def sudo_shell_run_function(
+    *, function_name: str = "run", flag_var: str = "use_sudo"
+) -> str:
+    """Render a shell helper that conditionally runs commands through sudo -n."""
+    return (
+        f"{function_name}() {{\n"
+        f"    if [ \"${flag_var}\" = \"true\" ]; then\n"
+        f"        {SUDO_NON_INTERACTIVE} \"$@\"\n"
+        f"    else\n"
+        f"        \"$@\"\n"
+        f"    fi\n"
+        f"}}"
+    )
+
+
 def quote(value: Any) -> str:
     """Quote a value for POSIX shell usage."""
     return shlex.quote(str(value))

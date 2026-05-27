@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix, sudo_shell_run_function
 
 
 def _sudo(params: Dict[str, Any]) -> str:
@@ -201,9 +201,7 @@ force=$5
 udev_settle=$6
 use_sudo=$7
 shift 7
-run() {{
-    if [ "$use_sudo" = "true" ]; then sudo -n "$@"; else "$@"; fi
-}}
+{sudo_shell_run_function()}
 if findmnt -rn --source "$device" >/dev/null 2>&1; then
     echo "refusing to partition mounted device: $device" >&2
     exit 1

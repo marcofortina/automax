@@ -15,7 +15,7 @@ from automax.core.models import ExecutionContext, PluginResult
 from automax.core.templating import render_template_string
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.file_utils import install_uploaded_file, upload_text_to_temp
-from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, quote, result_from_remote, sudo_command, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, quote, result_from_remote, sudo_command, sudo_prefix, sudo_shell_run_function
 
 
 def _content_diff(path: str, content: str) -> str:
@@ -428,13 +428,7 @@ dest=$2
 force=$3
 allow_replace_non_symlink=$4
 use_sudo=$5
-run() {{
-    if [ \"$use_sudo\" = \"true\" ]; then
-        sudo -n \"$@\"
-    else
-        \"$@\"
-    fi
-}}
+{sudo_shell_run_function()}
 if [ -L \"$dest\" ]; then
     current=$(readlink \"$dest\")
     if [ \"$current\" = \"$src\" ]; then
@@ -498,13 +492,7 @@ class FsSymlinkRemovePlugin(BasePlugin):
 set -eu
 path=$1
 use_sudo=$2
-run() {{
-    if [ \"$use_sudo\" = \"true\" ]; then
-        sudo -n \"$@\"
-    else
-        \"$@\"
-    fi
-}}
+{sudo_shell_run_function()}
 if [ -L \"$path\" ]; then
     run rm -f \"$path\"
     echo {CHANGE_MARKER}
