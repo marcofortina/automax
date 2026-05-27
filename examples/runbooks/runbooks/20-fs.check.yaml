@@ -50,7 +50,7 @@ tasks:
       use: fs.chmod
       with:
         path: /tmp/automax-demo
-        mode: 420
+        mode: '0644'
     - id: fs_chown
       use: fs.chown
       with:
