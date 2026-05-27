@@ -611,7 +611,7 @@ PLUGIN_EXAMPLES: dict[str, str] = {
     "db.sqlite.query": "use: db.sqlite.query\nwith:\n  connection:\n    path: /tmp/automax.sqlite\n  query: SELECT 1 AS value\n  output: rows",
     "remote.command": "use: remote.command\nwith:\n  command: systemctl is-active sshd\n  success_rc: 0",
     "ssh.authorized_key": "use: ssh.authorized_key\nwith:\n  user: deploy\n  key: '{{ vars.deploy_public_key }}'\n  state: present\n  sudo: true",
-    "sudoers.dropin": "use: sudoers.dropin\nwith:\n  name: deploy-myapp\n  content: 'deploy ALL=(root) NOPASSWD: /bin/systemctl restart myapp'\n  validate: true\n  sudo: true",
+    "sudoers.dropin": "use: sudoers.dropin\nwith:\n  name: deploy-myapp\n  content: 'deploy ALL=(root) /bin/systemctl restart myapp'\n  validate: true\n  sudo: true",
     "firewalld.port": "use: firewalld.port\nwith:\n  port: 443\n  protocol: tcp\n  zone: public\n  state: present\n  permanent: true\n  reload: true\n  sudo: true",
     "ufw.rule": "use: ufw.rule\nwith:\n  rule: allow\n  port: 22\n  protocol: tcp\n  from: 10.0.0.0/8\n  sudo: true",
     "nftables.apply": "use: nftables.apply\nwith:\n  src: ./firewall/prod.nft\n  sudo: true",

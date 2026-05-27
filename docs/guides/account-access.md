@@ -38,7 +38,7 @@ Use `password_hash` with `user.set_password` whenever possible. Plaintext passwo
   use: sudoers.dropin
   with:
     name: deploy-myapp
-    content: "deploy ALL=(root) NOPASSWD: /bin/systemctl restart myapp"
+    content: "deploy ALL=(root) /bin/systemctl restart myapp"
     validate: true
     sudo: true
 ```

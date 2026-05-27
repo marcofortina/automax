@@ -3885,6 +3885,15 @@ def test_sudo_management_plugins_render_validated_dropins():
     assert SudoValidatePlugin().manual_commands({}, context)[0] == "sudo -n visudo -cf /etc/sudoers"
 
 
+def test_sudoers_dropin_reference_example_keeps_password_required_sudo():
+    from automax.plugins.metadata import PLUGIN_EXAMPLES
+
+    example = PLUGIN_EXAMPLES["sudoers.dropin"]
+
+    assert "NOPASSWD" not in example
+    assert "deploy ALL=(root) /bin/systemctl restart myapp" in example
+
+
 def test_transfer_rsync_plugin_renders_secret_free_manual_command():
     from automax.plugins.transfer import TransferRsyncPlugin
 

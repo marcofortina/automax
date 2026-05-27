@@ -9490,7 +9490,7 @@ Example:
 use: sudoers.dropin
 with:
   name: deploy-myapp
-  content: 'deploy ALL=(root) NOPASSWD: /bin/systemctl restart myapp'
+  content: 'deploy ALL=(root) /bin/systemctl restart myapp'
   validate: true
   sudo: true
 ```
