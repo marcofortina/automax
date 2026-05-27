@@ -349,11 +349,9 @@ class TransferRsyncPlugin(BasePlugin):
         return PluginResult.success(changed=changed, rc=completed.returncode, stdout=completed.stdout, stderr=completed.stderr, data={"command": command})
 
 # Extended rsync operator controls.
-TransferRsyncPlugin.optional_params = ("direction", "archive", "compress", "delete", "checksum", "dry_run", "excludes", "ssh_options", "rsync_path", "timeout", "partial", "bwlimit", "numeric_ids", "itemize_changes", "stats")
-_orig_rsync_parts = TransferRsyncPlugin._command_parts
 
 def _rsync_parts_extended(self: TransferRsyncPlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-    parts = _orig_rsync_parts(self, params, context)
+    parts = TransferRsyncPlugin._command_parts(self, params, context)
     insert_at = 1
     extras: list[str] = []
     if bool(params.get("partial", False)):
@@ -368,4 +366,11 @@ def _rsync_parts_extended(self: TransferRsyncPlugin, params: Dict[str, Any], con
         extras.append("--stats")
     return parts[:insert_at] + extras + parts[insert_at:]
 
-TransferRsyncPlugin._command_parts = _rsync_parts_extended  # type: ignore[method-assign]
+
+class ExtendedTransferRsyncPlugin(TransferRsyncPlugin):
+    """transfer.rsync with extended operator controls."""
+
+    optional_params = ("direction", "archive", "compress", "delete", "checksum", "dry_run", "excludes", "ssh_options", "rsync_path", "timeout", "partial", "bwlimit", "numeric_ids", "itemize_changes", "stats")
+
+    def _command_parts(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return _rsync_parts_extended(self, params, context)

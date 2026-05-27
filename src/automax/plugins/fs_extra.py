@@ -560,10 +560,6 @@ class FsFindPlugin(BasePlugin):
         return PluginResult.success(changed=False, stdout=out, data={"paths": paths})
 
 # File mutation hardening: optional backups, validation commands and match-count guards.
-FsWritePlugin.optional_params = ("mode", "owner", "group", "sudo", "encoding", "backup_before", "backup_suffix", "validate_command", "sensitive", "atomic")
-FsTemplatePlugin.optional_params = ("mode", "owner", "group", "sudo", "encoding", "values", "backup_before", "backup_suffix", "validate_command", "sensitive", "atomic")
-FsLinePlugin.optional_params = ("state", "create", "sudo", "backup_before", "backup_suffix", "validate_command")
-FsReplacePlugin.optional_params = ("count", "sudo", "backup", "backup_before", "backup_suffix", "backup_path", "validate_command", "match_count_assert")
 
 
 def _backup_existing_command(path: str, params: Dict[str, Any]) -> str:
@@ -649,11 +645,9 @@ def _fs_line_execute(self: FsLinePlugin, params: Dict[str, Any], context: Execut
     return result
 
 
-_orig_replace_execute = FsReplacePlugin.execute
-_orig_replace_validate = FsReplacePlugin.validate
 
 def _fs_replace_validate(self: FsReplacePlugin, params: Dict[str, Any]) -> None:
-    _orig_replace_validate(self, params)
+    FsReplacePlugin.validate(self, params)
     if params.get("match_count_assert") is not None and int(params["match_count_assert"]) < 0:
         raise PluginValidationError("fs.replace match_count_assert must be >= 0")
 
@@ -676,7 +670,7 @@ def _fs_replace_execute(self: FsReplacePlugin, params: Dict[str, Any], context: 
     if bool(params.get("backup_before", False)):
         params = dict(params)
         params["backup"] = True
-    result = _orig_replace_execute(self, params, context)
+    result = FsReplacePlugin.execute(self, params, context)
     validation = _validate_command_for(str(params["path"]), params)
     if validation and result.rc == 0:
         rc, out, err = exec_remote(context, validation)
@@ -685,19 +679,13 @@ def _fs_replace_execute(self: FsReplacePlugin, params: Dict[str, Any], context: 
     return result
 
 
-FsWritePlugin.execute = _fs_write_execute  # type: ignore[method-assign]
-FsTemplatePlugin.execute = _fs_template_execute  # type: ignore[method-assign]
-FsReplacePlugin.validate = _fs_replace_validate  # type: ignore[method-assign]
-FsReplacePlugin.execute = _fs_replace_execute  # type: ignore[method-assign]
-
-_orig_line_execute = FsLinePlugin.execute
 
 def _fs_line_execute2(self: FsLinePlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
     if bool(params.get("backup_before", False)):
         rc, out, err = exec_remote(context, _backup_existing_command(str(params["path"]), params))
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.line backup failed")
-    result = _orig_line_execute(self, params, context)
+    result = FsLinePlugin.execute(self, params, context)
     validation = _validate_command_for(str(params["path"]), params)
     if validation and result.rc == 0:
         rc, out, err = exec_remote(context, validation)
@@ -705,4 +693,41 @@ def _fs_line_execute2(self: FsLinePlugin, params: Dict[str, Any], context: Execu
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.line validation failed")
     return result
 
-FsLinePlugin.execute = _fs_line_execute2  # type: ignore[method-assign]
+
+class ExtendedFsWritePlugin(FsWritePlugin):
+    """fs.write with backup, validation and atomic controls."""
+
+    optional_params = ("mode", "owner", "group", "sudo", "encoding", "backup_before", "backup_suffix", "validate_command", "sensitive", "atomic")
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        return _fs_write_execute(self, params, context)
+
+
+class ExtendedFsTemplatePlugin(FsTemplatePlugin):
+    """fs.template with backup, validation and atomic controls."""
+
+    optional_params = ("mode", "owner", "group", "sudo", "encoding", "values", "backup_before", "backup_suffix", "validate_command", "sensitive", "atomic")
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        return _fs_template_execute(self, params, context)
+
+
+class ExtendedFsReplacePlugin(FsReplacePlugin):
+    """fs.replace with backup, validation and match-count controls."""
+
+    optional_params = ("count", "sudo", "backup", "backup_before", "backup_suffix", "backup_path", "validate_command", "match_count_assert")
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        return _fs_replace_validate(self, params)
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        return _fs_replace_execute(self, params, context)
+
+
+class ExtendedFsLinePlugin(FsLinePlugin):
+    """fs.line with backup and validation controls."""
+
+    optional_params = ("state", "create", "sudo", "backup_before", "backup_suffix", "validate_command")
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        return _fs_line_execute2(self, params, context)

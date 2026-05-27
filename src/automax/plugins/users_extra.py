@@ -247,8 +247,6 @@ class SudoersDropinPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="sudoers.dropin failed", data={"path": dest})
 
 # Extended authorized_keys controls.
-SshAuthorizedKeyPlugin.optional_params = ("state", "sudo", "key_options", "exclusive", "comment_update", "fingerprint_assert")
-_orig_authorized_key_execute = SshAuthorizedKeyPlugin.execute
 
 def _authorized_key_execute_extended(self: SshAuthorizedKeyPlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
     self.validate(params)
@@ -292,6 +290,13 @@ echo __AUTOMAX_CHANGED__
             ),
         )
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.authorized_key failed")
-    return _orig_authorized_key_execute(self, params, context)
+    return SshAuthorizedKeyPlugin.execute(self, params, context)
 
-SshAuthorizedKeyPlugin.execute = _authorized_key_execute_extended  # type: ignore[method-assign]
+
+class ExtendedSshAuthorizedKeyPlugin(SshAuthorizedKeyPlugin):
+    """ssh.authorized_key with exclusive, fingerprint and comment controls."""
+
+    optional_params = ("state", "sudo", "key_options", "exclusive", "comment_update", "fingerprint_assert")
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        return _authorized_key_execute_extended(self, params, context)

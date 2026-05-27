@@ -362,6 +362,14 @@ def _ssh_keygen_execute(self: SshKeygenPlugin, params: Dict[str, Any], context: 
     return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.keygen failed", data={"path": str(params["path"]), "public_key": str(params["path"]) + ".pub"})
 
 
-SshKeygenPlugin.optional_params = ("type", "bits", "comment", "force", "passphrase_secret", "public_key_only", "fingerprint", "algorithm", "sudo", "owner", "group", "mode")
-SshKeygenPlugin.manual_commands = _ssh_keygen_manual  # type: ignore[method-assign]
-SshKeygenPlugin.execute = _ssh_keygen_execute  # type: ignore[method-assign]
+
+class ExtendedSshKeygenPlugin(SshKeygenPlugin):
+    """ssh.keygen with passphrase, ownership and public-key controls."""
+
+    optional_params = ("type", "bits", "comment", "force", "passphrase_secret", "public_key_only", "fingerprint", "algorithm", "sudo", "owner", "group", "mode")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return _ssh_keygen_manual(self, params, context)
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        return _ssh_keygen_execute(self, params, context)

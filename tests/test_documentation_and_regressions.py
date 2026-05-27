@@ -726,6 +726,20 @@ def test_plugin_specific_user_and_boolean_value_schemas_do_not_use_global_fallba
 
 
 
+
+
+def test_builtin_plugins_do_not_patch_methods_after_class_definition():
+    pattern = re.compile(r"\b\w+Plugin\.(execute|manual_commands|validate|_command|_command_parts|_content)\s*=")
+    offenders = []
+    for path in sorted(Path("src/automax/plugins").glob("*.py")):
+        if path.name == "registry.py":
+            continue
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            if pattern.search(line):
+                offenders.append(f"{path}:{lineno}:{line.strip()}")
+
+    assert offenders == []
+
 def test_ambiguous_plugin_parameters_have_plugin_specific_schemas():
     from automax.plugins.registry import build_builtin_registry
 

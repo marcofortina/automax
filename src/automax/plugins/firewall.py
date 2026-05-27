@@ -628,6 +628,23 @@ def _firewalld_rich_rule_manual(self: FirewalldRichRulePlugin, params: Dict[str,
     return [command + _reload_command(params)]
 
 
-FirewalldPortPlugin.manual_commands = _firewalld_port_manual  # type: ignore[method-assign]
-FirewalldServicePlugin.manual_commands = _firewalld_service_manual  # type: ignore[method-assign]
-FirewalldRichRulePlugin.manual_commands = _firewalld_rich_rule_manual  # type: ignore[method-assign]
+
+class ExtendedFirewalldPortPlugin(FirewalldPortPlugin):
+    """firewalld.port with query-only and reload-mode controls."""
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return _firewalld_port_manual(self, params, context)
+
+
+class ExtendedFirewalldServicePlugin(FirewalldServicePlugin):
+    """firewalld.service with query-only and reload-mode controls."""
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return _firewalld_service_manual(self, params, context)
+
+
+class ExtendedFirewalldRichRulePlugin(FirewalldRichRulePlugin):
+    """firewalld.rich_rule with query-only and reload-mode controls."""
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return _firewalld_rich_rule_manual(self, params, context)

@@ -3446,12 +3446,13 @@ def test_linux_ops_manual_commands_cover_resolver_env_download_and_sysctl():
     assert env == "export APP_HOME=/opt/app"
     download = DownloadFilePlugin().manual_commands({"url": "https://example.invalid/file.rpm", "dest": "/tmp/file.rpm"}, context)
     assert download[0] == "automax_download_tmp=$(mktemp /tmp/file.rpm.automax-download.XXXXXX)"
-    assert "curl -fsSL" in download[1]
-    assert "wget -q -O" in download[1]
-    assert '"${automax_download_tmp}"' in download[1]
-    assert download[1].startswith("(") and download[1].endswith(")")
-    assert download[2].startswith("(test ! -e ")
+    assert download[1] == "trap 'rm -f \"$automax_download_tmp\"' EXIT"
+    assert "curl -fsSL" in download[2]
+    assert "wget -q -O" in download[2]
+    assert '"${automax_download_tmp}"' in download[2]
+    assert download[2].startswith("(") and download[2].endswith(")")
     assert download[3].startswith("(test ! -e ")
+    assert download[4].startswith("(test ! -e ")
     assert SysctlReloadPlugin().manual_commands({"file": "/etc/sysctl.conf", "sudo": True}, context) == ["sudo -n sysctl -p /etc/sysctl.conf"]
 
 

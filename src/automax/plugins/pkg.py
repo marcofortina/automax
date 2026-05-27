@@ -369,11 +369,7 @@ esac
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}", get_pty=bool(params.get("sudo", True)))
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.clean failed")
 
-# Extended package operation renderers added after the base classes to keep the
-# original implementation small while exposing safer enterprise controls.
-PackageInstallPlugin.optional_params = ("name", "packages", "manager", "version", "enablerepo", "disablerepo", "no_recommends", "lock_after_install", "allow_downgrade", "sudo")
-PackageRemovePlugin.optional_params = ("name", "packages", "manager", "purge", "autoremove", "confirm", "protect_packages", "sudo")
-PackageUpgradePlugin.optional_params = ("manager", "security_only", "exclude", "download_only", "reboot_required_check", "sudo")
+# Extended package operation renderers expose safer enterprise controls.
 
 
 def _repo_opts(params: Dict[str, Any]) -> str:
@@ -483,12 +479,41 @@ def _pkg_upgrade_execute(self: PackageUpgradePlugin, params: Dict[str, Any], con
     return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.upgrade failed")
 
 
-PackageInstallPlugin.manual_commands = _pkg_install_manual  # type: ignore[method-assign]
-PackageInstallPlugin.execute = _pkg_install_execute  # type: ignore[method-assign]
-PackageRemovePlugin.manual_commands = _pkg_remove_manual  # type: ignore[method-assign]
-PackageRemovePlugin.execute = _pkg_remove_execute  # type: ignore[method-assign]
-PackageUpgradePlugin.manual_commands = _pkg_upgrade_manual  # type: ignore[method-assign]
-PackageUpgradePlugin.execute = _pkg_upgrade_execute  # type: ignore[method-assign]
+
+class ExtendedPackageInstallPlugin(PackageInstallPlugin):
+    """pkg.install with version, repository and package-lock controls."""
+
+    optional_params = ("name", "packages", "manager", "version", "enablerepo", "disablerepo", "no_recommends", "lock_after_install", "allow_downgrade", "sudo")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return _pkg_install_manual(self, params, context)
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        return _pkg_install_execute(self, params, context)
+
+
+class ExtendedPackageRemovePlugin(PackageRemovePlugin):
+    """pkg.remove with purge, autoremove and protected-package controls."""
+
+    optional_params = ("name", "packages", "manager", "purge", "autoremove", "confirm", "protect_packages", "sudo")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return _pkg_remove_manual(self, params, context)
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        return _pkg_remove_execute(self, params, context)
+
+
+class ExtendedPackageUpgradePlugin(PackageUpgradePlugin):
+    """pkg.upgrade with security, download-only and reboot-check controls."""
+
+    optional_params = ("manager", "security_only", "exclude", "download_only", "reboot_required_check", "sudo")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return _pkg_upgrade_manual(self, params, context)
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        return _pkg_upgrade_execute(self, params, context)
 
 # Helper intentionally appended after extended renderers; functions resolve globals at call time.
 def _as_list(value: Any) -> list[str]:

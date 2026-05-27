@@ -403,8 +403,6 @@ class ArchiveUnzipPlugin(BasePlugin):
         )
 
 # Harden archive extraction with optional checksum and safe path validation.
-ArchiveUntarPlugin.optional_params = ("compression", "strip_components", "creates", "cwd", "safe_extract", "checksum_verify", "include", "exclude", "owner", "group", "mode")
-ArchiveUnzipPlugin.optional_params = ("overwrite", "creates", "cwd", "safe_extract", "checksum_verify", "include", "exclude", "owner", "group", "mode")
 
 
 def _checksum_command(path: str, expected: str) -> str:
@@ -459,5 +457,19 @@ def _hardened_unzip_command(self: ArchiveUnzipPlugin, params: Dict[str, Any], co
     return apply_cwd(_guarded(" && ".join(parts), params.get("creates")), context, params.get("cwd"))
 
 
-ArchiveUntarPlugin._command = _hardened_untar_command  # type: ignore[method-assign]
-ArchiveUnzipPlugin._command = _hardened_unzip_command  # type: ignore[method-assign]
+class HardenedArchiveUntarPlugin(ArchiveUntarPlugin):
+    """archive.untar with checksum, safe extraction and ownership controls."""
+
+    optional_params = ("compression", "strip_components", "creates", "cwd", "safe_extract", "checksum_verify", "include", "exclude", "owner", "group", "mode")
+
+    def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return _hardened_untar_command(self, params, context)
+
+
+class HardenedArchiveUnzipPlugin(ArchiveUnzipPlugin):
+    """archive.unzip with checksum, safe extraction and ownership controls."""
+
+    optional_params = ("overwrite", "creates", "cwd", "safe_extract", "checksum_verify", "include", "exclude", "owner", "group", "mode")
+
+    def _command(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return _hardened_unzip_command(self, params, context)
