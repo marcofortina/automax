@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, shell_var_ref, sudo_prefix, tempfile_command
 
 
 
@@ -332,8 +332,11 @@ rm -f "$tmp"
         commands = []
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        commands.append(f"{sudo}sh -s -- {quote(path)} {quote(state)} {quote(token)} <<'SH' > /tmp/automax-grub.$$\n{script}\nSH")
-        commands.append(f"{sudo}install -m 0644 /tmp/automax-grub.$$ {quote(path)} && rm -f /tmp/automax-grub.$$")
+        tmp_var = "automax_grub_tmp"
+        tmp = shell_var_ref(tmp_var)
+        commands.append(tempfile_command(tmp_var, "grub"))
+        commands.append(f"{sudo}sh -s -- {quote(path)} {quote(state)} {quote(token)} <<'SH' > {tmp}\n{script}\nSH")
+        commands.append(f"{sudo}install -m 0644 {tmp} {quote(path)} && rm -f {tmp}")
         if bool(params.get("update_grub", True)):
             commands.append(f"if command -v update-grub >/dev/null 2>&1; then {sudo}update-grub; elif command -v grub2-mkconfig >/dev/null 2>&1; then {sudo}grub2-mkconfig -o /boot/grub2/grub.cfg; fi")
         return commands

@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -58,8 +58,9 @@ class PkiCaInstallPlugin(BasePlugin):
     def _install_cmd(self, params: Dict[str, Any], dest: str) -> str:
         content = _content(params)
         sudo = sudo_prefix(params, default=True)
-        temp = "/tmp/automax-ca.$$"
-        commands = [heredoc_to_file(temp, content)]
+        temp_var = "automax_ca_tmp"
+        temp = shell_var_ref(temp_var)
+        commands = [tempfile_command(temp_var, "ca"), heredoc_to_file_expr(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(dest)} || {sudo}cp -p {quote(dest)} {quote(dest + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -D -m {quote(params.get('mode', '0644'))} {temp} {quote(dest)}")

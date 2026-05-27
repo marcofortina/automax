@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -49,8 +49,9 @@ class SshdConfigPlugin(BasePlugin):
         path = self._path(params)
         content = self._content(params)
         sudo = sudo_prefix(params, default=True)
-        tmp = "/tmp/automax-sshd.$$"
-        commands = [heredoc_to_file(tmp, content)]
+        tmp_var = "automax_sshd_tmp"
+        tmp = shell_var_ref(tmp_var)
+        commands = [tempfile_command(tmp_var, "sshd"), heredoc_to_file_expr(tmp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.extend([f"{sudo}install -D -m 0644 {tmp} {quote(path)}", f"rm -f {tmp}", f"{sudo}sshd -t"])
@@ -125,8 +126,9 @@ class PasswordPolicyPlugin(BasePlugin):
         path = self._path(params)
         content = self._content(params)
         sudo = sudo_prefix(params, default=True)
-        tmp = "/tmp/automax-pwquality.$$"
-        commands = [heredoc_to_file(tmp, content)]
+        tmp_var = "automax_pwquality_tmp"
+        tmp = shell_var_ref(tmp_var)
+        commands = [tempfile_command(tmp_var, "pwquality"), heredoc_to_file_expr(tmp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.extend([f"{sudo}install -D -m 0644 {tmp} {quote(path)}", f"rm -f {tmp}"])

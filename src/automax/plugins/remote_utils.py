@@ -18,6 +18,7 @@ from automax.plugins.validation import PluginValidationError
 CHANGE_MARKER = "__AUTOMAX_CHANGED__"
 SUDO_NON_INTERACTIVE = "sudo -n"
 _ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_TEMP_COMPONENT_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 
 
 def sudo_prefix(params: Mapping[str, Any], *, default: bool = True) -> str:
@@ -79,6 +80,31 @@ def _safe_heredoc_parts(content: Any, *, prefix: str) -> tuple[str, str]:
         delimiter = f"{prefix}_{counter}"
     body = text if text.endswith("\n") else text + "\n"
     return delimiter, body
+
+
+def shell_var_ref(name: Any) -> str:
+    """Render a double-quoted POSIX shell variable reference."""
+    return f'"${{{validate_env_name(name)}}}"'
+
+
+def tempfile_path_command(var_name: Any, template: Any) -> str:
+    """Render a mktemp assignment for a caller-provided shell template."""
+    variable = validate_env_name(var_name)
+    return f"{variable}=$(mktemp {quote(template)})"
+
+
+def tempfile_command(var_name: Any, prefix: str, *, suffix: str = "") -> str:
+    """Render a mktemp assignment for a predictable automax /tmp template."""
+    for label, value in (("prefix", prefix), ("suffix", suffix)):
+        if value and not _TEMP_COMPONENT_RE.fullmatch(value):
+            raise PluginValidationError(f"invalid tempfile {label}: {value!r}")
+    return tempfile_path_command(var_name, f"/tmp/automax-{prefix}.XXXXXX{suffix}")
+
+
+def heredoc_to_file_expr(path_expr: str, content: Any, *, prefix: str = "AUTOMAX_EOF") -> str:
+    """Render a safe heredoc to an already-quoted shell path expression."""
+    delimiter, body = _safe_heredoc_parts(content, prefix=prefix)
+    return f"cat > {path_expr} <<'{delimiter}'\n{body}{delimiter}"
 
 
 def heredoc_to_file(path: Any, content: Any, *, prefix: str = "AUTOMAX_EOF") -> str:

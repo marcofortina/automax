@@ -3395,11 +3395,13 @@ def test_linux_ops_manual_commands_cover_resolver_env_download_and_sysctl():
     env = EnvSetPlugin().manual_commands({"variables": {"APP_HOME": "/opt/app"}}, context)[0]
     assert env == "export APP_HOME=/opt/app"
     download = DownloadFilePlugin().manual_commands({"url": "https://example.invalid/file.rpm", "dest": "/tmp/file.rpm"}, context)
-    assert "curl -fsSL" in download[0]
-    assert "wget -q -O" in download[0]
-    assert download[0].startswith("(") and download[0].endswith(")")
-    assert download[1].startswith("(test ! -e ")
+    assert download[0] == "automax_download_tmp=$(mktemp /tmp/file.rpm.automax-download.XXXXXX)"
+    assert "curl -fsSL" in download[1]
+    assert "wget -q -O" in download[1]
+    assert '"${automax_download_tmp}"' in download[1]
+    assert download[1].startswith("(") and download[1].endswith(")")
     assert download[2].startswith("(test ! -e ")
+    assert download[3].startswith("(test ! -e ")
     assert SysctlReloadPlugin().manual_commands({"file": "/etc/sysctl.conf", "sudo": True}, context) == ["sudo -n sysctl -p /etc/sysctl.conf"]
 
 
@@ -4516,7 +4518,17 @@ def test_transfer_plugins_allow_templated_controller_sources_in_static_validatio
 
 
 def test_shell_helpers_harden_environment_names_and_heredoc_delimiters():
-    from automax.plugins.remote_utils import apply_cwd, heredoc_to_file, sudo_command, sudo_prefix, sudo_shell_run_function
+    from automax.plugins.remote_utils import (
+        apply_cwd,
+        heredoc_to_file,
+        heredoc_to_file_expr,
+        shell_var_ref,
+        sudo_command,
+        sudo_prefix,
+        sudo_shell_run_function,
+        tempfile_command,
+        tempfile_path_command,
+    )
 
     context = ExecutionContext(
         run_id="test",
@@ -4545,6 +4557,14 @@ def test_shell_helpers_harden_environment_names_and_heredoc_delimiters():
         '    fi\n'
         '}'
     )
+    assert shell_var_ref("automax_tmp") == '"${automax_tmp}"'
+    assert tempfile_command("automax_tmp", "demo", suffix=".conf") == "automax_tmp=$(mktemp /tmp/automax-demo.XXXXXX.conf)"
+    assert tempfile_path_command("automax_tmp", "/var/tmp/demo.XXXXXX") == "automax_tmp=$(mktemp /var/tmp/demo.XXXXXX)"
+    assert heredoc_to_file_expr('"${automax_tmp}"', "body") == "cat > \"${automax_tmp}\" <<'AUTOMAX_EOF'\nbody\nAUTOMAX_EOF"
+    with pytest.raises(PluginValidationError):
+        tempfile_command("bad-name", "demo")
+    with pytest.raises(PluginValidationError):
+        tempfile_command("automax_tmp", "bad/path")
 
     context.step_state["env"] = {"SAFE_NAME": "ok"}
     assert apply_cwd("echo ok", context) == "SAFE_NAME=ok echo ok"
@@ -4747,6 +4767,17 @@ def test_plugin_sudo_rendering_does_not_reintroduce_local_wrappers():
         str(path)
         for path in sorted(plugin_root.glob("*.py"))
         if "def _sudo(" in path.read_text(encoding="utf-8")
+    ]
+    assert offenders == []
+
+
+
+def test_plugin_sources_do_not_use_pid_based_temp_paths():
+    plugin_root = Path("src/automax/plugins")
+    offenders = [
+        str(path)
+        for path in sorted(plugin_root.glob("*.py"))
+        if "$$" in path.read_text(encoding="utf-8")
     ]
     assert offenders == []
 

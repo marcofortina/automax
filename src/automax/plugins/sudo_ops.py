@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -47,8 +47,9 @@ class SudoRulePlugin(BasePlugin):
         content = self._content(params)
         path = self._path(params)
         sudo = sudo_prefix(params, default=True)
-        temp = "/tmp/automax-sudoers.$$"
-        commands = [heredoc_to_file(temp, content)]
+        temp_var = "automax_sudoers_tmp"
+        temp = shell_var_ref(temp_var)
+        commands = [tempfile_command(temp_var, "sudoers"), heredoc_to_file_expr(temp, content)]
         commands.append(f"{sudo}visudo -cf {temp}")
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")

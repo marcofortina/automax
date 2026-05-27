@@ -11,7 +11,7 @@ from typing import Any, Dict
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.linux_ops import ResolverConfigPlugin
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -41,9 +41,11 @@ def _backup_cmd(path: str, params: Dict[str, Any]) -> str:
 
 
 def _write_file_cmd(path: str, content: str, mode: str, params: Dict[str, Any]) -> str:
-    temp = "/tmp/automax-net.$$"
+    temp_var = "automax_net_tmp"
+    temp = shell_var_ref(temp_var)
     return " && ".join([
-        heredoc_to_file(temp, content),
+        tempfile_command(temp_var, "net"),
+        heredoc_to_file_expr(temp, content),
         _backup_cmd(path, params),
         f"{sudo_prefix(params, default=True)}install -D -m {mode} {temp} {quote(path)}",
         f"rm -f {temp}",

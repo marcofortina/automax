@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, SUDO_NON_INTERACTIVE, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, SUDO_NON_INTERACTIVE, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -267,8 +267,9 @@ class KernelModuleBlacklistPlugin(BasePlugin):
         if _state(params) == "absent":
             return [f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}rm -f {quote(path)}"]
         content = f"blacklist {params['module']}\ninstall {params['module']} /bin/false\n"
-        tmp = "/tmp/automax-modprobe.$$"
-        cmds = [heredoc_to_file(tmp, content)]
+        tmp_var = "automax_modprobe_tmp"
+        tmp = shell_var_ref(tmp_var)
+        cmds = [tempfile_command(tmp_var, "modprobe"), heredoc_to_file_expr(tmp, content)]
         if bool(params.get("backup", True)):
             cmds.append(f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         cmds.append(f"{sudo_prefix(params, default=True)}install -D -m 0644 {tmp} {quote(path)}")
@@ -360,7 +361,7 @@ class SysctlDropinPlugin(BasePlugin):
         return _diff(self._path(params), self._content(params), "sysctl-dropin-plan")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        path=self._path(params); content=self._content(params); tmp="/tmp/automax-sysctl.$$"; cmds=[heredoc_to_file(tmp, content)]
+        path=self._path(params); content=self._content(params); tmp_var="automax_sysctl_tmp"; tmp=shell_var_ref(tmp_var); cmds=[tempfile_command(tmp_var, "sysctl"), heredoc_to_file_expr(tmp, content)]
         if bool(params.get("backup", True)):
             cmds.append(f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix','.bak')))}")
         cmds.append(f"{sudo_prefix(params, default=True)}install -D -m 0644 {tmp} {quote(path)}")

@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, normalize_env_mapping, quote, render_env_prefix, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, tempfile_path_command, normalize_env_mapping, quote, render_env_prefix, result_from_remote, sudo_prefix
 
 
 
@@ -149,8 +149,9 @@ class LimitsDropinPlugin(BasePlugin):
         content = self._content(params)
         path = f"/etc/security/limits.d/{params['name']}.conf"
         sudo = sudo_prefix(params, default=True)
-        temp = "/tmp/automax-limits.$$"
-        commands = [heredoc_to_file(temp, content)]
+        temp_var = "automax_limits_tmp"
+        temp = shell_var_ref(temp_var)
+        commands = [tempfile_command(temp_var, "limits"), heredoc_to_file_expr(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")
@@ -386,8 +387,9 @@ class ResolverConfigPlugin(BasePlugin):
             return commands
         path = self._path_for_backend(params)
         content = self._resolved_content(params) if backend == "systemd-resolved" else self._content(params)
-        temp = "/tmp/automax-resolver.$$"
-        commands = [heredoc_to_file(temp, content)]
+        temp_var = "automax_resolver_tmp"
+        temp = shell_var_ref(temp_var)
+        commands = [tempfile_command(temp_var, "resolver"), heredoc_to_file_expr(temp, content)]
         if backend == "plain-file" and not bool(params.get("force", False)):
             commands.append("if [ -L /etc/resolv.conf ]; then echo 'refusing to manage symlinked /etc/resolv.conf with backend=plain-file' >&2; exit 1; fi")
         if bool(params.get("backup", True)):
@@ -428,8 +430,9 @@ class ChronyServersPlugin(BasePlugin):
         content = self._content(params)
         path = str(params.get("path", "/etc/chrony.d/99-automax.conf"))
         sudo = sudo_prefix(params, default=True)
-        temp = "/tmp/automax-chrony.$$"
-        commands = [heredoc_to_file(temp, content)]
+        temp_var = "automax_chrony_tmp"
+        temp = shell_var_ref(temp_var)
+        commands = [tempfile_command(temp_var, "chrony"), heredoc_to_file_expr(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")
@@ -509,8 +512,9 @@ class EnvSetPlugin(BasePlugin):
         content = self._content(params)
         path = self._path(params)
         sudo = sudo_prefix(params, default=scope == "global")
-        temp = "/tmp/automax-env.$$"
-        commands = [heredoc_to_file(temp, content)]
+        temp_var = "automax_env_tmp"
+        temp = shell_var_ref(temp_var)
+        commands = [tempfile_command(temp_var, "env"), heredoc_to_file_expr(temp, content)]
         if bool(params.get("backup", True)):
             commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
         commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")
@@ -571,9 +575,11 @@ class DownloadFilePlugin(BasePlugin):
         self.validate(params)
         sudo = sudo_prefix(params, default=True)
         dest = str(params["dest"])
-        tmp = f"{dest}.automax-download.$$"
+        tmp_var = "automax_download_tmp"
+        tmp = shell_var_ref(tmp_var)
         commands = [
-            f"(curl -fsSL --retry 3 -o {quote(tmp)} {quote(params['url'])} || wget -q -O {quote(tmp)} {quote(params['url'])})"
+            tempfile_path_command(tmp_var, f"{dest}.automax-download.XXXXXX"),
+            f"(curl -fsSL --retry 3 -o {tmp} {quote(params['url'])} || wget -q -O {tmp} {quote(params['url'])})"
         ]
         if params.get("checksum"):
             commands.append(f"printf '%s  %s\\n' {quote(params['checksum'])} {quote(tmp)} | sha256sum -c -")
