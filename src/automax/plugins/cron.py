@@ -100,6 +100,7 @@ class CronListPlugin(BasePlugin):
     name = "cron.list"
     description = "List system cron.d entries and optionally one user's crontab."
     optional_params = ("user", "sudo")
+    parameter_schema = {"user": {"type": "string", "description": "User account whose crontab should be listed."}}
     opens_remote_session = True
     supports_check_mode = True
 

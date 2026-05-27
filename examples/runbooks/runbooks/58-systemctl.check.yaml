@@ -18,7 +18,7 @@ tasks:
       use: systemctl.daemon_reload
       with:
         sudo: true
-        user: deploy
+        user: true
     - id: systemctl_disable
       use: systemctl.disable
       with:

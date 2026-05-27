@@ -2404,7 +2404,7 @@ List system cron.d entries and optionally one user's crontab.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
+| `user` | no | `string` | `False` | User account whose crontab should be listed. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -8746,7 +8746,7 @@ Set an SELinux boolean.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `name` | yes | `string` |  | Package, user or group name. |
-| `value` | yes | `string` |  | Desired parameter value. |
+| `value` | yes | `string` |  | Desired SELinux boolean value. |
 | `persist` | no | `boolean` | `False` | Persist the change across reboots. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 

@@ -681,6 +681,35 @@ def test_plugin_smoke_runbooks_match_auditd_search_user_schema():
     assert search_substeps
     assert all(isinstance((substep.get("with") or {}).get("user"), str) for substep in search_substeps)
 
+
+def test_plugin_smoke_runbooks_validate_against_builtin_schemas():
+    from automax.plugins.registry import build_builtin_registry
+
+    registry = build_builtin_registry()
+    failures = []
+    for runbook_path in sorted(Path("examples/runbooks/runbooks").glob("*.check.yaml")):
+        data = yaml.safe_load(runbook_path.read_text(encoding="utf-8"))
+        for task in data.get("tasks", []):
+            for step in task.get("steps", []):
+                for substep in step.get("substeps", []):
+                    plugin_name = substep.get("use")
+                    params = substep.get("with") or {}
+                    try:
+                        registry.get(plugin_name).validate(params)
+                    except Exception as exc:  # pragma: no cover - assertion reports all offenders
+                        failures.append(f"{runbook_path}:{substep.get('id')}:{plugin_name}: {exc}")
+
+    assert failures == []
+
+
+def test_plugin_specific_user_and_boolean_value_schemas_do_not_use_global_fallbacks():
+    from automax.plugins.registry import build_builtin_registry
+
+    registry = build_builtin_registry()
+    registry.get("cron.list").validate({"user": "deploy", "sudo": True})
+    registry.get("selinux.boolean").validate({"name": "httpd_can_network_connect", "value": True, "persist": True})
+
+
 def test_docs_show_sudo_password_env_for_runs_and_capability_installs():
     docs = "\n".join(
         path.read_text(encoding="utf-8")

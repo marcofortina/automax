@@ -68,6 +68,7 @@ class SelinuxBooleanPlugin(BasePlugin):
     description = "Set an SELinux boolean."
     required_params = ("name", "value")
     optional_params = ("persist", "sudo")
+    parameter_schema = {"value": {"types": ("boolean", "string"), "description": "Desired SELinux boolean value."}}
     opens_remote_session = True
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
