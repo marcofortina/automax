@@ -12,7 +12,7 @@ import posixpath
 import uuid
 
 from automax.core.models import ExecutionContext
-from automax.plugins.remote_utils import exec_remote, quote
+from automax.plugins.remote_utils import SUDO_NON_INTERACTIVE, exec_remote, quote
 
 
 def remote_dir(path: str) -> str:
@@ -75,18 +75,19 @@ def install_uploaded_file(
         install_flags.extend(["-g", quote(group)])
 
     if sudo:
+        sudo_prefix_text = f"{SUDO_NON_INTERACTIVE} "
         if atomic:
-            install = " ".join(["sudo -n install", *install_flags, temp_q, stage_q])
+            install = " ".join([f"{sudo_prefix_text}install", *install_flags, temp_q, stage_q])
             command = (
-                f"sudo -n mkdir -p {quote(remote_dir(dest))} && "
+                f"{sudo_prefix_text}mkdir -p {quote(remote_dir(dest))} && "
                 f"if test -e {dest_q} && cmp -s {temp_q} {dest_q}; then "
                 f"rm -f {temp_q}; "
-                f"else {install} && sudo -n mv -f {stage_q} {dest_q} && rm -f {temp_q} && echo __AUTOMAX_CHANGED__; fi"
+                f"else {install} && {sudo_prefix_text}mv -f {stage_q} {dest_q} && rm -f {temp_q} && echo __AUTOMAX_CHANGED__; fi"
             )
         else:
-            install = " ".join(["sudo -n install", *install_flags, temp_q, dest_q])
+            install = " ".join([f"{sudo_prefix_text}install", *install_flags, temp_q, dest_q])
             command = (
-                f"sudo -n mkdir -p {quote(remote_dir(dest))} && "
+                f"{sudo_prefix_text}mkdir -p {quote(remote_dir(dest))} && "
                 f"if test -e {dest_q} && cmp -s {temp_q} {dest_q}; then "
                 f"rm -f {temp_q}; "
                 f"else {install} && rm -f {temp_q} && echo __AUTOMAX_CHANGED__; fi"

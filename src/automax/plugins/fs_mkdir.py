@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin
-from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, quote, result_from_remote, sudo_prefix
 
 
 class FsMkdirPlugin(BasePlugin):
@@ -37,7 +37,7 @@ class FsMkdirPlugin(BasePlugin):
         if group:
             checks.append(f'test "$(stat -c %G {path})" = {quote(group)}')
 
-        sudo = "sudo -n " if bool(params.get("sudo", False)) else ""
+        sudo = sudo_prefix(params, default=False)
         commands = [f"{sudo}mkdir -p {path}"]
         if mode:
             commands.append(f"{sudo}chmod {quote(mode)} {path}")

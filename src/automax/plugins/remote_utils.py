@@ -25,6 +25,11 @@ def sudo_prefix(params: Mapping[str, Any], *, default: bool = True) -> str:
     return f"{SUDO_NON_INTERACTIVE} " if bool(params.get("sudo", default)) else ""
 
 
+def sudo_command(params: Mapping[str, Any], command: str, *, default: bool = True) -> str:
+    """Render one command with the shared non-interactive sudo prefix when enabled."""
+    return f"{sudo_prefix(params, default=default)}{command}"
+
+
 def quote(value: Any) -> str:
     """Quote a value for POSIX shell usage."""
     return shlex.quote(str(value))

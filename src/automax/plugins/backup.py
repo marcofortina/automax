@@ -22,8 +22,9 @@ def _checksum_cmd(path: str, params: Dict[str, Any]) -> str:
         return "true"
     if checksum != "sha256":
         raise PluginValidationError("checksum must be sha256 or none")
-    if bool(params.get("sudo", True)):
-        return f"sudo -n sha256sum {quote(path)} | sudo -n tee {quote(path + '.sha256')} >/dev/null"
+    sudo = _sudo(params)
+    if sudo:
+        return f"{sudo}sha256sum {quote(path)} | {sudo}tee {quote(path + '.sha256')} >/dev/null"
     return f"sha256sum {quote(path)} > {quote(path + '.sha256')}"
 
 

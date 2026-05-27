@@ -153,7 +153,7 @@ class SshKeygenPlugin(BasePlugin):
         mode = str(params.get("mode", "0600"))
         commands = [
             f"{sudo}install -d -m 0700 \"$(dirname {quote(path)})\"",
-            f"if test -e {quote(path)}; then {'sudo -n rm -f ' + quote(path) + ' ' + quote(path + '.pub') if force and sudo else 'rm -f ' + quote(path) + ' ' + quote(path + '.pub') if force else 'echo ' + quote('ssh key already exists: ' + path) + '; exit 0'}; fi",
+            f"if test -e {quote(path)}; then {sudo + 'rm -f ' + quote(path) + ' ' + quote(path + '.pub') if force and sudo else 'rm -f ' + quote(path) + ' ' + quote(path + '.pub') if force else 'echo ' + quote('ssh key already exists: ' + path) + '; exit 0'}; fi",
             f"{sudo}ssh-keygen -q -t {quote(key_type)}{bits} -f {quote(path)} -N '' -C {quote(comment)}",
             f"{sudo}chmod {quote(mode)} {quote(path)}",
         ]
@@ -209,7 +209,7 @@ class SshPublicKeyPlugin(BasePlugin):
             return [command]
         guard = "" if bool(params.get("overwrite", False)) else f"test ! -e {quote(params['dest'])} && "
         if bool(params.get("sudo", True)):
-            return [f"{guard}{command} | sudo -n tee {quote(params['dest'])} >/dev/null"]
+            return [f"{guard}{command} | {_sudo(params)}tee {quote(params['dest'])} >/dev/null"]
         return [f"{guard}{command} > {quote(params['dest'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -333,7 +333,7 @@ def _ssh_keygen_commands(self: SshKeygenPlugin, params: Dict[str, Any], context:
     passphrase = _ssh_keygen_passphrase(params, context, masked=masked)
     commands = [
         f"{sudo}install -d -m 0700 \"$(dirname {quote(path)})\"",
-        f"if test -e {quote(path)}; then {'sudo -n rm -f ' + quote(path) + ' ' + quote(path + '.pub') if force and sudo else 'rm -f ' + quote(path) + ' ' + quote(path + '.pub') if force else 'echo ' + quote('ssh key already exists: ' + path) + '; exit 0'}; fi",
+        f"if test -e {quote(path)}; then {sudo + 'rm -f ' + quote(path) + ' ' + quote(path + '.pub') if force and sudo else 'rm -f ' + quote(path) + ' ' + quote(path + '.pub') if force else 'echo ' + quote('ssh key already exists: ' + path) + '; exit 0'}; fi",
         f"{sudo}ssh-keygen -q -t {quote(key_type)}{bits} -f {quote(path)} -N {quote(passphrase)} -C {quote(comment)}",
         f"{sudo}chmod {quote(mode)} {quote(path)}",
     ]

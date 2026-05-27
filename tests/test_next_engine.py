@@ -4507,7 +4507,7 @@ def test_transfer_plugins_allow_templated_controller_sources_in_static_validatio
 
 
 def test_shell_helpers_harden_environment_names_and_heredoc_delimiters():
-    from automax.plugins.remote_utils import apply_cwd, heredoc_to_file, sudo_prefix
+    from automax.plugins.remote_utils import apply_cwd, heredoc_to_file, sudo_command, sudo_prefix
 
     context = ExecutionContext(
         run_id="test",
@@ -4525,6 +4525,8 @@ def test_shell_helpers_harden_environment_names_and_heredoc_delimiters():
     assert sudo_prefix({}, default=False) == ""
     assert sudo_prefix({"sudo": False}, default=True) == ""
     assert sudo_prefix({"sudo": True}, default=False) == "sudo -n "
+    assert sudo_command({}, "systemctl status nginx", default=False) == "systemctl status nginx"
+    assert sudo_command({"sudo": True}, "systemctl status nginx", default=False) == "sudo -n systemctl status nginx"
 
     context.step_state["env"] = {"SAFE_NAME": "ok"}
     assert apply_cwd("echo ok", context) == "SAFE_NAME=ok echo ok"

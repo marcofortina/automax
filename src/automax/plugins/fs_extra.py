@@ -15,7 +15,7 @@ from automax.core.models import ExecutionContext, PluginResult
 from automax.core.templating import render_template_string
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.file_utils import install_uploaded_file, upload_text_to_temp
-from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, quote, result_from_remote, sudo_command, sudo_prefix
 
 
 def _content_diff(path: str, content: str) -> str:
@@ -283,7 +283,7 @@ if changed:
     path.write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
     print("__AUTOMAX_CHANGED__")
 '''
-        python = "sudo -n python3" if bool(params.get("sudo", False)) else "python3"
+        python = sudo_command(params, "python3", default=False)
         command = (
             f"{python} - {quote(params['path'])} {quote(params['line'])} "
             f"{quote(params.get('state', 'present'))} {quote(str(bool(params.get('create', False))))} "
@@ -361,7 +361,7 @@ if changed_count:
     print("__AUTOMAX_CHANGED__")
 print(changed_count)
 '''
-        python = "sudo -n python3" if bool(params.get("sudo", False)) else "python3"
+        python = sudo_command(params, "python3", default=False)
         return (
             f"{python} - {quote(params['path'])} {quote(params['pattern'])} "
             f"{quote(params['replacement'])} {quote(params.get('count', 0))} "
@@ -393,7 +393,7 @@ class FsMovePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
-        sudo = "sudo -n " if bool(params.get("sudo", False)) else ""
+        sudo = sudo_prefix(params, default=False)
         overwrite = bool(params.get("overwrite", True))
         flag = "-f" if overwrite else "-n"
         command = (
@@ -572,7 +572,7 @@ FsReplacePlugin.optional_params = ("count", "sudo", "backup", "backup_before", "
 
 
 def _backup_existing_command(path: str, params: Dict[str, Any]) -> str:
-    sudo = "sudo -n " if bool(params.get("sudo", False)) else ""
+    sudo = sudo_prefix(params, default=False)
     return f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}"
 
 

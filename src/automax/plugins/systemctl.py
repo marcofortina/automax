@@ -11,14 +11,12 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_command
 
 
 def _systemctl_prefix(params: Dict[str, Any]) -> str:
     prefix = "systemctl --user" if bool(params.get("user", False)) else "systemctl"
-    if bool(params.get("sudo", False)):
-        return f"sudo -n {prefix}"
-    return prefix
+    return sudo_command(params, prefix, default=False)
 
 
 class _SystemctlServicePlugin(BasePlugin):

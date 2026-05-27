@@ -189,7 +189,7 @@ else
 fi
 chown -R "$user":"$user" "$ssh_dir" 2>/dev/null || true
 '''
-        prefix = "sudo -n " if bool(params.get("sudo", True)) else ""
+        prefix = sudo_prefix(params, default=True)
         command = f"{prefix}sh -s -- {quote(user)} {quote(key)} {quote(state)} <<'SH'\n{script}\nSH"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.authorized_key failed")
@@ -265,7 +265,7 @@ def _authorized_key_execute_extended(self: SshAuthorizedKeyPlugin, params: Dict[
     params["key"] = key
     if bool(params.get("exclusive", False)) and str(params.get("state", "present")) == "present":
         user = str(params["user"])
-        prefix = "sudo -n " if bool(params.get("sudo", True)) else ""
+        prefix = sudo_prefix(params, default=True)
         script = r'''
 set -eu
 user=$1
