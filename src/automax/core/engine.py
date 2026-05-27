@@ -772,8 +772,11 @@ class AutomaxEngine:
             cli_vars=cli_vars,
         )
         rows = []
+        uses_sudo = False
         for item in self.iter_rendered_plan_items(resolved, dry_run=True):
             commands = item["plugin"].manual_commands(item["params"], item["context"])
+            node_uses_sudo = any("sudo -n" in command for command in commands)
+            uses_sudo = uses_sudo or node_uses_sudo
             rows.append(
                 {
                     "target": item["target"].name,
@@ -782,6 +785,7 @@ class AutomaxEngine:
                     "plugin": item["plugin_name"],
                     "commands": [self._mask_text(command, resolved.secrets) for command in commands],
                     "available": bool(commands),
+                    "uses_sudo": node_uses_sudo,
                     "reason": "" if commands else self._mask_text(
                         item["plugin"].manual_commands_reason(item["params"], item["context"]),
                         resolved.secrets,
@@ -791,6 +795,12 @@ class AutomaxEngine:
         return {
             "job": self._job_name(resolved.job),
             "mode": "manual-commands",
+            "uses_sudo": uses_sudo,
+            "sudo_note": (
+                "Rendered manual commands containing sudo -n require an existing sudo timestamp "
+                "when pasted manually; normal automax run/resume can use "
+                "--sudo-password-env ENV_NAME instead."
+            ) if uses_sudo else "",
             "nodes": rows,
         }
 

@@ -2860,7 +2860,53 @@ tasks:
     assert "checkpoint=task.t1:step.s1:substep.local" in result.output
     assert "printf ***" in result.output
     assert "super-secret" not in result.output
-    assert "test ! -e /tmp/demo || { rm -rf -- /tmp/demo" in result.output
+    assert "sudo=no" in result.output
+
+
+def test_commands_render_marks_sudo_and_preserves_heredoc_commands(tmp_path: Path):
+    job = write(
+        tmp_path / "job.yaml",
+        """
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: manual-sudo-heredoc
+tasks:
+  - id: t1
+    targets: all
+    steps:
+      - id: s1
+        substeps:
+          - id: remove_key
+            use: ssh.authorized_key_absent
+            with:
+              user: deploy
+              key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo demo@example
+              sudo: true
+""",
+    )
+    inventory = write(
+        tmp_path / "inventory.yaml",
+        "servers:\n  controller:\n    host: 127.0.0.1\n",
+    )
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "commands",
+            "render",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "# sudo note: Rendered manual commands containing sudo -n" in result.output
+    assert "plugin=ssh.authorized_key_absent sudo=yes" in result.output
+    assert "cat <<'AUTOMAX_SH' | sudo -n sh -s -- deploy" in result.output
+    assert "--sudo-password-env ENV_NAME" in result.output
 
 
 def test_fs_remove_hardening_requires_confirm_and_renders_guards():
@@ -2942,7 +2988,10 @@ tasks:
 
     assert result.exit_code == 0, result.output
     payload = json.loads(result.output)
+    assert payload["uses_sudo"] is False
+    assert payload["sudo_note"] == ""
     assert payload["nodes"][0]["available"] is True
+    assert payload["nodes"][0]["uses_sudo"] is False
     assert payload["nodes"][0]["commands"]
     assert "stat /tmp/demo" in payload["nodes"][0]["commands"][0]
 

@@ -191,6 +191,11 @@ automax commands render --job job.yaml --inventory inventory.yaml --format=json
 # unavailable plugins are listed with an explicit reason instead of omitted
 ```
 
+Text output marks each node with `sudo=yes/no` and prints a sudo note when
+rendered manual commands contain `sudo -n`. JSON output includes top-level
+`uses_sudo`/`sudo_note` fields and per-node `uses_sudo` flags for operator
+tooling.
+
 ## SSH known_hosts scan
 
 Scan SSH host keys for direct hosts or inventory-selected targets. The command

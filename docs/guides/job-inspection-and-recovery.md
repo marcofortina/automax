@@ -181,9 +181,13 @@ automax commands render \
   --tags install
 ```
 
-The output includes the target, host, checkpoint and plugin name before each
-command. Every selected substep is listed. Plugins that cannot safely render a
-manual command are reported with a reason instead of inventing shell snippets.
+The output includes the target, host, checkpoint, plugin name and a `sudo=yes/no`
+marker before each command. Every selected substep is listed. If any rendered
+command contains `sudo -n`, the text output prints a sudo note: pasted manual
+commands require an existing sudo timestamp, while normal `automax run` or
+`automax resume` can use `--sudo-password-env ENV_NAME`. Plugins that cannot
+safely render a manual command are reported with a reason instead of inventing
+shell snippets.
 
 A typical recovery loop is:
 

@@ -1108,8 +1108,11 @@ def _echo_manual_commands_payload(payload: Dict[str, Any], output_format: str) -
         return
     click.echo(f"Job: {payload['job']}")
     click.echo("Manual command rendering:")
+    if payload.get("sudo_note"):
+        click.echo(f"# sudo note: {payload['sudo_note']}")
     for node in payload["nodes"]:
-        click.echo(f"# target={node['target']} host={node['host']} checkpoint={node['node_id']} plugin={node['plugin']}")
+        sudo_marker = "yes" if node.get("uses_sudo") else "no"
+        click.echo(f"# target={node['target']} host={node['host']} checkpoint={node['node_id']} plugin={node['plugin']} sudo={sudo_marker}")
         if node["commands"]:
             for command in node["commands"]:
                 click.echo(command)
