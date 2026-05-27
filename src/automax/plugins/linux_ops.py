@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file_expr, heredoc_to_stdin, shell_var_ref, tempfile_command, tempfile_path_command, normalize_env_mapping, quote, render_env_prefix, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, heredoc_to_stdin, shell_var_ref, tempfile_command, tempfile_path_command, normalize_env_mapping, quote, render_env_prefix, result_from_remote, sudo_prefix
 
 
 
@@ -115,7 +115,7 @@ class SwapAbsentPlugin(BasePlugin):
         if bool(params.get("persist", False)):
             if bool(params.get("backup", True)):
                 commands.append(f"test ! -e /etc/fstab || {sudo}cp -p /etc/fstab /etc/fstab{quote(params.get('backup_suffix', '.bak'))}")
-            commands.append(f"tmp=$(mktemp) && awk '$1 != {quote(path)}' /etc/fstab > $tmp && {sudo}cp $tmp /etc/fstab && rm -f $tmp")
+            commands.append(f"tmp=$(mktemp) && {cleanup_trap_command('tmp')} && awk '$1 != {quote(path)}' /etc/fstab > $tmp && {sudo}cp $tmp /etc/fstab")
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -227,7 +227,7 @@ class HostsEntryPlugin(BasePlugin):
         if state == "present":
             commands.append(f"grep -Fqx -- {quote(line)} /etc/hosts || printf '%s\\n' {quote(line)} | {sudo}tee -a /etc/hosts >/dev/null")
         else:
-            commands.append(f"tmp=$(mktemp) && grep -Fxv -- {quote(line)} /etc/hosts > $tmp || true; {sudo}cp $tmp /etc/hosts; rm -f $tmp")
+            commands.append(f"tmp=$(mktemp); {cleanup_trap_command('tmp')}; grep -Fxv -- {quote(line)} /etc/hosts > $tmp || true; {sudo}cp $tmp /etc/hosts")
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:

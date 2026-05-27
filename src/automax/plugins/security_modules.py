@@ -44,6 +44,7 @@ fi
 if [ "$persist" = true ] && [ -e /etc/selinux/config ]; then
   upper=$(printf '%s' "$state" | tr '[:lower:]' '[:upper:]')
   tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
   awk -v val="$upper" 'BEGIN{done=0} /^SELINUX=/ {print "SELINUX=" val; done=1; next} {print} END{if(!done) print "SELINUX=" val}' /etc/selinux/config > "$tmp"
   if ! cmp -s "$tmp" /etc/selinux/config; then
     cat "$tmp" > /etc/selinux/config

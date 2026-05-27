@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_stdin, quote, result_from_remote, shell_var_ref, sudo_prefix, tempfile_command
+from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_stdin, quote, result_from_remote, shell_var_ref, sudo_prefix, tempfile_command
 
 
 
@@ -90,6 +90,7 @@ if [ "$persist" = true ]; then
   mkdir -p "$(dirname "$file")"
   touch "$file"
   tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
   awk -v key="$name" 'BEGIN{done=0} $1==key && $2=="=" {if(!done){print key " = " ENVIRON["AUTOMAX_SYSCTL_VALUE"]; done=1}; next} {print} END{if(!done) print key " = " ENVIRON["AUTOMAX_SYSCTL_VALUE"]}' "$file" > "$tmp"
   if ! cmp -s "$tmp" "$file"; then
     cat "$tmp" > "$file"
@@ -229,6 +230,7 @@ if lsmod | awk '{print $1}' | grep -Fx -- "$module" >/dev/null; then
 fi
 if [ "$persist" = true ] && [ -e "$file" ]; then
   tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
   grep -Fxv -- "$module" "$file" > "$tmp" || true
   if ! cmp -s "$tmp" "$file"; then
     cat "$tmp" > "$file"
@@ -273,7 +275,7 @@ class KernelModulePersistPlugin(BasePlugin):
         if state == "present":
             command = f"{sudo_prefix(params, default=True)}mkdir -p {quote('/etc/modules-load.d')} && {sudo_prefix(params, default=True)}touch {quote(file_path)} && grep -Fx -- {quote(module)} {quote(file_path)} >/dev/null || {{ echo {quote(module)} | {sudo_prefix(params, default=True)}tee -a {quote(file_path)} >/dev/null && echo {CHANGE_MARKER}; }}"
         else:
-            command = f"if test -e {quote(file_path)}; then tmp=$(mktemp); grep -Fxv -- {quote(module)} {quote(file_path)} > $tmp || true; if cmp -s $tmp {quote(file_path)}; then rm -f $tmp; else {sudo_prefix(params, default=True)}cp $tmp {quote(file_path)} && rm -f $tmp && echo {CHANGE_MARKER}; fi; fi"
+            command = f"if test -e {quote(file_path)}; then tmp=$(mktemp); {cleanup_trap_command('tmp')}; grep -Fxv -- {quote(module)} {quote(file_path)} > $tmp || true; if ! cmp -s $tmp {quote(file_path)}; then {sudo_prefix(params, default=True)}cp $tmp {quote(file_path)} && echo {CHANGE_MARKER}; fi; fi"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.module.persist failed")
 
@@ -311,6 +313,7 @@ path=$1
 state=$2
 token=$3
 tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
 if [ ! -e "$path" ]; then echo 'missing grub defaults file' >&2; exit 1; fi
 awk -v state="$state" -v token="$token" '
   BEGIN{done=0}

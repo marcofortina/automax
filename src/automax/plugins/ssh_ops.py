@@ -268,6 +268,7 @@ home=$(getent passwd "$user" | cut -d: -f6)
 auth_file="$home/.ssh/authorized_keys"
 [ -e "$auth_file" ] || exit 0
 tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
 grep -Fxv -- "$key" "$auth_file" > "$tmp" || true
 if cmp -s "$tmp" "$auth_file"; then rm -f "$tmp"; exit 0; fi
 cat "$tmp" > "$auth_file"

@@ -93,6 +93,15 @@ def tempfile_path_command(var_name: Any, template: Any) -> str:
     return f"{variable}=$(mktemp {quote(template)})"
 
 
+def cleanup_trap_command(*var_names: Any) -> str:
+    """Render a POSIX shell trap that removes temporary file variables on exit."""
+    variables = [validate_env_name(var_name) for var_name in var_names]
+    if not variables:
+        raise PluginValidationError("cleanup trap requires at least one variable name")
+    refs = " ".join(f'"${variable}"' for variable in variables)
+    return f"trap 'rm -f {refs}' EXIT"
+
+
 def tempfile_command(var_name: Any, prefix: str, *, suffix: str = "") -> str:
     """Render a mktemp assignment for a predictable automax /tmp template."""
     for label, value in (("prefix", prefix), ("suffix", suffix)):
@@ -144,7 +153,7 @@ def prepare_sudo_password_command(command: str, sudo_password: str | None) -> tu
 IFS= read -r automax_sudo_password
 automax_sudo_passfile=$(mktemp /tmp/automax-sudo-pass.XXXXXX)
 automax_sudo_askpass=$(mktemp /tmp/automax-sudo-askpass.XXXXXX)
-trap 'rm -f "$automax_sudo_askpass" "$automax_sudo_passfile"' EXIT
+{cleanup_trap_command("automax_sudo_askpass", "automax_sudo_passfile")}
 printf '%s\n' "$automax_sudo_password" > "$automax_sudo_passfile"
 unset automax_sudo_password
 chmod 600 "$automax_sudo_passfile"

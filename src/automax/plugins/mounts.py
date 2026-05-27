@@ -50,6 +50,7 @@ state=$3
 file=/etc/fstab
 touch "$file"
 tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
 awk -v mp="$mountpoint" '$2 != mp {print}' "$file" > "$tmp"
 if [ "$state" = present ]; then
   printf '%s\n' "$line" >> "$tmp"
@@ -98,6 +99,7 @@ if ! findmnt -rn "$path" >/dev/null 2>&1; then
 fi
 if [ "$persist" = true ]; then
   tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
   awk -v mp="$path" '$2 != mp {print}' /etc/fstab > "$tmp"
   printf '%s\n' "$line" >> "$tmp"
   if ! cmp -s "$tmp" /etc/fstab; then
@@ -140,6 +142,7 @@ if findmnt -rn "$path" >/dev/null 2>&1; then
 fi
 if [ "$persist" = true ] && [ -e /etc/fstab ]; then
   tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
   awk -v mp="$path" '$2 != mp {print}' /etc/fstab > "$tmp"
   if ! cmp -s "$tmp" /etc/fstab; then
     cat "$tmp" > /etc/fstab

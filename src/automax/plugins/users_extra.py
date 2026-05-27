@@ -175,6 +175,7 @@ if [ "$state" = present ]; then
   echo __AUTOMAX_CHANGED__
 else
   tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
   grep -Fxv -- "$key" "$auth_file" > "$tmp" || true
   if cmp -s "$tmp" "$auth_file"; then
     rm -f "$tmp"

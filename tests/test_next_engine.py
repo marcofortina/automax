@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -4529,6 +4530,7 @@ def test_shell_helpers_harden_environment_names_and_heredoc_delimiters():
         sudo_shell_run_function,
         tempfile_command,
         tempfile_path_command,
+        cleanup_trap_command,
     )
 
     context = ExecutionContext(
@@ -4561,6 +4563,8 @@ def test_shell_helpers_harden_environment_names_and_heredoc_delimiters():
     assert shell_var_ref("automax_tmp") == '"${automax_tmp}"'
     assert tempfile_command("automax_tmp", "demo", suffix=".conf") == "automax_tmp=$(mktemp /tmp/automax-demo.XXXXXX.conf)"
     assert tempfile_path_command("automax_tmp", "/var/tmp/demo.XXXXXX") == "automax_tmp=$(mktemp /var/tmp/demo.XXXXXX)"
+    assert cleanup_trap_command("automax_tmp") == 'trap \'rm -f "$automax_tmp"\' EXIT'
+    assert cleanup_trap_command("automax_one", "automax_two") == 'trap \'rm -f "$automax_one" "$automax_two"\' EXIT'
     assert heredoc_to_file_expr('"${automax_tmp}"', "body") == "cat > \"${automax_tmp}\" <<'AUTOMAX_EOF'\nbody\nAUTOMAX_EOF"
     with pytest.raises(PluginValidationError):
         tempfile_command("bad-name", "demo")
@@ -4598,6 +4602,17 @@ def test_builtin_plugins_use_shared_script_heredoc_helper():
         for token in ("<<'PY'", "<<'SH'"):
             if token in content:
                 offenders.append(f"{path}:{token}")
+    assert not offenders
+
+
+def test_builtin_plugin_mktemp_files_install_cleanup_traps():
+    offenders = []
+    for path in sorted(Path("src/automax/plugins").glob("*.py")):
+        content = path.read_text(encoding="utf-8")
+        for match in re.finditer(r"tmp=\$\(mktemp\)", content):
+            window = content[match.end():match.end() + 160]
+            if 'trap \'rm -f "$tmp"\' EXIT' not in window and "cleanup_trap_command('tmp')" not in window:
+                offenders.append(f"{path}:{content[:match.start()].count(chr(10)) + 1}")
     assert not offenders
 def test_env_consuming_plugins_reject_unsafe_environment_names():
     from automax.plugins.cron import CronEntryPlugin
