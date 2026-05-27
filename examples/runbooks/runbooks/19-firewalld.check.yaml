@@ -58,7 +58,7 @@ tasks:
     - id: firewalld_source
       use: firewalld.source
       with:
-        source: /var/log/app
+        source: 10.0.0.0/8
     - id: firewalld_status
       use: firewalld.status
       with:

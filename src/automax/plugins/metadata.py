@@ -614,6 +614,7 @@ PLUGIN_EXAMPLES: dict[str, str] = {
     "sudoers.dropin": "use: sudoers.dropin\nwith:\n  name: deploy-myapp\n  content: 'deploy ALL=(root) /bin/systemctl restart myapp'\n  validate: true\n  sudo: true",
     "firewalld.port": "use: firewalld.port\nwith:\n  port: 443\n  protocol: tcp\n  zone: public\n  state: present\n  permanent: true\n  reload: true\n  sudo: true",
     "ufw.rule": "use: ufw.rule\nwith:\n  rule: allow\n  port: 22\n  protocol: tcp\n  from: 10.0.0.0/8\n  sudo: true",
+    "firewalld.source": "use: firewalld.source\nwith:\n  source: 10.0.0.0/8\n  zone: public\n  state: present\n  sudo: true",
     "nftables.apply": "use: nftables.apply\nwith:\n  src: ./firewall/prod.nft\n  sudo: true",
     "sysctl.set": "use: sysctl.set\nwith:\n  name: net.ipv4.ip_forward\n  value: '1'\n  runtime: true\n  persist: true\n  file: /etc/sysctl.d/99-automax.conf\n  sudo: true",
     "kernel.module.load": "use: kernel.module.load\nwith:\n  name: br_netfilter\n  persist: true\n  sudo: true",

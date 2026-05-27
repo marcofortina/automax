@@ -724,6 +724,41 @@ def test_plugin_specific_user_and_boolean_value_schemas_do_not_use_global_fallba
     registry.get("selinux.boolean").validate({"name": "httpd_can_network_connect", "value": True, "persist": True})
 
 
+
+
+def test_ambiguous_plugin_parameters_have_plugin_specific_schemas():
+    from automax.plugins.registry import build_builtin_registry
+
+    registry = build_builtin_registry()
+    expected = {
+        ("auditd.search", "user"): ("string",),
+        ("auditd.search", "start"): ("string",),
+        ("archive.compress", "source"): ("path",),
+        ("archive.decompress", "archive"): ("path",),
+        ("backup.restore", "archive"): ("boolean",),
+        ("cron.list", "user"): ("string",),
+        ("firewalld.source", "source"): ("string",),
+        ("selinux.boolean", "value"): ("boolean", "string"),
+        ("sysctl.set", "value"): ("string",),
+        ("systemctl.start", "user"): ("boolean",),
+        ("systemd.unit", "start"): ("boolean",),
+        ("transfer.rsync", "archive"): ("boolean",),
+    }
+
+    for (plugin_name, param_name), expected_types in expected.items():
+        schema = registry.get(plugin_name).parameter_schema[param_name]
+        actual = schema.get("types", schema.get("type"))
+        if isinstance(actual, str):
+            actual = (actual,)
+        assert tuple(actual) == expected_types
+
+    registry.get("firewalld.source").validate({"source": "10.0.0.0/8"})
+    registry.get("transfer.rsync").validate({"src": "/tmp/src", "dest": "/tmp/dest", "archive": True})
+
+    firewalld_runbook = Path("examples/runbooks/runbooks/19-firewalld.check.yaml").read_text(encoding="utf-8")
+    assert "source: 10.0.0.0/8" in firewalld_runbook
+    assert "source: /var/log/app" not in firewalld_runbook
+
 def test_docs_show_sudo_password_env_for_runs_and_capability_installs():
     docs = "\n".join(
         path.read_text(encoding="utf-8")

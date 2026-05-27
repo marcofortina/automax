@@ -280,6 +280,7 @@ class TransferRsyncPlugin(BasePlugin):
     description = "Synchronize files with rsync using the current target as the default remote endpoint."
     required_params = ("src", "dest")
     optional_params = ("direction", "archive", "compress", "delete", "checksum", "dry_run", "excludes", "ssh_options", "rsync_path", "timeout")
+    parameter_schema = {"archive": {"type": "boolean", "default": True, "description": "Use rsync archive mode."}}
     opens_remote_session = False
     supports_check_mode = True
 

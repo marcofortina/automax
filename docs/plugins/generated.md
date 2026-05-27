@@ -3229,7 +3229,7 @@ Manage a firewalld source in a zone.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `source` | yes | `path` |  | Remote source path to archive. |
+| `source` | yes | `string` |  | firewalld source address, network or ipset. |
 | `zone` | no | `string` |  | firewalld zone name. |
 | `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
 | `permanent` | no | `boolean` | `True` | Persist firewalld changes permanently. |
@@ -3250,7 +3250,10 @@ Example:
 ```yaml
 use: firewalld.source
 with:
-  source: /var/log/app
+  source: 10.0.0.0/8
+  zone: public
+  state: present
+  sudo: true
 ```
 
 ### `firewalld.status`
@@ -10612,7 +10615,7 @@ Synchronize files with rsync using the current target as the default remote endp
 | `src` | yes | `path` |  | Source path. |
 | `dest` | yes | `path` |  | Destination path. |
 | `direction` | no | `string` | `upload` | Transfer direction such as upload, download or local. |
-| `archive` | no | `path` |  | Remote archive path to extract. |
+| `archive` | no | `boolean` | `True` | Use rsync archive mode. |
 | `compress` | no | `boolean` | `False` | Enable stream compression when supported. |
 | `delete` | no | `boolean` | `False` | Delete extraneous destination files when supported. |
 | `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |

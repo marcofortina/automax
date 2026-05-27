@@ -545,7 +545,7 @@ class PamRestorePlugin(PamBackupPlugin):
 
 # Firewall backend-specific extras
 class FirewalldSourcePlugin(BasePlugin):
-    name="firewalld.source"; description="Manage a firewalld source in a zone."; required_params=("source",); optional_params=("zone","state","permanent","reload","sudo"); opens_remote_session=True
+    name="firewalld.source"; description="Manage a firewalld source in a zone."; required_params=("source",); optional_params=("zone","state","permanent","reload","sudo"); parameter_schema={"source": {"type": "string", "description": "firewalld source address, network or ipset."}}; opens_remote_session=True
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-source" if state=="present" else "remove-source"; query_cmd=f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-source={quote(params['source'])}"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(params['source'])} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {sudo_prefix(params, default=True)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
