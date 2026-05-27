@@ -25,7 +25,6 @@ tasks:
       with:
         archive: /tmp/app.tar.gz
         dest: /tmp/automax-demo
-        source: /tmp/automax-demo.gz
     - id: archive_tar
       use: archive.tar
       with:
