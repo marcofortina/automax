@@ -11,7 +11,7 @@ from shlex import quote as shell_quote
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext
-from automax.plugins.remote_utils import heredoc_to_file, heredoc_to_stdin
+from automax.plugins.remote_utils import heredoc_to_file, heredoc_to_stdin, sudo_prefix
 
 
 def _q(value: Any) -> str:
@@ -19,7 +19,7 @@ def _q(value: Any) -> str:
 
 
 def _sudo(params: Dict[str, Any]) -> str:
-    return "sudo -n " if bool(params.get("sudo", True)) else ""
+    return sudo_prefix(params, default=True)
 
 
 def _list(value: Any) -> list[str]:

@@ -10,11 +10,11 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, normalize_env_mapping, quote, render_env_prefix, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, normalize_env_mapping, quote, render_env_prefix, result_from_remote, sudo_prefix
 
 
 def _sudo(params: Dict[str, Any], default: bool = True) -> str:
-    return "sudo -n " if bool(params.get("sudo", default)) else ""
+    return sudo_prefix(params, default=default)
 
 
 def _bool(value: Any) -> str:

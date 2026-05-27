@@ -10,11 +10,11 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin
-from automax.plugins.remote_utils import exec_remote, quote
+from automax.plugins.remote_utils import exec_remote, quote, sudo_prefix
 
 
 def _sudo(params: Dict[str, Any]) -> str:
-    return "sudo -n " if bool(params.get("sudo", False)) else ""
+    return sudo_prefix(params, default=False)
 
 
 def _diff(path: str, text: str) -> list[Dict[str, Any]]:

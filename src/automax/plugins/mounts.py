@@ -9,11 +9,11 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import exec_remote, quote, result_from_remote, sudo_prefix
 
 
 def _sudo(params: Dict[str, Any]) -> str:
-    return "sudo -n " if bool(params.get("sudo", True)) else ""
+    return sudo_prefix(params, default=True)
 
 
 def _fstab_line(params: Dict[str, Any]) -> str:

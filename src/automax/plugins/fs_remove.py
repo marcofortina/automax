@@ -13,7 +13,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, quote, result_from_remote, sudo_prefix
 
 
 _ROOT_GUARD_PATHS = {
@@ -130,7 +130,7 @@ class FsRemovePlugin(BasePlugin):
             )
 
     def _sudo(self, params: Dict[str, Any]) -> str:
-        return "sudo -n " if bool(params.get("sudo", False)) else ""
+        return sudo_prefix(params, default=False)
 
     def _guard_commands(self, params: Dict[str, Any]) -> list[str]:
         path = quote(params["path"])

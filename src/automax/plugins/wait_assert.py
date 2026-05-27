@@ -16,7 +16,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import exec_remote, quote
+from automax.plugins.remote_utils import exec_remote, quote, sudo_prefix
 
 
 def _timeout(params: Dict[str, Any], default: int = 60) -> int:
@@ -34,7 +34,7 @@ def _interval(params: Dict[str, Any], default: int = 2) -> float:
 
 
 def _sudo(params: Dict[str, Any]) -> str:
-    return "sudo -n " if bool(params.get("sudo", False)) else ""
+    return sudo_prefix(params, default=False)
 
 
 def _tcp_check(host: str, port: int, timeout: float) -> tuple[bool, str]:

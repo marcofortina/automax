@@ -20,6 +20,11 @@ SUDO_NON_INTERACTIVE = "sudo -n"
 _ENV_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
+def sudo_prefix(params: Mapping[str, Any], *, default: bool = True) -> str:
+    """Render the non-interactive sudo prefix for remote shell commands."""
+    return f"{SUDO_NON_INTERACTIVE} " if bool(params.get("sudo", default)) else ""
+
+
 def quote(value: Any) -> str:
     """Quote a value for POSIX shell usage."""
     return shlex.quote(str(value))
