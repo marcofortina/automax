@@ -22,6 +22,7 @@ class LocalCommandPlugin(BasePlugin):
     name = "local.command"
     description = "Run a local command on the controller host."
     required_params = ("command",)
+    parameter_schema = {"command": {"types": ("string", "list")}}
 
     def manual_commands(
         self, params: Dict[str, Any], context: ExecutionContext

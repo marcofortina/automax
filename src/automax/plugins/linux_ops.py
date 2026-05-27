@@ -471,6 +471,7 @@ class EnvSetPlugin(BasePlugin):
     description = "Set step-scoped or persistent shell environment variables."
     required_params = ("variables",)
     optional_params = ("scope", "path", "user", "backup", "backup_suffix", "sudo")
+    parameter_schema = {"user": {"type": "string", "description": "User account name for scope=user."}}
     opens_remote_session = True
 
     def _content(self, params: Dict[str, Any]) -> str:

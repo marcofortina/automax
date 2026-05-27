@@ -28,6 +28,12 @@ class MailSendPlugin(BasePlugin):
     description = "Send an email from the Automax controller through SMTP."
     required_params = ("smtp_host", "from", "to", "subject")
     optional_params = ("smtp_port", "starttls", "ssl", "username", "password", "body", "cc", "bcc", "reply_to", "attachments", "timeout")
+    parameter_schema = {
+        "to": {"types": ("string", "list"), "description": "Email recipient or non-empty recipient list."},
+        "cc": {"types": ("string", "list"), "description": "Email CC recipient or non-empty recipient list."},
+        "bcc": {"types": ("string", "list"), "description": "Email BCC recipient or non-empty recipient list."},
+        "attachments": {"types": ("string", "list"), "description": "Attachment path or attachment path list."},
+    }
     opens_remote_session = False
 
     def _summary(self, params: Dict[str, Any]) -> str:

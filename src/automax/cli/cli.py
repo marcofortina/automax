@@ -900,7 +900,7 @@ def export_runbook(
 @click.option("--tags", multiple=True, help="Validate plan after keeping only these tags.")
 @click.option("--skip-tags", multiple=True, help="Validate plan after skipping these tags.")
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
-@click.option("--strict", is_flag=True, help="Reject unknown DSL keys and plugin parameters.")
+@click.option("--strict", is_flag=True, help="Also reject unknown DSL keys and validate the resolved plan scope.")
 def validate(
     job_path: str,
     inventory_path: str,

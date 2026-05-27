@@ -20,6 +20,7 @@ class FsChownPlugin(BasePlugin):
     name = "fs.chown"
     description = "Set remote file or directory owner/group."
     required_params = ("path",)
+    optional_params = ("owner", "group", "recursive", "cwd")
     opens_remote_session = True
 
     def validate(self, params: Dict[str, Any]) -> None:

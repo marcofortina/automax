@@ -1198,7 +1198,7 @@ Restore a remote file or tar archive from an explicit backup artifact.
 | `src` | yes | `path` |  | Source path. |
 | `dest` | yes | `path` |  | Destination path. |
 | `confirm` | yes | `boolean` |  | Explicit destructive-operation confirmation flag. |
-| `archive` | no | `path` |  | Remote archive path to extract. |
+| `archive` | no | `boolean` |  | Treat the source as an archive artifact. |
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
@@ -1234,7 +1234,7 @@ Preview a restore artifact without changing the target.
 |---|---:|---|---|---|
 | `src` | yes | `path` |  | Source path. |
 | `dest` | yes | `path` |  | Destination path. |
-| `archive` | no | `path` |  | Remote archive path to extract. |
+| `archive` | no | `boolean` |  | Treat the source as an archive artifact. |
 | `checksum_file` | no | `path` |  | Checksum sidecar file path. |
 | `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
@@ -1269,7 +1269,7 @@ Verify that restored content matches a backup artifact.
 |---|---:|---|---|---|
 | `src` | yes | `path` |  | Source path. |
 | `dest` | yes | `path` |  | Destination path. |
-| `archive` | no | `path` |  | Remote archive path to extract. |
+| `archive` | no | `boolean` |  | Treat the source as an archive artifact. |
 | `checksum_file` | no | `path` |  | Checksum sidecar file path. |
 | `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
@@ -2713,7 +2713,7 @@ Set step-scoped or persistent shell environment variables.
 | `variables` | yes | `mapping` |  | Environment variables to set. |
 | `scope` | no | `string` | `step` | Environment scope: step, user, global or file. |
 | `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
+| `user` | no | `string` | `False` | User account name for scope=user. |
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
@@ -3588,6 +3588,10 @@ Set remote file or directory owner/group.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `recursive` | no | `boolean` | `False` | Recurse into directories. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
 
 Result fields:
 
@@ -5144,7 +5148,7 @@ Ensure an iptables rule is present or absent in a table and chain.
 | `ipv6` | no | `boolean` | `False` | Use IPv6 command variant when supported. |
 | `position` | no | `integer` |  | Insertion position for ordered firewall rule backends. |
 | `comment` | no | `string` |  | User account comment or GECOS field. |
-| `wait` | no | `boolean` | `False` | Wait for the operation to become reachable again when supported. |
+| `wait` | no | `integer` |  | iptables -w lock wait timeout in seconds. |
 | `save_after` | no | `boolean` | `False` | Persist runtime firewall state after changing a rule. |
 | `dest` | no | `path` |  | Destination path. |
 | `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
@@ -6137,7 +6141,7 @@ Send an email from the Automax controller through SMTP.
 |---|---:|---|---|---|
 | `smtp_host` | yes | `string` |  | SMTP server host used by the Automax controller. |
 | `from` | yes | `string` |  | Source address for firewall rules. |
-| `to` | yes | `string` |  | Destination address for firewall rules. |
+| `to` | yes | `string` |  | Email recipient or non-empty recipient list. |
 | `subject` | yes | `string` |  | Email subject line. |
 | `smtp_port` | no | `integer` | `587` | SMTP server port. |
 | `starttls` | no | `boolean` | `True` | Use STARTTLS before SMTP authentication. |
@@ -6145,10 +6149,10 @@ Send an email from the Automax controller through SMTP.
 | `username` | no | `string` |  | SMTP username; prefer values rendered from secrets. |
 | `password` | no | `string` |  | Plaintext password; prefer password_hash when possible. |
 | `body` | no | `string` |  | Raw HTTP request body. |
-| `cc` | no | `list` |  | Email CC recipients. |
-| `bcc` | no | `list` |  | Email BCC recipients. |
+| `cc` | no | `list` |  | Email CC recipient or non-empty recipient list. |
+| `bcc` | no | `list` |  | Email BCC recipient or non-empty recipient list. |
 | `reply_to` | no | `string` |  | Email Reply-To address. |
-| `attachments` | no | `list` |  | Local controller-side attachment paths. |
+| `attachments` | no | `list` |  | Attachment path or attachment path list. |
 | `timeout` | no | `number` |  | Operation timeout in seconds. |
 
 Result fields:
@@ -8980,7 +8984,7 @@ Remove one SSH authorized_keys line for a remote user.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `user` | yes | `boolean` | `False` | Use systemctl --user instead of the system manager. |
+| `user` | yes | `string` | `False` | Remote user account owning authorized_keys. |
 | `key` | yes | `string` |  | SSH public key line. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
@@ -9159,7 +9163,7 @@ Ensure a known_hosts entry exists or is removed on a remote target.
 | `key` | no | `string` |  | SSH public key line. |
 | `port` | no | `integer` |  | TCP port number. |
 | `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
+| `user` | no | `string` | `False` | Remote user account owning known_hosts. |
 | `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |

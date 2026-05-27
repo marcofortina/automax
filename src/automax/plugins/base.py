@@ -8,6 +8,7 @@ Plugin base contract for Automax next engine.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
@@ -61,12 +62,99 @@ class BasePlugin(ABC):
         }
 
     def validate(self, params: Dict[str, Any]) -> None:
-        """Validate common required parameters."""
+        """Validate the common plugin parameter contract.
+
+        Builtin plugins expose ``required_params``, ``optional_params`` and a
+        runtime ``parameter_schema`` populated by the registry metadata pass.
+        Keeping this check in the base class makes typos, wrong YAML scalar
+        types and unsupported enum values fail before a plugin builds shell
+        commands or touches a target.
+        """
+        if not isinstance(params, Mapping):
+            raise PluginValidationError(f"plugin '{self.name}' params must be mapping")
+
         missing = [key for key in self.required_params if key not in params]
         if missing:
             raise PluginValidationError(
                 f"plugin '{self.name}' missing required params: {', '.join(missing)}"
             )
+
+        allowed = set(self.required_params) | set(self.optional_params)
+        unknown = sorted(set(params) - allowed)
+        if unknown:
+            raise PluginValidationError(
+                f"plugin '{self.name}' unknown params: {', '.join(unknown)}"
+            )
+
+        for name, value in params.items():
+            self._validate_parameter(name, value)
+
+    def _validate_parameter(self, name: str, value: Any) -> None:
+        """Validate one parameter using this plugin's runtime schema."""
+        schema = dict(self.parameter_schema.get(name, {}) or {})
+        expected_types = schema.get("types", schema.get("type", "any"))
+        if isinstance(expected_types, str):
+            expected_types = (expected_types,)
+        if expected_types and "any" not in expected_types:
+            self._validate_parameter_type(name, value, tuple(str(item) for item in expected_types))
+
+        enum = schema.get("enum")
+        if enum is not None and value not in enum:
+            allowed = ", ".join(str(item) for item in enum)
+            raise PluginValidationError(
+                f"plugin '{self.name}' param '{name}' must be one of: {allowed}"
+            )
+
+        if "min" in schema and self._is_number(value) and value < schema["min"]:
+            raise PluginValidationError(
+                f"plugin '{self.name}' param '{name}' must be >= {schema['min']}"
+            )
+        if "max" in schema and self._is_number(value) and value > schema["max"]:
+            raise PluginValidationError(
+                f"plugin '{self.name}' param '{name}' must be <= {schema['max']}"
+            )
+        if schema.get("non_empty") and self._is_empty(value):
+            raise PluginValidationError(
+                f"plugin '{self.name}' param '{name}' must not be empty"
+            )
+
+    def _validate_parameter_type(
+        self, name: str, value: Any, expected_types: tuple[str, ...]
+    ) -> None:
+        known_types = {"string", "path", "boolean", "integer", "number", "list", "sequence", "mapping"}
+        if not any(expected_type in known_types for expected_type in expected_types):
+            return
+
+        for expected_type in expected_types:
+            if expected_type in {"string", "path"} and isinstance(value, str):
+                return
+            if expected_type == "boolean" and isinstance(value, bool):
+                return
+            if (
+                expected_type == "integer"
+                and isinstance(value, int)
+                and not isinstance(value, bool)
+            ):
+                return
+            if expected_type == "number" and self._is_number(value):
+                return
+            if expected_type in {"list", "sequence"} and isinstance(value, list):
+                return
+            if expected_type == "mapping" and isinstance(value, dict):
+                return
+
+        expected = " or ".join(expected_types)
+        raise PluginValidationError(
+            f"plugin '{self.name}' param '{name}' must be {expected}"
+        )
+
+    @staticmethod
+    def _is_number(value: Any) -> bool:
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+    @staticmethod
+    def _is_empty(value: Any) -> bool:
+        return value is None or value == "" or value == [] or value == {}
 
     def dry_run(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         """Default dry-run implementation with operator preview data."""

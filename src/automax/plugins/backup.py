@@ -96,6 +96,12 @@ class BackupRestorePlugin(BasePlugin):
     description = "Restore a remote file or tar archive from an explicit backup artifact."
     required_params = ("src", "dest", "confirm")
     optional_params = ("archive", "backup", "backup_suffix", "sudo")
+    parameter_schema = {
+        "archive": {
+            "type": "boolean",
+            "description": "Treat the source as an archive artifact.",
+        }
+    }
     opens_remote_session = True
 
     def validate(self, params: Dict[str, Any]) -> None:
@@ -307,6 +313,12 @@ class BackupRestorePreviewPlugin(BasePlugin):
     description = "Preview a restore artifact without changing the target."
     required_params = ("src", "dest")
     optional_params = ("archive", "checksum_file", "checksum", "sudo")
+    parameter_schema = {
+        "archive": {
+            "type": "boolean",
+            "description": "Treat the source as an archive artifact.",
+        }
+    }
     opens_remote_session = True
     supports_check_mode = True
 
@@ -338,6 +350,12 @@ class BackupRestoreVerifyPlugin(BasePlugin):
     description = "Verify that restored content matches a backup artifact."
     required_params = ("src", "dest")
     optional_params = ("archive", "checksum_file", "checksum", "sudo")
+    parameter_schema = {
+        "archive": {
+            "type": "boolean",
+            "description": "Treat the source as an archive artifact.",
+        }
+    }
     opens_remote_session = True
     supports_check_mode = True
 

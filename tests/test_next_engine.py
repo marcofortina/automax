@@ -1562,6 +1562,39 @@ def test_ssh_smoke_documentation_is_linked():
     assert "SSH Smoke: guides/ssh-smoke.md" in mkdocs
     assert "docs/guides/ssh-smoke.md" in readme
 
+
+def test_base_plugin_validation_rejects_unknown_param_type_and_range():
+    from automax.plugins.base import BasePlugin, PluginValidationError
+
+    class ExamplePlugin(BasePlugin):
+        name = "example.strict"
+        required_params = ("path",)
+        optional_params = ("sudo", "port", "mode")
+        parameter_schema = {
+            "path": {"type": "path", "non_empty": True},
+            "sudo": {"type": "boolean"},
+            "port": {"type": "integer", "min": 1, "max": 65535},
+            "mode": {"type": "string", "enum": ["read", "write"]},
+        }
+
+        def execute(self, params, context):  # pragma: no cover - validation-only test
+            raise NotImplementedError
+
+    plugin = ExamplePlugin()
+    plugin.validate({"path": "/tmp/demo", "sudo": True, "port": 22, "mode": "read"})
+
+    with pytest.raises(PluginValidationError, match="unknown params: typo"):
+        plugin.validate({"path": "/tmp/demo", "typo": True})
+    with pytest.raises(PluginValidationError, match="param 'sudo' must be boolean"):
+        plugin.validate({"path": "/tmp/demo", "sudo": "true"})
+    with pytest.raises(PluginValidationError, match="param 'port' must be <= 65535"):
+        plugin.validate({"path": "/tmp/demo", "port": 70000})
+    with pytest.raises(PluginValidationError, match="param 'mode' must be one of: read, write"):
+        plugin.validate({"path": "/tmp/demo", "mode": "append"})
+    with pytest.raises(PluginValidationError, match="param 'path' must not be empty"):
+        plugin.validate({"path": ""})
+
+
 def test_validate_strict_rejects_unknown_plugin_parameter(tmp_path: Path):
     job = write(
         tmp_path / "job.yaml",
@@ -4118,13 +4151,18 @@ def _audit_sample_value(name: str):
         "chain": "/tmp/chain.pem",
         "command": "true",
         "confirm": True,
+        "compression": "gzip",
         "content": "# managed by automax\n",
         "database": "postgres",
         "dest": "/tmp/automax-dest",
+        "direction": "upload",
         "device": "/dev/sdb",
         "engine": "sqlite",
+        "encoding": "utf-8",
         "entries": [{"domain": "*", "type": "soft", "item": "nofile", "value": 1024}],
         "fstype": "ext4",
+        "checksum": "sha256",
+        "backend": "runtime",
         "host": "127.0.0.1",
         "ip": "127.0.0.1",
         "key": "/tmp/server.key",
@@ -4177,46 +4215,77 @@ def _audit_sample_value(name: str):
     return values.get(name, "demo")
 
 
+def _audit_sample_value_for_schema(name: str, schema: dict[str, object]) -> object:
+    value = _audit_sample_value(name)
+    enum = schema.get("enum")
+    if isinstance(enum, list) and enum:
+        default = schema.get("default")
+        return default if default in enum else enum[0]
+
+    expected = schema.get("types", schema.get("type", "any"))
+    if isinstance(expected, str):
+        expected_types = {expected}
+    else:
+        expected_types = {str(item) for item in expected}
+
+    if "boolean" in expected_types:
+        return True
+    if "integer" in expected_types:
+        if name in {"port", "smtp_port"}:
+            return 22
+        if name in {"expected_status", "status"}:
+            return 200
+        if name == "max_percent":
+            return 90
+        if name == "vlan_id":
+            return 100
+        return 1
+    if "number" in expected_types:
+        return 1
+    if "mapping" in expected_types:
+        if isinstance(value, dict):
+            return value
+        return {"demo": "1"}
+    if "list" in expected_types or "sequence" in expected_types:
+        if isinstance(value, list):
+            return value
+        if name == "query_params":
+            return []
+        if name == "statements":
+            return ["SELECT 1"]
+        if name == "syscalls":
+            return ["openat"]
+        if name == "tools":
+            return ["sh"]
+        if name == "commands":
+            return ["/usr/bin/id"]
+        if name == "devices":
+            return ["/dev/sdb"]
+        if name == "interfaces":
+            return ["eth1"]
+        if name == "paths":
+            return ["etc/hosts"]
+        if name == "patterns":
+            return ["*.bak"]
+        return [str(value)]
+    if "path" in expected_types or "string" in expected_types:
+        if isinstance(value, (list, dict, bool)):
+            return "demo"
+        return value
+    return value
+
+
 def _audit_sample_params(plugin) -> dict[str, object]:
-    params = {name: _audit_sample_value(name) for name in plugin.required_params}
+    params = {
+        name: _audit_sample_value_for_schema(name, plugin.parameter_schema.get(name, {}))
+        for name in plugin.required_params
+    }
     # Include optional values required by conservative renderers while keeping samples safe.
     for name in plugin.optional_params:
         if name in {"connection", "checks", "packages", "rules", "files", "features", "headers", "search", "options", "excludes", "ssh_options", "groups", "env", "values", "attachments", "cc", "bcc"}:
             continue
-        if name in {"sudo", "force", "backup", "reload", "permanent", "validate", "persist", "runtime", "create", "recursive", "ignore_missing", "test_only", "dry_run", "compress"}:
-            params[name] = True
-        elif name in {"port", "connect_timeout", "timeout", "interval", "expected_status", "status", "warning_days", "min_days", "max_percent", "count", "min_count", "max_count", "block_soft", "block_hard", "inode_soft", "inode_hard", "uid", "gid", "smtp_port", "strip_components", "days", "delay", "connect_timeout", "older_than_days", "keep"}:
-            params[name] = 1 if name not in {"port", "smtp_port", "expected_status", "status", "max_percent"} else (22 if name in {"port", "smtp_port"} else (200 if name in {"expected_status", "status"} else 90))
-        elif name in {"manager"}:
-            params[name] = "auto"
-        elif name in {"backend"}:
-            params[name] = "runtime"
-        elif name in {"protocol"}:
-            params[name] = "tcp"
-        elif name in {"state"}:
-            params[name] = "present"
-        elif name in {"compression"}:
-            params[name] = "gzip"
-        elif name in {"direction"}:
-            params[name] = "upload"
-        elif name in {"output"}:
-            params[name] = "dict"
-        elif name in {"checksum"}:
-            params[name] = "sha256"
-        elif name in {"fetch"}:
-            params[name] = "all"
-        elif name in {"success_rc"}:
-            params[name] = [0]
-        elif name in {"encoding"}:
-            params[name] = "utf-8"
-        elif name in {"query_params"}:
-            params[name] = []
-        elif name in {"statements"}:
-            params[name] = ["SELECT 1"]
-        elif name in {"connection"}:
-            params[name] = {"path": "/tmp/automax.sqlite"}
-        elif name not in params:
-            params[name] = _audit_sample_value(name)
+        if name not in params:
+            params[name] = _audit_sample_value_for_schema(name, plugin.parameter_schema.get(name, {}))
     # Plugin-specific safe corrections.
     if plugin.name.startswith("db."):
         params.setdefault("connection", {"path": "/tmp/automax.sqlite"})
@@ -4289,8 +4358,6 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["backend"] = "plain-file"
     if plugin.name in {"network.interface", "network.bond", "network.vlan"}:
         params["state"] = "up"
-    if plugin.name == "backup.restore":
-        params["archive"] = False
     return params
 
 

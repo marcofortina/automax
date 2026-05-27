@@ -83,6 +83,7 @@ class SshKnownHostsPlugin(BasePlugin):
     description = "Ensure a known_hosts entry exists or is removed on a remote target."
     required_params = ("host",)
     optional_params = ("key", "port", "path", "user", "state", "backup", "backup_suffix", "sudo")
+    parameter_schema = {"user": {"type": "string", "description": "Remote user account owning known_hosts."}}
     opens_remote_session = True
 
     def _path(self, params: Dict[str, Any]) -> str:
@@ -252,6 +253,7 @@ class SshAuthorizedKeyAbsentPlugin(BasePlugin):
     description = "Remove one SSH authorized_keys line for a remote user."
     required_params = ("user", "key")
     optional_params = ("sudo",)
+    parameter_schema = {"user": {"type": "string", "description": "Remote user account owning authorized_keys."}}
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:

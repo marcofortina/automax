@@ -389,6 +389,14 @@ class IptablesRulePlugin(BasePlugin):
     description = "Ensure an iptables rule is present or absent in a table and chain."
     required_params = ("chain", "rule")
     optional_params = ("table", "state", "ipv6", "position", "comment", "wait", "save_after", "dest", "backup_before", "sudo")
+    parameter_schema = {
+        "wait": {
+            "type": "integer",
+            "default": None,
+            "min": 0,
+            "description": "iptables -w lock wait timeout in seconds.",
+        }
+    }
     opens_remote_session = True
 
     def _bin(self, params: Dict[str, Any]) -> str:
