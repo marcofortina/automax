@@ -106,7 +106,7 @@ summary. Successful install command stdout/stderr is suppressed by default; add
 the full masked stdout/stderr payload for automation.
 
 ```bash
-automax capabilities install --job job.yaml --inventory inventory.yaml --verbose
+automax capabilities install --job job.yaml --inventory inventory.yaml --sudo-password-env AUTOMAX_SUDO_PASSWORD --verbose
 ```
 
 ## Resume

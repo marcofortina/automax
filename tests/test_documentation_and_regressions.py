@@ -611,3 +611,27 @@ def test_codeql_workflow_uses_node24_action_generation():
     assert "github/codeql-action/analyze@v4" in workflow
     assert "security-events: write" in workflow
     assert "security-extended,security-and-quality" in workflow
+
+def test_runbook_helpers_keep_sudo_password_env_explicit():
+    readme = Path("examples/runbooks/README.md").read_text(encoding="utf-8")
+    assert "export AUTOMAX_SUDO_PASSWORD='...'" in readme
+    assert "without installing NOPASSWD sudoers rules" in readme
+
+    for script_path in [
+        Path("examples/runbooks/scripts/run-all-checks.sh"),
+        Path("examples/runbooks/scripts/run-one-check.sh"),
+    ]:
+        script = script_path.read_text(encoding="utf-8")
+        assert 'SUDO_PASSWORD_ENV="${AUTOMAX_SUDO_PASSWORD_ENV:-AUTOMAX_SUDO_PASSWORD}"' in script
+        assert '[[ -z "${!SUDO_PASSWORD_ENV:-}" ]]' in script
+        assert '--sudo-password-env "$SUDO_PASSWORD_ENV"' in script
+
+
+def test_docs_show_sudo_password_env_for_runs_and_capability_installs():
+    docs = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in [Path("README.md"), Path("docs/reference/cli.md"), Path("docs/guides/first-ssh-job.md")]
+    )
+    assert "automax run --job job.yaml --inventory inventory.yaml --sudo-password-env AUTOMAX_SUDO_PASSWORD" in docs
+    assert "automax capabilities install --job job.yaml --inventory inventory.yaml --sudo-password-env AUTOMAX_SUDO_PASSWORD" in docs
+    assert "automax capabilities install --job job.yaml --inventory inventory.yaml --sudo-password-env AUTOMAX_SUDO_PASSWORD --verbose" in docs

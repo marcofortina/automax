@@ -112,6 +112,7 @@ When selected remote substeps use `sudo` and the target account requires a passw
 ```bash
 export AUTOMAX_SUDO_PASSWORD='...'
 automax run --job job.yaml --inventory inventory.yaml --sudo-password-env AUTOMAX_SUDO_PASSWORD
+automax capabilities install --job job.yaml --inventory inventory.yaml --sudo-password-env AUTOMAX_SUDO_PASSWORD
 ```
 
 Inspect an existing run:

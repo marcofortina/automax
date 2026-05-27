@@ -26,6 +26,9 @@ export VARS="$RB/lab-vars.example.yaml"
 cp lab-secrets.example.yaml lab-secrets.local.yaml
 $EDITOR lab-secrets.local.yaml
 export SECRETS="$RB/lab-secrets.local.yaml"
+
+# Required by the helper scripts and by the explicit --sudo-password-env examples.
+export AUTOMAX_SUDO_PASSWORD='...'
 ```
 
 `lab-secrets.example.yaml` intentionally contains empty values only. Populate `lab-secrets.local.yaml` locally and do not commit it. The local file is ignored by the `examples/runbooks/.gitignore` rules.
@@ -65,12 +68,13 @@ The helper also accepts the full relative path:
 "$RB/scripts/run-all-checks.sh"
 ```
 
-The helpers respect optional overrides:
+The helpers always pass `--sudo-password-env` so password-protected sudo can be tested without installing NOPASSWD sudoers rules. They fail early if the selected sudo password environment variable is unset. Optional overrides:
 
 ```bash
+export AUTOMAX_LAB_SUDO_PASSWORD='...'
 INV=/path/to/inventory.yaml \
 VARS=/path/to/vars.yaml \
 SECRETS=/path/to/lab-secrets.local.yaml \
-AUTOMAX_SUDO_PASSWORD_ENV=AUTOMAX_SUDO_PASSWORD \
+AUTOMAX_SUDO_PASSWORD_ENV=AUTOMAX_LAB_SUDO_PASSWORD \
 "$RB/scripts/run-all-checks.sh"
 ```
