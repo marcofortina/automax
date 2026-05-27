@@ -1345,7 +1345,7 @@ def capability_requirements(
 @click.option("--tags", multiple=True, help="Install dependencies for substeps matching one of these tags.")
 @click.option("--skip-tags", multiple=True, help="Skip substeps matching one of these tags.")
 @click.option("--plugin-path", multiple=True, help="External plugin file or directory.")
-@click.option("--sudo-password-env", help="Environment variable containing sudo password for sudo -S installs.")
+@click.option("--sudo-password-env", help="Environment variable containing the sudo password for package-manager installs.")
 @click.option("--verbose", is_flag=True, help="Show successful install command stdout/stderr.")
 @click.option(
     "--format",

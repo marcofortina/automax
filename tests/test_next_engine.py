@@ -5076,8 +5076,22 @@ def test_capability_install_uses_quiet_package_manager_commands(monkeypatch):
     from contextlib import contextmanager
 
     class FakeChannel:
+        def __init__(self):
+            self.shutdown = False
+
+        def shutdown_write(self):
+            self.shutdown = True
+
         def recv_exit_status(self):
             return 0
+
+    class FakeStdin:
+        def __init__(self):
+            self.channel = FakeChannel()
+            self.writes: list[str] = []
+
+        def write(self, value):
+            self.writes.append(value)
 
     class FakeStream:
         def __init__(self, data: str = ""):
@@ -5090,10 +5104,11 @@ def test_capability_install_uses_quiet_package_manager_commands(monkeypatch):
     class FakeClient:
         def __init__(self):
             self.commands: list[tuple[str, dict[str, object]]] = []
+            self.stdin = FakeStdin()
 
         def exec_command(self, command, **kwargs):
             self.commands.append((command, kwargs))
-            return object(), FakeStream("ok"), FakeStream()
+            return self.stdin, FakeStream("ok"), FakeStream()
 
     class FakeSshManager:
         def __init__(self):
@@ -5121,7 +5136,12 @@ def test_capability_install_uses_quiet_package_manager_commands(monkeypatch):
     assert "apt-get -o Dpkg::Use-Pty=0 -o APT::Color=0 install -y -qq acl zip" in command
     assert "DEBIAN_FRONTEND=noninteractive" in command
     assert "APT_LISTCHANGES_FRONTEND=none" in command
-    assert kwargs == {"get_pty": True}
+    assert "command sudo -A -p ''" in command
+    assert "SUDO_ASKPASS" in command
+    assert "secret-pass" not in command
+    assert ssh_manager.client.stdin.writes == ["secret-pass\n"]
+    assert ssh_manager.client.stdin.channel.shutdown is True
+    assert kwargs == {"get_pty": False}
 
 
 def test_capability_requirements_text_reports_missing_tools_and_packages(tmp_path: Path, monkeypatch):

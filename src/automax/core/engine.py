@@ -35,6 +35,7 @@ from automax.core.state import StateStore
 from automax.core.templating import render_mapping, render_value
 from automax.core.yaml_loader import load_yaml_file
 from automax.plugins.registry import PluginRegistry, build_builtin_registry
+from automax.plugins.remote_utils import prepare_sudo_password_command
 
 
 class AutomaxError(ValueError):
@@ -1396,8 +1397,6 @@ class AutomaxEngine:
             return 0, "", ""
         package_args = " ".join(shlex.quote(package) for package in packages)
         sudo = "sudo -n"
-        if sudo_password:
-            sudo = f"printf '%s\\n' {shlex.quote(sudo_password)} | sudo -S"
         if os_family == "debian":
             apt_env = "DEBIAN_FRONTEND=noninteractive APT_LISTCHANGES_FRONTEND=none"
             apt_opts = "-o Dpkg::Use-Pty=0 -o APT::Color=0"
@@ -1412,8 +1411,12 @@ class AutomaxEngine:
             )
         else:
             return 2, "", f"unsupported OS family for dependency install: {os_family}"
+        command, sudo_stdin = prepare_sudo_password_command(command, sudo_password)
         with self.ssh_manager.connect(target) as client:
-            _stdin, stdout, stderr = client.exec_command(command, get_pty=bool(sudo_password))
+            stdin, stdout, stderr = client.exec_command(command, get_pty=False)
+            if sudo_stdin:
+                stdin.write(sudo_stdin)
+                stdin.channel.shutdown_write()
             rc = stdout.channel.recv_exit_status()
             out = stdout.read().decode("utf-8", errors="replace")
             err = stderr.read().decode("utf-8", errors="replace")
