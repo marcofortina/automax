@@ -13,16 +13,13 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _diff(path: str, content: str, kind: str) -> list[Dict[str, Any]]:
     return [{"path": path, "kind": kind, "diff": "".join(unified_diff([], content.splitlines(keepends=True), fromfile=f"{path} (current)", tofile=f"{path} (desired)"))}]
 
 
 def _install_cmd(path: str, content: str, mode: str, params: Dict[str, Any]) -> str:
-    sudo = _sudo(params)
+    sudo = sudo_prefix(params, default=True)
     temp = "/tmp/automax-systemd.$$"
     commands = [heredoc_to_file(temp, content)]
     if bool(params.get("backup", True)):
@@ -54,7 +51,7 @@ class SystemdUnitPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         commands = [_install_cmd(self._path(params), _content(params), "0644", params), f"{sudo}systemctl daemon-reload"]
         if bool(params.get("enable", False)):
             commands.append(f"{sudo}systemctl enable {quote(params['name'])}")
@@ -97,7 +94,7 @@ class SystemdTmpfilesPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         commands = [_install_cmd(self._path(params), _content(params), "0644", params)]
         if bool(params.get("apply", False)):
-            commands.append(f"{_sudo(params)}systemd-tmpfiles --create {quote(self._path(params))}")
+            commands.append(f"{sudo_prefix(params, default=True)}systemd-tmpfiles --create {quote(self._path(params))}")
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -118,5 +115,5 @@ class SystemdSysusersPlugin(SystemdTmpfilesPlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         commands = [_install_cmd(self._path(params), _content(params), "0644", params)]
         if bool(params.get("apply", False)):
-            commands.append(f"{_sudo(params)}systemd-sysusers {quote(self._path(params))}")
+            commands.append(f"{sudo_prefix(params, default=True)}systemd-sysusers {quote(self._path(params))}")
         return commands

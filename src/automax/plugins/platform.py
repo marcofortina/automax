@@ -12,9 +12,6 @@ from automax.plugins.base import BasePlugin
 from automax.plugins.remote_utils import exec_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=False)
-
 
 class PlatformFactsPlugin(BasePlugin):
     name = "platform.facts"
@@ -28,7 +25,7 @@ class PlatformFactsPlugin(BasePlugin):
         return "platform.facts is a read-only backend detection plugin and does not change files"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=False)
         script = r'''
 set -eu
 has() { command -v "$1" >/dev/null 2>&1; }

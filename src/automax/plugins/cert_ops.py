@@ -12,9 +12,6 @@ from automax.plugins.base import BasePlugin
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 class CertGenerateCsrPlugin(BasePlugin):
     name = "cert.generate_csr"
@@ -29,7 +26,7 @@ class CertGenerateCsrPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         config = f" -config {quote(params['config'])}" if params.get("config") else ""
-        return [f"{_sudo(params)}openssl req -new -key {quote(params['key'])} -out {quote(params['dest'])} -subj {quote(params['subject'])}{config}"]
+        return [f"{sudo_prefix(params, default=True)}openssl req -new -key {quote(params['key'])} -out {quote(params['dest'])} -subj {quote(params['subject'])}{config}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
@@ -49,7 +46,7 @@ class CertSelfSignedPlugin(BasePlugin):
         self.validate(params)
         days = int(params.get("days", 365))
         extensions = f" -extensions {quote(params['extensions'])}" if params.get("extensions") else ""
-        return [f"{_sudo(params)}openssl req -x509 -new -key {quote(params['key'])} -out {quote(params['cert'])} -subj {quote(params['subject'])} -days {days}{extensions}"]
+        return [f"{sudo_prefix(params, default=True)}openssl req -x509 -new -key {quote(params['key'])} -out {quote(params['cert'])} -subj {quote(params['subject'])} -days {days}{extensions}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
@@ -69,7 +66,7 @@ class CertVerifyChainPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         untrusted = f" -untrusted {quote(params['untrusted'])}" if params.get("untrusted") else ""
-        return [f"{_sudo(params)}openssl verify -CAfile {quote(params['ca_file'])}{untrusted} {quote(params['cert'])}"]
+        return [f"{sudo_prefix(params, default=True)}openssl verify -CAfile {quote(params['ca_file'])}{untrusted} {quote(params['cert'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -89,7 +86,7 @@ class CertInstallKeypairPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         cert_dest = str(params["cert_dest"])
         key_dest = str(params["key_dest"])
         commands = []
@@ -127,7 +124,7 @@ class CertExpiryReportPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         seconds = int(params.get("warning_days", 30)) * 86400
-        return [f"{_sudo(params)}openssl x509 -in {quote(params['cert'])} -noout -enddate && {_sudo(params)}openssl x509 -in {quote(params['cert'])} -noout -checkend {seconds}"]
+        return [f"{sudo_prefix(params, default=True)}openssl x509 -in {quote(params['cert'])} -noout -enddate && {sudo_prefix(params, default=True)}openssl x509 -in {quote(params['cert'])} -noout -checkend {seconds}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -149,7 +146,7 @@ class CertFingerprintPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         algorithm = str(params.get("algorithm", "sha256"))
-        return [f"{_sudo(params)}openssl x509 -in {quote(params['cert'])} -noout -fingerprint -{quote(algorithm)}"]
+        return [f"{sudo_prefix(params, default=True)}openssl x509 -in {quote(params['cert'])} -noout -fingerprint -{quote(algorithm)}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -170,7 +167,7 @@ class CertMatchesKeyPlugin(BasePlugin):
         return "cert.matches_key is a read-only certificate/private-key assertion"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         cert = quote(params["cert"])
         key = quote(params["key"])
         return [f"test \"$({sudo}openssl x509 -in {cert} -pubkey -noout | openssl pkey -pubin -outform DER | openssl sha256)\" = \"$({sudo}openssl pkey -in {key} -pubout -outform DER | openssl sha256)\""]
@@ -196,7 +193,7 @@ class CertSanAssertPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         names = params["names"] if isinstance(params["names"], list) else [params["names"]]
-        base = f"{_sudo(params)}openssl x509 -in {quote(params['cert'])} -noout -ext subjectAltName"
+        base = f"{sudo_prefix(params, default=True)}openssl x509 -in {quote(params['cert'])} -noout -ext subjectAltName"
         commands = [base]
         for name in names:
             commands.append(f"{base} | grep -F -- {quote(name)}")
@@ -221,7 +218,7 @@ class CertSubjectAssertPlugin(BasePlugin):
         return "cert.subject_assert is a read-only certificate subject assertion"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        return [f"{_sudo(params)}openssl x509 -in {quote(params['cert'])} -noout -subject | grep -F -- {quote(params['subject'])}"]
+        return [f"{sudo_prefix(params, default=True)}openssl x509 -in {quote(params['cert'])} -noout -subject | grep -F -- {quote(params['subject'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -242,7 +239,7 @@ class CertIssuerAssertPlugin(BasePlugin):
         return "cert.issuer_assert is a read-only certificate issuer assertion"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        return [f"{_sudo(params)}openssl x509 -in {quote(params['cert'])} -noout -issuer | grep -F -- {quote(params['issuer'])}"]
+        return [f"{sudo_prefix(params, default=True)}openssl x509 -in {quote(params['cert'])} -noout -issuer | grep -F -- {quote(params['issuer'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -263,7 +260,7 @@ class CertInstallCaBundlePlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         src = str(params["src"])
         dest = str(params["dest"])
         mode = str(params.get("mode", "0644"))

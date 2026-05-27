@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, SUDO_NON_INTERACTIVE, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _as_list(value: Any) -> list[str]:
     if value is None:
@@ -60,7 +57,7 @@ class ApparmorEnforcePlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"{_sudo(params)}aa-enforce {quote(params['profile'])}"]
+        return [f"{sudo_prefix(params, default=True)}aa-enforce {quote(params['profile'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
@@ -73,7 +70,7 @@ class ApparmorComplainPlugin(ApparmorEnforcePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"{_sudo(params)}aa-complain {quote(params['profile'])}"]
+        return [f"{sudo_prefix(params, default=True)}aa-complain {quote(params['profile'])}"]
 
 
 class ApparmorDisablePlugin(ApparmorEnforcePlugin):
@@ -88,7 +85,7 @@ class ApparmorDisablePlugin(ApparmorEnforcePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"{_sudo(params)}aa-disable {quote(params['profile'])}"]
+        return [f"{sudo_prefix(params, default=True)}aa-disable {quote(params['profile'])}"]
 
 
 class ApparmorProfileAssertPlugin(_ReadOnlyCommandPlugin):
@@ -104,8 +101,8 @@ class ApparmorProfileAssertPlugin(_ReadOnlyCommandPlugin):
             raise PluginValidationError("apparmor.profile_assert state must be enforce, complain or disabled")
         profile = quote(params["profile"])
         if state == "disabled":
-            return [f"! {_sudo(params)}aa-status 2>/dev/null | grep -F -- {profile}"]
-        return [f"{_sudo(params)}aa-status 2>/dev/null | grep -F -- {profile} | grep -Fi -- {quote(state)}"]
+            return [f"! {sudo_prefix(params, default=True)}aa-status 2>/dev/null | grep -F -- {profile}"]
+        return [f"{sudo_prefix(params, default=True)}aa-status 2>/dev/null | grep -F -- {profile} | grep -Fi -- {quote(state)}"]
 
 
 class ApparmorParserValidatePlugin(_ReadOnlyCommandPlugin):
@@ -116,7 +113,7 @@ class ApparmorParserValidatePlugin(_ReadOnlyCommandPlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"{_sudo(params)}apparmor_parser -Q {quote(params['profile'])}"]
+        return [f"{sudo_prefix(params, default=True)}apparmor_parser -Q {quote(params['profile'])}"]
 
 
 # auditd
@@ -126,7 +123,7 @@ class AuditdRulesFactsPlugin(_ReadOnlyCommandPlugin):
     optional_params = ("sudo",)
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        return [f"{_sudo(params)}auditctl -l; printf '\\n### persistent rules\\n'; for f in /etc/audit/rules.d/*.rules; do test -f \"$f\" || continue; echo \"$f\"; sed -n '1,200p' \"$f\"; done"]
+        return [f"{sudo_prefix(params, default=True)}auditctl -l; printf '\\n### persistent rules\\n'; for f in /etc/audit/rules.d/*.rules; do test -f \"$f\" || continue; echo \"$f\"; sed -n '1,200p' \"$f\"; done"]
 
 
 class AuditdWatchPlugin(BasePlugin):
@@ -149,10 +146,10 @@ class AuditdWatchPlugin(BasePlugin):
         rule = self._rule(params)
         commands = []
         if bool(params.get("backup", True)):
-            commands.append(f"test ! -e {quote(path)} || {_sudo(params)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        commands.append(f"printf '%s\\n' {quote(rule)} | {_sudo(params)}tee {quote(path)} >/dev/null")
+            commands.append(f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
+        commands.append(f"printf '%s\\n' {quote(rule)} | {sudo_prefix(params, default=True)}tee {quote(path)} >/dev/null")
         if bool(params.get("reload", True)):
-            commands.append(f"if command -v augenrules >/dev/null 2>&1; then {_sudo(params)}augenrules --load; else {_sudo(params)}auditctl -R {quote(path)}; fi")
+            commands.append(f"if command -v augenrules >/dev/null 2>&1; then {sudo_prefix(params, default=True)}augenrules --load; else {sudo_prefix(params, default=True)}auditctl -R {quote(path)}; fi")
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -187,7 +184,7 @@ class AuditdSearchPlugin(_ReadOnlyCommandPlugin):
             args.append(f"-ts {quote(params['start'])}")
         if params.get("end"):
             args.append(f"-te {quote(params['end'])}")
-        return [f"{_sudo(params)}ausearch {' '.join(args)}"]
+        return [f"{sudo_prefix(params, default=True)}ausearch {' '.join(args)}"]
 
 
 class AuditdBacklogAssertPlugin(_ReadOnlyCommandPlugin):
@@ -198,7 +195,7 @@ class AuditdBacklogAssertPlugin(_ReadOnlyCommandPlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         max_lost = int(params.get("max_lost", 0))
         max_backlog = int(params.get("max_backlog", 8192))
-        return [f"{_sudo(params)}auditctl -s | awk -v max_lost={max_lost} -v max_backlog={max_backlog} '$1==\"lost\" && $2>max_lost {{ bad=1 }} $1==\"backlog\" && $2>max_backlog {{ bad=1 }} {{print}} END {{ exit bad }}'"]
+        return [f"{sudo_prefix(params, default=True)}auditctl -s | awk -v max_lost={max_lost} -v max_backlog={max_backlog} '$1==\"lost\" && $2>max_lost {{ bad=1 }} $1==\"backlog\" && $2>max_backlog {{ bad=1 }} {{print}} END {{ exit bad }}'"]
 
 
 # udev
@@ -221,7 +218,7 @@ class UdevTestPlugin(_ReadOnlyCommandPlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"{_sudo(params)}udevadm test {quote(params['device'])}"]
+        return [f"{sudo_prefix(params, default=True)}udevadm test {quote(params['device'])}"]
 
 
 class UdevFactsPlugin(_ReadOnlyCommandPlugin):
@@ -232,7 +229,7 @@ class UdevFactsPlugin(_ReadOnlyCommandPlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"{_sudo(params)}udevadm info --query=property --name {quote(params['device'])}"]
+        return [f"{sudo_prefix(params, default=True)}udevadm info --query=property --name {quote(params['device'])}"]
 
 
 # kernel/sysctl/time
@@ -268,13 +265,13 @@ class KernelModuleBlacklistPlugin(BasePlugin):
         self.validate(params)
         path = self._path(params)
         if _state(params) == "absent":
-            return [f"test ! -e {quote(path)} || {_sudo(params)}rm -f {quote(path)}"]
+            return [f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}rm -f {quote(path)}"]
         content = f"blacklist {params['module']}\ninstall {params['module']} /bin/false\n"
         tmp = "/tmp/automax-modprobe.$$"
         cmds = [heredoc_to_file(tmp, content)]
         if bool(params.get("backup", True)):
-            cmds.append(f"test ! -e {quote(path)} || {_sudo(params)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        cmds.append(f"{_sudo(params)}install -D -m 0644 {tmp} {quote(path)}")
+            cmds.append(f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
+        cmds.append(f"{sudo_prefix(params, default=True)}install -D -m 0644 {tmp} {quote(path)}")
         cmds.append(f"rm -f {tmp}")
         return cmds
 
@@ -312,9 +309,9 @@ class KernelBootParamAbsentPlugin(BasePlugin):
         path = str(params.get("file", "/etc/default/grub"))
         cmds=[]
         if bool(params.get("backup", True)):
-            cmds.append(f"test ! -e {quote(path)} || {_sudo(params)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        cmds.append(f"{_sudo(params)}sed -i -E 's/(GRUB_CMDLINE_LINUX[^=]*=\"[^\"]*)\\b{params['param']}\\b ?/\\1/' {quote(path)}")
-        sudo = _sudo(params)
+            cmds.append(f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
+        cmds.append(f"{sudo_prefix(params, default=True)}sed -i -E 's/(GRUB_CMDLINE_LINUX[^=]*=\"[^\"]*)\\b{params['param']}\\b ?/\\1/' {quote(path)}")
+        sudo = sudo_prefix(params, default=True)
         cmds.append(f"if command -v update-grub >/dev/null 2>&1; then {sudo}update-grub; elif command -v grub2-mkconfig >/dev/null 2>&1; then {sudo}grub2-mkconfig -o /boot/grub2/grub.cfg; fi")
         return cmds
 
@@ -330,7 +327,7 @@ class SysctlAssertPlugin(_ReadOnlyCommandPlugin):
     optional_params = ("sudo",)
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        return [f"test \"$({_sudo(params)}sysctl -n {quote(params['name'])})\" = {quote(params['value'])}"]
+        return [f"test \"$({sudo_prefix(params, default=True)}sysctl -n {quote(params['name'])})\" = {quote(params['value'])}"]
 
 
 class SysctlFactsPlugin(_ReadOnlyCommandPlugin):
@@ -340,7 +337,7 @@ class SysctlFactsPlugin(_ReadOnlyCommandPlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         names = _as_list(params.get("names"))
-        return [f"{_sudo(params)}sysctl -a" if not names else f"{_sudo(params)}sysctl {' '.join(quote(item) for item in names)}"]
+        return [f"{sudo_prefix(params, default=True)}sysctl -a" if not names else f"{sudo_prefix(params, default=True)}sysctl {' '.join(quote(item) for item in names)}"]
 
 
 class SysctlDropinPlugin(BasePlugin):
@@ -365,11 +362,11 @@ class SysctlDropinPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         path=self._path(params); content=self._content(params); tmp="/tmp/automax-sysctl.$$"; cmds=[heredoc_to_file(tmp, content)]
         if bool(params.get("backup", True)):
-            cmds.append(f"test ! -e {quote(path)} || {_sudo(params)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix','.bak')))}")
-        cmds.append(f"{_sudo(params)}install -D -m 0644 {tmp} {quote(path)}")
+            cmds.append(f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix','.bak')))}")
+        cmds.append(f"{sudo_prefix(params, default=True)}install -D -m 0644 {tmp} {quote(path)}")
         cmds.append(f"rm -f {tmp}")
         if bool(params.get("reload", True)):
-            cmds.append(f"{_sudo(params)}sysctl --system")
+            cmds.append(f"{sudo_prefix(params, default=True)}sysctl --system")
         return cmds
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -381,11 +378,11 @@ class TimedatectlStatusPlugin(_ReadOnlyCommandPlugin):
     name = "timedatectl.status"
     description = "Read timedatectl time, timezone and NTP state."
     optional_params = ("sudo",)
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]: return [f"{_sudo(params)}timedatectl status"]
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]: return [f"{sudo_prefix(params, default=True)}timedatectl status"]
 
 class TimedatectlTimezonePlugin(BasePlugin):
     name="timedatectl.timezone"; description="Set system timezone with timedatectl."; required_params=("timezone",); optional_params=("sudo",); opens_remote_session=True
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]: return [f"test \"$({_sudo(params)}timedatectl show -p Timezone --value)\" = {quote(params['timezone'])} || {_sudo(params)}timedatectl set-timezone {quote(params['timezone'])}"]
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]: return [f"test \"$({sudo_prefix(params, default=True)}timedatectl show -p Timezone --value)\" = {quote(params['timezone'])} || {sudo_prefix(params, default=True)}timedatectl set-timezone {quote(params['timezone'])}"]
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="timedatectl.timezone failed")
 
@@ -393,7 +390,7 @@ class TimedatectlNtpPlugin(TimedatectlTimezonePlugin):
     name="timedatectl.ntp"; description="Enable or disable NTP through timedatectl."; required_params=("enabled",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         want="yes" if bool(params["enabled"]) else "no"; value="true" if bool(params["enabled"]) else "false"
-        return [f"test \"$({_sudo(params)}timedatectl show -p NTP --value)\" = {quote(want)} || {_sudo(params)}timedatectl set-ntp {value}"]
+        return [f"test \"$({sudo_prefix(params, default=True)}timedatectl show -p NTP --value)\" = {quote(want)} || {sudo_prefix(params, default=True)}timedatectl set-ntp {value}"]
 
 class ChronyTrackingAssertPlugin(_ReadOnlyCommandPlugin):
     name="chrony.tracking_assert"; description="Assert chrony tracking health using chronyc tracking."; optional_params=("max_offset","max_stratum","sudo")
@@ -405,7 +402,7 @@ class ChronyTrackingAssertPlugin(_ReadOnlyCommandPlugin):
 # User/group/sudo facts and assertions
 class UserFactsPlugin(_ReadOnlyCommandPlugin):
     name="user.facts"; description="Read passwd, shadow lock and group facts for a user."; required_params=("user",); optional_params=("sudo",)
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]: return [f"getent passwd {quote(params['user'])}; id {quote(params['user'])}; {_sudo(params)}passwd -S {quote(params['user'])} 2>/dev/null || true"]
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]: return [f"getent passwd {quote(params['user'])}; id {quote(params['user'])}; {sudo_prefix(params, default=True)}passwd -S {quote(params['user'])} 2>/dev/null || true"]
 
 class UserShellAssertPlugin(_ReadOnlyCommandPlugin):
     name="user.shell_assert"; description="Assert a user's login shell."; required_params=("user","shell"); optional_params=("sudo",)
@@ -435,22 +432,22 @@ class GroupMemberAbsentPlugin(BasePlugin):
         super().validate(params)
         if not bool(params.get("confirm", False)): raise PluginValidationError("group.member_absent requires confirm=true")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        self.validate(params); return [f"{_sudo(params)}gpasswd -d {quote(params['user'])} {quote(params['group'])}"]
+        self.validate(params); return [f"{sudo_prefix(params, default=True)}gpasswd -d {quote(params['user'])} {quote(params['group'])}"]
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
         rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="group.member_absent failed")
 
 class SudoListPlugin(_ReadOnlyCommandPlugin):
     name="sudo.list"; description="List sudo privileges for a user."; required_params=("user",); optional_params=("sudo",)
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{_sudo(params)}sudo -l -U {quote(params['user'])}"]
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{sudo_prefix(params, default=True)}sudo -l -U {quote(params['user'])}"]
 
 class SudoAssertPlugin(_ReadOnlyCommandPlugin):
     name="sudo.assert"; description="Assert sudo -l output contains a rule fragment."; required_params=("user","rule"); optional_params=("sudo",)
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{_sudo(params)}sudo -l -U {quote(params['user'])} | grep -F -- {quote(params['rule'])}"]
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{sudo_prefix(params, default=True)}sudo -l -U {quote(params['user'])} | grep -F -- {quote(params['rule'])}"]
 
 class SudoCanRunPlugin(_ReadOnlyCommandPlugin):
     name="sudo.can_run"; description="Assert that a user can run a command via sudo without prompting."; required_params=("user","command"); optional_params=("run_as","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        run_as=f" -u {quote(params.get('run_as'))}" if params.get("run_as") else ""; return [f"{_sudo(params)}{SUDO_NON_INTERACTIVE} -l -U {quote(params['user'])}{run_as} {quote(params['command'])}"]
+        run_as=f" -u {quote(params.get('run_as'))}" if params.get("run_as") else ""; return [f"{sudo_prefix(params, default=True)}{SUDO_NON_INTERACTIVE} -l -U {quote(params['user'])}{run_as} {quote(params['command'])}"]
 
 
 # Mount/fstab/block safety
@@ -474,8 +471,8 @@ class FstabAbsentPlugin(BasePlugin):
         if not bool(params.get("confirm", False)): raise PluginValidationError("fstab.absent requires confirm=true")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         self.validate(params); file=str(params.get("file","/etc/fstab")); pattern=params.get("path") or params.get("source"); cmds=[]
-        if bool(params.get("backup", True)): cmds.append(f"{_sudo(params)}cp -p {quote(file)} {quote(file + str(params.get('backup_suffix','.bak')))}")
-        cmds.append(f"{_sudo(params)}awk '$0 ~ /^#/ || $0 !~ {quote(pattern)}' {quote(file)} | {_sudo(params)}tee {quote(file)} >/dev/null")
+        if bool(params.get("backup", True)): cmds.append(f"{sudo_prefix(params, default=True)}cp -p {quote(file)} {quote(file + str(params.get('backup_suffix','.bak')))}")
+        cmds.append(f"{sudo_prefix(params, default=True)}awk '$0 ~ /^#/ || $0 !~ {quote(pattern)}' {quote(file)} | {sudo_prefix(params, default=True)}tee {quote(file)} >/dev/null")
         return cmds
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
         rc,out,err=exec_remote(context," && ".join(self.manual_commands(params,context))+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="fstab.absent failed")
@@ -490,11 +487,11 @@ class FstabAssertPlugin(_ReadOnlyCommandPlugin):
 
 class BlockSizeAssertPlugin(_ReadOnlyCommandPlugin):
     name="block.size_assert"; description="Assert block device size in bytes."; required_params=("device","size"); optional_params=("sudo",)
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"test \"$({_sudo(params)}blockdev --getsize64 {quote(params['device'])})\" = {quote(params['size'])}"]
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"test \"$({sudo_prefix(params, default=True)}blockdev --getsize64 {quote(params['device'])})\" = {quote(params['size'])}"]
 
 class BlockFsAssertPlugin(_ReadOnlyCommandPlugin):
     name="block.fs_assert"; description="Assert block device filesystem type."; required_params=("device","fstype"); optional_params=("sudo",)
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"test \"$({_sudo(params)}blkid -o value -s TYPE {quote(params['device'])})\" = {quote(params['fstype'])}"]
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"test \"$({sudo_prefix(params, default=True)}blkid -o value -s TYPE {quote(params['device'])})\" = {quote(params['fstype'])}"]
 
 class BlockMountpointAssertPlugin(_ReadOnlyCommandPlugin):
     name="block.mountpoint_assert"; description="Assert a block device is mounted at a path."; required_params=("device","path"); optional_params=("sudo",)
@@ -502,7 +499,7 @@ class BlockMountpointAssertPlugin(_ReadOnlyCommandPlugin):
 
 class BlockEmptyAssertPlugin(_ReadOnlyCommandPlugin):
     name="block.empty_assert"; description="Assert a block device has no detectable signature before destructive use."; required_params=("device",); optional_params=("sudo",)
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"! {_sudo(params)}blkid {quote(params['device'])}"]
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"! {sudo_prefix(params, default=True)}blkid {quote(params['device'])}"]
 
 class BlockNotMountedAssertPlugin(_ReadOnlyCommandPlugin):
     name="block.not_mounted_assert"; description="Assert a block device is not mounted."; required_params=("device",); optional_params=("sudo",)
@@ -526,7 +523,7 @@ class PamOrderAssertPlugin(_ReadOnlyCommandPlugin):
 class PamBackupPlugin(BasePlugin):
     name="pam.backup"; description="Backup one PAM service file."; required_params=("service",); optional_params=("dest","sudo"); opens_remote_session=True
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        src=f"/etc/pam.d/{params['service']}"; dest=str(params.get("dest", src+".bak")); return [f"{_sudo(params)}cp -p {quote(src)} {quote(dest)}"]
+        src=f"/etc/pam.d/{params['service']}"; dest=str(params.get("dest", src+".bak")); return [f"{sudo_prefix(params, default=True)}cp -p {quote(src)} {quote(dest)}"]
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
         rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="pam.backup failed")
 
@@ -536,44 +533,44 @@ class PamRestorePlugin(PamBackupPlugin):
         super().validate(params)
         if not bool(params.get("confirm", False)): raise PluginValidationError("pam.restore requires confirm=true")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        self.validate(params); dest=f"/etc/pam.d/{params['service']}"; return [f"{_sudo(params)}cp -p {quote(params['src'])} {quote(dest)}"]
+        self.validate(params); dest=f"/etc/pam.d/{params['service']}"; return [f"{sudo_prefix(params, default=True)}cp -p {quote(params['src'])} {quote(dest)}"]
 
 
 # Firewall backend-specific extras
 class FirewalldSourcePlugin(BasePlugin):
     name="firewalld.source"; description="Manage a firewalld source in a zone."; required_params=("source",); optional_params=("zone","state","permanent","reload","sudo"); opens_remote_session=True
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-source" if state=="present" else "remove-source"; query_cmd=f"{_sudo(params)}firewall-cmd {zone}{permanent}--query-source={quote(params['source'])}"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {_sudo(params)}firewall-cmd {zone}{permanent}--{action}={quote(params['source'])} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {_sudo(params)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
+        state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-source" if state=="present" else "remove-source"; query_cmd=f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-source={quote(params['source'])}"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(params['source'])} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {sudo_prefix(params, default=True)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
         rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]); return result_from_remote(rc=rc, stdout=out, stderr=err, message="firewalld.source failed")
 
 class FirewalldIcmpBlockPlugin(FirewalldSourcePlugin):
     name="firewalld.icmp_block"; description="Manage a firewalld ICMP block."; required_params=("icmp_type",); optional_params=("zone","state","permanent","reload","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-icmp-block" if state=="present" else "remove-icmp-block"; query_cmd=f"{_sudo(params)}firewall-cmd {zone}{permanent}--query-icmp-block={quote(params['icmp_type'])}"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {_sudo(params)}firewall-cmd {zone}{permanent}--{action}={quote(params['icmp_type'])} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {_sudo(params)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
+        state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-icmp-block" if state=="present" else "remove-icmp-block"; query_cmd=f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-icmp-block={quote(params['icmp_type'])}"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(params['icmp_type'])} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {sudo_prefix(params, default=True)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
 
 class FirewalldMasqueradePlugin(FirewalldSourcePlugin):
     name="firewalld.masquerade"; description="Manage firewalld masquerading for a zone."; required_params=(); optional_params=("zone","state","permanent","reload","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-masquerade" if state=="present" else "remove-masquerade"; query_cmd=f"{_sudo(params)}firewall-cmd {zone}{permanent}--query-masquerade"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {_sudo(params)}firewall-cmd {zone}{permanent}--{action} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {_sudo(params)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
+        state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-masquerade" if state=="present" else "remove-masquerade"; query_cmd=f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-masquerade"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {sudo_prefix(params, default=True)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
 
 class FirewalldForwardPortPlugin(FirewalldSourcePlugin):
     name="firewalld.forward_port"; description="Manage firewalld forward-port rules."; required_params=("port","to_port"); optional_params=("protocol","to_addr","zone","state","permanent","reload","sudo")
     def _spec(self, params: Dict[str, Any])->str:
         spec=f"port={params['port']}:proto={params.get('protocol','tcp')}:toport={params['to_port']}"; return spec + (f":toaddr={params['to_addr']}" if params.get("to_addr") else "")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-forward-port" if state=="present" else "remove-forward-port"; spec=self._spec(params); query_cmd=f"{_sudo(params)}firewall-cmd {zone}{permanent}--query-forward-port={quote(spec)}"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {_sudo(params)}firewall-cmd {zone}{permanent}--{action}={quote(spec)} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {_sudo(params)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
+        state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-forward-port" if state=="present" else "remove-forward-port"; spec=self._spec(params); query_cmd=f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-forward-port={quote(spec)}"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(spec)} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {sudo_prefix(params, default=True)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
 
 class NftablesRulesetAssertPlugin(_ReadOnlyCommandPlugin):
     name="nftables.ruleset_assert"; description="Assert the active nftables ruleset contains a fragment."; required_params=("fragment",); optional_params=("sudo",)
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{_sudo(params)}nft list ruleset | grep -F -- {quote(params['fragment'])}"]
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{sudo_prefix(params, default=True)}nft list ruleset | grep -F -- {quote(params['fragment'])}"]
 
 class NftablesRollbackFilePlugin(BasePlugin):
     name="nftables.rollback_file"; description="Apply an nftables rollback ruleset file after explicit confirmation."; required_params=("file",); optional_params=("confirm","sudo"); opens_remote_session=True
     def validate(self, params: Dict[str, Any])->None:
         super().validate(params)
         if not bool(params.get("confirm", False)): raise PluginValidationError("nftables.rollback_file requires confirm=true")
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: self.validate(params); return [f"{_sudo(params)}nft -c -f {quote(params['file'])} && {_sudo(params)}nft -f {quote(params['file'])}"]
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: self.validate(params); return [f"{sudo_prefix(params, default=True)}nft -c -f {quote(params['file'])} && {sudo_prefix(params, default=True)}nft -f {quote(params['file'])}"]
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
         rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="nftables.rollback_file failed")
 
@@ -583,32 +580,32 @@ class IptablesDeletePlugin(BasePlugin):
         super().validate(params)
         if not bool(params.get("confirm", False)): raise PluginValidationError("iptables.delete requires confirm=true")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        self.validate(params); binary="ip6tables" if bool(params.get("ipv6",False)) else "iptables"; table=str(params.get("table","filter")); return [f"{_sudo(params)}{binary} -t {quote(table)} -C {quote(params['chain'])} {params['rule']} >/dev/null 2>&1 && {_sudo(params)}{binary} -t {quote(table)} -D {quote(params['chain'])} {params['rule']} || true"]
+        self.validate(params); binary="ip6tables" if bool(params.get("ipv6",False)) else "iptables"; table=str(params.get("table","filter")); return [f"{sudo_prefix(params, default=True)}{binary} -t {quote(table)} -C {quote(params['chain'])} {params['rule']} >/dev/null 2>&1 && {sudo_prefix(params, default=True)}{binary} -t {quote(table)} -D {quote(params['chain'])} {params['rule']} || true"]
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
         rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.delete failed")
 
 class IptablesExistsAssertPlugin(_ReadOnlyCommandPlugin):
     name="iptables.exists_assert"; description="Assert an iptables rule exists."; required_params=("chain","rule"); optional_params=("table","ipv6","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        binary="ip6tables" if bool(params.get("ipv6",False)) else "iptables"; table=str(params.get("table","filter")); return [f"{_sudo(params)}{binary} -t {quote(table)} -C {quote(params['chain'])} {params['rule']}"]
+        binary="ip6tables" if bool(params.get("ipv6",False)) else "iptables"; table=str(params.get("table","filter")); return [f"{sudo_prefix(params, default=True)}{binary} -t {quote(table)} -C {quote(params['chain'])} {params['rule']}"]
 
 class IptablesCounterAssertPlugin(_ReadOnlyCommandPlugin):
     name="iptables.counter_assert"; description="Assert iptables chain packet counters are above a threshold."; required_params=("chain",); optional_params=("table","min_packets","ipv6","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        binary="ip6tables" if bool(params.get("ipv6",False)) else "iptables"; table=str(params.get("table","filter")); minp=int(params.get("min_packets",1)); return [f"{_sudo(params)}{binary} -t {quote(table)} -L {quote(params['chain'])} -v -n -x | awk 'NR>2 && $1+0>={minp} {{found=1}} END {{exit !found}}'"]
+        binary="ip6tables" if bool(params.get("ipv6",False)) else "iptables"; table=str(params.get("table","filter")); minp=int(params.get("min_packets",1)); return [f"{sudo_prefix(params, default=True)}{binary} -t {quote(table)} -L {quote(params['chain'])} -v -n -x | awk 'NR>2 && $1+0>={minp} {{found=1}} END {{exit !found}}'"]
 
 class UfwDeletePlugin(BasePlugin):
     name="ufw.delete"; description="Delete a UFW rule after explicit confirmation."; required_params=("rule",); optional_params=("confirm","sudo"); opens_remote_session=True
     def validate(self, params: Dict[str, Any])->None:
         super().validate(params)
         if not bool(params.get("confirm",False)): raise PluginValidationError("ufw.delete requires confirm=true")
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: self.validate(params); return [f"{_sudo(params)}ufw --force delete {params['rule']}"]
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: self.validate(params); return [f"{sudo_prefix(params, default=True)}ufw --force delete {params['rule']}"]
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
         rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="ufw.delete failed")
 
 class UfwResetPlugin(UfwDeletePlugin):
     name="ufw.reset"; description="Reset UFW after explicit confirmation."; required_params=(); optional_params=("confirm","sudo")
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: self.validate(params); return [f"{_sudo(params)}ufw --force reset"]
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: self.validate(params); return [f"{sudo_prefix(params, default=True)}ufw --force reset"]
 
 # Parameter schema disambiguation for names that have plugin-specific meaning.
 for _cls in (UserFactsPlugin, UserShellAssertPlugin, UserHomeAssertPlugin, UserGroupsAssertPlugin, SudoListPlugin, SudoAssertPlugin, SudoCanRunPlugin):

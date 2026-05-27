@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin
 from automax.plugins.remote_utils import exec_remote, quote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=False)
-
 
 def _diff(path: str, text: str) -> list[Dict[str, Any]]:
     return [{"path": path, "kind": "log-plan", "diff": "".join(unified_diff([], [text + "\n"], fromfile=f"{path} (current)", tofile=f"{path} (query)"))}]
@@ -39,7 +36,7 @@ class LogGrepPlugin(BasePlugin):
             files = [files]
         max_count = f" -m {int(params['max_count'])}" if params.get("max_count") else ""
         missing = " -s" if bool(params.get("ignore_missing", True)) else ""
-        return [f"{_sudo(params)}grep -R{missing}{max_count} -- {quote(params['pattern'])} {' '.join(quote(item) for item in files)}"]
+        return [f"{sudo_prefix(params, default=False)}grep -R{missing}{max_count} -- {quote(params['pattern'])} {' '.join(quote(item) for item in files)}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -59,7 +56,7 @@ class JournalCollectPlugin(BasePlugin):
         return _diff("journal.collect", f"journalctl service={params.get('service', '')} since={params.get('since', '')} lines={params.get('lines', '')}")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        command = [f"{_sudo(params)}journalctl", "--no-pager"]
+        command = [f"{sudo_prefix(params, default=False)}journalctl", "--no-pager"]
         if params.get("service"):
             command.extend(["-u", quote(params["service"])])
         if params.get("since"):
@@ -102,7 +99,7 @@ class LogExportPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         if params.get("files"):
             files = params["files"] if isinstance(params["files"], list) else [params["files"]]
-            return [f"{_sudo(params)}tail -n {int(params.get('lines', 200))} {' '.join(quote(item) for item in files)}"]
+            return [f"{sudo_prefix(params, default=False)}tail -n {int(params.get('lines', 200))} {' '.join(quote(item) for item in files)}"]
         return JournalCollectPlugin().manual_commands(params, context)
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:

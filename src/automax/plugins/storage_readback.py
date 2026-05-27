@@ -23,9 +23,6 @@ def _lv_size_filter(size: Any) -> str:
     return f"grep -F -- {quote(requested)}"
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 class LvmFactsPlugin(BasePlugin):
     name = "lvm.facts"
@@ -40,7 +37,7 @@ class LvmFactsPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         vg_filter = f" {quote(params['vg'])}" if params.get("vg") else ""
         lv_filter = f" {quote('/dev/' + str(params['vg']) + '/' + str(params['name']))}" if params.get("vg") and params.get("name") else ""
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         return [f"{sudo}pvs --reportformat json; {sudo}vgs --reportformat json{vg_filter}; {sudo}lvs --reportformat json{lv_filter}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -63,7 +60,7 @@ class LvmLvAssertPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         lv_path = f"/dev/{params['vg']}/{params['name']}"
-        command = f"{_sudo(params)}lvs --noheadings -o lv_size {quote(lv_path)}"
+        command = f"{sudo_prefix(params, default=True)}lvs --noheadings -o lv_size {quote(lv_path)}"
         if params.get("size"):
             command += f" | {_lv_size_filter(params['size'])}"
         return [command]
@@ -108,7 +105,7 @@ class FstabValidatePlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         file_path = str(params.get("file", "/etc/fstab"))
-        return [f"{_sudo(params)}findmnt --verify --tab-file {quote(file_path)}"]
+        return [f"{sudo_prefix(params, default=True)}findmnt --verify --tab-file {quote(file_path)}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -152,13 +149,13 @@ class BlkidAssertPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         device = quote(params["device"])
-        commands = [f"{_sudo(params)}blkid {device}"]
+        commands = [f"{sudo_prefix(params, default=True)}blkid {device}"]
         if params.get("fstype"):
-            commands.append(f"{_sudo(params)}blkid -o value -s TYPE {device} | grep -Fx -- {quote(params['fstype'])}")
+            commands.append(f"{sudo_prefix(params, default=True)}blkid -o value -s TYPE {device} | grep -Fx -- {quote(params['fstype'])}")
         if params.get("label"):
-            commands.append(f"{_sudo(params)}blkid -o value -s LABEL {device} | grep -Fx -- {quote(params['label'])}")
+            commands.append(f"{sudo_prefix(params, default=True)}blkid -o value -s LABEL {device} | grep -Fx -- {quote(params['label'])}")
         if params.get("uuid"):
-            commands.append(f"{_sudo(params)}blkid -o value -s UUID {device} | grep -Fx -- {quote(params['uuid'])}")
+            commands.append(f"{sudo_prefix(params, default=True)}blkid -o value -s UUID {device} | grep -Fx -- {quote(params['uuid'])}")
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:

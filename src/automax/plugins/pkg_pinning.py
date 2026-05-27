@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _manager(params: Dict[str, Any]) -> str:
     manager = str(params.get("manager", "auto"))
@@ -65,7 +62,7 @@ class PkgHoldPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         packages = " ".join(quote(item) for item in _packages(params))
         manager = _manager(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         commands = {
             "apt": f"{sudo}apt-mark hold {packages}",
             "dnf": f"command -v dnf >/dev/null 2>&1 && {sudo}dnf versionlock add {packages}",
@@ -88,7 +85,7 @@ class PkgUnholdPlugin(PkgHoldPlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         packages = " ".join(quote(item) for item in _packages(params))
         manager = _manager(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         commands = {
             "apt": f"{sudo}apt-mark unhold {packages}",
             "dnf": f"command -v dnf >/dev/null 2>&1 && {sudo}dnf versionlock delete {packages}",
@@ -126,7 +123,7 @@ class PkgVersionPinPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         manager = _manager(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         name = str(params["name"])
         version = str(params["version"])
         lock_spec = quote(f"{name}-{version}")
@@ -202,7 +199,7 @@ class PkgRepoPriorityPlugin(BasePlugin):
         self.validate(params)
         path = self._path(params)
         content = self._content(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         temp = "/tmp/automax-repo-priority.$$"
         commands = [heredoc_to_file(temp, content)]
         if bool(params.get("backup", True)):

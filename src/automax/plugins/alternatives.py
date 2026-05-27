@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 class AlternativesSetPlugin(BasePlugin):
     name = "alternatives.set"
@@ -30,7 +27,7 @@ class AlternativesSetPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         return [f"if command -v update-alternatives >/dev/null 2>&1; then {sudo}update-alternatives --set {quote(params['name'])} {quote(params['path'])}; elif command -v alternatives >/dev/null 2>&1; then {sudo}alternatives --set {quote(params['name'])} {quote(params['path'])}; else echo 'no alternatives command found' >&2; exit 1; fi"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -51,7 +48,7 @@ class AlternativesGetPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         name = quote(params["name"])
         return [f"if command -v update-alternatives >/dev/null 2>&1; then {sudo}update-alternatives --query {name}; elif command -v alternatives >/dev/null 2>&1; then {sudo}alternatives --display {name}; else echo 'no alternatives command found' >&2; exit 1; fi"]
 
@@ -72,7 +69,7 @@ class AlternativesListPlugin(BasePlugin):
         return "alternatives.list is a read-only alternatives inventory query"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         return [
             "if command -v update-alternatives >/dev/null 2>&1; then "
             f"{sudo}update-alternatives --get-selections; "

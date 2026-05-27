@@ -12,9 +12,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import exec_remote, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _fstab_line(params: Dict[str, Any]) -> str:
     return " ".join(
@@ -65,7 +62,7 @@ else
   echo __AUTOMAX_CHANGED__
 fi
 '''
-        command = f"{_sudo(params)}sh -s -- {quote(line)} {quote(params['path'])} {quote(state)} <<'SH'\n{script}\nSH"
+        command = f"{sudo_prefix(params, default=True)}sh -s -- {quote(line)} {quote(params['path'])} {quote(state)} <<'SH'\n{script}\nSH"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="fstab.entry failed", data={"line": line})
 
@@ -107,7 +104,7 @@ if [ "$persist" = true ]; then
 fi
 if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
 '''
-        command = f"{_sudo(params)}sh -s -- {quote(params['src'])} {quote(params['path'])} {quote(params['fstype'])} {quote(params.get('opts','defaults'))} {quote(str(persist).lower())} {quote(line)} <<'SH'\n{script}\nSH"
+        command = f"{sudo_prefix(params, default=True)}sh -s -- {quote(params['src'])} {quote(params['path'])} {quote(params['fstype'])} {quote(params.get('opts','defaults'))} {quote(str(persist).lower())} {quote(line)} <<'SH'\n{script}\nSH"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="mount.present failed")
 
@@ -142,6 +139,6 @@ if [ "$persist" = true ] && [ -e /etc/fstab ]; then
 fi
 if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
 '''
-        command = f"{_sudo(params)}sh -s -- {quote(params['path'])} {quote(str(persist).lower())} <<'SH'\n{script}\nSH"
+        command = f"{sudo_prefix(params, default=True)}sh -s -- {quote(params['path'])} {quote(str(persist).lower())} <<'SH'\n{script}\nSH"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="mount.absent failed")

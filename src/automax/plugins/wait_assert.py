@@ -33,9 +33,6 @@ def _interval(params: Dict[str, Any], default: int = 2) -> float:
     return value
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=False)
-
 
 def _tcp_check(host: str, port: int, timeout: float) -> tuple[bool, str]:
     try:
@@ -164,7 +161,7 @@ class WaitCommandPlugin(BasePlugin):
         last_rc = 1
         last_out = ""
         last_err = ""
-        command = f"{_sudo(params)}{params['command']}"
+        command = f"{sudo_prefix(params, default=False)}{params['command']}"
         while time.monotonic() <= deadline:
             last_rc, last_out, last_err = exec_remote(
                 context,
@@ -201,7 +198,7 @@ class AssertCommandPlugin(BasePlugin):
         self.validate(params)
         rc, out, err = exec_remote(
             context,
-            f"{_sudo(params)}{params['command']}",
+            f"{sudo_prefix(params, default=False)}{params['command']}",
             get_pty=bool(params.get("get_pty", params.get("sudo", False))),
         )
         if not _expected_match(params, out, rc):
@@ -223,7 +220,7 @@ class WaitFilePlugin(BasePlugin):
         params = {**params, "type": params.get("type", "file")}
         timeout = _timeout(params)
         interval = _interval(params)
-        command = f"{_sudo(params)}{_path_test_command(params)}"
+        command = f"{sudo_prefix(params, default=False)}{_path_test_command(params)}"
         deadline = time.monotonic() + timeout
         last_rc = 1
         last_err = ""
@@ -253,7 +250,7 @@ class AssertFilePlugin(BasePlugin):
         params = {**params, "type": params.get("type", "file")}
         rc, out, err = exec_remote(
             context,
-            f"{_sudo(params)}{_path_test_command(params)}",
+            f"{sudo_prefix(params, default=False)}{_path_test_command(params)}",
             get_pty=bool(params.get("sudo", False)),
         )
         if rc != 0:
@@ -300,7 +297,7 @@ class WaitProcessPlugin(BasePlugin):
             raise PluginValidationError("state must be present or absent")
         timeout = _timeout(params)
         interval = _interval(params)
-        command = f"{_sudo(params)}pgrep -f {quote(params['pattern'])} >/dev/null"
+        command = f"{sudo_prefix(params, default=False)}pgrep -f {quote(params['pattern'])} >/dev/null"
         if state == "absent":
             command = f"! {command}"
         deadline = time.monotonic() + timeout
@@ -334,7 +331,7 @@ class AssertDiskPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
-        command = f"{_sudo(params)}df -Pk {quote(params['path'])} | awk 'NR==2 {{print $2, $4}}'"
+        command = f"{sudo_prefix(params, default=False)}df -Pk {quote(params['path'])} | awk 'NR==2 {{print $2, $4}}'"
         rc, out, err = exec_remote(context, command, get_pty=bool(params.get("sudo", False)))
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="assert.disk failed")

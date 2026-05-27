@@ -12,9 +12,6 @@ from automax.plugins.base import BasePlugin
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=False)
-
 
 class MultipathStatusPlugin(BasePlugin):
     name = "multipath.status"
@@ -28,7 +25,7 @@ class MultipathStatusPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         name = f" {quote(params['name'])}" if params.get("name") else ""
-        return [f"{_sudo(params)}multipath -ll{name}".rstrip()]
+        return [f"{sudo_prefix(params, default=False)}multipath -ll{name}".rstrip()]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -53,7 +50,7 @@ class MultipathReloadPlugin(BasePlugin):
         return "multipath.reload refreshes runtime multipath maps and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        return [f"{_sudo(params)}multipath -r"]
+        return [f"{sudo_prefix(params, default=False)}multipath -r"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -72,7 +69,7 @@ class MultipathFlushPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"{_sudo(params)}multipath -f {quote(params['name'])}"]
+        return [f"{sudo_prefix(params, default=False)}multipath -f {quote(params['name'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])

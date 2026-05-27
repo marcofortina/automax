@@ -14,9 +14,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _list(value: Any) -> list[str]:
     if value is None:
@@ -44,7 +41,7 @@ class GroupCreatePlugin(BasePlugin):
             flags.extend(["--gid", quote(params["gid"])])
         command = (
             f"getent group {quote(params['name'])} >/dev/null "
-            f"|| {{ {_sudo(params)}groupadd {' '.join(flags)} {quote(params['name'])} "
+            f"|| {{ {sudo_prefix(params, default=True)}groupadd {' '.join(flags)} {quote(params['name'])} "
             f"&& echo {CHANGE_MARKER}; }}"
         )
         rc, out, err = exec_remote(context, command)
@@ -64,7 +61,7 @@ class GroupRemovePlugin(BasePlugin):
         self.validate(params)
         command = (
             f"if getent group {quote(params['name'])} >/dev/null; then "
-            f"{_sudo(params)}groupdel {quote(params['name'])} && echo {CHANGE_MARKER}; fi"
+            f"{sudo_prefix(params, default=True)}groupdel {quote(params['name'])} && echo {CHANGE_MARKER}; fi"
         )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="group.remove failed")
@@ -111,7 +108,7 @@ class UserCreatePlugin(BasePlugin):
             flags.extend(["--comment", quote(params["comment"])])
         command = (
             f"id -u {quote(params['name'])} >/dev/null 2>&1 "
-            f"|| {{ {_sudo(params)}useradd {' '.join(flags)} {quote(params['name'])} "
+            f"|| {{ {sudo_prefix(params, default=True)}useradd {' '.join(flags)} {quote(params['name'])} "
             f"&& echo {CHANGE_MARKER}; }}"
         )
         rc, out, err = exec_remote(context, command)
@@ -155,7 +152,7 @@ class UserModifyPlugin(BasePlugin):
             return PluginResult.success(changed=False, message="no user.modify fields requested")
         command = (
             f"id -u {quote(params['name'])} >/dev/null 2>&1 && "
-            f"{_sudo(params)}usermod {' '.join(flags)} {quote(params['name'])} && echo {CHANGE_MARKER}"
+            f"{sudo_prefix(params, default=True)}usermod {' '.join(flags)} {quote(params['name'])} && echo {CHANGE_MARKER}"
         )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.modify failed")
@@ -175,7 +172,7 @@ class UserRemovePlugin(BasePlugin):
         flag = "--remove" if bool(params.get("remove_home", False)) else ""
         command = (
             f"if id -u {quote(params['name'])} >/dev/null 2>&1; then "
-            f"{_sudo(params)}userdel {flag} {quote(params['name'])} && echo {CHANGE_MARKER}; fi"
+            f"{sudo_prefix(params, default=True)}userdel {flag} {quote(params['name'])} && echo {CHANGE_MARKER}; fi"
         )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.remove failed")
@@ -198,9 +195,9 @@ class ProcessKillPlugin(BasePlugin):
         signal = str(params.get("signal", "TERM"))
         ignore_missing = bool(params.get("ignore_missing", True))
         if params.get("pid"):
-            command = f"{_sudo(params)}kill -s {quote(signal)} {quote(params['pid'])} && echo {CHANGE_MARKER}"
+            command = f"{sudo_prefix(params, default=True)}kill -s {quote(signal)} {quote(params['pid'])} && echo {CHANGE_MARKER}"
         else:
-            command = f"{_sudo(params)}pkill -{quote(signal)} -f {quote(params['pattern'])} && echo {CHANGE_MARKER}"
+            command = f"{sudo_prefix(params, default=True)}pkill -{quote(signal)} -f {quote(params['pattern'])} && echo {CHANGE_MARKER}"
         if ignore_missing:
             command = f"{command} || true"
         rc, out, err = exec_remote(context, command)
@@ -265,9 +262,9 @@ class ProcessSignalPlugin(BasePlugin):
         self.validate(params)
         signal = str(params.get("signal", "TERM"))
         if params.get("pid"):
-            command = f"{_sudo(params)}kill -s {quote(signal)} {quote(params['pid'])}"
+            command = f"{sudo_prefix(params, default=True)}kill -s {quote(signal)} {quote(params['pid'])}"
         else:
-            command = f"{_sudo(params)}pkill -{quote(signal)} -f {quote(params['pattern'])}"
+            command = f"{sudo_prefix(params, default=True)}pkill -{quote(signal)} -f {quote(params['pattern'])}"
         if bool(params.get("ignore_missing", True)):
             command += " || true"
         return [command]
@@ -291,7 +288,7 @@ class ProcessAssertAbsentPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"! {_sudo(params)}pgrep -f {quote(params['pattern'])} >/dev/null"]
+        return [f"! {sudo_prefix(params, default=True)}pgrep -f {quote(params['pattern'])} >/dev/null"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -319,7 +316,7 @@ class ProcessAssertCountPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        checks = [f"actual=$({_sudo(params)}pgrep -fc {quote(params['pattern'])})"]
+        checks = [f"actual=$({sudo_prefix(params, default=True)}pgrep -fc {quote(params['pattern'])})"]
         if params.get("count") is not None:
             checks.append(f"test \"$actual\" -eq {quote(params['count'])}")
         if params.get("min_count") is not None:

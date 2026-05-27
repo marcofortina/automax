@@ -12,9 +12,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _checksum_cmd(path: str, params: Dict[str, Any]) -> str:
     checksum = str(params.get("checksum", "sha256"))
@@ -22,7 +19,7 @@ def _checksum_cmd(path: str, params: Dict[str, Any]) -> str:
         return "true"
     if checksum != "sha256":
         raise PluginValidationError("checksum must be sha256 or none")
-    sudo = _sudo(params)
+    sudo = sudo_prefix(params, default=True)
     if sudo:
         return f"{sudo}sha256sum {quote(path)} | {sudo}tee {quote(path + '.sha256')} >/dev/null"
     return f"sha256sum {quote(path)} > {quote(path + '.sha256')}"
@@ -42,7 +39,7 @@ class BackupFilePlugin(BasePlugin):
         self.validate(params)
         src = str(params["src"])
         dest = str(params["dest"])
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         return [
             " && ".join(
                 [
@@ -76,7 +73,7 @@ class BackupDirectoryPlugin(BasePlugin):
         if compression not in {"none", "gzip", "bzip2", "xz"}:
             raise PluginValidationError("compression must be none, gzip, bzip2 or xz")
         flags = {"none": "cf", "gzip": "czf", "bzip2": "cjf", "xz": "cJf"}[compression]
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         return [
             " && ".join(
                 [
@@ -117,7 +114,7 @@ class BackupRestorePlugin(BasePlugin):
         self.validate(params)
         src = str(params["src"])
         dest = str(params["dest"])
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         commands = [f"test -e {quote(src)}"]
         if bool(params.get("backup", True)):
             commands.append(f"if test -e {quote(dest)}; then {sudo}cp -a {quote(dest)} {quote(dest + str(params.get('backup_suffix', '.pre-restore')))}; fi")
@@ -149,7 +146,7 @@ class BackupVerifyPlugin(BasePlugin):
         if checksum != "sha256":
             raise PluginValidationError("backup.verify supports checksum=sha256")
         checksum_file = str(params.get("checksum_file", path + ".sha256"))
-        return [f"cd $(dirname {quote(path)}) && {_sudo(params)}sha256sum -c {quote(checksum_file)}"]
+        return [f"cd $(dirname {quote(path)}) && {sudo_prefix(params, default=True)}sha256sum -c {quote(checksum_file)}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -180,7 +177,7 @@ class BackupManifestPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         root = str(params["root"])
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         output = params.get("dest")
         paths = params.get("paths") or ["."]
         if isinstance(paths, str):
@@ -237,7 +234,7 @@ class BackupPrunePlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         path = quote(params["path"])
         patterns = _patterns_expr(params.get("patterns"))
         commands = [f"test -d {path}"]
@@ -293,7 +290,7 @@ class BackupRotatePlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         path = str(params["path"])
         keep = int(params["keep"])
         commands = [f"{sudo}rm -f -- {quote(path + '.' + str(keep))}"]
@@ -332,9 +329,9 @@ class BackupRestorePreviewPlugin(BasePlugin):
         dest = str(params["dest"])
         commands = [f"test -e {quote(src)}"]
         if params.get("checksum_file"):
-            commands.append(f"cd $(dirname {quote(src)}) && {_sudo(params)}sha256sum -c {quote(params['checksum_file'])}")
+            commands.append(f"cd $(dirname {quote(src)}) && {sudo_prefix(params, default=True)}sha256sum -c {quote(params['checksum_file'])}")
         if bool(params.get("archive", False)):
-            commands.append(f"{_sudo(params)}tar -tf {quote(src)} | sed 's#^#{dest.rstrip('/')}/#'")
+            commands.append(f"{sudo_prefix(params, default=True)}tar -tf {quote(src)} | sed 's#^#{dest.rstrip('/')}/#'")
         else:
             commands.append(f"printf '%s -> %s\\n' {quote(src)} {quote(dest)}")
         return [" && ".join(commands)]
@@ -369,9 +366,9 @@ class BackupRestoreVerifyPlugin(BasePlugin):
         dest = str(params["dest"])
         commands = [f"test -e {quote(src)}", f"test -e {quote(dest)}"]
         if params.get("checksum_file"):
-            commands.append(f"cd $(dirname {quote(src)}) && {_sudo(params)}sha256sum -c {quote(params['checksum_file'])}")
+            commands.append(f"cd $(dirname {quote(src)}) && {sudo_prefix(params, default=True)}sha256sum -c {quote(params['checksum_file'])}")
         if bool(params.get("archive", False)):
-            commands.append(f"{_sudo(params)}tar -df {quote(src)} -C {quote(dest)}")
+            commands.append(f"{sudo_prefix(params, default=True)}tar -df {quote(src)} -C {quote(dest)}")
         else:
             commands.append(f"cmp -s -- {quote(src)} {quote(dest)}")
         return [" && ".join(commands)]

@@ -14,9 +14,6 @@ from automax.plugins.http import HttpAssertPlugin
 from automax.plugins.remote_utils import exec_remote, quote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=False)
-
 
 class HealthPortPlugin(BasePlugin):
     name = "health.port"
@@ -32,7 +29,7 @@ class HealthPortPlugin(BasePlugin):
         self.validate(params)
         port = quote(params["port"])
         if bool(params.get("listen", True)):
-            return [f"{_sudo(params)}ss -H -ltn sport = :{port} | grep -q ."]
+            return [f"{sudo_prefix(params, default=False)}ss -H -ltn sport = :{port} | grep -q ."]
         host = str(params.get("host", "127.0.0.1"))
         return [f"python3 - <<'PY'\nimport socket\nsocket.create_connection(({host!r}, {int(params['port'])}), timeout={float(params.get('timeout', 3))}).close()\nPY"]
 

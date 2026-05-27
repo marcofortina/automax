@@ -13,9 +13,6 @@ from automax.plugins.file_utils import install_uploaded_file, upload_text_to_tem
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix, validate_env_name
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _safe_name(name: str) -> str:
     if "/" in name or name in {".", ".."}:
@@ -51,7 +48,7 @@ class CronEntryPlugin(BasePlugin):
         self.validate(params)
         dest = f"/etc/cron.d/{params['name']}"
         if str(params.get("state", "present")) == "absent":
-            command = f"if test -e {quote(dest)}; then {_sudo(params)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
+            command = f"if test -e {quote(dest)}; then {sudo_prefix(params, default=True)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
             rc, out, err = exec_remote(context, command)
             return result_from_remote(rc=rc, stdout=out, stderr=err, message="cron.entry failed")
         env_lines = []
@@ -91,7 +88,7 @@ class CronFilePlugin(BasePlugin):
         self.validate(params)
         dest = f"/etc/cron.d/{params['name']}"
         if str(params.get("state", "present")) == "absent":
-            command = f"if test -e {quote(dest)}; then {_sudo(params)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
+            command = f"if test -e {quote(dest)}; then {sudo_prefix(params, default=True)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
             rc, out, err = exec_remote(context, command)
             return result_from_remote(rc=rc, stdout=out, stderr=err, message="cron.file failed")
         temp_path = upload_text_to_temp(context, str(params["content"]).rstrip() + "\n")
@@ -111,8 +108,8 @@ class CronListPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         if params.get("user"):
-            return [f"{_sudo(params)}crontab -l -u {quote(params['user'])}"]
-        return [f"{_sudo(params)}ls -1 /etc/cron.d 2>/dev/null || true; {_sudo(params)}crontab -l 2>/dev/null || true"]
+            return [f"{sudo_prefix(params, default=True)}crontab -l -u {quote(params['user'])}"]
+        return [f"{sudo_prefix(params, default=True)}ls -1 /etc/cron.d 2>/dev/null || true; {sudo_prefix(params, default=True)}crontab -l 2>/dev/null || true"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -138,7 +135,7 @@ class CronAbsentPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         path = f"/etc/cron.d/{params['name']}"
-        return [f"test ! -e {quote(path)} || {_sudo(params)}rm -f {quote(path)}"]
+        return [f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}rm -f {quote(path)}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
@@ -168,7 +165,7 @@ awk '
   END { exit bad ? 1 : 0 }
 ' "$file"
 '''
-        return [f"{_sudo(params)}sh -s -- {quote(params['path'])} <<'SH'\n{script}\nSH"]
+        return [f"{sudo_prefix(params, default=True)}sh -s -- {quote(params['path'])} <<'SH'\n{script}\nSH"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])

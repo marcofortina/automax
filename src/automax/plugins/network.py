@@ -14,9 +14,6 @@ from automax.plugins.linux_ops import ResolverConfigPlugin
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _plan(path: str, before: str, after: str, kind: str) -> list[Dict[str, Any]]:
     diff = "".join(unified_diff([before + "\n"], [after + "\n"], fromfile=f"{path} (current)", tofile=f"{path} (desired)"))
@@ -40,7 +37,7 @@ def _persist(params: Dict[str, Any]) -> bool:
 def _backup_cmd(path: str, params: Dict[str, Any]) -> str:
     if not bool(params.get("backup", True)):
         return "true"
-    return f"test ! -e {quote(path)} || {_sudo(params)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}"
+    return f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}"
 
 
 def _write_file_cmd(path: str, content: str, mode: str, params: Dict[str, Any]) -> str:
@@ -48,7 +45,7 @@ def _write_file_cmd(path: str, content: str, mode: str, params: Dict[str, Any]) 
     return " && ".join([
         heredoc_to_file(temp, content),
         _backup_cmd(path, params),
-        f"{_sudo(params)}install -D -m {mode} {temp} {quote(path)}",
+        f"{sudo_prefix(params, default=True)}install -D -m {mode} {temp} {quote(path)}",
         f"rm -f {temp}",
     ])
 
@@ -99,7 +96,7 @@ class NetworkInterfacePlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         backend = _backend(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         name = quote(params["name"])
         commands = []
         if params.get("address") and not params.get("prefix"):
@@ -175,19 +172,19 @@ class NetworkRoutePlugin(BasePlugin):
             if backend == "networkmanager":
                 if not params.get("dev"):
                     raise PluginValidationError("network.route with NetworkManager persistence requires dev")
-                return [f"{_sudo(params)}nmcli connection modify {quote(params['dev'])} +ipv4.routes {quote(self._route(params))} && {_sudo(params)}nmcli connection up {quote(params['dev'])}"]
+                return [f"{sudo_prefix(params, default=True)}nmcli connection modify {quote(params['dev'])} +ipv4.routes {quote(self._route(params))} && {sudo_prefix(params, default=True)}nmcli connection up {quote(params['dev'])}"]
             if backend == "systemd-networkd":
                 dev = str(params.get("dev", "routes"))
                 content = f"# Managed by automax\n[Route]\nDestination={params['dest']}\n" + (f"Gateway={params['gateway']}\n" if params.get("gateway") else "")
-                return [_write_file_cmd(f"/etc/systemd/network/20-{dev}-route.network.d/automax-route.conf", content, "0644", params), f"{_sudo(params)}systemctl restart systemd-networkd"]
+                return [_write_file_cmd(f"/etc/systemd/network/20-{dev}-route.network.d/automax-route.conf", content, "0644", params), f"{sudo_prefix(params, default=True)}systemctl restart systemd-networkd"]
             if backend == "ifcfg":
                 if not params.get("dev"):
                     raise PluginValidationError("network.route with ifcfg persistence requires dev")
                 return [_write_file_cmd(f"/etc/sysconfig/network-scripts/route-{params['dev']}", self._route(params) + "\n", "0644", params)]
         if state == "present":
-            return [f"{_sudo(params)}ip route replace {route}"]
+            return [f"{sudo_prefix(params, default=True)}ip route replace {route}"]
         if state == "absent":
-            return [f"{_sudo(params)}ip route del {route} || true"]
+            return [f"{sudo_prefix(params, default=True)}ip route del {route} || true"]
         raise PluginValidationError("network.route state must be present or absent")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -209,7 +206,7 @@ class NetworkBondPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         interfaces = params["interfaces"] if isinstance(params["interfaces"], list) else [params["interfaces"]]
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         name = quote(params["name"])
         mode = quote(params.get("mode", "active-backup"))
         miimon = quote(params.get("miimon", 100))
@@ -243,7 +240,7 @@ class NetworkVlanPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         name = quote(params["name"])
         if _persist(params) and _backend(params) == "networkmanager":
             commands = [f"{sudo}nmcli connection show {name} >/dev/null 2>&1 || {sudo}nmcli connection add type vlan ifname {name} con-name {name} dev {quote(params['parent'])} id {quote(params['vlan_id'])}"]
@@ -281,7 +278,7 @@ class NetworkBridgePlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         state = str(params.get("state", "present"))
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         name = quote(params["name"])
         if state == "absent":
             return [f"ip link show dev {name} >/dev/null 2>&1 && {{ {sudo}ip link set dev {name} down; {sudo}ip link delete {name} type bridge; }} || true"]

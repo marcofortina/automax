@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=False)
-
 
 def _render_rules(params: Dict[str, Any]) -> str:
     if "content" in params:
@@ -74,7 +71,7 @@ class UdevRulePlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         content = _render_rules(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=False)
         temp = "/tmp/automax-udev-rule.$$"
         path = str(params["path"])
         backup_suffix = str(params.get("backup_suffix", ".bak"))
@@ -107,7 +104,7 @@ class UdevReloadPlugin(BasePlugin):
         return "udev.reload reloads runtime udev rules and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        return [f"{_sudo(params)}udevadm control --reload-rules"]
+        return [f"{sudo_prefix(params, default=False)}udevadm control --reload-rules"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -125,7 +122,7 @@ class UdevTriggerPlugin(BasePlugin):
         return "udev.trigger changes runtime udev device state and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        command = f"{_sudo(params)}udevadm trigger"
+        command = f"{sudo_prefix(params, default=False)}udevadm trigger"
         if params.get("subsystem"):
             command += f" --subsystem-match={quote(params['subsystem'])}"
         if params.get("action"):

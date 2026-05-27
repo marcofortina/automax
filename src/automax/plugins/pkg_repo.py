@@ -14,9 +14,6 @@ from automax.plugins.file_utils import install_uploaded_file, upload_text_to_tem
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _manager(params: Dict[str, Any]) -> str:
     manager = str(params.get("manager", "auto"))
@@ -50,13 +47,13 @@ class PackageKeyAddPlugin(BasePlugin):
         self.validate(params)
         manager = _manager(params)
         if params.get("url") and manager in {"auto", "dnf", "yum", "rpm"}:
-            command = f"{_sudo(params)}rpm --import {quote(params['url'])} && echo {CHANGE_MARKER}"
+            command = f"{sudo_prefix(params, default=True)}rpm --import {quote(params['url'])} && echo {CHANGE_MARKER}"
             rc, out, err = exec_remote(context, command)
             if manager != "auto" or rc == 0:
                 return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.key.add failed")
         dest = str(params.get("dest", f"/etc/apt/keyrings/{params['name']}.gpg"))
         if params.get("url"):
-            command = f"{_sudo(params)}mkdir -p {quote('/etc/apt/keyrings')} && curl -fsSL {quote(params['url'])} | {_sudo(params)}tee {quote(dest)} >/dev/null && {_sudo(params)}chmod 0644 {quote(dest)} && echo {CHANGE_MARKER}"
+            command = f"{sudo_prefix(params, default=True)}mkdir -p {quote('/etc/apt/keyrings')} && curl -fsSL {quote(params['url'])} | {sudo_prefix(params, default=True)}tee {quote(dest)} >/dev/null && {sudo_prefix(params, default=True)}chmod 0644 {quote(dest)} && echo {CHANGE_MARKER}"
             rc, out, err = exec_remote(context, command)
             return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.key.add failed", data={"path": dest})
         temp_path = upload_text_to_temp(context, _content_from_params(params), encoding="utf-8")
@@ -74,7 +71,7 @@ class PackageKeyRemovePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         dest = str(params.get("dest", f"/etc/apt/keyrings/{params['name']}.gpg"))
-        command = f"if test -e {quote(dest)}; then {_sudo(params)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
+        command = f"if test -e {quote(dest)}; then {sudo_prefix(params, default=True)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.key.remove failed")
 
@@ -106,7 +103,7 @@ class PackageRepoAddPlugin(BasePlugin):
         rc, out, err = install_uploaded_file(context, temp_path, dest, sudo=bool(params.get("sudo", True)), mode="0644", owner="root", group="root")
         if rc == 0 and bool(params.get("update_cache", False)):
             updater = "apt-get update" if dest.endswith(".list") else ("dnf makecache" if manager != "yum" else "yum makecache")
-            rc2, out2, err2 = exec_remote(context, f"{_sudo(params)}{updater}")
+            rc2, out2, err2 = exec_remote(context, f"{sudo_prefix(params, default=True)}{updater}")
             rc = rc2
             out += out2
             err += err2
@@ -129,9 +126,9 @@ class PackageRepoRemovePlugin(BasePlugin):
             dest = f"/etc/apt/sources.list.d/{params['name']}.list"
         else:
             dest = f"/etc/yum.repos.d/{params['name']}.repo"
-        command = f"if test -e {quote(dest)}; then {_sudo(params)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
+        command = f"if test -e {quote(dest)}; then {sudo_prefix(params, default=True)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
         if bool(params.get("update_cache", False)):
             updater = "apt-get update" if dest.endswith(".list") else ("dnf makecache" if manager != "yum" else "yum makecache")
-            command += f"; {_sudo(params)}{updater}"
+            command += f"; {sudo_prefix(params, default=True)}{updater}"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.repo.remove failed")

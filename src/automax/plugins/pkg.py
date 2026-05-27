@@ -37,13 +37,10 @@ def _manager(params: Dict[str, Any]) -> str:
     return manager
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _shell_header(params: Dict[str, Any]) -> str:
     manager = _manager(params)
-    sudo = _sudo(params)
+    sudo = sudo_prefix(params, default=True)
     return f"""
 manager={quote(manager)}
 if [ "$manager" = auto ]; then
@@ -330,7 +327,7 @@ class PackageVerifyPlugin(_PackagePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         packages = _package_args(_as_packages(params))
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         command = _inspection_header(params) + f"""
 case "$manager" in
   apt|apt-get) if command -v debsums >/dev/null 2>&1; then {sudo}debsums -s {packages}; else {sudo}dpkg -V {packages}; fi ;;
@@ -355,7 +352,7 @@ class PackageCleanPlugin(_PackagePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         command = _inspection_header(params) + f"""
 case "$manager" in
   apt|apt-get) {sudo}apt-get clean ;;
@@ -395,7 +392,7 @@ def _pkg_install_manual(self: PackageInstallPlugin, params: Dict[str, Any], cont
         raise PluginValidationError("pkg.install version requires exactly one package")
     package_exprs = [f"{packages[0]}={params['version']}" if params.get("version") else package for package in packages]
     pkg_args = _package_args(package_exprs)
-    sudo = _sudo(params)
+    sudo = sudo_prefix(params, default=True)
     no_recommends = " --no-install-recommends" if bool(params.get("no_recommends", False)) else ""
     allow_downgrade = " --allow-downgrades" if bool(params.get("allow_downgrade", False)) else ""
     repo_opts = _repo_opts(params)
@@ -433,7 +430,7 @@ def _pkg_remove_manual(self: PackageRemovePlugin, params: Dict[str, Any], contex
     if dangerous and not bool(params.get("confirm", False)):
         raise PluginValidationError("pkg.remove purge/autoremove/protected package removal requires confirm=true")
     pkg_args = _package_args(packages)
-    sudo = _sudo(params)
+    sudo = sudo_prefix(params, default=True)
     purge = " purge" if bool(params.get("purge", False)) else " remove"
     autoremove = f" && {sudo}apt-get autoremove -y" if bool(params.get("autoremove", False)) else ""
     command = _shell_header(params) + f"""
@@ -462,7 +459,7 @@ def _pkg_remove_execute(self: PackageRemovePlugin, params: Dict[str, Any], conte
 
 def _pkg_upgrade_manual(self: PackageUpgradePlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
     _manager(params)
-    sudo = _sudo(params)
+    sudo = sudo_prefix(params, default=True)
     excludes = " ".join(f"--exclude={quote(item)}" for item in _as_list(params.get("exclude")))
     download = " --download-only" if bool(params.get("download_only", False)) else ""
     security = " --security" if bool(params.get("security_only", False)) else ""

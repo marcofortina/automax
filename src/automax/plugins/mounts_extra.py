@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _diff(path: str, before: str, after: str, kind: str) -> list[Dict[str, Any]]:
     return [{"path": path, "kind": kind, "diff": "".join(unified_diff([before + "\n"], [after + "\n"], fromfile=f"{path} (current)", tofile=f"{path} (desired)"))}]
@@ -35,7 +32,7 @@ class MountRemountPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         opts = str(params.get("opts", "defaults"))
-        return [f"{_sudo(params)}mount -o remount,{quote(opts)} {quote(params['path'])}"]
+        return [f"{sudo_prefix(params, default=True)}mount -o remount,{quote(opts)} {quote(params['path'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -55,7 +52,7 @@ class FsResizePlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         fstype = str(params["fstype"])
         if fstype == "xfs":
             return [f"{sudo}xfs_growfs {quote(params.get('path', params['device']))}"]

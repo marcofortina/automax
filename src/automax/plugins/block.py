@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix, sudo_shell_run_function
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=False)
-
 
 def _bool(value: Any) -> str:
     return "true" if bool(value) else "false"
@@ -46,7 +43,7 @@ class BlockFactsPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         devices = _as_list(params.get("devices"))
         device_args = " ".join(quote(item) for item in devices)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=False)
         commands = [
             f"{sudo}lsblk -J -O {device_args}".rstrip(),
             f"{sudo}blkid {device_args} || true".rstrip(),
@@ -83,7 +80,7 @@ class BlockIdentityPlugin(BasePlugin):
         scsi_id = str(params.get("scsi_id_path", "/usr/lib/udev/scsi_id"))
         device = quote(params["device"])
         return [
-            f"{_sudo(params)}{quote(scsi_id)} -g -u -d {device}",
+            f"{sudo_prefix(params, default=False)}{quote(scsi_id)} -g -u -d {device}",
             f"udevadm info --query=property --name={device} | egrep '^(ID_SERIAL|ID_SERIAL_SHORT|ID_WWN|DM_UUID)=' || true",
         ]
 
@@ -107,7 +104,7 @@ class BlockRescanPlugin(BasePlugin):
         return "block.rescan changes kernel device discovery state and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=False)
         device = params.get("device")
         commands = []
         if device:
@@ -143,7 +140,7 @@ class BlockPartitionRescanPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=False)
         device = quote(params["device"])
         commands = [f"{sudo}partprobe {device} || {sudo}blockdev --rereadpt {device}"]
         if bool(params.get("udev_settle", True)):
@@ -284,7 +281,7 @@ class BlockWipeSignaturesPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=False)
         device = quote(params["device"])
         commands = []
         if bool(params.get("backup", True)):
@@ -315,7 +312,7 @@ class BlockMkfsPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=False)
         device = quote(params["device"])
         fstype = str(params["fstype"])
         label_arg = f" -L {quote(params['label'])}" if params.get("label") else ""

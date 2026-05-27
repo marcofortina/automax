@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _diff(path: str, before: str, after: str, kind: str) -> list[Dict[str, Any]]:
     return [{"path": path, "kind": kind, "diff": "".join(unified_diff([before + "\n"], [after + "\n"], fromfile=f"{path} (current)", tofile=f"{path} (desired)"))}]
@@ -43,7 +40,7 @@ class FsBindMountPlugin(BasePlugin):
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
             raise PluginValidationError("fs.bind_mount state must be present or absent")
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         src = str(params["src"])
         dest = str(params["dest"])
         commands: list[str] = []
@@ -77,7 +74,7 @@ class FsDiskUsageAssertPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"usage=$({_sudo(params)}df -P {quote(params['path'])} | awk 'NR==2 {{gsub(/%/, \"\", $5); print $5}}'); test \"$usage\" -le {quote(params['max_percent'])}"]
+        return [f"usage=$({sudo_prefix(params, default=True)}df -P {quote(params['path'])} | awk 'NR==2 {{gsub(/%/, \"\", $5); print $5}}'); test \"$usage\" -le {quote(params['max_percent'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -98,7 +95,7 @@ class FsInodeUsageAssertPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"usage=$({_sudo(params)}df -Pi {quote(params['path'])} | awk 'NR==2 {{gsub(/%/, \"\", $5); print $5}}'); test \"$usage\" -le {quote(params['max_percent'])}"]
+        return [f"usage=$({sudo_prefix(params, default=True)}df -Pi {quote(params['path'])} | awk 'NR==2 {{gsub(/%/, \"\", $5); print $5}}'); test \"$usage\" -le {quote(params['max_percent'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])

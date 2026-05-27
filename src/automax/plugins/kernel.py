@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 class SysctlGetPlugin(BasePlugin):
     name = "sysctl.get"
@@ -53,15 +50,15 @@ class SysctlSetPlugin(BasePlugin):
         file_path = str(params.get("file", "/etc/sysctl.d/99-automax.conf"))
         commands = []
         if runtime:
-            commands.append(f"{_sudo(params)}sysctl -w {quote(name + '=' + value)}")
+            commands.append(f"{sudo_prefix(params, default=True)}sysctl -w {quote(name + '=' + value)}")
         if persist:
             pattern = "^" + name.replace(".", "\\.") + "[[:space:]]*="
             replacement = name + " = " + value
-            commands.append(f"{_sudo(params)}mkdir -p {quote(posixpath.dirname(file_path))}")
+            commands.append(f"{sudo_prefix(params, default=True)}mkdir -p {quote(posixpath.dirname(file_path))}")
             commands.append(
                 f"if grep -Eq {quote(pattern)} {quote(file_path)} 2>/dev/null; then "
-                f"{_sudo(params)}sed -i {quote('s#' + pattern + '.*#' + replacement + '#')} {quote(file_path)}; "
-                f"else printf '%s\\n' {quote(replacement)} | {_sudo(params)}tee -a {quote(file_path)} >/dev/null; fi"
+                f"{sudo_prefix(params, default=True)}sed -i {quote('s#' + pattern + '.*#' + replacement + '#')} {quote(file_path)}; "
+                f"else printf '%s\\n' {quote(replacement)} | {sudo_prefix(params, default=True)}tee -a {quote(file_path)} >/dev/null; fi"
             )
         return commands
 
@@ -103,7 +100,7 @@ fi
 if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
 '''
         command = (
-            f"AUTOMAX_SYSCTL_VALUE={quote(value)} {_sudo(params)}sh -s -- "
+            f"AUTOMAX_SYSCTL_VALUE={quote(value)} {sudo_prefix(params, default=True)}sh -s -- "
             f"{quote(name)} {quote(value)} {quote(str(runtime).lower())} {quote(str(persist).lower())} {quote(file_path)} <<'SH'\n{script}\nSH"
         )
         rc, out, err = exec_remote(context, command)
@@ -138,8 +135,8 @@ class SysctlReloadPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         if params.get("file"):
-            return [f"{_sudo(params)}sysctl -p {quote(params['file'])}"]
-        return [f"{_sudo(params)}sysctl --system"]
+            return [f"{sudo_prefix(params, default=True)}sysctl -p {quote(params['file'])}"]
+        return [f"{sudo_prefix(params, default=True)}sysctl --system"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         command = self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}"
@@ -157,10 +154,10 @@ class KernelModuleLoadPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         module = str(params["name"])
-        commands = [f"{_sudo(params)}modprobe {quote(module)}"]
+        commands = [f"{sudo_prefix(params, default=True)}modprobe {quote(module)}"]
         if bool(params.get("persist", False)):
             file_path = str(params.get("file", f"/etc/modules-load.d/{module}.conf"))
-            commands.append(f"grep -Fx -- {quote(module)} {quote(file_path)} >/dev/null 2>&1 || printf '%s\\n' {quote(module)} | {_sudo(params)}tee -a {quote(file_path)} >/dev/null")
+            commands.append(f"grep -Fx -- {quote(module)} {quote(file_path)} >/dev/null 2>&1 || printf '%s\\n' {quote(module)} | {sudo_prefix(params, default=True)}tee -a {quote(file_path)} >/dev/null")
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -188,7 +185,7 @@ if [ "$persist" = true ]; then
 fi
 if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
 '''
-        command = f"{_sudo(params)}sh -s -- {quote(module)} {quote(str(persist).lower())} {quote(file_path)} <<'SH'\n{script}\nSH"
+        command = f"{sudo_prefix(params, default=True)}sh -s -- {quote(module)} {quote(str(persist).lower())} {quote(file_path)} <<'SH'\n{script}\nSH"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.module.load failed")
 
@@ -203,7 +200,7 @@ class KernelModuleUnloadPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         module = str(params["name"])
-        commands = [f"{_sudo(params)}modprobe -r {quote(module)}"]
+        commands = [f"{sudo_prefix(params, default=True)}modprobe -r {quote(module)}"]
         if bool(params.get("persist", False)):
             file_path = str(params.get("file", f"/etc/modules-load.d/{module}.conf"))
             commands.append(f"test ! -e {quote(file_path)} || sed -i {quote('/^' + module + '$/d')} {quote(file_path)}")
@@ -235,7 +232,7 @@ if [ "$persist" = true ] && [ -e "$file" ]; then
 fi
 if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
 '''
-        command = f"{_sudo(params)}sh -s -- {quote(module)} {quote(str(persist).lower())} {quote(file_path)} <<'SH'\n{script}\nSH"
+        command = f"{sudo_prefix(params, default=True)}sh -s -- {quote(module)} {quote(str(persist).lower())} {quote(file_path)} <<'SH'\n{script}\nSH"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.module.unload failed")
 
@@ -253,7 +250,7 @@ class KernelModulePersistPlugin(BasePlugin):
         module = str(params["name"])
         file_path = str(params.get("file", f"/etc/modules-load.d/{module}.conf"))
         if state == "present":
-            return [f"{_sudo(params)}mkdir -p {quote('/etc/modules-load.d')} && grep -Fx -- {quote(module)} {quote(file_path)} >/dev/null 2>&1 || printf '%s\\n' {quote(module)} | {_sudo(params)}tee -a {quote(file_path)} >/dev/null"]
+            return [f"{sudo_prefix(params, default=True)}mkdir -p {quote('/etc/modules-load.d')} && grep -Fx -- {quote(module)} {quote(file_path)} >/dev/null 2>&1 || printf '%s\\n' {quote(module)} | {sudo_prefix(params, default=True)}tee -a {quote(file_path)} >/dev/null"]
         return [f"test ! -e {quote(file_path)} || sed -i {quote('/^' + module + '$/d')} {quote(file_path)}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -264,9 +261,9 @@ class KernelModulePersistPlugin(BasePlugin):
         module = str(params["name"])
         file_path = str(params.get("file", f"/etc/modules-load.d/{module}.conf"))
         if state == "present":
-            command = f"{_sudo(params)}mkdir -p {quote('/etc/modules-load.d')} && {_sudo(params)}touch {quote(file_path)} && grep -Fx -- {quote(module)} {quote(file_path)} >/dev/null || {{ echo {quote(module)} | {_sudo(params)}tee -a {quote(file_path)} >/dev/null && echo {CHANGE_MARKER}; }}"
+            command = f"{sudo_prefix(params, default=True)}mkdir -p {quote('/etc/modules-load.d')} && {sudo_prefix(params, default=True)}touch {quote(file_path)} && grep -Fx -- {quote(module)} {quote(file_path)} >/dev/null || {{ echo {quote(module)} | {sudo_prefix(params, default=True)}tee -a {quote(file_path)} >/dev/null && echo {CHANGE_MARKER}; }}"
         else:
-            command = f"if test -e {quote(file_path)}; then tmp=$(mktemp); grep -Fxv -- {quote(module)} {quote(file_path)} > $tmp || true; if cmp -s $tmp {quote(file_path)}; then rm -f $tmp; else {_sudo(params)}cp $tmp {quote(file_path)} && rm -f $tmp && echo {CHANGE_MARKER}; fi; fi"
+            command = f"if test -e {quote(file_path)}; then tmp=$(mktemp); grep -Fxv -- {quote(module)} {quote(file_path)} > $tmp || true; if cmp -s $tmp {quote(file_path)}; then rm -f $tmp; else {sudo_prefix(params, default=True)}cp $tmp {quote(file_path)} && rm -f $tmp && echo {CHANGE_MARKER}; fi; fi"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.module.persist failed")
 
@@ -297,7 +294,7 @@ class KernelBootParamPlugin(BasePlugin):
             raise PluginValidationError("kernel.boot_param state must be present or absent")
         path = self._path(params)
         token = self._token(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         script = r'''
 set -eu
 path=$1

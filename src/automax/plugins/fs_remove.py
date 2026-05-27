@@ -129,8 +129,6 @@ class FsRemovePlugin(BasePlugin):
                 "fs.remove requires confirm=true for recursive, force, backup_before, trash_dir or root-guard override"
             )
 
-    def _sudo(self, params: Dict[str, Any]) -> str:
-        return sudo_prefix(params, default=False)
 
     def _guard_commands(self, params: Dict[str, Any]) -> list[str]:
         path = quote(params["path"])
@@ -145,14 +143,14 @@ class FsRemovePlugin(BasePlugin):
         return commands
 
     def _backup_command(self, params: Dict[str, Any]) -> str:
-        sudo = self._sudo(params)
+        sudo = sudo_prefix(params, default=False)
         path = quote(params["path"])
         backup_path = str(params.get("backup_path") or f"/tmp/automax-remove-backup-{_safe_label(params['path'])}")
         backup = quote(backup_path)
         return f"test ! -e {backup} && {sudo}cp -a -- {path} {backup} || {{ echo 'fs.remove backup path already exists or backup failed' >&2; exit 1; }}"
 
     def _remove_or_trash_command(self, params: Dict[str, Any]) -> str:
-        sudo = self._sudo(params)
+        sudo = sudo_prefix(params, default=False)
         path = quote(params["path"])
         if params.get("trash_dir"):
             trash_dir = quote(params["trash_dir"])

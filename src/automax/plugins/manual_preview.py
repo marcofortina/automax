@@ -18,9 +18,6 @@ def _q(value: Any) -> str:
     return shell_quote(str(value))
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _list(value: Any) -> list[str]:
     if value is None:
@@ -38,7 +35,7 @@ def _packages(params: Dict[str, Any]) -> str:
 
 
 def _package_manager_command(params: Dict[str, Any], apt: str, dnf: str, yum: str, zypper: str) -> str:
-    sudo = _sudo(params)
+    sudo = sudo_prefix(params, default=True)
     return (
         "if command -v apt-get >/dev/null 2>&1; then "
         f"{sudo}{apt}; "
@@ -54,13 +51,13 @@ def _package_manager_command(params: Dict[str, Any], apt: str, dnf: str, yum: st
 
 def _systemctl(params: Dict[str, Any], action: str) -> str:
     service = params.get("service", "demo.service")
-    sudo = _sudo(params)
+    sudo = sudo_prefix(params, default=True)
     scope = " --user" if bool(params.get("user", False)) else ""
     return f"{sudo}systemctl{scope} {action} {_q(service)}"
 
 
 def _firewalld(params: Dict[str, Any], action: str) -> str:
-    sudo = _sudo(params)
+    sudo = sudo_prefix(params, default=True)
     zone = f" --zone={_q(params['zone'])}" if params.get("zone") else ""
     permanent = " --permanent" if bool(params.get("permanent", True)) else ""
     reload_cmd = f" && {sudo}firewall-cmd --reload" if bool(params.get("reload", False)) else ""
@@ -118,7 +115,7 @@ def _useradd_flags(params: Dict[str, Any]) -> str:
 
 def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
     """Return deterministic manual commands for legacy plugins that do not override them."""
-    sudo = _sudo(params)
+    sudo = sudo_prefix(params, default=True)
     path = str(params.get("path", "/tmp/automax-demo"))
     name = str(params.get("name", "demo"))
 

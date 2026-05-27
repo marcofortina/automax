@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _diff(path: str, content: str, kind: str) -> list[Dict[str, Any]]:
     return [{"path": path, "kind": kind, "diff": "".join(unified_diff([], content.splitlines(keepends=True), fromfile=f"{path} (current)", tofile=f"{path} (desired)"))}]
@@ -45,11 +42,11 @@ def _settings_content(settings: Dict[str, Any]) -> str:
 
 
 def _backup(path: str, params: Dict[str, Any]) -> str:
-    return f"test ! -e {quote(path)} || {_sudo(params)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}"
+    return f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}"
 
 
 def _ensure_line(path: str, line: str, params: Dict[str, Any]) -> str:
-    return f"grep -Fxq -- {quote(line)} {quote(path)} || printf '%s\\n' {quote(line)} | {_sudo(params)}tee -a {quote(path)} >/dev/null"
+    return f"grep -Fxq -- {quote(line)} {quote(path)} || printf '%s\\n' {quote(line)} | {sudo_prefix(params, default=True)}tee -a {quote(path)} >/dev/null"
 
 
 def _service_files(params: Dict[str, Any]) -> list[str]:
@@ -73,7 +70,7 @@ def _install_content_command(path: str, content: str, params: Dict[str, Any], mo
     commands = [heredoc_to_file(tmp, content)]
     if bool(params.get("backup", True)):
         commands.append(_backup(path, params))
-    commands.extend([f"{_sudo(params)}install -D -m {mode} {tmp} {quote(path)}", f"rm -f {tmp}"])
+    commands.extend([f"{sudo_prefix(params, default=True)}install -D -m {mode} {tmp} {quote(path)}", f"rm -f {tmp}"])
     return commands
 
 
@@ -81,13 +78,13 @@ def _settings_file_commands(path: str, settings: Dict[str, Any], params: Dict[st
     commands: list[str] = []
     if bool(params.get("backup", True)):
         commands.append(_backup(path, params))
-    commands.append(f"{_sudo(params)}touch {quote(path)}")
+    commands.append(f"{sudo_prefix(params, default=True)}touch {quote(path)}")
     for key, value in sorted(settings.items()):
         line = f"{key} = {value}"
         commands.append(
             f"if grep -Eq '^[#[:space:]]*{key}[[:space:]]*=' {quote(path)}; then "
-            f"{_sudo(params)}sed -i -E 's|^[#[:space:]]*{key}[[:space:]]*=.*|{line}|' {quote(path)}; "
-            f"else printf '%s\\n' {quote(line)} | {_sudo(params)}tee -a {quote(path)} >/dev/null; fi"
+            f"{sudo_prefix(params, default=True)}sed -i -E 's|^[#[:space:]]*{key}[[:space:]]*=.*|{line}|' {quote(path)}; "
+            f"else printf '%s\\n' {quote(line)} | {sudo_prefix(params, default=True)}tee -a {quote(path)} >/dev/null; fi"
         )
     return commands
 
@@ -123,7 +120,7 @@ class PamServiceLinePlugin(BasePlugin):
         if _state(params) == "present":
             commands.append(_ensure_line(path, line, params))
         else:
-            commands.append(f"test ! -e {quote(path)} || {_sudo(params)}python3 - <<'PY'\nfrom pathlib import Path\npath = Path({path!r})\nline = {line!r}\nif path.exists():\n    lines = path.read_text().splitlines()\n    path.write_text('\\n'.join(item for item in lines if item != line) + ('\\n' if lines else ''))\nPY")
+            commands.append(f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}python3 - <<'PY'\nfrom pathlib import Path\npath = Path({path!r})\nline = {line!r}\nif path.exists():\n    lines = path.read_text().splitlines()\n    path.write_text('\\n'.join(item for item in lines if item != line) + ('\\n' if lines else ''))\nPY")
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -175,17 +172,17 @@ class PamAccessPlugin(BasePlugin):
         commands: list[str] = []
         if bool(params.get("backup", True)):
             commands.append(_backup(path, params))
-        commands.append(f"{_sudo(params)}touch {quote(path)}")
+        commands.append(f"{sudo_prefix(params, default=True)}touch {quote(path)}")
         for line in entries:
             if state == "present":
                 commands.append(_ensure_line(path, line, params))
             else:
-                commands.append(f"test ! -e {quote(path)} || {_sudo(params)}grep -Fxv -- {quote(line)} {quote(path)} | {_sudo(params)}tee {quote(path)} >/dev/null")
+                commands.append(f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}grep -Fxv -- {quote(line)} {quote(path)} | {sudo_prefix(params, default=True)}tee {quote(path)} >/dev/null")
         service_line = "account required pam_access.so"
         for service_path in _service_files(params):
             if bool(params.get("backup", True)):
                 commands.append(_backup(service_path, params))
-            commands.append(_ensure_line(service_path, service_line, params) if state == "present" else f"test ! -e {quote(service_path)} || {_sudo(params)}grep -Fxv -- {quote(service_line)} {quote(service_path)} | {_sudo(params)}tee {quote(service_path)} >/dev/null")
+            commands.append(_ensure_line(service_path, service_line, params) if state == "present" else f"test ! -e {quote(service_path)} || {sudo_prefix(params, default=True)}grep -Fxv -- {quote(service_line)} {quote(service_path)} | {sudo_prefix(params, default=True)}tee {quote(service_path)} >/dev/null")
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -286,7 +283,7 @@ class PamSucceedIfPlugin(BasePlugin):
         commands: list[str] = []
         if bool(params.get("backup", True)):
             commands.append(_backup(path, params))
-        commands.append(_ensure_line(path, line, params) if state == "present" else f"test ! -e {quote(path)} || {_sudo(params)}grep -Fxv -- {quote(line)} {quote(path)} | {_sudo(params)}tee {quote(path)} >/dev/null")
+        commands.append(_ensure_line(path, line, params) if state == "present" else f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}grep -Fxv -- {quote(line)} {quote(path)} | {sudo_prefix(params, default=True)}tee {quote(path)} >/dev/null")
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -361,11 +358,11 @@ class PamAuthselectPlugin(BasePlugin):
         return "pam.authselect is a read-only authselect profile assertion"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        command = f"{_sudo(params)}authselect current"
+        command = f"{sudo_prefix(params, default=True)}authselect current"
         if params.get("profile"):
             command += f" | grep -F -- {quote(params['profile'])} >/dev/null"
         for feature in self._features(params):
-            command += f" && {_sudo(params)}authselect current | grep -F -- {quote(feature)} >/dev/null"
+            command += f" && {sudo_prefix(params, default=True)}authselect current | grep -F -- {quote(feature)} >/dev/null"
         return [command]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:

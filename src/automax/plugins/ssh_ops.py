@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _diff(path: str, content: str, kind: str) -> list[Dict[str, Any]]:
     return [{"path": path, "kind": kind, "diff": "".join(unified_diff([], content.splitlines(keepends=True), fromfile=f"{path} (current)", tofile=f"{path} (desired)"))}]
@@ -62,7 +59,7 @@ class SshConfigPlugin(BasePlugin):
         self.validate(params)
         content = self._content(params)
         path = self._path(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         temp = "/tmp/automax-ssh-config.$$"
         commands = [heredoc_to_file(temp, content)]
         if bool(params.get("backup", True)):
@@ -110,7 +107,7 @@ class SshKnownHostsPlugin(BasePlugin):
             raise PluginValidationError("ssh.known_hosts state must be present or absent")
         path = self._path(params)
         host = str(params["host"])
-        sudo = _sudo(params) if path.startswith("/etc/") else ""
+        sudo = sudo_prefix(params, default=True) if path.startswith("/etc/") else ""
         path_expr = "${HOME}/.ssh/known_hosts" if path == "$HOME/.ssh/known_hosts" else quote(path)
         mkdir = f'mkdir -p "$(dirname {path_expr})"'
         backup_dest = quote(path + str(params.get('backup_suffix', '.bak'))) if path != "$HOME/.ssh/known_hosts" else '"${HOME}/.ssh/known_hosts' + str(params.get('backup_suffix', '.bak')) + '"'
@@ -147,7 +144,7 @@ class SshKeygenPlugin(BasePlugin):
         path = str(params["path"])
         key_type = str(params.get("type", "ed25519"))
         comment = str(params.get("comment", "automax"))
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         force = bool(params.get("force", False))
         bits = f" -b {quote(params['bits'])}" if params.get("bits") else ""
         mode = str(params.get("mode", "0600"))
@@ -183,7 +180,7 @@ class SshFingerprintPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         algorithm = str(params.get("algorithm", "sha256"))
-        return [f"{_sudo(params)}ssh-keygen -lf {quote(params['path'])} -E {quote(algorithm)}"]
+        return [f"{sudo_prefix(params, default=True)}ssh-keygen -lf {quote(params['path'])} -E {quote(algorithm)}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -204,12 +201,12 @@ class SshPublicKeyPlugin(BasePlugin):
         return "ssh.public_key derives public key material; dest writes are shown in manual commands"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        command = f"{_sudo(params)}ssh-keygen -y -f {quote(params['path'])}"
+        command = f"{sudo_prefix(params, default=True)}ssh-keygen -y -f {quote(params['path'])}"
         if not params.get("dest"):
             return [command]
         guard = "" if bool(params.get("overwrite", False)) else f"test ! -e {quote(params['dest'])} && "
         if bool(params.get("sudo", True)):
-            return [f"{guard}{command} | {_sudo(params)}tee {quote(params['dest'])} >/dev/null"]
+            return [f"{guard}{command} | {sudo_prefix(params, default=True)}tee {quote(params['dest'])} >/dev/null"]
         return [f"{guard}{command} > {quote(params['dest'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -229,7 +226,7 @@ class SshHostKeygenPlugin(BasePlugin):
         return "ssh.host_keygen creates host key material under the system SSH directory"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         types = params.get("types") or []
         if isinstance(types, str):
             types = [types]
@@ -276,7 +273,7 @@ cat "$tmp" > "$auth_file"
 rm -f "$tmp"
 echo __AUTOMAX_CHANGED__
 '''
-        return [f"{_sudo(params)}sh -s -- {quote(params['user'])} {quote(params['key'])} <<'SH'\n{script}\nSH"]
+        return [f"{sudo_prefix(params, default=True)}sh -s -- {quote(params['user'])} {quote(params['key'])} <<'SH'\n{script}\nSH"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -295,7 +292,7 @@ class SshdValidatePlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         config = f" -f {quote(params['config'])}" if params.get("config") else ""
-        return [f"{_sudo(params)}sshd -t{config}"]
+        return [f"{sudo_prefix(params, default=True)}sshd -t{config}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -318,7 +315,7 @@ def _ssh_keygen_passphrase(params: Dict[str, Any], context: ExecutionContext, *,
 def _ssh_keygen_commands(self: SshKeygenPlugin, params: Dict[str, Any], context: ExecutionContext, *, masked: bool) -> list[str]:
     self.validate(params)
     path = str(params["path"])
-    sudo = _sudo(params)
+    sudo = sudo_prefix(params, default=True)
     algorithm = str(params.get("algorithm", "sha256"))
     if bool(params.get("public_key_only", False)):
         commands = [f"test -f {quote(path + '.pub')} && cat {quote(path + '.pub')} || {sudo}ssh-keygen -y -f {quote(path)}"]

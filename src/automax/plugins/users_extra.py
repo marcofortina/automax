@@ -15,9 +15,6 @@ from automax.plugins.file_utils import install_uploaded_file, upload_text_to_tem
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 class UserExistsPlugin(BasePlugin):
     """Check whether a remote user exists."""
@@ -76,7 +73,7 @@ class UserLockPlugin(BasePlugin):
         command = (
             f"id -u {name} >/dev/null 2>&1 && "
             f"if passwd -S {name} 2>/dev/null | awk '{{print $2}}' | grep -Eq '^(L|LK|NP)$'; then "
-            f"true; else {_sudo(params)}usermod --lock {name} && echo {CHANGE_MARKER}; fi"
+            f"true; else {sudo_prefix(params, default=True)}usermod --lock {name} && echo {CHANGE_MARKER}; fi"
         )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.lock failed")
@@ -97,7 +94,7 @@ class UserUnlockPlugin(BasePlugin):
         command = (
             f"id -u {name} >/dev/null 2>&1 && "
             f"if passwd -S {name} 2>/dev/null | awk '{{print $2}}' | grep -Eq '^(P|PS)$'; then "
-            f"true; else {_sudo(params)}usermod --unlock {name} && echo {CHANGE_MARKER}; fi"
+            f"true; else {sudo_prefix(params, default=True)}usermod --unlock {name} && echo {CHANGE_MARKER}; fi"
         )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.unlock failed")
@@ -123,10 +120,10 @@ class UserSetPasswordPlugin(BasePlugin):
         if params.get("password_hash"):
             # usermod --password expects a crypt(3) hash. The shell-quoted value is still sensitive,
             # but avoids sending plaintext passwords to the remote chpasswd process.
-            command = f"id -u {quote(name)} >/dev/null 2>&1 && {_sudo(params)}usermod --password {quote(params['password_hash'])} {quote(name)} && echo {CHANGE_MARKER}"
+            command = f"id -u {quote(name)} >/dev/null 2>&1 && {sudo_prefix(params, default=True)}usermod --password {quote(params['password_hash'])} {quote(name)} && echo {CHANGE_MARKER}"
         else:
             temp_path = upload_text_to_temp(context, f"{name}:{params['password']}\n")
-            command = f"{_sudo(params)}chpasswd < {quote(temp_path)} && rm -f {quote(temp_path)} && echo {CHANGE_MARKER}"
+            command = f"{sudo_prefix(params, default=True)}chpasswd < {quote(temp_path)} && rm -f {quote(temp_path)} && echo {CHANGE_MARKER}"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.set_password failed")
 
@@ -225,12 +222,12 @@ class SudoersDropinPlugin(BasePlugin):
         dest = f"/etc/sudoers.d/{params['name']}"
         state = str(params.get("state", "present"))
         if state == "absent":
-            command = f"if test -e {quote(dest)}; then {_sudo(params)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
+            command = f"if test -e {quote(dest)}; then {sudo_prefix(params, default=True)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
             rc, out, err = exec_remote(context, command)
             return result_from_remote(rc=rc, stdout=out, stderr=err, message="sudoers.dropin failed")
         temp_path = upload_text_to_temp(context, str(params["content"]).rstrip() + "\n")
         if bool(params.get("validate", True)):
-            rc, out, err = exec_remote(context, f"{_sudo(params)}visudo -cf {quote(temp_path)}")
+            rc, out, err = exec_remote(context, f"{sudo_prefix(params, default=True)}visudo -cf {quote(temp_path)}")
             if rc != 0:
                 return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="sudoers.dropin validation failed")
         rc, out, err = install_uploaded_file(

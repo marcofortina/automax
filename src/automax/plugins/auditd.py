@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _rules(params: Dict[str, Any]) -> list[str]:
     raw = params.get("rules") or params.get("rule")
@@ -50,7 +47,7 @@ class AuditdRulePlugin(BasePlugin):
         self.validate(params)
         content = self._content(params)
         path = self._path(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         temp = "/tmp/automax-auditd.$$"
         commands = [heredoc_to_file(temp, content)]
         if bool(params.get("backup", True)):
@@ -77,7 +74,7 @@ class AuditdStatusPlugin(BasePlugin):
         return "auditd.status is read-only and does not change files"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        return [f"{_sudo(params)}auditctl -s"]
+        return [f"{sudo_prefix(params, default=True)}auditctl -s"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -96,7 +93,7 @@ class AuditdReloadPlugin(BasePlugin):
         return "auditd.reload is a runtime reload operation with no deterministic file diff"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        return [f"if command -v augenrules >/dev/null 2>&1; then {_sudo(params)}augenrules --load; else {_sudo(params)}service auditd restart; fi"]
+        return [f"if command -v augenrules >/dev/null 2>&1; then {sudo_prefix(params, default=True)}augenrules --load; else {sudo_prefix(params, default=True)}service auditd restart; fi"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])

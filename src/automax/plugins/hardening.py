@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _settings_content(settings: Dict[str, Any], sep: str = " ") -> str:
     return "".join(f"{key}{sep}{value}\n" for key, value in sorted(settings.items()))
@@ -51,7 +48,7 @@ class SshdConfigPlugin(BasePlugin):
         self.validate(params)
         path = self._path(params)
         content = self._content(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         tmp = "/tmp/automax-sshd.$$"
         commands = [heredoc_to_file(tmp, content)]
         if bool(params.get("backup", True)):
@@ -87,7 +84,7 @@ class LoginDefsPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         path = self._path(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         script_lines = []
         for key, value in sorted(params["settings"].items()):
             script_lines.append(f"if grep -Eq '^[#[:space:]]*{key}[[:space:]]+' {quote(path)}; then {sudo}sed -i -E 's|^[#[:space:]]*{key}[[:space:]]+.*|{key} {value}|' {quote(path)}; else printf '%s\\n' {quote(f'{key} {value}')} | {sudo}tee -a {quote(path)} >/dev/null; fi")
@@ -127,7 +124,7 @@ class PasswordPolicyPlugin(BasePlugin):
         self.validate(params)
         path = self._path(params)
         content = self._content(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         tmp = "/tmp/automax-pwquality.$$"
         commands = [heredoc_to_file(tmp, content)]
         if bool(params.get("backup", True)):
@@ -157,7 +154,7 @@ class AuthselectProfilePlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         features = " ".join(quote(item) for item in self._features(params))
         backup = " --backup=automax" if bool(params.get("backup", True)) else ""
         force = " --force" if bool(params.get("force", False)) else ""

@@ -14,9 +14,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _content(params: Dict[str, Any]) -> str:
     if params.get("content") is not None:
@@ -60,7 +57,7 @@ class PkiCaInstallPlugin(BasePlugin):
 
     def _install_cmd(self, params: Dict[str, Any], dest: str) -> str:
         content = _content(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         temp = "/tmp/automax-ca.$$"
         commands = [heredoc_to_file(temp, content)]
         if bool(params.get("backup", True)):
@@ -75,7 +72,7 @@ class PkiCaInstallPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         if str(params.get("trust_store", "explicit")) == "system" and not params.get("dest"):
             deb = self._install_cmd(params, self._dest(params, "debian")) + f" && {sudo}update-ca-certificates"
             rh = self._install_cmd(params, self._dest(params, "redhat")) + f" && {sudo}update-ca-trust extract"
@@ -104,7 +101,7 @@ class PkiKeyPermissionsPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         path = quote(params["path"])
         commands = []
         if params.get("owner") or params.get("group"):

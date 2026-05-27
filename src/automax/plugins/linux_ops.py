@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, normalize_env_mapping, quote, render_env_prefix, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any], default: bool = True) -> str:
-    return sudo_prefix(params, default=default)
-
 
 def _bool(value: Any) -> str:
     return "true" if bool(value) else "false"
@@ -67,7 +64,7 @@ class SwapPresentPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         path = str(params["path"])
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         commands = []
         if params.get("size"):
             commands.extend([
@@ -113,7 +110,7 @@ class SwapAbsentPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         path = str(params["path"])
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         commands = [f"swapon --show=NAME --noheadings | grep -Fx -- {quote(path)} >/dev/null && {sudo}swapoff {quote(path)} || true"]
         if bool(params.get("persist", False)):
             if bool(params.get("backup", True)):
@@ -151,7 +148,7 @@ class LimitsDropinPlugin(BasePlugin):
         self.validate(params)
         content = self._content(params)
         path = f"/etc/security/limits.d/{params['name']}.conf"
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         temp = "/tmp/automax-limits.$$"
         commands = [heredoc_to_file(temp, content)]
         if bool(params.get("backup", True)):
@@ -184,7 +181,7 @@ class PamLimitsPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         files = self._files(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         commands = []
         line = "session required pam_limits.so"
         for path in files:
@@ -221,7 +218,7 @@ class HostsEntryPlugin(BasePlugin):
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
             raise PluginValidationError("hosts.entry state must be present or absent")
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         line = self._line(params)
         commands = []
         if bool(params.get("backup", True)):
@@ -250,7 +247,7 @@ class HostnameSetPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"test \"$(hostnamectl --static 2>/dev/null || hostname)\" = {quote(params['name'])} || {_sudo(params)}hostnamectl set-hostname {quote(params['name'])}"]
+        return [f"test \"$(hostnamectl --static 2>/dev/null || hostname)\" = {quote(params['name'])} || {sudo_prefix(params, default=True)}hostnamectl set-hostname {quote(params['name'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -373,7 +370,7 @@ class ResolverConfigPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         backend = self._backend(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         if backend == "networkmanager":
             connection = params.get("nm_connection")
             if not connection:
@@ -430,7 +427,7 @@ class ChronyServersPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         content = self._content(params)
         path = str(params.get("path", "/etc/chrony.d/99-automax.conf"))
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         temp = "/tmp/automax-chrony.$$"
         commands = [heredoc_to_file(temp, content)]
         if bool(params.get("backup", True)):
@@ -511,7 +508,7 @@ class EnvSetPlugin(BasePlugin):
             return [f"export {render_env_prefix(variables)}"]
         content = self._content(params)
         path = self._path(params)
-        sudo = _sudo(params, default=scope == "global")
+        sudo = sudo_prefix(params, default=scope == "global")
         temp = "/tmp/automax-env.$$"
         commands = [heredoc_to_file(temp, content)]
         if bool(params.get("backup", True)):
@@ -542,7 +539,7 @@ class SystemRebootPlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         delay = int(params.get("delay", 3))
-        return [f"({_sudo(params)}shutdown -r +0 'Automax requested reboot' >/dev/null 2>&1 &) && sleep {delay}"]
+        return [f"({sudo_prefix(params, default=True)}shutdown -r +0 'Automax requested reboot' >/dev/null 2>&1 &) && sleep {delay}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -572,7 +569,7 @@ class DownloadFilePlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         dest = str(params["dest"])
         tmp = f"{dest}.automax-download.$$"
         commands = [

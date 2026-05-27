@@ -4741,6 +4741,16 @@ def test_prepare_sudo_password_command_uses_askpass_without_embedding_password()
     assert stdin == "secret-pass\n"
 
 
+def test_plugin_sudo_rendering_does_not_reintroduce_local_wrappers():
+    plugin_root = Path("src/automax/plugins")
+    offenders = [
+        str(path)
+        for path in sorted(plugin_root.glob("*.py"))
+        if "def _sudo(" in path.read_text(encoding="utf-8")
+    ]
+    assert offenders == []
+
+
 def test_cli_run_sudo_password_env_feeds_sudo_enabled_remote_substeps(tmp_path: Path, monkeypatch):
     from contextlib import contextmanager
 

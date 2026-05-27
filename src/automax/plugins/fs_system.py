@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _diff(path: str, content: str, kind: str) -> list[Dict[str, Any]]:
     return [{"path": path, "kind": kind, "diff": "".join(unified_diff([], content.splitlines(keepends=True), fromfile=f"{path} (current)", tofile=f"{path} (desired)"))}]
@@ -37,7 +34,7 @@ class FsAclPlugin(BasePlugin):
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
             raise PluginValidationError("fs.acl state must be present or absent")
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         path = quote(params["path"])
         commands = []
         if bool(params.get("backup", True)):
@@ -72,7 +69,7 @@ class FsAttrPlugin(BasePlugin):
             raise PluginValidationError("fs.attr state must be present or absent")
         op = "+" if state == "present" else "-"
         flag = "-R " if bool(params.get("recursive", False)) else ""
-        return [f"{_sudo(params)}chattr {flag}{op}{quote(params['attrs'])} {quote(params['path'])}"]
+        return [f"{sudo_prefix(params, default=True)}chattr {flag}{op}{quote(params['attrs'])} {quote(params['path'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -98,7 +95,7 @@ class FsQuotaPlugin(BasePlugin):
             raise PluginValidationError("fs.quota type must be user or group")
         flag = "-u" if quota_type == "user" else "-g"
         values = [params.get("block_soft", 0), params.get("block_hard", 0), params.get("inode_soft", 0), params.get("inode_hard", 0)]
-        return [f"{_sudo(params)}setquota {flag} {quote(params['target'])} {' '.join(quote(v) for v in values)} {quote(params['mountpoint'])}"]
+        return [f"{sudo_prefix(params, default=True)}setquota {flag} {quote(params['target'])} {' '.join(quote(v) for v in values)} {quote(params['mountpoint'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -122,7 +119,7 @@ class FsAclGetPlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         recursive = " -R" if bool(params.get("recursive", False)) else ""
-        return [f"{_sudo(params)}getfacl -p{recursive} {quote(params['path'])}"]
+        return [f"{sudo_prefix(params, default=True)}getfacl -p{recursive} {quote(params['path'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
@@ -150,7 +147,7 @@ class FsAclAssertPlugin(BasePlugin):
         if state not in {"present", "absent"}:
             raise PluginValidationError("fs.acl.assert state must be present or absent")
         commands = []
-        acl_source = f"{_sudo(params)}getfacl -cp {quote(params['path'])}"
+        acl_source = f"{sudo_prefix(params, default=True)}getfacl -cp {quote(params['path'])}"
         for entry in _acl_entries(params["acl"]):
             grep_cmd = f"{acl_source} | grep -Fx -- {quote(entry)} >/dev/null"
             if state == "present":
@@ -181,7 +178,7 @@ class FsAclRestorePlugin(BasePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         test = " --test" if bool(params.get("test_only", False)) else ""
-        return [f"{_sudo(params)}setfacl{test} --restore={quote(params['file'])}"]
+        return [f"{sudo_prefix(params, default=True)}setfacl{test} --restore={quote(params['file'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         command = self.manual_commands(params, context)[0]

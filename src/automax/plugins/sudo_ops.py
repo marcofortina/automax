@@ -13,9 +13,6 @@ from automax.plugins.base import BasePlugin
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_file, quote, result_from_remote, sudo_prefix
 
 
-def _sudo(params: Dict[str, Any]) -> str:
-    return sudo_prefix(params, default=True)
-
 
 def _diff(path: str, content: str, kind: str) -> list[Dict[str, Any]]:
     return [{"path": path, "kind": kind, "diff": "".join(unified_diff([], content.splitlines(keepends=True), fromfile=f"{path} (current)", tofile=f"{path} (desired)"))}]
@@ -49,7 +46,7 @@ class SudoRulePlugin(BasePlugin):
         self.validate(params)
         content = self._content(params)
         path = self._path(params)
-        sudo = _sudo(params)
+        sudo = sudo_prefix(params, default=True)
         temp = "/tmp/automax-sudoers.$$"
         commands = [heredoc_to_file(temp, content)]
         commands.append(f"{sudo}visudo -cf {temp}")
@@ -76,7 +73,7 @@ class SudoValidatePlugin(BasePlugin):
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         path = str(params.get("path", "/etc/sudoers"))
-        return [f"{_sudo(params)}visudo -cf {quote(path)}"]
+        return [f"{sudo_prefix(params, default=True)}visudo -cf {quote(path)}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
