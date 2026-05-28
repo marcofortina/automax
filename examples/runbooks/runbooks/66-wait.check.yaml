@@ -15,11 +15,11 @@ tasks:
   - id: catalog
     substeps:
     - id: wait_process
-      use: wait.process
+      use: process.wait
       with:
         pattern: KEY=.*
     - id: wait_tcp
-      use: wait.tcp
+      use: network.connectivity.port_wait
       with:
         host: 127.0.0.1
         port: 22

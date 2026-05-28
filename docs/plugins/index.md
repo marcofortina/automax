@@ -35,7 +35,6 @@ archive.untar
 archive.unzip
 archive.zip
 assert.disk
-assert.tcp
 auditd.backlog_assert
 auditd.reload
 auditd.rule
@@ -188,9 +187,10 @@ multipath.flush
 multipath.reload
 multipath.status
 network.connectivity.port_check
-network.dns
-network.dns_assert
-network.dns_facts
+network.connectivity.port_wait
+network.dns.config
+network.dns.check
+network.dns.facts
 network.firewall.firewalld.forward_port
 network.firewall.firewalld.icmp_block
 network.firewall.firewalld.list
@@ -356,8 +356,6 @@ user.remove
 user.set_password
 user.shell_assert
 user.unlock
-wait.process
-wait.tcp
 ```
 
 ## Manuals by category

@@ -20,7 +20,7 @@ tasks:
         path: /tmp/automax-demo
         min_free_mb: 1
     - id: assert_tcp
-      use: assert.tcp
+      use: network.connectivity.port_check
       with:
         host: 127.0.0.1
         port: 22

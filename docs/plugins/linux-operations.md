@@ -65,11 +65,11 @@ pam.access / pam.faillock / pam.pwhistory / pam.succeed_if
 pam.service_line / pam.validate / pam.stack_facts / pam.authselect
 hosts.entry
 hostname.set
-network.dns
+network.dns.config
 chrony.servers / chrony.sources_assert
 ```
 
-`network.dns` is deliberately careful: with `backend: auto`, it refuses to
+`network.dns.config` is deliberately careful: with `backend: auto`, it refuses to
 replace a symlinked `/etc/resolv.conf` unless `force: true` or an explicit backend
 is provided. This avoids corrupting systems managed by systemd-resolved,
 NetworkManager, resolvconf or cloud-init.
@@ -108,9 +108,9 @@ structured `plan --diff` previews before applying storage changes.
 ## Runtime network operations
 
 Use `network.link.interface`, `network.link.bond`, `network.link.bridge`, `network.link.vlan`,
-`network.route.add`, `network.route.remove` and `network.dns` for runtime network setup
+`network.route.add`, `network.route.remove` and `network.dns.config` for runtime network setup
 and DNS resolver changes. DNS handling is
-backend-aware through the same safety rules as `network.dns`: managed or
+backend-aware through the same safety rules as `network.dns.config`: managed or
 symlinked resolver files are not overwritten silently.
 
 
@@ -187,7 +187,7 @@ Useful families include:
 
 ```text
 platform.facts
-network.dns_facts
+network.dns.facts
 network.link.facts / network.route.facts
 pkg.version_pin / pkg.repo_priority
 network.link.interface / network.link.bond / network.link.vlan / network.route.add / network.route.remove with persist/backend
@@ -224,7 +224,7 @@ existing configuration files.
 ## Network checks, facts and bridge operations
 
 Use `network.link.bridge` for explicit runtime bridge creation/removal. Use
-`network.link.check`, `network.route.check`, `network.dns_assert` and
+`network.link.check`, `network.route.check`, `network.dns.check` and
 `network.connectivity.port_check` as precheck/postcheck guards around network operations.
 Use `network.link.facts` and `network.route.facts` for read-only iproute2 JSON
 readback without treating mismatched state as a failed assertion.

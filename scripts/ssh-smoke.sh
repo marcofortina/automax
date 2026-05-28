@@ -251,7 +251,7 @@ tasks:
             with:
               command: "sh -c 'sleep 30 >/dev/null 2>&1 &'"
           - id: wait_process
-            use: wait.process
+            use: process.wait
             with:
               pattern: "sleep 30"
               state: present
@@ -271,7 +271,7 @@ tasks:
               path: ${WORK_DIR}
               min_free_mb: 1
           - id: assert_tcp
-            use: assert.tcp
+            use: network.connectivity.port_check
             with:
               host: ${AUTOMAX_SSH_HOST}
               port: ${PORT}

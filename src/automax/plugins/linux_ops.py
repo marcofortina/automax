@@ -242,7 +242,7 @@ class HostnameSetPlugin(BasePlugin):
 
 
 class NetworkDnsFactsPlugin(BasePlugin):
-    name = "network.dns_facts"
+    name = "network.dns.facts"
     description = "Detect the active DNS resolver backend without changing resolver configuration."
     required_params: tuple[str, ...] = ()
     optional_params = ("sudo",)
@@ -250,7 +250,7 @@ class NetworkDnsFactsPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "network.dns_facts is read-only resolver backend detection and does not change files"
+        return "network.dns.facts is read-only resolver backend detection and does not change files"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         script = '''
@@ -276,7 +276,7 @@ printf 'backend=%s\npath=%s\ntarget=%s\n' "$backend" "$path" "$target"
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.dns_facts failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.dns.facts failed")
         data = {}
         for line in out.splitlines():
             if "=" in line:
@@ -333,7 +333,7 @@ class NetworkDnsConfigBase(RenderedFileInstallMixin, BasePlugin):
     def _backend(self, params: Dict[str, Any]) -> str:
         backend = str(params.get("backend", "plain-file"))
         if backend == "auto":
-            raise PluginValidationError("network.dns requires an explicit backend for persistent changes")
+            raise PluginValidationError("network.dns.config requires an explicit backend for persistent changes")
         if backend not in {"plain-file", "systemd-resolved", "networkmanager", "resolvconf"}:
             raise PluginValidationError("resolver backend must be plain-file, systemd-resolved, networkmanager or resolvconf")
         return backend
@@ -361,7 +361,7 @@ class NetworkDnsConfigBase(RenderedFileInstallMixin, BasePlugin):
         if backend == "networkmanager":
             connection = params.get("nm_connection")
             if not connection:
-                raise PluginValidationError("network.dns backend=networkmanager requires nm_connection")
+                raise PluginValidationError("network.dns.config backend=networkmanager requires nm_connection")
             dns = " ".join(self._nameservers(params))
             search = " ".join(self._search(params))
             commands = [f"{sudo}nmcli connection modify {quote(connection)} ipv4.ignore-auto-dns yes"]

@@ -15,12 +15,12 @@ tasks:
   - id: catalog
     substeps:
     - id: network_dns
-      use: network.dns
+      use: network.dns.config
       with:
         backend: auto
         nameservers:
         - 192.0.2.53
     - id: network_dns_facts
-      use: network.dns_facts
+      use: network.dns.facts
       with:
         sudo: true

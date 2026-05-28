@@ -62,7 +62,7 @@ def test_plugin_metadata_sample_formatter_is_python39_safe():
     assert _format_sample_value("interval", 1.5, indent="  ") == ["  interval: 1.5"]
 
 def test_documented_builtin_plugin_list_matches_registry():
-    documented = set()
+    documented = []
     in_block = False
     for line in Path("docs/plugins/index.md").read_text(encoding="utf-8").splitlines():
         if line.strip() == "```text":
@@ -71,9 +71,11 @@ def test_documented_builtin_plugin_list_matches_registry():
         if in_block and line.strip() == "```":
             break
         if in_block and line.strip():
-            documented.add(line.strip())
+            documented.append(line.strip())
 
-    assert documented == set(AutomaxEngine().plugin_registry.names())
+    duplicate_names = sorted({name for name in documented if documented.count(name) > 1})
+    assert duplicate_names == []
+    assert set(documented) == set(AutomaxEngine().plugin_registry.names())
 
 
 def test_documentation_does_not_reference_removed_legacy_artifacts():
@@ -784,7 +786,7 @@ def test_rendered_file_install_mixin_covers_managed_file_plugins():
         "auditd.rule",
         "chrony.servers",
         "limits.dropin",
-        "network.dns",
+        "network.dns.config",
         "password.policy",
         "ssh.config",
         "sshd.config",
@@ -858,8 +860,8 @@ def test_resolver_namespace_is_not_public_plugin_surface():
     from automax.plugins.registry import build_builtin_registry
 
     names = set(build_builtin_registry().names())
-    assert "network.dns" in names
-    assert "network.dns_facts" in names
+    assert "network.dns.config" in names
+    assert "network.dns.facts" in names
     assert not any(name.startswith("resolver.") for name in names)
 
     docs = "\n".join(

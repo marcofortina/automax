@@ -613,40 +613,6 @@ with:
   path: /tmp/automax-demo
 ```
 
-### `assert.tcp`
-
-Assert that a TCP host/port is reachable from the controller.
-
-- Remote session: `false`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `host` | yes | `string` |  | Hostname or IP address to check from the controller. |
-| `port` | yes | `integer` |  | TCP port number. |
-| `connect_timeout` | no | `number` | `3` | Per-attempt TCP connect timeout in seconds. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.host`: Checked host.
-- `data.port`: Checked TCP port.
-
-Example:
-
-```yaml
-use: assert.tcp
-with:
-  host: 127.0.0.1
-  port: 22
-```
-
 ## auditd
 
 ### `auditd.backlog_assert`
@@ -5862,6 +5828,8 @@ Result fields:
 - `stdout`: Captured standard output when applicable.
 - `stderr`: Captured standard error when applicable.
 - `data`: Plugin-specific structured result data.
+- `data.host`: Checked host.
+- `data.port`: Checked TCP port.
 
 Example:
 
@@ -5872,7 +5840,80 @@ with:
   port: 22
 ```
 
-### `network.dns`
+### `network.connectivity.port_wait`
+
+Wait for TCP or UDP connectivity from the remote target.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `host` | yes | `string` |  | Hostname or IP address to check from the controller. |
+| `port` | yes | `integer` |  | TCP port number. |
+| `protocol` | no | `string` | `tcp` | Network protocol such as tcp or udp. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `interval` | no | `number` | `2` | Polling interval in seconds. |
+| `retries` | no | `integer` | `12` | Maximum polling attempts before a wait operation fails. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.host`: Checked host.
+- `data.port`: Checked TCP port.
+
+Example:
+
+```yaml
+use: network.connectivity.port_wait
+with:
+  host: 127.0.0.1
+  port: 22
+```
+
+### `network.dns.check`
+
+Assert resolver nameserver, search and option entries from /etc/resolv.conf.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `nameservers` | no | `list` |  | Resolver nameserver addresses. |
+| `search` | no | `list` |  | Resolver search domains. |
+| `options` | no | `list` |  | Resolver options. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.dns.check
+with:
+  nameservers:
+    - 192.0.2.53
+  search:
+    - example.com
+```
+
+### `network.dns.config`
 
 Configure DNS resolver settings using the backend-aware resolver implementation.
 
@@ -5905,49 +5946,14 @@ Result fields:
 Example:
 
 ```yaml
-use: network.dns
+use: network.dns.config
 with:
   backend: auto
   nameservers:
     - 192.0.2.53
 ```
 
-### `network.dns_assert`
-
-Assert resolver nameserver, search and option entries from /etc/resolv.conf.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `nameservers` | no | `list` |  | Resolver nameserver addresses. |
-| `search` | no | `list` |  | Resolver search domains. |
-| `options` | no | `list` |  | Resolver options. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: network.dns_assert
-with:
-  nameservers:
-    - 192.0.2.53
-  search:
-    - example.com
-```
-
-### `network.dns_facts`
+### `network.dns.facts`
 
 Detect the active DNS resolver backend without changing resolver configuration.
 
@@ -5971,7 +5977,7 @@ Result fields:
 Example:
 
 ```yaml
-use: network.dns_facts
+use: network.dns.facts
 with:
   sudo: true
 ```
@@ -11606,75 +11612,4 @@ Example:
 use: user.unlock
 with:
   name: nginx
-```
-
-## wait
-
-### `wait.process`
-
-Wait until a remote process condition is true.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `interval` | no | `number` | `2` | Polling interval in seconds. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: wait.process
-with:
-  pattern: KEY=.*
-```
-
-### `wait.tcp`
-
-Wait until a TCP host/port is reachable from the controller.
-
-- Remote session: `false`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `host` | yes | `string` |  | Hostname or IP address to check from the controller. |
-| `port` | yes | `integer` |  | TCP port number. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `interval` | no | `number` | `2` | Polling interval in seconds. |
-| `connect_timeout` | no | `number` | `3` | Per-attempt TCP connect timeout in seconds. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.host`: Checked host.
-- `data.port`: Checked TCP port.
-
-Example:
-
-```yaml
-use: wait.tcp
-with:
-  host: 127.0.0.1
-  port: 22
 ```

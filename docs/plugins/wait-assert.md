@@ -12,21 +12,21 @@ The public `assert.*` / `wait.*` surface is intentionally shrinking. File,
 directory and symlink checks now live in the type-specific filesystem families:
 `fs.dir.*`, `fs.file.*` and `fs.symlink.*`.
 
-## `wait.tcp` and `assert.tcp`
+## `network.connectivity.port_wait` and `network.connectivity.port_check`
 
-TCP checks run from the controller.
+Connectivity checks run from the remote target using `nc`.
 
 ```yaml
 - id: wait_port
-  use: wait.tcp
+  use: network.connectivity.port_wait
   with:
     host: "{{ server.host }}"
     port: 443
-    timeout: 60
+    retries: 30
     interval: 2
 
 - id: assert_port
-  use: assert.tcp
+  use: network.connectivity.port_check
   with:
     host: "{{ server.host }}"
     port: 443
@@ -53,13 +53,13 @@ wrong type. `*.wait` polls with `retries` and `interval`.
     path: /etc/myapp
 ```
 
-## `wait.process`
+## `process.wait`
 
 Waits for a remote process matching a pattern.
 
 ```yaml
 - id: wait_worker
-  use: wait.process
+  use: process.wait
   with:
     pattern: "myapp-worker"
     state: present

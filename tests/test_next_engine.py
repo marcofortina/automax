@@ -659,9 +659,9 @@ def test_wait_and_assert_plugins_are_registered():
     names = AutomaxEngine().plugin_registry.names()
 
     for name in (
-        "wait.tcp",
-        "wait.process",
-        "assert.tcp",
+        "network.connectivity.port_wait",
+        "process.wait",
+        "network.connectivity.port_check",
         "assert.disk",
     ):
         assert name in names
@@ -707,13 +707,14 @@ tasks:
       - id: controller_checks
         substeps:
           - id: wait_tcp
-            use: wait.tcp
+            use: network.connectivity.port_wait
             with:
               host: 127.0.0.1
               port: 22
-              timeout: 1
+              retries: 1
+              interval: 1
           - id: assert_tcp
-            use: assert.tcp
+            use: network.connectivity.port_check
             with:
               host: 127.0.0.1
               port: 22
@@ -1566,11 +1567,11 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "transfer.sync",
         "fs.file.wait",
         "fs.dir.wait",
-        "wait.process",
+        "process.wait",
         "fs.file.exists",
         "fs.dir.exists",
         "assert.disk",
-        "assert.tcp",
+        "network.connectivity.port_check",
         "systemctl.status",
         "pkg.query",
         "user.create",
@@ -3372,8 +3373,8 @@ def test_storage_and_linux_ops_plugins_are_registered():
         "pam.limits",
         "hosts.entry",
         "hostname.set",
-        "network.dns",
-        "network.dns_facts",
+        "network.dns.config",
+        "network.dns.facts",
         "chrony.servers",
         "chrony.sources_assert",
         "env.set",
@@ -3609,7 +3610,7 @@ def test_lvm_plugins_render_manual_commands_and_previews():
 def test_network_plugins_render_interface_route_bond_vlan_dns():
     from automax.plugins.network import (
         NetworkBondPlugin,
-        NetworkDnsPlugin,
+        NetworkDnsConfigPlugin,
         NetworkInterfacePlugin,
         NetworkRouteAddPlugin,
         NetworkRouteFactsPlugin,
@@ -3618,7 +3619,7 @@ def test_network_plugins_render_interface_route_bond_vlan_dns():
     )
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("network.link.interface", "network.route.add", "network.route.remove", "network.route.facts", "network.link.bond", "network.link.facts", "network.link.vlan", "network.dns"):
+    for name in ("network.link.interface", "network.route.add", "network.route.remove", "network.route.facts", "network.link.bond", "network.link.facts", "network.link.vlan", "network.dns.config"):
         assert name in names
 
     context = _sysops_preview_context()
@@ -3632,7 +3633,7 @@ def test_network_plugins_render_interface_route_bond_vlan_dns():
     assert "modprobe bonding" in NetworkBondPlugin().manual_commands({"name": "bond0", "interfaces": ["eth1", "eth2"]}, context)[0]
     assert "type vlan id 100" in NetworkVlanPlugin().manual_commands({"name": "eth0.100", "parent": "eth0", "vlan_id": 100}, context)[0]
     assert "network-plan" == NetworkInterfacePlugin().diff_preview({"name": "eth0"}, context)[0]["kind"]
-    assert NetworkDnsPlugin().manual_commands({"nameservers": ["192.0.2.53"]}, context)
+    assert NetworkDnsConfigPlugin().manual_commands({"nameservers": ["192.0.2.53"]}, context)
 
 
 def test_health_namespace_is_not_public_plugin_surface():
@@ -3753,22 +3754,22 @@ def test_platform_facts_plugin_renders_backend_detection():
 
 def test_network_dns_backend_aware_plugins_render_safe_backends():
     from automax.plugins.linux_ops import NetworkDnsFactsPlugin
-    from automax.plugins.network import NetworkDnsPlugin
+    from automax.plugins.network import NetworkDnsConfigPlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    assert "network.dns_facts" in names
-    assert "network.dns" in names
+    assert "network.dns.facts" in names
+    assert "network.dns.config" in names
     assert ".".join(("resolver", "facts")) not in names
     assert ".".join(("resolver", "config")) not in names
     context = _sysops_preview_context()
     facts = NetworkDnsFactsPlugin().manual_commands({}, context)[0]
     assert "backend=" in facts
-    resolved = "\n".join(NetworkDnsPlugin().manual_commands({"backend": "systemd-resolved", "nameservers": ["192.0.2.53"]}, context))
+    resolved = "\n".join(NetworkDnsConfigPlugin().manual_commands({"backend": "systemd-resolved", "nameservers": ["192.0.2.53"]}, context))
     assert "/etc/systemd/resolved.conf.d/99-automax.conf" in resolved
     assert "systemctl restart systemd-resolved" in resolved
-    nm = " && ".join(NetworkDnsPlugin().manual_commands({"backend": "networkmanager", "nm_connection": "eth0", "nameservers": ["192.0.2.53"]}, context))
+    nm = " && ".join(NetworkDnsConfigPlugin().manual_commands({"backend": "networkmanager", "nm_connection": "eth0", "nameservers": ["192.0.2.53"]}, context))
     assert "nmcli connection modify eth0" in nm
-    assert NetworkDnsPlugin().diff_preview({"backend": "resolvconf", "nameservers": ["192.0.2.53"]}, context)[0]["kind"] == "resolver-plan"
+    assert NetworkDnsConfigPlugin().diff_preview({"backend": "resolvconf", "nameservers": ["192.0.2.53"]}, context)[0]["kind"] == "resolver-plan"
 
 
 def test_lvm_extra_plugins_render_destructive_and_snapshot_operations():
@@ -4426,7 +4427,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["match_count_assert"] = 1
     if plugin.name == "sshd.config":
         params["match_blocks"] = [{"match": "User deploy", "settings": {"X11Forwarding": "no"}}]
-    if plugin.name == "network.dns":
+    if plugin.name == "network.dns.config":
         params["backend"] = "plain-file"
     if plugin.name in {"network.route.add", "network.route.remove"}:
         params["backend"] = "runtime"
@@ -4512,7 +4513,7 @@ def test_network_advanced_plugins_render_manual_commands():
     assert "ip link add name br0 type bridge" in " && ".join(registry.get("network.link.bridge").manual_commands({"name": "br0", "interfaces": ["eth1"], "sudo": False}, context))
     assert "ip link show dev eth0" in registry.get("network.link.check").manual_commands({"name": "eth0"}, context)[0]
     assert "ip route show" in registry.get("network.route.check").manual_commands({"dest": "default", "gateway": "192.0.2.1"}, context)[0]
-    assert "nameserver" in " && ".join(registry.get("network.dns_assert").manual_commands({"nameservers": ["192.0.2.53"]}, context))
+    assert "nameserver" in " && ".join(registry.get("network.dns.check").manual_commands({"nameservers": ["192.0.2.53"]}, context))
     assert "nc -z" in registry.get("network.connectivity.port_check").manual_commands({"host": "example.com", "port": 443}, context)[0]
     assert "ip -j link show" in registry.get("network.link.facts").manual_commands({}, context)[0]
     assert "ip -j route show" in registry.get("network.route.facts").manual_commands({}, context)[0]

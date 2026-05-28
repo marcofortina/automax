@@ -49,8 +49,8 @@ remote user. It covers:
 - `fs.object.find`, `fs.permission.mode`
 - `archive.tar`, `archive.untar`, `archive.zip`, `archive.unzip`
 - `transfer.upload`, `transfer.download`, `transfer.sync`
-- `wait.process`
-- `assert.disk`, `assert.tcp`
+- `process.wait`
+- `assert.disk`, `network.connectivity.port_check`
 - artifact capture for stdout/stderr/data
 - resume helpers through the normal run state store
 

@@ -215,12 +215,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsSymlinkWaitPlugin,
     )
     from automax.plugins.http import HttpAssertPlugin, HttpRequestPlugin, HttpWaitPlugin
-    from automax.plugins.wait_assert import (
-        AssertDiskPlugin,
-        AssertTcpPlugin,
-        WaitProcessPlugin,
-        WaitTcpPlugin,
-    )
+    from automax.plugins.wait_assert import AssertDiskPlugin
     from automax.plugins.kernel import (
         KernelModuleLoadPlugin,
         KernelBootParamPlugin,
@@ -260,12 +255,13 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     from automax.plugins.network import (
         NetworkBondPlugin,
         NetworkBridgePlugin,
-        NetworkDnsAssertPlugin,
-        NetworkDnsPlugin,
+        NetworkDnsCheckPlugin,
+        NetworkDnsConfigPlugin,
         NetworkInterfacePlugin,
         NetworkLinkCheckPlugin,
         NetworkLinkFactsPlugin,
         NetworkPortCheckPlugin,
+        NetworkPortWaitPlugin,
         NetworkRouteAddPlugin,
         NetworkRouteCheckPlugin,
         NetworkRouteFactsPlugin,
@@ -526,9 +522,6 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FactsPackagesPlugin(),
         FactsServicesPlugin(),
         PlatformFactsPlugin(),
-        WaitTcpPlugin(),
-        WaitProcessPlugin(),
-        AssertTcpPlugin(),
         AssertDiskPlugin(),
         FirewalldPortPlugin(),
         FirewalldServicePlugin(),
@@ -772,13 +765,14 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         NetworkRouteFactsPlugin(),
         NetworkBondPlugin(),
         NetworkVlanPlugin(),
-        NetworkDnsPlugin(),
+        NetworkDnsConfigPlugin(),
         NetworkBridgePlugin(),
         NetworkLinkCheckPlugin(),
         NetworkLinkFactsPlugin(),
         NetworkRouteCheckPlugin(),
-        NetworkDnsAssertPlugin(),
+        NetworkDnsCheckPlugin(),
         NetworkPortCheckPlugin(),
+        NetworkPortWaitPlugin(),
         PkiCaInstallPlugin(),
         PkiKeyPermissionsPlugin(),
         PkiCertExpiryAssertPlugin(),

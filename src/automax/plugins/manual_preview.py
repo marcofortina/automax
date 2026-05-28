@@ -135,8 +135,11 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
     if plugin_name.startswith("assert."):
         if plugin_name == "assert.disk":
             return [f"df -Pm {_q(path)}"]
-        if plugin_name == "assert.tcp":
-            return [f"nc -z -w {_q(params.get('connect_timeout', 5))} {_q(params.get('host', '127.0.0.1'))} {_q(params.get('port', 22))}"]
+
+    if plugin_name == "network.connectivity.port_check":
+        return [f"nc -z -w {_q(params.get('timeout', params.get('connect_timeout', 5)))} {_q(params.get('host', '127.0.0.1'))} {_q(params.get('port', 22))}"]
+    if plugin_name == "network.connectivity.port_wait":
+        return [f"i=0; until nc -z -w {_q(params.get('timeout', 5))} {_q(params.get('host', '127.0.0.1'))} {_q(params.get('port', 22))}; do i=$((i + 1)); [ $i -ge {_q(params.get('retries', 30))} ] && exit 1; sleep {_q(params.get('interval', 2))}; done"]
 
     if plugin_name.startswith("db.") and plugin_name.endswith(".query"):
         conn = _db_connection(params)
@@ -322,14 +325,6 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
             return [f"scp{_ssh_opts(params)} {_q(str(src))} {_q(str(dest))}"]
         if plugin_name == "transfer.sync":
             return [f"rsync -a {_q(str(src))}/ {_q(str(dest))}/"]
-
-    if plugin_name.startswith("wait."):
-        timeout = params.get("timeout", 60)
-        interval = params.get("interval", 2)
-        if plugin_name == "wait.process":
-            return [f"timeout {_q(timeout)} sh -c 'until pgrep -f {_q(params.get('pattern', 'process'))} >/dev/null; do sleep {_q(interval)}; done'"]
-        if plugin_name == "wait.tcp":
-            return [f"timeout {_q(timeout)} sh -c 'until nc -z -w {_q(params.get('connect_timeout', 5))} {_q(params.get('host', '127.0.0.1'))} {_q(params.get('port', 22))}; do sleep {_q(interval)}; done'"]
 
     if plugin_name in {"cron.entry", "cron.file"}:
         return [f"{sudo}crontab -l 2>/dev/null | sed '/# automax:{_q(name)}/d' | {sudo}crontab -"]

@@ -87,6 +87,7 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "mount.facts": ("findmnt",),
     "mount.options_assert": ("findmnt",),
     "network.connectivity.port_check": ("nc",),
+    "network.connectivity.port_wait": ("nc",),
     "network.link.bond": ("ip", "modprobe"),
     "network.link.bridge": ("ip",),
     "network.link.check": ("ip",),
