@@ -21,7 +21,7 @@ Targets: web01, web02
 
 Task deploy -> targets: web01, web02
   Step prepare -> opens a new SSH connection per target; targets: web01, web02
-    Substep create_dir -> fs.mkdir; targets: web01, web02; checkpoint: task.deploy:step.prepare:substep.create_dir
+    Substep create_dir -> fs.dir.create; targets: web01, web02; checkpoint: task.deploy:step.prepare:substep.create_dir
 
 Resume points:
   task.deploy:step.prepare:substep.create_dir

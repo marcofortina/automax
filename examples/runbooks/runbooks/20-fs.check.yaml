@@ -66,10 +66,36 @@ tasks:
       with:
         path: /tmp
         max_percent: 99
-    - id: fs_exists
-      use: fs.exists
+    - id: fs_dir_create
+      use: fs.dir.create
       with:
         path: /tmp/automax-demo
+    - id: fs_dir_exists
+      use: fs.dir.exists
+      with:
+        path: /tmp/automax-demo
+    - id: fs_dir_wait
+      use: fs.dir.wait
+      with:
+        path: /tmp/automax-demo
+        state: present
+        retries: 1
+        interval: 1
+    - id: fs_file_create
+      use: fs.file.create
+      with:
+        path: /tmp/automax-demo-file
+    - id: fs_file_exists
+      use: fs.file.exists
+      with:
+        path: /tmp/automax-demo-file
+    - id: fs_file_wait
+      use: fs.file.wait
+      with:
+        path: /tmp/automax-demo-file
+        state: present
+        retries: 1
+        interval: 1
     - id: fs_find
       use: fs.find
       with:
@@ -84,10 +110,6 @@ tasks:
       with:
         path: /tmp/automax-demo
         line: KEY=value
-    - id: fs_mkdir
-      use: fs.mkdir
-      with:
-        path: /tmp/automax-demo
     - id: fs_move
       use: fs.move
       with:
@@ -102,11 +124,15 @@ tasks:
       use: fs.read
       with:
         path: /tmp/automax-demo
-    - id: fs_remove
-      use: fs.remove
+    - id: fs_dir_remove
+      use: fs.dir.remove
       with:
         path: /tmp/automax-demo
-        confirm: true
+        recursive: true
+    - id: fs_file_remove
+      use: fs.file.remove
+      with:
+        path: /tmp/automax-demo-file
     - id: fs_replace
       use: fs.replace
       with:
@@ -127,6 +153,17 @@ tasks:
       with:
         src: /tmp/source
         dest: /tmp/dest
+    - id: fs_symlink_exists
+      use: fs.symlink.exists
+      with:
+        path: /tmp/automax-demo
+    - id: fs_symlink_wait
+      use: fs.symlink.wait
+      with:
+        path: /tmp/automax-demo
+        state: present
+        retries: 1
+        interval: 1
     - id: fs_symlink_remove
       use: fs.symlink.remove
       with:

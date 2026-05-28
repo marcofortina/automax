@@ -14,14 +14,6 @@ tasks:
   steps:
   - id: catalog
     substeps:
-    - id: wait_file
-      use: wait.file
-      with:
-        path: /tmp/automax-demo
-    - id: wait_path
-      use: wait.path
-      with:
-        path: /tmp/automax-demo
     - id: wait_process
       use: wait.process
       with:

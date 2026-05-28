@@ -30,7 +30,7 @@ tasks:
       - id: filesystem
         substeps:
           - id: create_dir
-            use: fs.mkdir
+            use: fs.dir.create
             with:
               path: /opt/{{ vars.app_name }}
               mode: "0755"
@@ -48,7 +48,7 @@ automax plugins list
 Inspect parameter metadata:
 
 ```bash
-automax plugins describe fs.mkdir
+automax plugins describe fs.dir.create
 ```
 
 ## Keep secrets out of job files
@@ -61,7 +61,7 @@ providers.
 Prefer:
 
 ```yaml
-use: fs.mkdir
+use: fs.dir.create
 ```
 
 over:

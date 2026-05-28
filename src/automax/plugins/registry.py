@@ -172,11 +172,8 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     from automax.plugins.fs_chmod import FsChmodPlugin
     from automax.plugins.fs_chown import FsChownPlugin
     from automax.plugins.fs_copy import FsCopyPlugin
-    from automax.plugins.fs_mkdir import FsMkdirPlugin
-    from automax.plugins.fs_remove import FsRemovePlugin
     from automax.plugins.fs_system import FsAclAssertPlugin, FsAclGetPlugin, FsAclPlugin, FsAclRestorePlugin, FsAttrPlugin, FsQuotaPlugin
     from automax.plugins.fs_extra import (
-        FsExistsPlugin,
         FsFindPlugin,
         ExtendedFsLinePlugin,
         FsMovePlugin,
@@ -196,14 +193,22 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         DbPostgresQueryPlugin,
         DbSqliteQueryPlugin,
     )
+    from automax.plugins.fs_typed import (
+        FsDirCreatePlugin,
+        FsDirExistsPlugin,
+        FsDirRemovePlugin,
+        FsDirWaitPlugin,
+        FsFileCreatePlugin,
+        FsFileExistsPlugin,
+        FsFileRemovePlugin,
+        FsFileWaitPlugin,
+        FsSymlinkExistsPlugin,
+        FsSymlinkWaitPlugin,
+    )
     from automax.plugins.http import HttpAssertPlugin, HttpRequestPlugin, HttpWaitPlugin
     from automax.plugins.wait_assert import (
         AssertDiskPlugin,
-        AssertFilePlugin,
-        AssertPathPlugin,
         AssertTcpPlugin,
-        WaitFilePlugin,
-        WaitPathPlugin,
         WaitProcessPlugin,
         WaitTcpPlugin,
     )
@@ -510,12 +515,8 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FactsServicesPlugin(),
         PlatformFactsPlugin(),
         WaitTcpPlugin(),
-        WaitFilePlugin(),
-        WaitPathPlugin(),
         WaitProcessPlugin(),
         AssertTcpPlugin(),
-        AssertFilePlugin(),
-        AssertPathPlugin(),
         AssertDiskPlugin(),
         FirewalldPortPlugin(),
         FirewalldServicePlugin(),
@@ -656,10 +657,15 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         ExtendedTransferRsyncPlugin(),
         TransferSyncPlugin(),
         FsCdPlugin(),
-        FsMkdirPlugin(),
+        FsDirCreatePlugin(),
+        FsDirRemovePlugin(),
+        FsDirExistsPlugin(),
+        FsDirWaitPlugin(),
+        FsFileCreatePlugin(),
+        FsFileRemovePlugin(),
+        FsFileExistsPlugin(),
+        FsFileWaitPlugin(),
         FsCopyPlugin(),
-        FsRemovePlugin(),
-        FsExistsPlugin(),
         FsStatPlugin(),
         FsReadPlugin(),
         ExtendedFsWritePlugin(),
@@ -669,6 +675,8 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsMovePlugin(),
         FsSymlinkCreatePlugin(),
         FsSymlinkRemovePlugin(),
+        FsSymlinkExistsPlugin(),
+        FsSymlinkWaitPlugin(),
         FsFindPlugin(),
         FsChownPlugin(),
         FsChmodPlugin(),

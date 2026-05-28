@@ -43,13 +43,14 @@ The default smoke is non-destructive and should be safe for an unprivileged
 remote user. It covers:
 
 - `remote.command`
-- `fs.mkdir`, `fs.cd`, `fs.write`, `fs.read`, `fs.exists`, `fs.stat`
+- `fs.dir.create`, `fs.dir.remove`, `fs.dir.exists`, `fs.dir.wait`
+- `fs.file.exists`, `fs.file.wait`, `fs.cd`, `fs.write`, `fs.read`, `fs.stat`
 - `fs.line`, `fs.replace`, `fs.copy`, `fs.move`, `fs.symlink.create`, `fs.symlink.remove`
-- `fs.find`, `fs.chmod`, `fs.remove`
+- `fs.find`, `fs.chmod`
 - `archive.tar`, `archive.untar`, `archive.zip`, `archive.unzip`
 - `transfer.upload`, `transfer.download`, `transfer.sync`
-- `wait.file`, `wait.path`, `wait.process`
-- `assert.file`, `assert.path`, `assert.disk`, `assert.tcp`
+- `wait.process`
+- `assert.disk`, `assert.tcp`
 - artifact capture for stdout/stderr/data
 - resume helpers through the normal run state store
 

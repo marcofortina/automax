@@ -13,7 +13,7 @@ tasks:
       - id: workspace
         substeps:
           - id: mkdir
-            use: fs.mkdir
+            use: fs.dir.create
             with:
               path: /tmp/automax-macros
               mode: "0755"
@@ -46,12 +46,10 @@ tasks:
               creates: /tmp/automax-macros-extracted/automax-macros/hosts.copy
 
           - id: remove
-            use: fs.remove
+            use: fs.dir.remove
             with:
               path: /tmp/automax-macros-extracted
               recursive: true
-              force: true
-              confirm: true
 
   - id: services
     targets: group:ssh

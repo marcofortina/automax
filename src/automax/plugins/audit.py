@@ -138,7 +138,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
     if plugin.name == "db.health":
         params["engine"] = "sqlite"
         params["connection"] = {"path": "/tmp/automax.sqlite"}
-    if plugin.name in {"backup.prune", "backup.restore", "backup.rotate", "fs.remove", "iptables.restore", "lvm.lv_remove", "lvm.pv_remove", "lvm.vg_remove"}:
+    if plugin.name in {"backup.prune", "backup.restore", "backup.rotate", "iptables.restore", "lvm.lv_remove", "lvm.pv_remove", "lvm.vg_remove"}:
         params["confirm"] = True
     if plugin.name == "plugin.requirements":
         params["plugin"] = "transfer.rsync"
@@ -156,8 +156,6 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["src"] = "README.md"
     if plugin.name == "network.interface":
         params["backend"] = "runtime"
-    if plugin.name == "fs.remove":
-        params.update({"path": "/tmp/automax-demo", "allowlist": ["/tmp"], "denylist": ["/etc", "/usr", "/var"], "max_depth": 2, "trash_dir": "/tmp/automax-trash", "backup_path": "/tmp/automax-demo.bak"})
     if plugin.name in {"process.kill", "process.signal", "process.wait"}:
         params.pop("pid", None)
         params["pattern"] = "automax-demo"

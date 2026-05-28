@@ -19,14 +19,6 @@ tasks:
       with:
         path: /tmp/automax-demo
         min_free_mb: 1
-    - id: assert_file
-      use: assert.file
-      with:
-        path: /tmp/automax-demo
-    - id: assert_path
-      use: assert.path
-      with:
-        path: /tmp/automax-demo
     - id: assert_tcp
       use: assert.tcp
       with:

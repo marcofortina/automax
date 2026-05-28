@@ -23,7 +23,7 @@ tasks:
         substeps:
           - id: mkdir
             tags: [safe]
-            use: fs.mkdir
+            use: fs.dir.create
             with:
               path: /tmp/automax-example
               mode: "0755"

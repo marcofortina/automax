@@ -42,25 +42,6 @@ def _tcp_check(host: str, port: int, timeout: float) -> tuple[bool, str]:
         return False, str(exc)
 
 
-def _path_test_command(params: Dict[str, Any]) -> str:
-    state = str(params.get("state", "present"))
-    path_type = str(params.get("type", "path"))
-    if state not in {"present", "absent"}:
-        raise PluginValidationError("state must be present or absent")
-    flags = {
-        "path": "-e",
-        "any": "-e",
-        "file": "-f",
-        "directory": "-d",
-        "dir": "-d",
-        "symlink": "-L",
-    }
-    flag = flags.get(path_type)
-    if flag is None:
-        raise PluginValidationError("type must be path, any, file, directory, dir or symlink")
-    test = f"test {flag} {quote(params['path'])}"
-    return test if state == "present" else f"! {test}"
-
 
 class WaitTcpPlugin(BasePlugin):
     """Wait until a TCP endpoint is reachable from the controller."""
@@ -121,81 +102,6 @@ class AssertTcpPlugin(BasePlugin):
             message="TCP endpoint is reachable",
             data={"host": params["host"], "port": int(params["port"])},
         )
-
-
-class WaitFilePlugin(BasePlugin):
-    """Wait until a remote file condition is true."""
-
-    name = "wait.file"
-    description = "Wait until a remote file condition is true."
-    required_params = ("path",)
-    optional_params = ("state", "type", "timeout", "interval", "sudo")
-    opens_remote_session = True
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        self.validate(params)
-        params = {**params, "type": params.get("type", "file")}
-        timeout = _timeout(params)
-        interval = _interval(params)
-        command = f"{sudo_prefix(params, default=False)}{_path_test_command(params)}"
-        deadline = time.monotonic() + timeout
-        last_rc = 1
-        last_err = ""
-        while time.monotonic() <= deadline:
-            last_rc, _, last_err = exec_remote(context, command, get_pty=bool(params.get("sudo", False)))
-            if last_rc == 0:
-                return PluginResult.success(
-                    changed=False,
-                    message="file condition matched",
-                    data={"path": params["path"], "state": params.get("state", "present")},
-                )
-            time.sleep(interval)
-        return PluginResult.failure(rc=last_rc, stderr=last_err, message="wait.file timed out")
-
-
-class AssertFilePlugin(BasePlugin):
-    """Assert that a remote file condition is true."""
-
-    name = "assert.file"
-    description = "Assert that a remote file condition is true."
-    required_params = ("path",)
-    optional_params = ("state", "type", "sudo")
-    opens_remote_session = True
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        self.validate(params)
-        params = {**params, "type": params.get("type", "file")}
-        rc, out, err = exec_remote(
-            context,
-            f"{sudo_prefix(params, default=False)}{_path_test_command(params)}",
-            get_pty=bool(params.get("sudo", False)),
-        )
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="assert.file failed")
-        return PluginResult.success(
-            changed=False,
-            data={"path": params["path"], "state": params.get("state", "present")},
-        )
-
-
-class WaitPathPlugin(WaitFilePlugin):
-    """Wait until a remote path condition is true."""
-
-    name = "wait.path"
-    description = "Wait until a remote path condition is true."
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        return super().execute({**params, "type": params.get("type", "path")}, context)
-
-
-class AssertPathPlugin(AssertFilePlugin):
-    """Assert that a remote path condition is true."""
-
-    name = "assert.path"
-    description = "Assert that a remote path condition is true."
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        return super().execute({**params, "type": params.get("type", "path")}, context)
 
 
 class WaitProcessPlugin(BasePlugin):

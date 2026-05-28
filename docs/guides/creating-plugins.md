@@ -8,7 +8,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 Automax plugins are small execution units loaded by the plugin registry.
 
 A plugin should keep business logic outside the engine and expose one canonical
-DSL name, for example `fs.mkdir` or `systemctl.restart`.
+DSL name, for example `fs.dir.create` or `systemctl.restart`.
 
 ## Contract
 

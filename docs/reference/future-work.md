@@ -43,7 +43,7 @@ rules. Example use cases:
 
 ```text
 require approval for pkg.upgrade
-forbid recursive fs.remove on production
+forbid recursive fs.dir.remove on production
 forbid shell execution for selected targets
 require --lock on production deploy jobs
 ```
@@ -56,9 +56,9 @@ different guardrails to the same job definition in lab and production.
 `plan` or `explain` may eventually classify potentially dangerous operations:
 
 ```text
-low: assert.*, wait.*, fs.exists
+low: fs.dir.exists, fs.file.exists, fs.symlink.exists
 medium: systemctl.restart, fs.template, transfer.upload
-high: pkg.upgrade, user.remove, fs.remove recursive=true
+high: pkg.upgrade, user.remove, fs.dir.remove recursive=true
 ```
 
 This would give operators a quick review surface before running jobs on real

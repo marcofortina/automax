@@ -613,70 +613,6 @@ with:
   path: /tmp/automax-demo
 ```
 
-### `assert.file`
-
-Assert that a remote file condition is true.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: assert.file
-with:
-  path: /tmp/automax-demo
-```
-
-### `assert.path`
-
-Assert that a remote path condition is true.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: assert.path
-with:
-  path: /tmp/automax-demo
-```
-
 ### `assert.tcp`
 
 Assert that a TCP host/port is reachable from the controller.
@@ -3617,6 +3553,142 @@ with:
   dest: /tmp/dest
 ```
 
+### `fs.dir.create`
+
+Create a real directory, refusing files and symlinks at the destination.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.dir.create
+with:
+  path: /tmp/automax-demo
+```
+
+### `fs.dir.exists`
+
+Check whether a real directory exists, failing if another path type exists there.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.exists`: Boolean directory existence result.
+- `data.path`: Checked remote path.
+- `data.type`: Expected filesystem type.
+
+Example:
+
+```yaml
+use: fs.dir.exists
+with:
+  path: /tmp/automax-demo
+```
+
+### `fs.dir.remove`
+
+Remove a real directory, refusing files and symlinks. Non-empty directories require recursive=true.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `recursive` | no | `boolean` | `False` | Recurse into directories. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.dir.remove
+with:
+  path: /tmp/automax-demo
+```
+
+### `fs.dir.wait`
+
+Wait for a real directory to become present or absent.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `retries` | no | `integer` | `12` | Maximum polling attempts before a wait operation fails. |
+| `interval` | no | `number` | `2` | Polling interval in seconds. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.state`: Desired directory state.
+- `data.attempts`: Polling attempts used.
+
+Example:
+
+```yaml
+use: fs.dir.wait
+with:
+  path: /tmp/automax-demo
+```
+
 ### `fs.disk_usage_assert`
 
 Assert that filesystem block usage is below a maximum percentage.
@@ -3649,9 +3721,9 @@ with:
   max_percent: value
 ```
 
-### `fs.exists`
+### `fs.file.create`
 
-Check whether a remote path exists.
+Create a real regular file, refusing directories and symlinks at the destination.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -3660,7 +3732,10 @@ Check whether a remote path exists.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `cwd` | no | `path` |  | Remote or local working directory for this operation. |
 
 Result fields:
@@ -3671,13 +3746,112 @@ Result fields:
 - `stdout`: Captured standard output when applicable.
 - `stderr`: Captured standard error when applicable.
 - `data`: Plugin-specific structured result data.
-- `data.exists`: Boolean path existence result.
-- `data.path`: Checked remote path.
 
 Example:
 
 ```yaml
-use: fs.exists
+use: fs.file.create
+with:
+  path: /tmp/automax-demo
+```
+
+### `fs.file.exists`
+
+Check whether a real regular file exists, failing if another path type exists there.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.exists`: Boolean regular-file existence result.
+- `data.path`: Checked remote path.
+- `data.type`: Expected filesystem type.
+
+Example:
+
+```yaml
+use: fs.file.exists
+with:
+  path: /tmp/automax-demo
+```
+
+### `fs.file.remove`
+
+Remove a real regular file, refusing directories and symlinks.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.file.remove
+with:
+  path: /tmp/automax-demo
+```
+
+### `fs.file.wait`
+
+Wait for a real regular file to become present or absent.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `retries` | no | `integer` | `12` | Maximum polling attempts before a wait operation fails. |
+| `interval` | no | `number` | `2` | Polling interval in seconds. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.state`: Desired regular-file state.
+- `data.attempts`: Polling attempts used.
+
+Example:
+
+```yaml
+use: fs.file.wait
 with:
   path: /tmp/automax-demo
 ```
@@ -3784,40 +3958,6 @@ with:
   line: KEY=value
 ```
 
-### `fs.mkdir`
-
-Create a directory with owner/group/mode parameters.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fs.mkdir
-with:
-  path: /tmp/automax-demo
-```
-
 ### `fs.move`
 
 Move or rename a remote path.
@@ -3915,48 +4055,6 @@ Example:
 
 ```yaml
 use: fs.read
-with:
-  path: /tmp/automax-demo
-```
-
-### `fs.remove`
-
-Remove a remote file or directory with optional backup, trash and path safety guards.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `recursive` | no | `boolean` | `False` | Recurse into directories. |
-| `force` | no | `boolean` | `False` | Force the operation when supported. |
-| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
-| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
-| `backup_path` | no | `path` |  | Explicit backup path for pre-change file content. |
-| `trash_dir` | no | `path` |  | Remote directory used to move the target instead of deleting it. |
-| `max_depth` | no | `integer` |  | Maximum remote find traversal depth. |
-| `allowlist` | no | `list` |  | List of path prefixes allowed for guarded destructive filesystem operations. |
-| `denylist` | no | `list` |  | List of path prefixes refused for guarded destructive filesystem operations. |
-| `refuse_root_paths` | no | `boolean` | `True` | Refuse high-risk root-level paths such as /, /etc, /usr and /var. |
-| `require_recursive_for_directories` | no | `boolean` | `True` | Fail early when the target is a directory and recursive=true is not set. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fs.remove
 with:
   path: /tmp/automax-demo
 ```
@@ -4105,6 +4203,40 @@ with:
   dest: /tmp/dest
 ```
 
+### `fs.symlink.exists`
+
+Check whether a symbolic link exists, failing if another path type exists there.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.exists`: Boolean symlink existence result.
+- `data.path`: Checked remote path.
+- `data.type`: Expected filesystem type.
+
+Example:
+
+```yaml
+use: fs.symlink.exists
+with:
+  path: /tmp/automax-demo
+```
+
 ### `fs.symlink.remove`
 
 Remove a remote symbolic link safely.
@@ -4131,6 +4263,42 @@ Example:
 
 ```yaml
 use: fs.symlink.remove
+with:
+  path: /tmp/automax-demo
+```
+
+### `fs.symlink.wait`
+
+Wait for a symbolic link to become present or absent.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `retries` | no | `integer` | `12` | Maximum polling attempts before a wait operation fails. |
+| `interval` | no | `number` | `2` | Polling interval in seconds. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.state`: Desired symlink state.
+- `data.attempts`: Polling attempts used.
+
+Example:
+
+```yaml
+use: fs.symlink.wait
 with:
   path: /tmp/automax-demo
 ```
@@ -11284,74 +11452,6 @@ with:
 ```
 
 ## wait
-
-### `wait.file`
-
-Wait until a remote file condition is true.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `interval` | no | `number` | `2` | Polling interval in seconds. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: wait.file
-with:
-  path: /tmp/automax-demo
-```
-
-### `wait.path`
-
-Wait until a remote path condition is true.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `interval` | no | `number` | `2` | Polling interval in seconds. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: wait.path
-with:
-  path: /tmp/automax-demo
-```
 
 ### `wait.process`
 

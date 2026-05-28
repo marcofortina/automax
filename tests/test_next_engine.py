@@ -21,6 +21,7 @@ from automax.core.models import ExecutionContext, Target
 from automax.core.state import StateStore
 from automax.plugins.base import PluginValidationError
 import automax.plugins.fs_extra as fs_extra
+import automax.plugins.fs_typed as fs_typed
 
 
 def write(path: Path, content: str) -> Path:
@@ -317,17 +318,15 @@ def test_builtin_filesystem_plugins_are_registered():
 
     assert result.exit_code == 0, result.output
     output_names = set(result.output.splitlines())
-    for name in ("fs.cd", "fs.chmod", "fs.chown", "fs.mkdir"):
+    for name in ("fs.cd", "fs.chmod", "fs.chown", "fs.dir.create"):
         assert name in output_names
-    for alias in ("cd", "chmod", "chown", "mkdir"):
+    for alias in ("cd", "chmod", "chown", "mkdir", "fs.mkdir"):
         assert alias not in output_names
 
 
 
 
-def test_fs_mkdir_manual_commands_render_sudo_owner_group_and_mode():
-    from automax.plugins.fs_mkdir import FsMkdirPlugin
-
+def test_fs_dir_create_manual_commands_render_type_strict_sudo_owner_group_and_mode():
     context = ExecutionContext(
         run_id="test",
         dry_run=True,
@@ -341,7 +340,7 @@ def test_fs_mkdir_manual_commands_render_sudo_owner_group_and_mode():
         secrets={},
     )
 
-    commands = FsMkdirPlugin().manual_commands(
+    commands = fs_typed.FsDirCreatePlugin().manual_commands(
         {
             "path": "/u01/app/grid",
             "owner": "grid",
@@ -352,16 +351,50 @@ def test_fs_mkdir_manual_commands_render_sudo_owner_group_and_mode():
         context,
     )
 
-    assert commands == [
-        'test -d /u01/app/grid && '
-        'test "$(stat -c %a /u01/app/grid)" = 0775 && '
-        'test "$(stat -c %U /u01/app/grid)" = grid && '
-        'test "$(stat -c %G /u01/app/grid)" = oinstall || '
-        '{ sudo -n mkdir -p /u01/app/grid && '
-        'sudo -n chmod 0775 /u01/app/grid && '
-        'sudo -n chown grid:oinstall /u01/app/grid; '
-        'echo __AUTOMAX_CHANGED__; }'
-    ]
+    command = commands[0]
+    assert "fs.dir.create" not in command
+    assert 'is_dir() { run test -d "$path" && ! run test -L "$path"; }' in command
+    assert 'run mkdir -p -- "$path"' in command
+    assert 'run chmod "$mode" "$path"' in command
+    assert 'run chown "$owner_group" "$path"' in command
+    assert 'sudo -n "$@"' in command
+
+
+def test_typed_filesystem_plugins_are_strict_about_wrong_path_types(monkeypatch):
+    context = ExecutionContext(
+        run_id="run-1",
+        dry_run=False,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="host", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+    context.ssh_client = object()
+
+    calls = []
+
+    def fake_exec_remote(context, command, **kwargs):
+        calls.append(command)
+        return 20, "", "wrong-type: expected file at /tmp/demo"
+
+    monkeypatch.setattr(fs_typed, "exec_remote", fake_exec_remote)
+
+    result = fs_typed.FsFileExistsPlugin().execute({"path": "/tmp/demo"}, context)
+
+    assert not result.ok
+    assert "wrong-type" in result.stderr
+    assert 'is_file() { run test -f "$path" && ! run test -L "$path"; }' in calls[0]
+
+    with pytest.raises(PluginValidationError):
+        fs_typed.FsDirRemovePlugin().manual_commands({"path": "/etc", "recursive": True}, context)
+
+    remove_command = fs_typed.FsFileRemovePlugin().manual_commands({"path": "/tmp/demo"}, context)[0]
+    assert "refusing to remove non-$kind path" in remove_command
+    assert 'is_file() { run test -f "$path" && ! run test -L "$path"; }' in remove_command
 
 
 def test_ssh_smoke_script_is_syntax_valid():
@@ -393,11 +426,9 @@ tasks:
               dest: /tmp/dest.txt
               overwrite: false
           - id: remove
-            use: fs.remove
+            use: fs.file.remove
             with:
               path: /tmp/dest.txt
-              force: true
-              confirm: true
           - id: tar
             use: archive.tar
             with:
@@ -477,7 +508,14 @@ def test_filesystem_plugin_names_are_canonical():
     names = AutomaxEngine().plugin_registry.names()
 
     for name in (
-        "fs.exists",
+        "fs.dir.create",
+        "fs.dir.remove",
+        "fs.dir.exists",
+        "fs.dir.wait",
+        "fs.file.create",
+        "fs.file.remove",
+        "fs.file.exists",
+        "fs.file.wait",
         "fs.stat",
         "fs.read",
         "fs.write",
@@ -487,10 +525,14 @@ def test_filesystem_plugin_names_are_canonical():
         "fs.move",
         "fs.symlink.create",
         "fs.symlink.remove",
+        "fs.symlink.exists",
+        "fs.symlink.wait",
         "fs.find",
     ):
         assert name in names
 
+    for removed in ("fs.mkdir", "fs.remove", "fs.exists", "assert.file", "assert.path", "wait.file", "wait.path"):
+        assert removed not in names
     assert "exists" not in names
     assert "template" not in names
     assert "fs.symlink" not in names
@@ -618,18 +660,18 @@ def test_wait_and_assert_plugins_are_registered():
 
     for name in (
         "wait.tcp",
-        "wait.file",
-        "wait.path",
         "wait.process",
         "assert.tcp",
-        "assert.file",
-        "assert.path",
         "assert.disk",
     ):
         assert name in names
 
     assert "check.tcp" not in names
     assert "check.disk" not in names
+    assert "wait.file" not in names
+    assert "wait.path" not in names
+    assert "assert.file" not in names
+    assert "assert.path" not in names
 
 
 def test_wait_assert_plugins_validate_in_job_yaml(tmp_path: Path):
@@ -647,17 +689,16 @@ tasks:
       - id: remote_checks
         substeps:
           - id: wait_file
-            use: wait.file
+            use: fs.file.wait
             with:
               path: /tmp/automax-ready
               state: absent
-              timeout: 1
+              retries: 1
               interval: 1
-          - id: assert_path
-            use: assert.path
+          - id: dir_exists
+            use: fs.dir.exists
             with:
               path: /tmp
-              type: directory
           - id: assert_disk
             use: assert.disk
             with:
@@ -1507,7 +1548,7 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
     required_snippets = [
         "fs.write",
         "fs.read",
-        "fs.exists",
+        "fs.file.exists",
         "fs.stat",
         "fs.line",
         "fs.replace",
@@ -1523,11 +1564,11 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "transfer.upload",
         "transfer.download",
         "transfer.sync",
-        "wait.file",
-        "wait.path",
+        "fs.file.wait",
+        "fs.dir.wait",
         "wait.process",
-        "assert.file",
-        "assert.path",
+        "fs.file.exists",
+        "fs.dir.exists",
         "assert.disk",
         "assert.tcp",
         "systemctl.status",
@@ -2819,12 +2860,10 @@ tasks:
             with:
               command: "printf {{ secrets.token }}"
           - id: cleanup
-            use: fs.remove
+            use: fs.dir.remove
             with:
               path: /tmp/demo
               recursive: true
-              force: true
-              confirm: true
 """,
     )
     inventory = write(
@@ -2898,44 +2937,6 @@ tasks:
     assert "plugin=ssh.authorized_key_absent sudo=yes" in result.output
     assert "cat <<'AUTOMAX_SH' | sudo -n sh -s -- deploy" in result.output
     assert "--sudo-password-env ENV_NAME" in result.output
-
-
-def test_fs_remove_hardening_requires_confirm_and_renders_guards():
-    from automax.core.models import ExecutionContext, Target
-    from automax.plugins.base import PluginValidationError
-    from automax.plugins.fs_remove import FsRemovePlugin
-
-    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
-    plugin = FsRemovePlugin()
-
-    try:
-        plugin.manual_commands({"path": "/tmp/demo", "recursive": True}, context)
-    except PluginValidationError as exc:
-        assert "confirm=true" in str(exc)
-    else:
-        raise AssertionError("recursive fs.remove must require confirm=true")
-
-    command = plugin.manual_commands({
-        "path": "/tmp/demo",
-        "recursive": True,
-        "force": True,
-        "confirm": True,
-        "backup_before": True,
-        "backup_path": "/tmp/demo.bak",
-        "trash_dir": "/tmp/trash",
-        "max_depth": 2,
-        "allowlist": ["/tmp"],
-    }, context)[0]
-    assert "cp -a -- /tmp/demo /tmp/demo.bak" in command
-    assert "find /tmp/demo -mindepth 3" in command
-    assert "mv -- /tmp/demo /tmp/trash/$(basename -- /tmp/demo).$(date +%Y%m%d%H%M%S)" in command
-
-    try:
-        plugin.manual_commands({"path": "/etc", "confirm": True, "recursive": True}, context)
-    except PluginValidationError as exc:
-        assert "protected root-level path" in str(exc)
-    else:
-        raise AssertionError("protected root-level paths must be refused")
 
 
 def test_commands_render_json_marks_legacy_plugins_available_with_fallback(tmp_path: Path):
@@ -4345,17 +4346,13 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "db.health":
         params["engine"] = "sqlite"
         params["connection"] = {"path": "/tmp/automax.sqlite"}
-    if plugin.name in {"lvm.lv_remove", "lvm.vg_remove", "lvm.pv_remove", "backup.restore", "backup.prune", "backup.rotate", "iptables.restore", "fs.remove"}:
+    if plugin.name in {"lvm.lv_remove", "lvm.vg_remove", "lvm.pv_remove", "backup.restore", "backup.prune", "backup.rotate", "iptables.restore"}:
         params["confirm"] = True
     if plugin.name == "plugin.requirements":
         params["plugin"] = "transfer.rsync"
-    if plugin.name == "fs.remove":
-        params["path"] = "/tmp/automax-demo"
-        params["allowlist"] = ["/tmp"]
-        params["denylist"] = ["/etc", "/usr", "/var"]
-        params["max_depth"] = 2
-        params["trash_dir"] = "/tmp/automax-trash"
-        params["backup_path"] = "/tmp/automax-demo.bak"
+    if plugin.name == "fs.dir.remove":
+        params["path"] = "/tmp/automax-demo-dir"
+        params["recursive"] = True
     if plugin.name == "process.signal":
         params.pop("pid", None)
         params["pattern"] = "automax-demo"

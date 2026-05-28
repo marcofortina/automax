@@ -58,33 +58,6 @@ def _render_template_content(params: Dict[str, Any], context: ExecutionContext) 
     return str(template_path), rendered
 
 
-class FsExistsPlugin(BasePlugin):
-    """Check whether a remote path exists without failing when it does not."""
-
-    name = "fs.exists"
-    description = "Check whether a remote path exists."
-    required_params = ("path",)
-    optional_params = ("type", "cwd")
-    opens_remote_session = True
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        self.validate(params)
-        test_flag = {"file": "-f", "directory": "-d", "dir": "-d", "path": "-e", "any": "-e"}.get(
-            str(params.get("type", "any"))
-        )
-        if test_flag is None:
-            raise PluginValidationError("fs.exists type must be file, directory, dir, path or any")
-        command = apply_cwd(f"test {test_flag} {quote(params['path'])}", context, params.get("cwd"))
-        rc, out, err = exec_remote(context, command)
-        exists = rc == 0
-        return PluginResult.success(
-            changed=False,
-            rc=0,
-            stdout=out,
-            stderr="" if exists else err,
-            data={"exists": exists, "path": params["path"]},
-        )
-
 
 class FsStatPlugin(BasePlugin):
     """Read POSIX stat metadata for a remote path."""

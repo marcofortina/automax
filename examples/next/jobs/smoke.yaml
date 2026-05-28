@@ -37,7 +37,7 @@ tasks:
               remote_user: stdout.trim
 
           - id: mkdir
-            use: fs.mkdir
+            use: fs.dir.create
             with:
               path: "/tmp/automax-{{ outputs.remote_user }}"
               mode: "0755"

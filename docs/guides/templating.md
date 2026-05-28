@@ -31,7 +31,7 @@ step_state   values shared by plugins in the same step
 
 ```yaml
 - id: make_release_dir
-  use: fs.mkdir
+  use: fs.dir.create
   with:
     path: "/opt/{{ vars.app_name }}/{{ vars.version }}"
     owner: "{{ server.vars.owner }}"
@@ -51,7 +51,7 @@ Registered outputs can be reused later in the same run:
     remote_user: stdout.trim
 
 - id: create_dir
-  use: fs.mkdir
+  use: fs.dir.create
   with:
     path: /opt/app
     owner: "{{ outputs.remote_user }}"

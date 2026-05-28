@@ -133,8 +133,6 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
         return [f"{sudo}aa-status"]
 
     if plugin_name.startswith("assert."):
-        if plugin_name in {"assert.file", "assert.path"}:
-            return [f"test -e {_q(path)}"]
         if plugin_name == "assert.disk":
             return [f"df -Pm {_q(path)}"]
         if plugin_name == "assert.tcp":
@@ -247,8 +245,26 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
             return [f"cd {_q(path)}"]
         if plugin_name == "fs.copy":
             return [f"cp {'-a ' if params.get('preserve') else ''}{'-r ' if params.get('recursive') else ''}{_q(params.get('src', '/tmp/source'))} {_q(params.get('dest', '/tmp/dest'))}"]
-        if plugin_name == "fs.exists":
-            return [f"test -e {_q(path)}"]
+        if plugin_name == "fs.dir.create":
+            return [f"test -d {_q(path)} && ! test -L {_q(path)} || mkdir -p -- {_q(path)}"]
+        if plugin_name == "fs.dir.remove":
+            return [f"test ! -e {_q(path)} || rmdir -- {_q(path)}"]
+        if plugin_name == "fs.dir.exists":
+            return [f"test -d {_q(path)} && ! test -L {_q(path)}"]
+        if plugin_name == "fs.dir.wait":
+            return [f"for i in $(seq 1 {_q(params.get('retries', 12))}); do test -d {_q(path)} && ! test -L {_q(path)} && exit 0; sleep {_q(params.get('interval', 5))}; done; exit 1"]
+        if plugin_name == "fs.file.create":
+            return [f"test -f {_q(path)} && ! test -L {_q(path)} || touch -- {_q(path)}"]
+        if plugin_name == "fs.file.remove":
+            return [f"test ! -e {_q(path)} || rm -f -- {_q(path)}"]
+        if plugin_name == "fs.file.exists":
+            return [f"test -f {_q(path)} && ! test -L {_q(path)}"]
+        if plugin_name == "fs.file.wait":
+            return [f"for i in $(seq 1 {_q(params.get('retries', 12))}); do test -f {_q(path)} && ! test -L {_q(path)} && exit 0; sleep {_q(params.get('interval', 5))}; done; exit 1"]
+        if plugin_name == "fs.symlink.exists":
+            return [f"test -L {_q(path)}"]
+        if plugin_name == "fs.symlink.wait":
+            return [f"for i in $(seq 1 {_q(params.get('retries', 12))}); do test -L {_q(path)} && exit 0; sleep {_q(params.get('interval', 5))}; done; exit 1"]
         if plugin_name == "fs.find":
             return [f"find {_q(path)}"]
         if plugin_name == "fs.line":
@@ -310,8 +326,6 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
     if plugin_name.startswith("wait."):
         timeout = params.get("timeout", 60)
         interval = params.get("interval", 2)
-        if plugin_name in {"wait.file", "wait.path"}:
-            return [f"timeout {_q(timeout)} sh -c 'until test -e {_q(path)}; do sleep {_q(interval)}; done'"]
         if plugin_name == "wait.process":
             return [f"timeout {_q(timeout)} sh -c 'until pgrep -f {_q(params.get('pattern', 'process'))} >/dev/null; do sleep {_q(interval)}; done'"]
         if plugin_name == "wait.tcp":

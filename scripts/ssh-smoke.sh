@@ -83,13 +83,12 @@ tasks:
       - id: filesystem_archive_transfer
         substeps:
           - id: clean_start
-            use: fs.remove
+            use: fs.dir.remove
             with:
               path: ${WORK_DIR}
               recursive: true
-              force: true
           - id: mkdir
-            use: fs.mkdir
+            use: fs.dir.create
             with:
               path: ${WORK_DIR}
               mode: "0700"
@@ -112,10 +111,9 @@ tasks:
             artifacts:
               stdout: core/read-marker.txt
           - id: exists_marker
-            use: fs.exists
+            use: fs.file.exists
             with:
               path: result.txt
-              type: file
             register:
               marker_exists: data.exists
           - id: stat_marker
@@ -235,20 +233,18 @@ tasks:
               dest: ${WORK_DIR}/unzip
               creates: ${WORK_DIR}/unzip/uploaded-dir/nested.txt
           - id: wait_file
-            use: wait.file
+            use: fs.file.wait
             with:
               path: ${WORK_DIR}/uploaded.txt
               state: present
-              type: file
-              timeout: 10
+              retries: 10
               interval: 1
-          - id: wait_path
-            use: wait.path
+          - id: wait_dir
+            use: fs.dir.wait
             with:
               path: ${WORK_DIR}/untar
               state: present
-              type: directory
-              timeout: 10
+              retries: 10
               interval: 1
           - id: start_background_process
             use: remote.command
@@ -261,18 +257,14 @@ tasks:
               state: present
               timeout: 10
               interval: 1
-          - id: assert_file
-            use: assert.file
+          - id: file_exists
+            use: fs.file.exists
             with:
               path: ${WORK_DIR}/uploaded.txt
-              state: present
-              type: file
-          - id: assert_path
-            use: assert.path
+          - id: dir_exists
+            use: fs.dir.exists
             with:
               path: ${WORK_DIR}/untar
-              state: present
-              type: directory
           - id: assert_disk
             use: assert.disk
             with:
@@ -290,11 +282,10 @@ tasks:
               pattern: "sleep 30"
               ignore_missing: true
           - id: cleanup_workspace
-            use: fs.remove
+            use: fs.dir.remove
             with:
               path: ${WORK_DIR}
               recursive: true
-              force: true
 YAML
 
 if [[ -n "${SMOKE_SERVICE}" ]]; then
