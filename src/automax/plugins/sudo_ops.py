@@ -9,7 +9,7 @@ from difflib import unified_diff
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin
+from automax.plugins.base import BasePlugin, ReadOnlyCommandPlugin
 from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
@@ -62,7 +62,7 @@ class SudoRulePlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="sudo.rule failed")
 
 
-class SudoValidatePlugin(BasePlugin):
+class SudoValidatePlugin(ReadOnlyCommandPlugin):
     name = "sudo.validate"
     description = "Validate sudoers syntax with visudo without changing files."
     optional_params = ("path", "sudo")

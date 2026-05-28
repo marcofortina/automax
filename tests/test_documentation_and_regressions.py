@@ -750,6 +750,33 @@ def test_plugin_specific_user_and_boolean_value_schemas_do_not_use_global_fallba
 
 
 
+
+
+def test_read_only_command_plugin_is_shared_base_class():
+    from automax.plugins.base import ReadOnlyCommandPlugin
+    from automax.plugins.ops_completeness import __dict__ as ops_symbols
+    from automax.plugins.registry import build_builtin_registry
+
+    assert "_ReadOnlyCommandPlugin" not in ops_symbols
+
+    registry = build_builtin_registry()
+    expected = {
+        "apparmor.profile_assert",
+        "auditd.status",
+        "auditd.search",
+        "cron.list",
+        "sudo.validate",
+        "sysctl.assert",
+        "udev.validate",
+    }
+    for name in expected:
+        assert isinstance(registry.get(name), ReadOnlyCommandPlugin)
+
+    readonly_plugins = [
+        name for name in registry.names() if isinstance(registry.get(name), ReadOnlyCommandPlugin)
+    ]
+    assert len(readonly_plugins) >= 40
+
 def test_builtin_plugins_do_not_patch_methods_after_class_definition():
     pattern = re.compile(r"\b\w+Plugin\.(execute|manual_commands|validate|_command|_command_parts|_content)\s*=")
     offenders = []

@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin, PluginValidationError
+from automax.plugins.base import BasePlugin, ReadOnlyCommandPlugin, PluginValidationError
 from automax.plugins.file_utils import install_uploaded_file, upload_text_to_temp
 from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_stdin, quote, result_from_remote, sudo_prefix, validate_env_name
 
@@ -96,7 +96,7 @@ class CronFilePlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="cron.file failed", data={"path": dest})
 
 
-class CronListPlugin(BasePlugin):
+class CronListPlugin(ReadOnlyCommandPlugin):
     name = "cron.list"
     description = "List system cron.d entries and optionally one user's crontab."
     optional_params = ("user", "sudo")
@@ -143,16 +143,13 @@ class CronAbsentPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="cron.absent failed")
 
 
-class CronValidatePlugin(BasePlugin):
+class CronValidatePlugin(ReadOnlyCommandPlugin):
     name = "cron.validate"
     description = "Validate basic cron file syntax without installing it."
     required_params = ("path",)
     optional_params = ("sudo",)
     opens_remote_session = True
     supports_check_mode = True
-
-    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cron.validate is a read-only cron syntax check"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -173,9 +170,3 @@ awk '
                 prefix="AUTOMAX_SH",
             )
         ]
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cron.validate failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)

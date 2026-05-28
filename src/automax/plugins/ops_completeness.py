@@ -9,7 +9,7 @@ from difflib import unified_diff
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin, PluginValidationError
+from automax.plugins.base import BasePlugin, PluginValidationError, ReadOnlyCommandPlugin
 from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, SUDO_NON_INTERACTIVE, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
@@ -31,20 +31,6 @@ def _state(params: Dict[str, Any], allowed: set[str] = {"present", "absent"}) ->
     if state not in allowed:
         raise PluginValidationError(f"state must be one of: {', '.join(sorted(allowed))}")
     return state
-
-
-class _ReadOnlyCommandPlugin(BasePlugin):
-    opens_remote_session = True
-    supports_check_mode = True
-
-    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return f"{self.name} is a read-only assertion or fact query"
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message=f"{self.name} failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"output": out})
 
 
 # AppArmor
@@ -88,7 +74,7 @@ class ApparmorDisablePlugin(ApparmorEnforcePlugin):
         return [f"{sudo_prefix(params, default=True)}aa-disable {quote(params['profile'])}"]
 
 
-class ApparmorProfileAssertPlugin(_ReadOnlyCommandPlugin):
+class ApparmorProfileAssertPlugin(ReadOnlyCommandPlugin):
     name = "apparmor.profile_assert"
     description = "Assert that an AppArmor profile is loaded in the expected mode."
     required_params = ("profile", "state")
@@ -105,7 +91,7 @@ class ApparmorProfileAssertPlugin(_ReadOnlyCommandPlugin):
         return [f"{sudo_prefix(params, default=True)}aa-status 2>/dev/null | grep -F -- {profile} | grep -Fi -- {quote(state)}"]
 
 
-class ApparmorParserValidatePlugin(_ReadOnlyCommandPlugin):
+class ApparmorParserValidatePlugin(ReadOnlyCommandPlugin):
     name = "apparmor.parser_validate"
     description = "Validate an AppArmor profile with apparmor_parser before applying it."
     required_params = ("profile",)
@@ -117,7 +103,7 @@ class ApparmorParserValidatePlugin(_ReadOnlyCommandPlugin):
 
 
 # auditd
-class AuditdRulesFactsPlugin(_ReadOnlyCommandPlugin):
+class AuditdRulesFactsPlugin(ReadOnlyCommandPlugin):
     name = "auditd.rules_facts"
     description = "List active auditd rules and persistent rules.d files."
     optional_params = ("sudo",)
@@ -169,7 +155,7 @@ class AuditdSyscallPlugin(AuditdWatchPlugin):
         return f"-a {params.get('action', 'always,exit')} -F arch={params.get('arch', 'b64')} {syscalls} {filters} -k {params['key']}".strip()
 
 
-class AuditdSearchPlugin(_ReadOnlyCommandPlugin):
+class AuditdSearchPlugin(ReadOnlyCommandPlugin):
     name = "auditd.search"
     description = "Search audit events by key, user or time window."
     optional_params = ("key", "user", "start", "end", "sudo")
@@ -193,7 +179,7 @@ class AuditdSearchPlugin(_ReadOnlyCommandPlugin):
         return [f"{sudo_prefix(params, default=True)}ausearch {' '.join(args)}"]
 
 
-class AuditdBacklogAssertPlugin(_ReadOnlyCommandPlugin):
+class AuditdBacklogAssertPlugin(ReadOnlyCommandPlugin):
     name = "auditd.backlog_assert"
     description = "Assert auditd lost-event count and backlog are below thresholds."
     optional_params = ("max_lost", "max_backlog", "sudo")
@@ -205,7 +191,7 @@ class AuditdBacklogAssertPlugin(_ReadOnlyCommandPlugin):
 
 
 # udev
-class UdevValidatePlugin(_ReadOnlyCommandPlugin):
+class UdevValidatePlugin(ReadOnlyCommandPlugin):
     name = "udev.validate"
     description = "Validate udev rules file syntax with udevadm test where possible."
     required_params = ("file",)
@@ -216,7 +202,7 @@ class UdevValidatePlugin(_ReadOnlyCommandPlugin):
         return [f"test -r {quote(params['file'])} && grep -nE '^[^#].*(==|=|:=|\\+=)' {quote(params['file'])} >/dev/null"]
 
 
-class UdevTestPlugin(_ReadOnlyCommandPlugin):
+class UdevTestPlugin(ReadOnlyCommandPlugin):
     name = "udev.test"
     description = "Run udevadm test for a device sysfs path."
     required_params = ("device",)
@@ -227,7 +213,7 @@ class UdevTestPlugin(_ReadOnlyCommandPlugin):
         return [f"{sudo_prefix(params, default=True)}udevadm test {quote(params['device'])}"]
 
 
-class UdevFactsPlugin(_ReadOnlyCommandPlugin):
+class UdevFactsPlugin(ReadOnlyCommandPlugin):
     name = "udev.facts"
     description = "Read udev properties for a device path."
     required_params = ("device",)
@@ -239,7 +225,7 @@ class UdevFactsPlugin(_ReadOnlyCommandPlugin):
 
 
 # kernel/sysctl/time
-class KernelModuleStatusPlugin(_ReadOnlyCommandPlugin):
+class KernelModuleStatusPlugin(ReadOnlyCommandPlugin):
     name = "kernel.module.status"
     description = "Assert or report kernel module load status."
     required_params = ("module",)
@@ -287,7 +273,7 @@ class KernelModuleBlacklistPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.module.blacklist failed")
 
 
-class KernelCmdlineAssertPlugin(_ReadOnlyCommandPlugin):
+class KernelCmdlineAssertPlugin(ReadOnlyCommandPlugin):
     name = "kernel.cmdline_assert"
     description = "Assert that the running kernel command line contains or omits a parameter."
     required_params = ("param",)
@@ -327,7 +313,7 @@ class KernelBootParamAbsentPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.boot_param_absent failed")
 
 
-class SysctlAssertPlugin(_ReadOnlyCommandPlugin):
+class SysctlAssertPlugin(ReadOnlyCommandPlugin):
     name = "sysctl.assert"
     description = "Assert a runtime sysctl value."
     required_params = ("name", "value")
@@ -337,7 +323,7 @@ class SysctlAssertPlugin(_ReadOnlyCommandPlugin):
         return [f"test \"$({sudo_prefix(params, default=True)}sysctl -n {quote(params['name'])})\" = {quote(params['value'])}"]
 
 
-class SysctlFactsPlugin(_ReadOnlyCommandPlugin):
+class SysctlFactsPlugin(ReadOnlyCommandPlugin):
     name = "sysctl.facts"
     description = "Read one or more sysctl values."
     optional_params = ("names", "sudo")
@@ -381,7 +367,7 @@ class SysctlDropinPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="sysctl.dropin failed")
 
 
-class TimedatectlStatusPlugin(_ReadOnlyCommandPlugin):
+class TimedatectlStatusPlugin(ReadOnlyCommandPlugin):
     name = "timedatectl.status"
     description = "Read timedatectl time, timezone and NTP state."
     optional_params = ("sudo",)
@@ -399,7 +385,7 @@ class TimedatectlNtpPlugin(TimedatectlTimezonePlugin):
         want="yes" if bool(params["enabled"]) else "no"; value="true" if bool(params["enabled"]) else "false"
         return [f"test \"$({sudo_prefix(params, default=True)}timedatectl show -p NTP --value)\" = {quote(want)} || {sudo_prefix(params, default=True)}timedatectl set-ntp {value}"]
 
-class ChronyTrackingAssertPlugin(_ReadOnlyCommandPlugin):
+class ChronyTrackingAssertPlugin(ReadOnlyCommandPlugin):
     name="chrony.tracking_assert"; description="Assert chrony tracking health using chronyc tracking."; optional_params=("max_offset","max_stratum","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         max_offset=float(params.get("max_offset",1.0)); max_stratum=int(params.get("max_stratum",16))
@@ -407,15 +393,15 @@ class ChronyTrackingAssertPlugin(_ReadOnlyCommandPlugin):
 
 
 # User/group/sudo facts and assertions
-class UserFactsPlugin(_ReadOnlyCommandPlugin):
+class UserFactsPlugin(ReadOnlyCommandPlugin):
     name="user.facts"; description="Read passwd, shadow lock and group facts for a user."; required_params=("user",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]: return [f"getent passwd {quote(params['user'])}; id {quote(params['user'])}; {sudo_prefix(params, default=True)}passwd -S {quote(params['user'])} 2>/dev/null || true"]
 
-class UserShellAssertPlugin(_ReadOnlyCommandPlugin):
+class UserShellAssertPlugin(ReadOnlyCommandPlugin):
     name="user.shell_assert"; description="Assert a user's login shell."; required_params=("user","shell"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"test \"$(getent passwd {quote(params['user'])} | cut -d: -f7)\" = {quote(params['shell'])}"]
 
-class UserHomeAssertPlugin(_ReadOnlyCommandPlugin):
+class UserHomeAssertPlugin(ReadOnlyCommandPlugin):
     name="user.home_assert"; description="Assert a user's home directory path, owner or mode."; required_params=("user",); optional_params=("path","mode","owner","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         path=f"$(getent passwd {quote(params['user'])} | cut -d: -f6)"; cmds=[]
@@ -424,12 +410,12 @@ class UserHomeAssertPlugin(_ReadOnlyCommandPlugin):
         if params.get("owner"): cmds.append(f"test \"$(stat -c %U {path})\" = {quote(params['owner'])}")
         return cmds or [f"test -d {path}"]
 
-class UserGroupsAssertPlugin(_ReadOnlyCommandPlugin):
+class UserGroupsAssertPlugin(ReadOnlyCommandPlugin):
     name="user.groups_assert"; description="Assert required group membership for a user."; required_params=("user","groups"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         user=quote(params['user']); return [" && ".join(f"id -nG {user} | tr ' ' '\\n' | grep -Fx -- {quote(g)}" for g in _as_list(params['groups']))]
 
-class GroupMembersPlugin(_ReadOnlyCommandPlugin):
+class GroupMembersPlugin(ReadOnlyCommandPlugin):
     name="group.members"; description="List members of a group."; required_params=("group",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"getent group {quote(params['group'])}"]
 
@@ -443,22 +429,22 @@ class GroupMemberAbsentPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
         rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="group.member_absent failed")
 
-class SudoListPlugin(_ReadOnlyCommandPlugin):
+class SudoListPlugin(ReadOnlyCommandPlugin):
     name="sudo.list"; description="List sudo privileges for a user."; required_params=("user",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{sudo_prefix(params, default=True)}sudo -l -U {quote(params['user'])}"]
 
-class SudoAssertPlugin(_ReadOnlyCommandPlugin):
+class SudoAssertPlugin(ReadOnlyCommandPlugin):
     name="sudo.assert"; description="Assert sudo -l output contains a rule fragment."; required_params=("user","rule"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{sudo_prefix(params, default=True)}sudo -l -U {quote(params['user'])} | grep -F -- {quote(params['rule'])}"]
 
-class SudoCanRunPlugin(_ReadOnlyCommandPlugin):
+class SudoCanRunPlugin(ReadOnlyCommandPlugin):
     name="sudo.can_run"; description="Assert that a user can run a command via sudo without prompting."; required_params=("user","command"); optional_params=("run_as","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         run_as=f" -u {quote(params.get('run_as'))}" if params.get("run_as") else ""; return [f"{sudo_prefix(params, default=True)}{SUDO_NON_INTERACTIVE} -l -U {quote(params['user'])}{run_as} {quote(params['command'])}"]
 
 
 # Mount/fstab/block safety
-class MountAssertPlugin(_ReadOnlyCommandPlugin):
+class MountAssertPlugin(ReadOnlyCommandPlugin):
     name="mount.assert"; description="Assert a mountpoint is mounted, optionally from source and fstype."; required_params=("path",); optional_params=("source","fstype","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         cmd=f"findmnt -n {quote(params['path'])}"; filters=[]
@@ -466,7 +452,7 @@ class MountAssertPlugin(_ReadOnlyCommandPlugin):
         if params.get("fstype"): filters.append(f"grep -F -- {quote(params['fstype'])}")
         return [" | ".join([cmd,*filters])]
 
-class MountOptionsAssertPlugin(_ReadOnlyCommandPlugin):
+class MountOptionsAssertPlugin(ReadOnlyCommandPlugin):
     name="mount.options_assert"; description="Assert required mount options are active."; required_params=("path","options"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         cmd=f"findmnt -n -o OPTIONS {quote(params['path'])}"; return [" && ".join(f"{cmd} | tr ',' '\\n' | grep -Fx -- {quote(o)}" for o in _as_list(params['options']))]
@@ -484,7 +470,7 @@ class FstabAbsentPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
         rc,out,err=exec_remote(context," && ".join(self.manual_commands(params,context))+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="fstab.absent failed")
 
-class FstabAssertPlugin(_ReadOnlyCommandPlugin):
+class FstabAssertPlugin(ReadOnlyCommandPlugin):
     name="fstab.assert"; description="Assert an fstab entry exists for source, path or fstype."; optional_params=("path","source","fstype","file","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         file=quote(params.get("file","/etc/fstab")); cmds=[f"grep -Ev '^[[:space:]]*(#|$)' {file}"]
@@ -492,38 +478,38 @@ class FstabAssertPlugin(_ReadOnlyCommandPlugin):
             if params.get(key): cmds.append(f"grep -F -- {quote(params[key])}")
         return [" | ".join(cmds)]
 
-class BlockSizeAssertPlugin(_ReadOnlyCommandPlugin):
+class BlockSizeAssertPlugin(ReadOnlyCommandPlugin):
     name="block.size_assert"; description="Assert block device size in bytes."; required_params=("device","size"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"test \"$({sudo_prefix(params, default=True)}blockdev --getsize64 {quote(params['device'])})\" = {quote(params['size'])}"]
 
-class BlockFsAssertPlugin(_ReadOnlyCommandPlugin):
+class BlockFsAssertPlugin(ReadOnlyCommandPlugin):
     name="block.fs_assert"; description="Assert block device filesystem type."; required_params=("device","fstype"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"test \"$({sudo_prefix(params, default=True)}blkid -o value -s TYPE {quote(params['device'])})\" = {quote(params['fstype'])}"]
 
-class BlockMountpointAssertPlugin(_ReadOnlyCommandPlugin):
+class BlockMountpointAssertPlugin(ReadOnlyCommandPlugin):
     name="block.mountpoint_assert"; description="Assert a block device is mounted at a path."; required_params=("device","path"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"findmnt -n -S {quote(params['device'])} -T {quote(params['path'])}"]
 
-class BlockEmptyAssertPlugin(_ReadOnlyCommandPlugin):
+class BlockEmptyAssertPlugin(ReadOnlyCommandPlugin):
     name="block.empty_assert"; description="Assert a block device has no detectable signature before destructive use."; required_params=("device",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"! {sudo_prefix(params, default=True)}blkid {quote(params['device'])}"]
 
-class BlockNotMountedAssertPlugin(_ReadOnlyCommandPlugin):
+class BlockNotMountedAssertPlugin(ReadOnlyCommandPlugin):
     name="block.not_mounted_assert"; description="Assert a block device is not mounted."; required_params=("device",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"! findmnt -n -S {quote(params['device'])}"]
 
 
 # PAM stack helpers
-class PamIncludeAssertPlugin(_ReadOnlyCommandPlugin):
+class PamIncludeAssertPlugin(ReadOnlyCommandPlugin):
     name="pam.include_assert"; description="Assert a PAM service includes another stack."; required_params=("service","include"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"grep -Eq '(^|[[:space:]])(include|substack|@include)[[:space:]]+{params['include']}($|[[:space:]])' /etc/pam.d/{quote(params['service'])}"]
 
-class PamModuleAssertPlugin(_ReadOnlyCommandPlugin):
+class PamModuleAssertPlugin(ReadOnlyCommandPlugin):
     name="pam.module_assert"; description="Assert a PAM module line exists in a service."; required_params=("service","module"); optional_params=("type","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         prefix=f"^{params.get('type')}[[:space:]]+" if params.get("type") else ""; return [f"grep -Eq {quote(prefix + '.*' + str(params['module']))} /etc/pam.d/{quote(params['service'])}"]
 
-class PamOrderAssertPlugin(_ReadOnlyCommandPlugin):
+class PamOrderAssertPlugin(ReadOnlyCommandPlugin):
     name="pam.order_assert"; description="Assert one PAM line appears before another."; required_params=("service","before","after"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"awk '/{params['before']}/{{b=NR}} /{params['after']}/{{a=NR}} END{{exit !(b && a && b<a)}}' /etc/pam.d/{quote(params['service'])}"]
 
@@ -568,7 +554,7 @@ class FirewalldForwardPortPlugin(FirewalldSourcePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-forward-port" if state=="present" else "remove-forward-port"; spec=self._spec(params); query_cmd=f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-forward-port={quote(spec)}"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(spec)} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {sudo_prefix(params, default=True)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
 
-class NftablesRulesetAssertPlugin(_ReadOnlyCommandPlugin):
+class NftablesRulesetAssertPlugin(ReadOnlyCommandPlugin):
     name="nftables.ruleset_assert"; description="Assert the active nftables ruleset contains a fragment."; required_params=("fragment",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{sudo_prefix(params, default=True)}nft list ruleset | grep -F -- {quote(params['fragment'])}"]
 
@@ -591,12 +577,12 @@ class IptablesDeletePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
         rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.delete failed")
 
-class IptablesExistsAssertPlugin(_ReadOnlyCommandPlugin):
+class IptablesExistsAssertPlugin(ReadOnlyCommandPlugin):
     name="iptables.exists_assert"; description="Assert an iptables rule exists."; required_params=("chain","rule"); optional_params=("table","ipv6","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         binary="ip6tables" if bool(params.get("ipv6",False)) else "iptables"; table=str(params.get("table","filter")); return [f"{sudo_prefix(params, default=True)}{binary} -t {quote(table)} -C {quote(params['chain'])} {params['rule']}"]
 
-class IptablesCounterAssertPlugin(_ReadOnlyCommandPlugin):
+class IptablesCounterAssertPlugin(ReadOnlyCommandPlugin):
     name="iptables.counter_assert"; description="Assert iptables chain packet counters are above a threshold."; required_params=("chain",); optional_params=("table","min_packets","ipv6","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         binary="ip6tables" if bool(params.get("ipv6",False)) else "iptables"; table=str(params.get("table","filter")); minp=int(params.get("min_packets",1)); return [f"{sudo_prefix(params, default=True)}{binary} -t {quote(table)} -L {quote(params['chain'])} -v -n -x | awk 'NR>2 && $1+0>={minp} {{found=1}} END {{exit !found}}'"]

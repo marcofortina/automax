@@ -9,7 +9,7 @@ from difflib import unified_diff
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin, PluginValidationError
+from automax.plugins.base import BasePlugin, PluginValidationError, ReadOnlyCommandPlugin
 from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
@@ -64,24 +64,15 @@ class AuditdRulePlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="auditd.rule failed")
 
 
-class AuditdStatusPlugin(BasePlugin):
+class AuditdStatusPlugin(ReadOnlyCommandPlugin):
     name = "auditd.status"
     description = "Read auditd status without changing the system."
     optional_params = ("sudo",)
     opens_remote_session = True
     supports_check_mode = True
 
-    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "auditd.status is read-only and does not change files"
-
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return [f"{sudo_prefix(params, default=True)}auditctl -s"]
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="auditd.status failed")
-        return PluginResult.success(changed=False, stdout=out, stderr=err)
 
 
 class AuditdReloadPlugin(BasePlugin):

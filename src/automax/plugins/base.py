@@ -193,3 +193,56 @@ class BasePlugin(ABC):
     @abstractmethod
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         """Execute a plugin action."""
+
+
+class ReadOnlyCommandPlugin(BasePlugin):
+    """Base class for read-only plugins rendered as shell commands."""
+
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return f"{self.name} is a read-only assertion or fact query"
+
+    def command_failure_message(self, params: Dict[str, Any]) -> str:
+        """Return the failure message used when the read-only command fails."""
+        return f"{self.name} failed"
+
+    def command_result_data(self, params: Dict[str, Any], stdout: str, stderr: str, rc: int) -> Dict[str, Any]:
+        """Return optional structured data for a successful command result."""
+        return {"output": stdout}
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        commands = self.manual_commands(params, context)
+        rc, out, err = self._execute_read_only_commands(commands, context)
+        if rc != 0:
+            return PluginResult.failure(
+                rc=rc,
+                stdout=out,
+                stderr=err,
+                message=self.command_failure_message(params),
+            )
+        return PluginResult.success(
+            changed=False,
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            data=self.command_result_data(params, out, err, rc),
+        )
+
+    def _execute_read_only_commands(self, commands: list[str], context: ExecutionContext) -> tuple[int, str, str]:
+        """Execute one or more read-only commands and aggregate output."""
+        from automax.plugins.remote_utils import exec_remote
+
+        stdout_parts: list[str] = []
+        stderr_parts: list[str] = []
+        last_rc = 0
+        for command in commands:
+            last_rc, out, err = exec_remote(context, command)
+            if out:
+                stdout_parts.append(out)
+            if err:
+                stderr_parts.append(err)
+            if last_rc != 0:
+                break
+        return last_rc, "\n".join(stdout_parts), "\n".join(stderr_parts)
