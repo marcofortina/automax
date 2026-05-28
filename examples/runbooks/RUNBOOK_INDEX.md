@@ -26,7 +26,6 @@ Per-plugin runbooks only. No combined runbook, no reused runtime smoke flow, and
 | `runbooks/20-fs.check.yaml` | `fs` | 27 |
 | `runbooks/21-fstab.check.yaml` | `fstab` | 4 |
 | `runbooks/22-group.check.yaml` | `group` | 5 |
-| `runbooks/23-health.check.yaml` | `health` | 4 |
 | `runbooks/24-hostname.check.yaml` | `hostname` | 1 |
 | `runbooks/25-hosts.check.yaml` | `hosts` | 1 |
 | `runbooks/26-http.check.yaml` | `http` | 3 |

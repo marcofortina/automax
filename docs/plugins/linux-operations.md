@@ -113,12 +113,12 @@ backend-aware through the same safety rules as `network.dns`: managed or
 symlinked resolver files are not overwritten silently.
 
 
-## Service health assertions
+## Runtime service checks
 
-Use `health.port`, `health.listen`, `health.process` and `health.http` to assert
-that ports, processes and HTTP endpoints are available after a change. These
-macros are read-only and provide explicit no-diff reasons plus copy/pasteable
-manual checks.
+Use `network.port_check` for target-side TCP/UDP connectivity checks,
+`http.request` for controller-side HTTP probes, and the `process.*` family for
+process lifecycle checks. The former service-health wrapper namespace is
+intentionally not part of the public plugin surface.
 
 
 ## Certificate and PKI operations

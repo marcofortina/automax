@@ -328,12 +328,6 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PamSucceedIfPlugin,
         PamValidatePlugin,
     )
-    from automax.plugins.health import (
-        HealthHttpPlugin,
-        HealthListenPlugin,
-        HealthPortPlugin,
-        HealthProcessPlugin,
-    )
     from automax.plugins.pki import (
         PkiCaInstallPlugin,
         PkiCertExpiryAssertPlugin,
@@ -764,10 +758,6 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         NetworkRouteAssertPlugin(),
         NetworkDnsAssertPlugin(),
         NetworkPortCheckPlugin(),
-        HealthPortPlugin(),
-        HealthListenPlugin(),
-        HealthProcessPlugin(),
-        HealthHttpPlugin(),
         PkiCaInstallPlugin(),
         PkiKeyPermissionsPlugin(),
         PkiCertExpiryAssertPlugin(),

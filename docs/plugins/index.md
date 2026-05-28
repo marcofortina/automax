@@ -150,10 +150,6 @@ group.exists
 group.member_absent
 group.members
 group.remove
-health.http
-health.listen
-health.port
-health.process
 hostname.set
 hosts.entry
 http.assert

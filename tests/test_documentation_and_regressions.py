@@ -838,6 +838,22 @@ def test_read_only_command_plugin_is_shared_base_class():
 
 
 
+
+def test_health_namespace_is_removed_from_public_documentation_and_runbooks():
+    from automax.plugins.registry import build_builtin_registry
+
+    assert not any(name.startswith("health.") for name in build_builtin_registry().names())
+
+    searched = [
+        Path("docs/plugins/index.md"),
+        Path("docs/plugins/linux-operations.md"),
+        Path("docs/plugins/generated.md"),
+        Path("examples/runbooks/RUNBOOK_INDEX.md"),
+        *Path("examples/runbooks/runbooks").glob("*.check.yaml"),
+    ]
+    offenders = [str(path) for path in searched if "health." in path.read_text(encoding="utf-8")]
+    assert offenders == []
+
 def test_resolver_namespace_is_not_public_plugin_surface():
     from automax.plugins.registry import build_builtin_registry
 

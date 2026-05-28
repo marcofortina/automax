@@ -3639,19 +3639,14 @@ def test_network_plugins_render_interface_route_bond_vlan_dns():
     assert NetworkDnsPlugin().manual_commands({"nameservers": ["192.0.2.53"]}, context)
 
 
-def test_health_plugins_render_safe_assertions():
-    from automax.plugins.health import HealthHttpPlugin, HealthListenPlugin, HealthPortPlugin, HealthProcessPlugin
-
+def test_health_namespace_is_not_public_plugin_surface():
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("health.port", "health.listen", "health.process", "health.http"):
-        assert name in names
 
-    context = _sysops_preview_context()
-    assert "ss -H -ltn" in HealthPortPlugin().manual_commands({"port": 443}, context)[0]
-    assert "ss -H -ltn" in HealthListenPlugin().manual_commands({"port": 8443}, context)[0]
-    assert "pgrep -af" in HealthProcessPlugin().manual_commands({"pattern": "sshd"}, context)[0]
-    assert "read-only process assertion" in HealthProcessPlugin().diff_preview_reason({"pattern": "sshd"}, context)
-    assert HealthHttpPlugin().name == "health.http"
+    assert not any(name.startswith("health.") for name in names)
+    assert "http.request" in names
+    assert "network.port_check" in names
+    assert "process.assert_absent" in names
+    assert "process.assert_count" in names
 
 
 def test_pki_plugins_install_permissions_and_expiry_preview():
