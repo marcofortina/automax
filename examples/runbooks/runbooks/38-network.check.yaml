@@ -15,14 +15,14 @@ tasks:
   - id: catalog
     substeps:
     - id: network_bond
-      use: network.bond
+      use: network.link.bond
       with:
         name: nginx
         interfaces:
         - eth1
         - eth2
     - id: network_bridge
-      use: network.bridge
+      use: network.link.bridge
       with:
         name: nginx
     - id: network_dns
@@ -39,28 +39,43 @@ tasks:
         search:
         - example.com
     - id: network_interface
-      use: network.interface
+      use: network.link.interface
       with:
         name: nginx
-    - id: network_link_assert
-      use: network.link_assert
+    - id: network_link_check
+      use: network.link.check
+      with:
+        name: nginx
+    - id: network_link_facts
+      use: network.link.facts
       with:
         name: nginx
     - id: network_port_check
-      use: network.port_check
+      use: network.connectivity.port_check
       with:
         host: 127.0.0.1
         port: 22
-    - id: network_route
-      use: network.route
+    - id: network_route_add
+      use: network.route.add
       with:
-        dest: /tmp/dest
-    - id: network_route_assert
-      use: network.route_assert
+        dest: default
+        gateway: 192.0.2.1
+    - id: network_route_remove
+      use: network.route.remove
       with:
-        dest: /tmp/dest
+        dest: 192.0.2.0/24
+        dev: eth0
+    - id: network_route_check
+      use: network.route.check
+      with:
+        dest: default
+        gateway: 192.0.2.1
+    - id: network_route_facts
+      use: network.route.facts
+      with:
+        family: inet
     - id: network_vlan
-      use: network.vlan
+      use: network.link.vlan
       with:
         name: nginx
         parent: eth0

@@ -397,6 +397,8 @@ RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
     "user.exists": {"data.exists": "Whether the remote user exists.", "data.name": "Checked username."},
     "group.exists": {"data.exists": "Whether the remote group exists.", "data.name": "Checked group name."},
     "network.firewall.ufw.status": {"data.status": "Raw UFW status output."},
+    "network.link.facts": {"data.links": "Network link facts from iproute2 JSON output."},
+    "network.route.facts": {"data.routes": "Route facts from iproute2 JSON output."},
     "sysctl.get": {"data.name": "sysctl name.", "data.value": "Current sysctl value."},
     "sysctl.set": {"data.name": "sysctl name.", "data.value": "Desired sysctl value."},
     "apparmor.status": {"data.status": "Raw AppArmor status output."},

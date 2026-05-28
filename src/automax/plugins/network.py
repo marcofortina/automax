@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import json
 from difflib import unified_diff
 from typing import Any, Dict
 
@@ -78,7 +79,7 @@ def _ifcfg_interface_content(params: Dict[str, Any]) -> str:
 
 
 class NetworkInterfacePlugin(BasePlugin):
-    name = "network.interface"
+    name = "network.link.interface"
     description = "Apply runtime and optional persistent interface state/address configuration."
     required_params = ("name",)
     optional_params = ("state", "address", "prefix", "gateway", "mtu", "persist", "backend", "backup", "backup_suffix", "sudo")
@@ -103,7 +104,7 @@ class NetworkInterfacePlugin(BasePlugin):
         name = quote(params["name"])
         commands = []
         if params.get("address") and not params.get("prefix"):
-            raise PluginValidationError("network.interface requires prefix when address is set")
+            raise PluginValidationError("network.link.interface requires prefix when address is set")
         if _persist(params) and backend == "networkmanager":
             nm = _nmcli_connection(str(params["name"]))
             commands.append(f"{sudo}nmcli connection show {nm} >/dev/null 2>&1 || {sudo}nmcli connection add type ethernet ifname {name} con-name {nm}")
@@ -131,19 +132,17 @@ class NetworkInterfacePlugin(BasePlugin):
         if state in {"up", "down"}:
             commands.append(f"{sudo}ip link set dev {name} {state}")
         else:
-            raise PluginValidationError("network.interface state must be up or down")
+            raise PluginValidationError("network.link.interface state must be up or down")
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="network.interface failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="network.link.interface failed")
 
 
-class NetworkRoutePlugin(BasePlugin):
-    name = "network.route"
-    description = "Ensure a runtime and optional persistent IP route is present or absent."
+class NetworkRouteBasePlugin(BasePlugin):
     required_params = ("dest",)
-    optional_params = ("gateway", "dev", "table", "metric", "state", "persist", "backend", "backup", "backup_suffix", "sudo")
+    optional_params = ("gateway", "dev", "table", "metric", "persist", "backend", "backup", "backup_suffix", "sudo")
     opens_remote_session = True
 
     def _route_parts(self, params: Dict[str, Any]) -> list[str]:
@@ -161,42 +160,79 @@ class NetworkRoutePlugin(BasePlugin):
     def _route(self, params: Dict[str, Any]) -> str:
         return " ".join(self._route_parts(params))
 
+    def _runtime_command(self, params: Dict[str, Any], action: str) -> str:
+        route = " ".join(quote(item) for item in self._route_parts(params))
+        sudo = sudo_prefix(params, default=True)
+        if action == "add":
+            return f"{sudo}ip route replace {route}"
+        return f"{sudo}ip route del {route} || true"
+
+    def _persistent_commands(self, params: Dict[str, Any], action: str) -> list[str]:
+        backend = _backend(params)
+        sudo = sudo_prefix(params, default=True)
+        route_text = self._route(params)
+        if backend == "networkmanager":
+            if not params.get("dev"):
+                raise PluginValidationError(f"{self.name} with NetworkManager persistence requires dev")
+            operator = "+ipv4.routes" if action == "add" else "-ipv4.routes"
+            return [f"{sudo}nmcli connection modify {quote(params['dev'])} {operator} {quote(route_text)} && {sudo}nmcli connection up {quote(params['dev'])}"]
+        if backend == "systemd-networkd":
+            dev = str(params.get("dev", "routes"))
+            path = f"/etc/systemd/network/20-{dev}-route.network.d/automax-route.conf"
+            if action == "remove":
+                return [f"{sudo}rm -f {quote(path)} && {sudo}systemctl restart systemd-networkd"]
+            content = f"# Managed by automax\n[Route]\nDestination={params['dest']}\n" + (f"Gateway={params['gateway']}\n" if params.get("gateway") else "")
+            return [_write_file_cmd(path, content, "0644", params), f"{sudo}systemctl restart systemd-networkd"]
+        if backend == "ifcfg":
+            if not params.get("dev"):
+                raise PluginValidationError(f"{self.name} with ifcfg persistence requires dev")
+            path = f"/etc/sysconfig/network-scripts/route-{params['dev']}"
+            if action == "remove":
+                return [f"test ! -e {quote(path)} || {{ {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}; tmp=$(mktemp); {cleanup_trap_command('tmp')}; grep -Fvx -- {quote(route_text)} {quote(path)} > $tmp || true; {sudo}cp $tmp {quote(path)}; }}"]
+            return [_write_file_cmd(path, route_text + "\n", "0644", params)]
+        raise PluginValidationError("network route backend must be runtime, networkmanager, systemd-networkd or ifcfg")
+
+    def _commands(self, params: Dict[str, Any], action: str) -> list[str]:
+        self.validate(params)
+        if _persist(params):
+            return self._persistent_commands(params, action)
+        return [self._runtime_command(params, action)]
+
+
+class NetworkRouteAddPlugin(NetworkRouteBasePlugin):
+    name = "network.route.add"
+    description = "Ensure a runtime and optional persistent IP route is present."
+
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         self.validate(params)
-        state = str(params.get("state", "present"))
-        return _plan("routes", "current runtime routes", f"{state}: {self._route(params)}", "network-plan")
+        return _plan("routes", "current runtime routes", f"present: {self._route(params)}", "network-plan")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        self.validate(params)
-        state = str(params.get("state", "present"))
-        route = " ".join(quote(item) for item in self._route_parts(params))
-        if _persist(params):
-            backend = _backend(params)
-            if backend == "networkmanager":
-                if not params.get("dev"):
-                    raise PluginValidationError("network.route with NetworkManager persistence requires dev")
-                return [f"{sudo_prefix(params, default=True)}nmcli connection modify {quote(params['dev'])} +ipv4.routes {quote(self._route(params))} && {sudo_prefix(params, default=True)}nmcli connection up {quote(params['dev'])}"]
-            if backend == "systemd-networkd":
-                dev = str(params.get("dev", "routes"))
-                content = f"# Managed by automax\n[Route]\nDestination={params['dest']}\n" + (f"Gateway={params['gateway']}\n" if params.get("gateway") else "")
-                return [_write_file_cmd(f"/etc/systemd/network/20-{dev}-route.network.d/automax-route.conf", content, "0644", params), f"{sudo_prefix(params, default=True)}systemctl restart systemd-networkd"]
-            if backend == "ifcfg":
-                if not params.get("dev"):
-                    raise PluginValidationError("network.route with ifcfg persistence requires dev")
-                return [_write_file_cmd(f"/etc/sysconfig/network-scripts/route-{params['dev']}", self._route(params) + "\n", "0644", params)]
-        if state == "present":
-            return [f"{sudo_prefix(params, default=True)}ip route replace {route}"]
-        if state == "absent":
-            return [f"{sudo_prefix(params, default=True)}ip route del {route} || true"]
-        raise PluginValidationError("network.route state must be present or absent")
+        return self._commands(params, "add")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="network.route failed")
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="network.route.add failed")
+
+
+class NetworkRouteRemovePlugin(NetworkRouteBasePlugin):
+    name = "network.route.remove"
+    description = "Ensure a runtime and optional persistent IP route is absent."
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        self.validate(params)
+        return _plan("routes", "current runtime routes", f"absent: {self._route(params)}", "network-plan")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return self._commands(params, "remove")
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="network.route.remove failed")
 
 
 class NetworkBondPlugin(BasePlugin):
-    name = "network.bond"
+    name = "network.link.bond"
     description = "Create or update a runtime and optional persistent Linux bonding interface."
     required_params = ("name", "interfaces")
     optional_params = ("mode", "miimon", "state", "persist", "backend", "backup", "backup_suffix", "sudo")
@@ -227,11 +263,11 @@ class NetworkBondPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="network.bond failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="network.link.bond failed")
 
 
 class NetworkVlanPlugin(BasePlugin):
-    name = "network.vlan"
+    name = "network.link.vlan"
     description = "Create or update a runtime and optional persistent VLAN interface."
     required_params = ("name", "parent", "vlan_id")
     optional_params = ("address", "prefix", "state", "persist", "backend", "backup", "backup_suffix", "sudo")
@@ -249,21 +285,21 @@ class NetworkVlanPlugin(BasePlugin):
             commands = [f"{sudo}nmcli connection show {name} >/dev/null 2>&1 || {sudo}nmcli connection add type vlan ifname {name} con-name {name} dev {quote(params['parent'])} id {quote(params['vlan_id'])}"]
             if params.get("address"):
                 if not params.get("prefix"):
-                    raise PluginValidationError("network.vlan requires prefix when address is set")
+                    raise PluginValidationError("network.link.vlan requires prefix when address is set")
                 commands.append(f"{sudo}nmcli connection modify {name} ipv4.addresses {quote(str(params['address']) + '/' + str(params['prefix']))} ipv4.method manual")
             commands.append(f"{sudo}nmcli connection up {name}")
             return commands
         commands = [f"test -d /sys/class/net/{name} || {sudo}ip link add link {quote(params['parent'])} name {name} type vlan id {quote(params['vlan_id'])}"]
         if params.get("address"):
             if not params.get("prefix"):
-                raise PluginValidationError("network.vlan requires prefix when address is set")
+                raise PluginValidationError("network.link.vlan requires prefix when address is set")
             commands.append(f"{sudo}ip addr replace {quote(str(params['address']) + '/' + str(params['prefix']))} dev {name}")
         commands.append(f"{sudo}ip link set dev {name} {quote(params.get('state', 'up'))}")
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="network.vlan failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="network.link.vlan failed")
 
 
 class NetworkDnsPlugin(NetworkDnsConfigBase):
@@ -272,7 +308,7 @@ class NetworkDnsPlugin(NetworkDnsConfigBase):
 
 
 class NetworkBridgePlugin(BasePlugin):
-    name = "network.bridge"
+    name = "network.link.bridge"
     description = "Create or remove a runtime Linux bridge and enslave interfaces."
     required_params = ("name",)
     optional_params = ("interfaces", "state", "stp", "mtu", "sudo")
@@ -286,7 +322,7 @@ class NetworkBridgePlugin(BasePlugin):
         if state == "absent":
             return [f"ip link show dev {name} >/dev/null 2>&1 && {{ {sudo}ip link set dev {name} down; {sudo}ip link delete {name} type bridge; }} || true"]
         if state != "present":
-            raise PluginValidationError("network.bridge state must be present or absent")
+            raise PluginValidationError("network.link.bridge state must be present or absent")
         interfaces = params.get("interfaces") or []
         if isinstance(interfaces, str):
             interfaces = [interfaces]
@@ -303,19 +339,19 @@ class NetworkBridgePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="network.bridge failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="network.link.bridge failed")
 
 
-class NetworkLinkAssertPlugin(BasePlugin):
-    name = "network.link_assert"
-    description = "Assert that a network link exists and optionally has expected state or MTU."
+class NetworkLinkCheckPlugin(BasePlugin):
+    name = "network.link.check"
+    description = "Check that a network link exists and optionally has expected state or MTU."
     required_params = ("name",)
     optional_params = ("state", "mtu", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "network.link_assert is a read-only network link assertion"
+        return "network.link.check is a read-only network link check"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -330,20 +366,20 @@ class NetworkLinkAssertPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.link_assert failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.link.check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
-class NetworkRouteAssertPlugin(BasePlugin):
-    name = "network.route_assert"
-    description = "Assert that a route exists with optional gateway, device, table or metric."
+class NetworkRouteCheckPlugin(BasePlugin):
+    name = "network.route.check"
+    description = "Check that a route exists with optional gateway, device, table or metric."
     required_params = ("dest",)
     optional_params = ("gateway", "dev", "table", "metric", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "network.route_assert is a read-only route assertion"
+        return "network.route.check is a read-only route check"
 
     def _route_text(self, params: Dict[str, Any]) -> str:
         parts = [str(params["dest"])]
@@ -363,8 +399,67 @@ class NetworkRouteAssertPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.route_assert failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.route.check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+
+
+class NetworkLinkFactsPlugin(BasePlugin):
+    name = "network.link.facts"
+    description = "Gather network link facts from iproute2 JSON output."
+    optional_params = ("name", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        if params.get("name"):
+            return [f"ip -j link show dev {quote(params['name'])}"]
+        return ["ip -j link show"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.link.facts failed")
+        try:
+            links = json.loads(out or "[]")
+        except json.JSONDecodeError as exc:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message=f"network.link.facts failed: invalid JSON: {exc}")
+        data = {"links": links}
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data=data)
+
+
+class NetworkRouteFactsPlugin(BasePlugin):
+    name = "network.route.facts"
+    description = "Gather IP route facts from iproute2 JSON output."
+    optional_params = ("family", "table", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        family = str(params.get("family", "all"))
+        if family not in {"all", "inet", "inet6"}:
+            raise PluginValidationError("network.route.facts family must be all, inet or inet6")
+        command = "ip -j"
+        if family == "inet":
+            command += " -4"
+        if family == "inet6":
+            command += " -6"
+        command += " route show"
+        if params.get("table"):
+            command += f" table {quote(params['table'])}"
+        return [command]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.route.facts failed")
+        try:
+            routes = json.loads(out or "[]")
+        except json.JSONDecodeError as exc:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message=f"network.route.facts failed: invalid JSON: {exc}")
+        data = {"routes": routes}
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data=data)
 
 
 class NetworkDnsAssertPlugin(BasePlugin):
@@ -396,7 +491,7 @@ class NetworkDnsAssertPlugin(BasePlugin):
 
 
 class NetworkPortCheckPlugin(BasePlugin):
-    name = "network.port_check"
+    name = "network.connectivity.port_check"
     description = "Check TCP or UDP connectivity from the remote target."
     required_params = ("host", "port")
     optional_params = ("protocol", "timeout", "sudo")
@@ -404,7 +499,7 @@ class NetworkPortCheckPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "network.port_check is a read-only connectivity check"
+        return "network.connectivity.port_check is a read-only connectivity check"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -412,11 +507,11 @@ class NetworkPortCheckPlugin(BasePlugin):
         timeout = str(params.get("timeout", 5))
         udp = " -u" if protocol == "udp" else ""
         if protocol not in {"tcp", "udp"}:
-            raise PluginValidationError("network.port_check protocol must be tcp or udp")
+            raise PluginValidationError("network.connectivity.port_check protocol must be tcp or udp")
         return [f"nc -z{udp} -w {quote(timeout)} {quote(params['host'])} {quote(params['port'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.port_check failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.connectivity.port_check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)

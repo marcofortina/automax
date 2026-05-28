@@ -40,7 +40,7 @@ Per-plugin runbooks only. No combined runbook, no reused runtime smoke flow, and
 | `runbooks/35-mail.check.yaml` | `mail` | 1 |
 | `runbooks/36-mount.check.yaml` | `mount` | 6 |
 | `runbooks/37-multipath.check.yaml` | `multipath` | 3 |
-| `runbooks/38-network.check.yaml` | `network` | 10 |
+| `runbooks/38-network.check.yaml` | `network` | 13 |
 | `runbooks/39-nftables.check.yaml` | `network.firewall.nftables` | 6 |
 | `runbooks/40-pam.check.yaml` | `pam` | 14 |
 | `runbooks/41-password.check.yaml` | `password` | 1 |

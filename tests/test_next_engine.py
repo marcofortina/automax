@@ -3611,20 +3611,24 @@ def test_network_plugins_render_interface_route_bond_vlan_dns():
         NetworkBondPlugin,
         NetworkDnsPlugin,
         NetworkInterfacePlugin,
-        NetworkRoutePlugin,
+        NetworkRouteAddPlugin,
+        NetworkRouteFactsPlugin,
+        NetworkRouteRemovePlugin,
         NetworkVlanPlugin,
     )
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("network.interface", "network.route", "network.bond", "network.vlan", "network.dns"):
+    for name in ("network.link.interface", "network.route.add", "network.route.remove", "network.route.facts", "network.link.bond", "network.link.facts", "network.link.vlan", "network.dns"):
         assert name in names
 
     context = _sysops_preview_context()
     assert "ip addr replace" in " && ".join(NetworkInterfacePlugin().manual_commands({"name": "eth0", "address": "192.0.2.10", "prefix": 24}, context))
     nm_commands = " && ".join(NetworkInterfacePlugin().manual_commands({"name": "eth0", "address": "192.0.2.10", "prefix": 24, "persist": True, "backend": "networkmanager"}, context))
     assert "nmcli connection" in nm_commands
-    assert NetworkRoutePlugin().manual_commands({"dest": "default", "gateway": "192.0.2.1", "dev": "eth0"}, context)[0] == "sudo -n ip route replace default via 192.0.2.1 dev eth0"
-    assert "route-eth0" in NetworkRoutePlugin().manual_commands({"dest": "default", "gateway": "192.0.2.1", "dev": "eth0", "persist": True, "backend": "ifcfg"}, context)[0]
+    assert NetworkRouteAddPlugin().manual_commands({"dest": "default", "gateway": "192.0.2.1", "dev": "eth0"}, context)[0] == "sudo -n ip route replace default via 192.0.2.1 dev eth0"
+    assert "route-eth0" in NetworkRouteAddPlugin().manual_commands({"dest": "default", "gateway": "192.0.2.1", "dev": "eth0", "persist": True, "backend": "ifcfg"}, context)[0]
+    assert "ip route del" in NetworkRouteRemovePlugin().manual_commands({"dest": "192.0.2.0/24", "dev": "eth0"}, context)[0]
+    assert "ip -j route show" in NetworkRouteFactsPlugin().manual_commands({"family": "all"}, context)[0]
     assert "modprobe bonding" in NetworkBondPlugin().manual_commands({"name": "bond0", "interfaces": ["eth1", "eth2"]}, context)[0]
     assert "type vlan id 100" in NetworkVlanPlugin().manual_commands({"name": "eth0.100", "parent": "eth0", "vlan_id": 100}, context)[0]
     assert "network-plan" == NetworkInterfacePlugin().diff_preview({"name": "eth0"}, context)[0]["kind"]
@@ -3636,7 +3640,7 @@ def test_health_namespace_is_not_public_plugin_surface():
 
     assert not any(name.startswith("health.") for name in names)
     assert "http.request" in names
-    assert "network.port_check" in names
+    assert "network.connectivity.port_check" in names
     assert "process.assert_absent" in names
     assert "process.assert_count" in names
 
@@ -4404,7 +4408,12 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["match_blocks"] = [{"match": "User deploy", "settings": {"X11Forwarding": "no"}}]
     if plugin.name == "network.dns":
         params["backend"] = "plain-file"
-    if plugin.name in {"network.interface", "network.bond", "network.vlan"}:
+    if plugin.name in {"network.route.add", "network.route.remove"}:
+        params["backend"] = "runtime"
+        params["persist"] = False
+    if plugin.name == "network.route.facts":
+        params["family"] = "inet"
+    if plugin.name in {"network.link.interface", "network.link.bond", "network.link.vlan"}:
         params["state"] = "up"
     return params
 
@@ -4480,11 +4489,13 @@ def test_network_advanced_plugins_render_manual_commands():
     context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
     registry = build_builtin_registry()
 
-    assert "ip link add name br0 type bridge" in " && ".join(registry.get("network.bridge").manual_commands({"name": "br0", "interfaces": ["eth1"], "sudo": False}, context))
-    assert "ip link show dev eth0" in registry.get("network.link_assert").manual_commands({"name": "eth0"}, context)[0]
-    assert "ip route show" in registry.get("network.route_assert").manual_commands({"dest": "default", "gateway": "192.0.2.1"}, context)[0]
+    assert "ip link add name br0 type bridge" in " && ".join(registry.get("network.link.bridge").manual_commands({"name": "br0", "interfaces": ["eth1"], "sudo": False}, context))
+    assert "ip link show dev eth0" in registry.get("network.link.check").manual_commands({"name": "eth0"}, context)[0]
+    assert "ip route show" in registry.get("network.route.check").manual_commands({"dest": "default", "gateway": "192.0.2.1"}, context)[0]
     assert "nameserver" in " && ".join(registry.get("network.dns_assert").manual_commands({"nameservers": ["192.0.2.53"]}, context))
-    assert "nc -z" in registry.get("network.port_check").manual_commands({"host": "example.com", "port": 443}, context)[0]
+    assert "nc -z" in registry.get("network.connectivity.port_check").manual_commands({"host": "example.com", "port": 443}, context)[0]
+    assert "ip -j link show" in registry.get("network.link.facts").manual_commands({}, context)[0]
+    assert "ip -j route show" in registry.get("network.route.facts").manual_commands({}, context)[0]
 
 
 def test_storage_readback_plugins_render_manual_commands():

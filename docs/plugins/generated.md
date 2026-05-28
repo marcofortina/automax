@@ -5775,25 +5775,20 @@ with:
 
 ## network
 
-### `network.bond`
+### `network.connectivity.port_check`
 
-Create or update a runtime and optional persistent Linux bonding interface.
+Check TCP or UDP connectivity from the remote target.
 
 - Remote session: `true`
 - Dry-run support: `true`
-- Check mode support: `false`
+- Check mode support: `true`
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `interfaces` | yes | `list` |  | Network interfaces to include in a bond or aggregate. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-| `miimon` | no | `integer` | `100` | Bond link monitoring interval in milliseconds. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
-| `backend` | no | `string` |  | Operation backend such as auto, runtime, networkmanager, systemd-networkd, ifcfg, plain-file, systemd-resolved or resolvconf. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `host` | yes | `string` |  | Hostname or IP address to check from the controller. |
+| `port` | yes | `integer` |  | TCP port number. |
+| `protocol` | no | `string` | `tcp` | Network protocol such as tcp or udp. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -5808,46 +5803,10 @@ Result fields:
 Example:
 
 ```yaml
-use: network.bond
+use: network.connectivity.port_check
 with:
-  name: nginx
-  interfaces:
-    - eth1
-    - eth2
-```
-
-### `network.bridge`
-
-Create or remove a runtime Linux bridge and enslave interfaces.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `interfaces` | no | `list` |  | Network interfaces to include in a bond or aggregate. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `stp` | no | `boolean` | `False` | Enable STP on a Linux bridge when supported. |
-| `mtu` | no | `integer` |  | Network interface MTU. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: network.bridge
-with:
-  name: nginx
+  host: 127.0.0.1
+  port: 22
 ```
 
 ### `network.dns`
@@ -7032,7 +6991,146 @@ with:
   sudo: true
 ```
 
-### `network.interface`
+### `network.link.bond`
+
+Create or update a runtime and optional persistent Linux bonding interface.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `interfaces` | yes | `list` |  | Network interfaces to include in a bond or aggregate. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `miimon` | no | `integer` | `100` | Bond link monitoring interval in milliseconds. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `backend` | no | `string` |  | Operation backend such as auto, runtime, networkmanager, systemd-networkd, ifcfg, plain-file, systemd-resolved or resolvconf. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.link.bond
+with:
+  name: nginx
+  interfaces:
+    - eth1
+    - eth2
+```
+
+### `network.link.bridge`
+
+Create or remove a runtime Linux bridge and enslave interfaces.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `interfaces` | no | `list` |  | Network interfaces to include in a bond or aggregate. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `stp` | no | `boolean` | `False` | Enable STP on a Linux bridge when supported. |
+| `mtu` | no | `integer` |  | Network interface MTU. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.link.bridge
+with:
+  name: nginx
+```
+
+### `network.link.check`
+
+Check that a network link exists and optionally has expected state or MTU.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `mtu` | no | `integer` |  | Network interface MTU. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.link.check
+with:
+  name: nginx
+```
+
+### `network.link.facts`
+
+Gather network link facts from iproute2 JSON output.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | no | `string` |  | Package, user or group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.links`: Network link facts from iproute2 JSON output.
+
+Example:
+
+```yaml
+use: network.link.facts
+with:
+  name: nginx
+  sudo: true
+```
+
+### `network.link.interface`
 
 Apply runtime and optional persistent interface state/address configuration.
 
@@ -7066,151 +7164,12 @@ Result fields:
 Example:
 
 ```yaml
-use: network.interface
+use: network.link.interface
 with:
   name: nginx
 ```
 
-### `network.link_assert`
-
-Assert that a network link exists and optionally has expected state or MTU.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `mtu` | no | `integer` |  | Network interface MTU. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: network.link_assert
-with:
-  name: nginx
-```
-
-### `network.port_check`
-
-Check TCP or UDP connectivity from the remote target.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `host` | yes | `string` |  | Hostname or IP address to check from the controller. |
-| `port` | yes | `integer` |  | TCP port number. |
-| `protocol` | no | `string` | `tcp` | Network protocol such as tcp or udp. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: network.port_check
-with:
-  host: 127.0.0.1
-  port: 22
-```
-
-### `network.route`
-
-Ensure a runtime and optional persistent IP route is present or absent.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `dest` | yes | `path` |  | Destination path. |
-| `gateway` | no | `string` |  | Route gateway address. |
-| `dev` | no | `string` |  | Network device name for a route. |
-| `table` | no | `string` |  | Routing table name or number. |
-| `metric` | no | `integer` |  | Route metric. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
-| `backend` | no | `string` |  | Operation backend such as auto, runtime, networkmanager, systemd-networkd, ifcfg, plain-file, systemd-resolved or resolvconf. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: network.route
-with:
-  dest: /tmp/dest
-```
-
-### `network.route_assert`
-
-Assert that a route exists with optional gateway, device, table or metric.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `dest` | yes | `path` |  | Destination path. |
-| `gateway` | no | `string` |  | Route gateway address. |
-| `dev` | no | `string` |  | Network device name for a route. |
-| `table` | no | `string` |  | Routing table name or number. |
-| `metric` | no | `integer` |  | Route metric. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: network.route_assert
-with:
-  dest: /tmp/dest
-```
-
-### `network.vlan`
+### `network.link.vlan`
 
 Create or update a runtime and optional persistent VLAN interface.
 
@@ -7244,11 +7203,154 @@ Result fields:
 Example:
 
 ```yaml
-use: network.vlan
+use: network.link.vlan
 with:
   name: nginx
   parent: eth0
   vlan_id: 100
+```
+
+### `network.route.add`
+
+Ensure a runtime and optional persistent IP route is present.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `dest` | yes | `path` |  | Destination path. |
+| `gateway` | no | `string` |  | Route gateway address. |
+| `dev` | no | `string` |  | Network device name for a route. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `metric` | no | `integer` |  | Route metric. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `backend` | no | `string` |  | Operation backend such as auto, runtime, networkmanager, systemd-networkd, ifcfg, plain-file, systemd-resolved or resolvconf. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.route.add
+with:
+  dest: /tmp/dest
+```
+
+### `network.route.check`
+
+Check that a route exists with optional gateway, device, table or metric.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `dest` | yes | `path` |  | Destination path. |
+| `gateway` | no | `string` |  | Route gateway address. |
+| `dev` | no | `string` |  | Network device name for a route. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `metric` | no | `integer` |  | Route metric. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.route.check
+with:
+  dest: /tmp/dest
+```
+
+### `network.route.facts`
+
+Gather IP route facts from iproute2 JSON output.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `family` | no | `string` | `inet` | nftables address family such as ip, ip6, inet, arp, bridge or netdev. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.routes`: Route facts from iproute2 JSON output.
+
+Example:
+
+```yaml
+use: network.route.facts
+with:
+  family: inet
+  table: main
+```
+
+### `network.route.remove`
+
+Ensure a runtime and optional persistent IP route is absent.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `dest` | yes | `path` |  | Destination path. |
+| `gateway` | no | `string` |  | Route gateway address. |
+| `dev` | no | `string` |  | Network device name for a route. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `metric` | no | `integer` |  | Route metric. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `backend` | no | `string` |  | Operation backend such as auto, runtime, networkmanager, systemd-networkd, ifcfg, plain-file, systemd-resolved or resolvconf. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.route.remove
+with:
+  dest: /tmp/dest
 ```
 
 ## pam

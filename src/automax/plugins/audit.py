@@ -154,7 +154,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["force"] = True
     if plugin.name == "fs.template":
         params["src"] = "README.md"
-    if plugin.name == "network.interface":
+    if plugin.name == "network.link.interface":
         params["backend"] = "runtime"
     if plugin.name in {"process.kill", "process.signal", "process.wait"}:
         params.pop("pid", None)
@@ -188,7 +188,12 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["match_blocks"] = [{"match": "User deploy", "settings": {"X11Forwarding": "no"}}]
     if plugin.name == "network.dns":
         params["backend"] = "plain-file"
-    if plugin.name in {"network.interface", "network.bond", "network.vlan"}:
+    if plugin.name in {"network.route.add", "network.route.remove"}:
+        params["backend"] = "runtime"
+        params["persist"] = False
+    if plugin.name == "network.route.facts":
+        params["family"] = "inet"
+    if plugin.name in {"network.link.interface", "network.link.bond", "network.link.vlan"}:
         params["state"] = "up"
     return params
 

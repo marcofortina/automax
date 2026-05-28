@@ -107,15 +107,16 @@ structured `plan --diff` previews before applying storage changes.
 
 ## Runtime network operations
 
-Use `network.interface`, `network.route`, `network.bond`, `network.vlan` and
-`network.dns` for runtime network setup and DNS resolver changes. DNS handling is
+Use `network.link.interface`, `network.link.bond`, `network.link.bridge`, `network.link.vlan`,
+`network.route.add`, `network.route.remove` and `network.dns` for runtime network setup
+and DNS resolver changes. DNS handling is
 backend-aware through the same safety rules as `network.dns`: managed or
 symlinked resolver files are not overwritten silently.
 
 
 ## Runtime service checks
 
-Use `network.port_check` for target-side TCP/UDP connectivity checks,
+Use `network.connectivity.port_check` for target-side TCP/UDP connectivity checks,
 `http.request` for controller-side HTTP probes, and the `process.*` family for
 process lifecycle checks. The former service-health wrapper namespace is
 intentionally not part of the public plugin surface.
@@ -187,8 +188,9 @@ Useful families include:
 ```text
 platform.facts
 network.dns_facts
+network.link.facts / network.route.facts
 pkg.version_pin / pkg.repo_priority
-network.interface / network.route / network.bond / network.vlan with persist/backend
+network.link.interface / network.link.bond / network.link.vlan / network.route.add / network.route.remove with persist/backend
 pki.ca_install with trust_store=system
 lvm.snapshot / lvm.thin_pool / lvm.lv_remove / lvm.vg_remove / lvm.pv_remove
 fs.acl / fs.attr / fs.quota
@@ -219,11 +221,13 @@ existing configuration files.
 `cert.install_keypair` installs certificate/key pairs with private-key mode `0600`.
 `cert.expiry_report` reads certificate expiry and fails when inside the configured warning window.
 
-## Network assertions and bridge operations
+## Network checks, facts and bridge operations
 
-Use `network.bridge` for explicit runtime bridge creation/removal. Use
-`network.link_assert`, `network.route_assert`, `network.dns_assert` and
-`network.port_check` as precheck/postcheck guards around network operations.
+Use `network.link.bridge` for explicit runtime bridge creation/removal. Use
+`network.link.check`, `network.route.check`, `network.dns_assert` and
+`network.connectivity.port_check` as precheck/postcheck guards around network operations.
+Use `network.link.facts` and `network.route.facts` for read-only iproute2 JSON
+readback without treating mismatched state as a failed assertion.
 
 ## Udev, time and account readback
 

@@ -871,6 +871,52 @@ def test_resolver_namespace_is_not_public_plugin_surface():
 
 
 
+
+def test_flat_network_resource_namespaces_are_not_public_plugin_surface():
+    from automax.plugins.registry import build_builtin_registry
+
+    old_names = [
+        "network.bond",
+        "network.bridge",
+        "network.interface",
+        "network.link_assert",
+        "network.port_check",
+        "network.route",
+        "network.route_assert",
+        "network.vlan",
+    ]
+    names = set(build_builtin_registry().names())
+    assert not (names & set(old_names))
+    assert {
+        "network.link.bond",
+        "network.link.bridge",
+        "network.link.check",
+        "network.link.facts",
+        "network.link.interface",
+        "network.link.vlan",
+        "network.connectivity.port_check",
+        "network.route.add",
+        "network.route.check",
+        "network.route.facts",
+        "network.route.remove",
+    } <= names
+
+    searched = [
+        Path("docs/plugins/index.md"),
+        Path("docs/plugins/linux-operations.md"),
+        Path("docs/plugins/generated.md"),
+        Path("examples/runbooks/RUNBOOK_INDEX.md"),
+        *Path("examples/runbooks/runbooks").glob("*.check.yaml"),
+    ]
+    offenders = []
+    for path in searched:
+        text = path.read_text(encoding="utf-8")
+        for old_name in old_names:
+            pattern = re.compile(r"(?<![A-Za-z0-9_.])" + re.escape(old_name) + r"(?![A-Za-z0-9_.])")
+            if pattern.search(text):
+                offenders.append(f"{path}:{old_name}")
+    assert offenders == []
+
 def test_top_level_firewall_namespaces_are_not_public_plugin_surface():
     import re
 
