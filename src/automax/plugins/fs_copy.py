@@ -17,7 +17,7 @@ from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, 
 class FsCopyPlugin(BasePlugin):
     """Copy files or directories on the remote target."""
 
-    name = "fs.copy"
+    name = "fs.object.copy"
     description = "Copy a remote file or directory to another remote path."
     required_params = ("src", "dest")
     optional_params = (
@@ -44,7 +44,7 @@ class FsCopyPlugin(BasePlugin):
         if context.dry_run:
             return self.dry_run(params, context)
         if context.ssh_client is None:
-            return PluginResult.failure(message="fs.copy requires an SSH session")
+            return PluginResult.failure(message="fs.object.copy requires an SSH session")
 
         src = quote(params["src"])
         dest = quote(params["dest"])
@@ -81,6 +81,6 @@ class FsCopyPlugin(BasePlugin):
             rc=rc,
             stdout=out,
             stderr=err,
-            message="fs.copy failed",
+            message="fs.object.copy failed",
             data={"src": params["src"], "dest": params["dest"]},
         )

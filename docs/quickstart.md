@@ -71,7 +71,7 @@ automax runs show <run-id> --state-dir .automax/runs
 
 ```bash
 automax plugins list
-automax plugins describe fs.template
+automax plugins describe fs.file.template
 ```
 
 ## 7. Build the documentation

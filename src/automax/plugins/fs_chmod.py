@@ -17,7 +17,7 @@ from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, 
 class FsChmodPlugin(BasePlugin):
     """Change remote file mode with idempotent non-recursive checks."""
 
-    name = "fs.chmod"
+    name = "fs.permission.mode"
     description = "Set remote file or directory mode."
     required_params = ("path", "mode")
     opens_remote_session = True
@@ -57,6 +57,6 @@ class FsChmodPlugin(BasePlugin):
             rc=rc,
             stdout=out,
             stderr=err,
-            message="fs.chmod failed",
+            message="fs.permission.mode failed",
             data={"path": params["path"], "mode": params["mode"]},
         )

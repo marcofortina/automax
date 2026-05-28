@@ -70,7 +70,7 @@ tasks:
             register:
               remote_hostname: stdout.trim
           - id: os_release
-            use: fs.read
+            use: fs.file.read
             with:
               path: /etc/os-release
 ```

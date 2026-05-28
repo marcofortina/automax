@@ -125,11 +125,11 @@ job shape.
 
 ## Preserve file content before regex replacements
 
-`fs.replace` can create a pre-change backup before writing replacements:
+`fs.file.replace` can create a pre-change backup before writing replacements:
 
 ```yaml
 - id: update_config
-  use: fs.replace
+  use: fs.file.replace
   with:
     path: /etc/myapp/app.conf
     pattern: "^port=.*$"
@@ -140,7 +140,7 @@ job shape.
 
 The backup is created only when the replacement actually changes the file.
 `automax plan --diff` cannot read the remote file during planning, so
-`fs.replace` emits a deterministic replacement plan showing path, regex,
+`fs.file.replace` emits a deterministic replacement plan showing path, regex,
 replacement, count and backup target instead of pretending to know the final
 remote diff.
 

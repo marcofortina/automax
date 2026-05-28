@@ -2835,45 +2835,9 @@ with:
 
 ## fs
 
-### `fs.acl`
+### `fs.acl.check`
 
-Ensure or remove POSIX ACL entries with getfacl backup support.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `acl` | yes | `string` |  | POSIX ACL entry accepted by setfacl. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `recursive` | no | `boolean` | `False` | Recurse into directories. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_path` | no | `path` |  | Explicit backup path for pre-change file content. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fs.acl
-with:
-  path: /tmp/automax-demo
-  acl: value
-```
-
-### `fs.acl.assert`
-
-Assert that POSIX ACL entries are present or absent.
+Check whether POSIX ACL entries are present or absent.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -2898,7 +2862,7 @@ Result fields:
 Example:
 
 ```yaml
-use: fs.acl.assert
+use: fs.acl.check
 with:
   path: /tmp/automax-demo
   acl: value
@@ -2966,7 +2930,106 @@ with:
   file: /etc/sysctl.d/99-automax.conf
 ```
 
-### `fs.attr`
+### `fs.acl.set`
+
+Ensure or remove POSIX ACL entries with getfacl backup support.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `acl` | yes | `string` |  | POSIX ACL entry accepted by setfacl. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `recursive` | no | `boolean` | `False` | Recurse into directories. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_path` | no | `path` |  | Explicit backup path for pre-change file content. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.acl.set
+with:
+  path: /tmp/automax-demo
+  acl: value
+```
+
+### `fs.attr.check`
+
+Check whether Linux filesystem attributes are present or absent.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `attrs` | yes | `string` |  | Linux filesystem attribute flags accepted by chattr. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.attr.check
+with:
+  path: /tmp/automax-demo
+  attrs: value
+```
+
+### `fs.attr.get`
+
+Read Linux filesystem attributes with lsattr.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.attr.get
+with:
+  path: /tmp/automax-demo
+```
+
+### `fs.attr.set`
 
 Set or clear Linux filesystem attributes with chattr.
 
@@ -2994,7 +3057,7 @@ Result fields:
 Example:
 
 ```yaml
-use: fs.attr
+use: fs.attr.set
 with:
   path: /tmp/automax-demo
   attrs: value
@@ -3064,109 +3127,6 @@ Example:
 use: fs.cd
 with:
   path: /tmp/automax-demo
-```
-
-### `fs.chmod`
-
-Set remote file or directory mode.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `mode` | yes | `string` |  | POSIX file mode, for example 0644 or 0755. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fs.chmod
-with:
-  path: /tmp/automax-demo
-  mode: 0644
-```
-
-### `fs.chown`
-
-Set remote file or directory owner/group.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `recursive` | no | `boolean` | `False` | Recurse into directories. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fs.chown
-with:
-  path: /tmp/automax-demo
-```
-
-### `fs.copy`
-
-Copy a remote file or directory to another remote path.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `dest` | yes | `path` |  | Destination path. |
-| `recursive` | no | `boolean` | `False` | Recurse into directories. |
-| `preserve` | no | `boolean` | `False` | Preserve mode, ownership and timestamps when copying. |
-| `overwrite` | no | `boolean` | `False` | Replace an existing destination when supported. |
-| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fs.copy
-with:
-  src: /tmp/source
-  dest: /tmp/dest
 ```
 
 ### `fs.dir.create`
@@ -3405,6 +3365,74 @@ with:
   path: /tmp/automax-demo
 ```
 
+### `fs.file.line`
+
+Ensure an exact line is present or absent in a remote file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `line` | yes | `string` |  | Exact line to ensure in a remote file. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `create` | no | `boolean` | `False` | Create the remote file when ensuring a line is present. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `validate_command` | no | `string` |  | Command used to validate generated file content. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.file.line
+with:
+  path: /tmp/automax-demo
+  line: KEY=value
+```
+
+### `fs.file.read`
+
+Read a remote file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Remote file content.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.path`: Read remote path.
+
+Example:
+
+```yaml
+use: fs.file.read
+with:
+  path: /tmp/automax-demo
+```
+
 ### `fs.file.remove`
 
 Remove a real regular file, refusing directories and symlinks.
@@ -3434,6 +3462,93 @@ Example:
 use: fs.file.remove
 with:
   path: /tmp/automax-demo
+```
+
+### `fs.file.replace`
+
+Replace text in a remote file using a regex pattern.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
+| `replacement` | yes | `string` |  | Regex replacement text. |
+| `count` | no | `integer` | `0` | Maximum regex replacements; 0 means replace all matches. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `backup_path` | no | `path` |  | Explicit backup path for pre-change file content. |
+| `validate_command` | no | `string` |  | Command used to validate generated file content. |
+| `match_count_assert` | no | `integer` |  | Expected number of regex matches. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.file.replace
+with:
+  path: /tmp/automax-demo
+  pattern: KEY=.*
+  replacement: KEY=new-value
+```
+
+### `fs.file.template`
+
+Render a local Jinja2 template to a remote file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Local Jinja2 template path on the controller. |
+| `dest` | yes | `path` |  | Remote destination file path. |
+| `mode` | no | `string` |  | Optional remote file mode, for example 0644. |
+| `owner` | no | `string` |  | Optional remote file owner. |
+| `group` | no | `string` |  | Optional remote file group. |
+| `sudo` | no | `boolean` | `False` | Install the rendered file with sudo. |
+| `encoding` | no | `string` | `utf-8` | Template and upload encoding. |
+| `values` | no | `mapping` |  | Additional values exposed to the template as values.*. |
+| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `validate_command` | no | `string` |  | Command used to validate generated file content. |
+| `sensitive` | no | `boolean` | `False` | Mask sensitive content in previews or logs. |
+| `atomic` | no | `boolean` | `True` | Install generated file content via a temporary path and final rename where possible. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.src`: Rendered template path.
+- `data.dest`: Remote destination path
+
+Example:
+
+```yaml
+use: fs.file.template
+with:
+  src: ./templates/app.conf.j2
+  dest: /etc/myapp/app.conf
+  mode: '0644'
+  sudo: true
 ```
 
 ### `fs.file.wait`
@@ -3472,9 +3587,9 @@ with:
   path: /tmp/automax-demo
 ```
 
-### `fs.find`
+### `fs.file.write`
 
-Find remote paths.
+Write text content to a remote file.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -3483,10 +3598,17 @@ Find remote paths.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `patterns` | no | `list` |  | Find-name patterns to match. |
-| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
-| `max_depth` | no | `integer` |  | Maximum remote find traversal depth. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+| `content` | yes | `string` |  | Text content to write. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
+| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `validate_command` | no | `string` |  | Command used to validate generated file content. |
+| `sensitive` | no | `boolean` | `False` | Mask sensitive content in previews or logs. |
+| `atomic` | no | `boolean` | `True` | Install generated file content via a temporary path and final rename where possible. |
 
 Result fields:
 
@@ -3500,9 +3622,11 @@ Result fields:
 Example:
 
 ```yaml
-use: fs.find
+use: fs.file.write
 with:
   path: /tmp/automax-demo
+  content: managed by automax
+
 ```
 
 ### `fs.inode_usage_assert`
@@ -3537,9 +3661,9 @@ with:
   max_percent: value
 ```
 
-### `fs.line`
+### `fs.object.copy`
 
-Ensure an exact line is present or absent in a remote file.
+Copy a remote file or directory to another remote path.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -3547,14 +3671,16 @@ Ensure an exact line is present or absent in a remote file.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `line` | yes | `string` |  | Exact line to ensure in a remote file. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `create` | no | `boolean` | `False` | Create the remote file when ensuring a line is present. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `validate_command` | no | `string` |  | Command used to validate generated file content. |
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `recursive` | no | `boolean` | `False` | Recurse into directories. |
+| `preserve` | no | `boolean` | `False` | Preserve mode, ownership and timestamps when copying. |
+| `overwrite` | no | `boolean` | `False` | Replace an existing destination when supported. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
 
 Result fields:
 
@@ -3568,13 +3694,46 @@ Result fields:
 Example:
 
 ```yaml
-use: fs.line
+use: fs.object.copy
 with:
-  path: /tmp/automax-demo
-  line: KEY=value
+  src: /tmp/source
+  dest: /tmp/dest
 ```
 
-### `fs.move`
+### `fs.object.find`
+
+Find remote paths.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `patterns` | no | `list` |  | Find-name patterns to match. |
+| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
+| `max_depth` | no | `integer` |  | Maximum remote find traversal depth. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.object.find
+with:
+  path: /tmp/automax-demo
+```
+
+### `fs.object.move`
 
 Move or rename a remote path.
 
@@ -3601,10 +3760,110 @@ Result fields:
 Example:
 
 ```yaml
-use: fs.move
+use: fs.object.move
 with:
   src: /tmp/source
   dest: /tmp/dest
+```
+
+### `fs.object.stat`
+
+Read remote path metadata.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `missing_ok` | no | `boolean` | `False` | Return success with exists=false when the path is missing. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.exists`: Boolean path existence result.
+- `data.size`: Path size in bytes.
+- `data.mode`: POSIX mode.
+- `data.owner`: Owner name.
+- `data.group`: Group name.
+
+Example:
+
+```yaml
+use: fs.object.stat
+with:
+  path: /tmp/automax-demo
+```
+
+### `fs.permission.mode`
+
+Set remote file or directory mode.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `mode` | yes | `string` |  | POSIX file mode, for example 0644 or 0755. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.permission.mode
+with:
+  path: /tmp/automax-demo
+  mode: 0644
+```
+
+### `fs.permission.owner`
+
+Set remote file or directory owner/group.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `recursive` | no | `boolean` | `False` | Recurse into directories. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: fs.permission.owner
+with:
+  path: /tmp/automax-demo
 ```
 
 ### `fs.quota`
@@ -3644,78 +3903,6 @@ with:
   mountpoint: value
 ```
 
-### `fs.read`
-
-Read a remote file.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Remote file content.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.path`: Read remote path.
-
-Example:
-
-```yaml
-use: fs.read
-with:
-  path: /tmp/automax-demo
-```
-
-### `fs.replace`
-
-Replace text in a remote file using a regex pattern.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
-| `replacement` | yes | `string` |  | Regex replacement text. |
-| `count` | no | `integer` | `0` | Maximum regex replacements; 0 means replace all matches. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `backup_path` | no | `path` |  | Explicit backup path for pre-change file content. |
-| `validate_command` | no | `string` |  | Command used to validate generated file content. |
-| `match_count_assert` | no | `integer` |  | Expected number of regex matches. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fs.replace
-with:
-  path: /tmp/automax-demo
-  pattern: KEY=.*
-  replacement: KEY=new-value
-```
-
 ### `fs.resize`
 
 Resize a filesystem using the appropriate platform tool.
@@ -3747,42 +3934,6 @@ use: fs.resize
 with:
   device: /dev/sdb
   fstype: xfs
-```
-
-### `fs.stat`
-
-Read remote path metadata.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `missing_ok` | no | `boolean` | `False` | Return success with exists=false when the path is missing. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.exists`: Boolean path existence result.
-- `data.size`: Path size in bytes.
-- `data.mode`: POSIX mode.
-- `data.owner`: Owner name.
-- `data.group`: Group name.
-
-Example:
-
-```yaml
-use: fs.stat
-with:
-  path: /tmp/automax-demo
 ```
 
 ### `fs.symlink.create`
@@ -3917,94 +4068,6 @@ Example:
 use: fs.symlink.wait
 with:
   path: /tmp/automax-demo
-```
-
-### `fs.template`
-
-Render a local Jinja2 template to a remote file.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Local Jinja2 template path on the controller. |
-| `dest` | yes | `path` |  | Remote destination file path. |
-| `mode` | no | `string` |  | Optional remote file mode, for example 0644. |
-| `owner` | no | `string` |  | Optional remote file owner. |
-| `group` | no | `string` |  | Optional remote file group. |
-| `sudo` | no | `boolean` | `False` | Install the rendered file with sudo. |
-| `encoding` | no | `string` | `utf-8` | Template and upload encoding. |
-| `values` | no | `mapping` |  | Additional values exposed to the template as values.*. |
-| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `validate_command` | no | `string` |  | Command used to validate generated file content. |
-| `sensitive` | no | `boolean` | `False` | Mask sensitive content in previews or logs. |
-| `atomic` | no | `boolean` | `True` | Install generated file content via a temporary path and final rename where possible. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.src`: Rendered template path.
-- `data.dest`: Remote destination path
-
-Example:
-
-```yaml
-use: fs.template
-with:
-  src: ./templates/app.conf.j2
-  dest: /etc/myapp/app.conf
-  mode: '0644'
-  sudo: true
-```
-
-### `fs.write`
-
-Write text content to a remote file.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `content` | yes | `string` |  | Text content to write. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
-| `backup_before` | no | `boolean` | `False` | Capture or copy the current state before applying a potentially destructive change. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `validate_command` | no | `string` |  | Command used to validate generated file content. |
-| `sensitive` | no | `boolean` | `False` | Mask sensitive content in previews or logs. |
-| `atomic` | no | `boolean` | `True` | Install generated file content via a temporary path and final rename where possible. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fs.write
-with:
-  path: /tmp/automax-demo
-  content: managed by automax
-
 ```
 
 ## fstab

@@ -59,10 +59,13 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "chrony.tracking_assert": ("chronyc",),
     "cron.list": ("crontab",),
     "fstab.validate": ("findmnt",),
-    "fs.acl": ("getfacl", "setfacl"),
-    "fs.acl.assert": ("getfacl",),
+    "fs.acl.set": ("getfacl", "setfacl"),
+    "fs.acl.check": ("getfacl",),
     "fs.acl.get": ("getfacl",),
     "fs.acl.restore": ("setfacl",),
+    "fs.attr.get": ("lsattr",),
+    "fs.attr.check": ("lsattr",),
+    "fs.attr.set": ("chattr",),
     "network.firewall.iptables.chain": ("iptables",),
     "network.firewall.iptables.counter_assert": ("iptables",),
     "network.firewall.iptables.delete": ("iptables",),
@@ -169,7 +172,6 @@ RHEL_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
 
 PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "archive.": ("tar", "unzip", "zip", "gzip"),
-    "fs.attr": ("chattr",),
     "kernel.module.": ("modprobe", "lsmod"),
     "mount.": ("mount",),
     "process.": ("pgrep",),
@@ -188,10 +190,10 @@ RHEL_PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
 }
 
 PARAM_TOOL_REQUIREMENTS: Dict[tuple[str, str], tuple[str, ...]] = {
-    ("fs.write", "validate_command"): ("sh",),
-    ("fs.template", "validate_command"): ("sh",),
-    ("fs.line", "validate_command"): ("sh",),
-    ("fs.replace", "validate_command"): ("sh",),
+    ("fs.file.write", "validate_command"): ("sh",),
+    ("fs.file.template", "validate_command"): ("sh",),
+    ("fs.file.line", "validate_command"): ("sh",),
+    ("fs.file.replace", "validate_command"): ("sh",),
     ("archive.untar", "checksum"): ("sha256sum",),
     ("archive.unzip", "checksum"): ("sha256sum",),
 }

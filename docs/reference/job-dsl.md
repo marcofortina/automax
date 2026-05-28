@@ -234,7 +234,7 @@ values:
     app_version: stdout.trim
 
 - id: render_config
-  use: fs.template
+  use: fs.file.template
   with:
     src: ./templates/app.conf.j2
     dest: /etc/myapp/app.conf

@@ -193,7 +193,7 @@ pkg.version_pin / pkg.repo_priority
 network.link.interface / network.link.bond / network.link.vlan / network.route.add / network.route.remove with persist/backend
 pki.ca_install with trust_store=system
 lvm.snapshot / lvm.thin_pool / lvm.lv_remove / lvm.vg_remove / lvm.pv_remove
-fs.acl / fs.attr / fs.quota
+fs.acl.set / fs.attr.set / fs.quota
 systemd.unit / systemd.timer / systemd.tmpfiles / systemd.sysusers
 alternatives.set
 auditd.rule / auditd.status / auditd.reload

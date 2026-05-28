@@ -97,13 +97,13 @@ tasks:
             with:
               path: ${WORK_DIR}
           - id: write_marker
-            use: fs.write
+            use: fs.file.write
             with:
               path: result.txt
               content: "automax-ssh-ok\n"
               mode: "0600"
           - id: read_marker
-            use: fs.read
+            use: fs.file.read
             with:
               path: result.txt
             register:
@@ -117,31 +117,31 @@ tasks:
             register:
               marker_exists: data.exists
           - id: stat_marker
-            use: fs.stat
+            use: fs.object.stat
             with:
               path: result.txt
             artifacts:
               data: core/stat-marker.json
           - id: ensure_line
-            use: fs.line
+            use: fs.file.line
             with:
               path: result.txt
               line: "line=old"
               state: present
           - id: replace_line
-            use: fs.replace
+            use: fs.file.replace
             with:
               path: result.txt
               pattern: "line=old"
               replacement: "line=new"
           - id: copy_marker
-            use: fs.copy
+            use: fs.object.copy
             with:
               src: result.txt
               dest: copied.txt
               overwrite: true
           - id: move_marker
-            use: fs.move
+            use: fs.object.move
             with:
               src: copied.txt
               dest: moved.txt
@@ -157,7 +157,7 @@ tasks:
             with:
               path: moved.link
           - id: find_files
-            use: fs.find
+            use: fs.object.find
             with:
               path: .
               patterns: ["*.txt"]
@@ -166,7 +166,7 @@ tasks:
             artifacts:
               stdout: core/find-files.txt
           - id: chmod_marker
-            use: fs.chmod
+            use: fs.permission.mode
             with:
               path: moved.txt
               mode: "0600"

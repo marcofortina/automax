@@ -10,7 +10,7 @@ Automax plugins are named operations loaded through the plugin registry.
 Only canonical names are public DSL names. For example:
 
 ```text
-fs.template
+fs.file.template
 systemctl.restart
 db.sqlite.query
 ```
@@ -21,8 +21,8 @@ Aliases are intentionally not exposed by `automax plugins list`.
 
 ```bash
 automax plugins list
-automax plugins describe fs.template
-automax plugins describe fs.template --json
+automax plugins describe fs.file.template
+automax plugins describe fs.file.template --json
 automax plugins audit
 ```
 

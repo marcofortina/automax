@@ -243,7 +243,7 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
     if plugin_name.startswith("fs."):
         if plugin_name == "fs.cd":
             return [f"cd {_q(path)}"]
-        if plugin_name == "fs.copy":
+        if plugin_name == "fs.object.copy":
             return [f"cp {'-a ' if params.get('preserve') else ''}{'-r ' if params.get('recursive') else ''}{_q(params.get('src', '/tmp/source'))} {_q(params.get('dest', '/tmp/dest'))}"]
         if plugin_name == "fs.dir.create":
             return [f"test -d {_q(path)} && ! test -L {_q(path)} || mkdir -p -- {_q(path)}"]
@@ -265,23 +265,23 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
             return [f"test -L {_q(path)}"]
         if plugin_name == "fs.symlink.wait":
             return [f"for i in $(seq 1 {_q(params.get('retries', 12))}); do test -L {_q(path)} && exit 0; sleep {_q(params.get('interval', 5))}; done; exit 1"]
-        if plugin_name == "fs.find":
+        if plugin_name == "fs.object.find":
             return [f"find {_q(path)}"]
-        if plugin_name == "fs.line":
+        if plugin_name == "fs.file.line":
             return [f"grep -Fqx {_q(params.get('line', 'line'))} {_q(path)} || printf '%s\\n' {_q(params.get('line', 'line'))} >> {_q(path)}"]
-        if plugin_name == "fs.move":
+        if plugin_name == "fs.object.move":
             return [f"mv {_q(params.get('src', '/tmp/source'))} {_q(params.get('dest', '/tmp/dest'))}"]
-        if plugin_name == "fs.read":
+        if plugin_name == "fs.file.read":
             return [f"cat {_q(path)}"]
-        if plugin_name == "fs.stat":
+        if plugin_name == "fs.object.stat":
             return [f"stat {_q(path)}"]
         if plugin_name == "fs.symlink.create":
             return [f"ln -sfn {_q(params.get('src', '/tmp/source'))} {_q(params.get('dest', '/tmp/dest'))}"]
         if plugin_name == "fs.symlink.remove":
             return [f"test -L {_q(path)} && rm -f {_q(path)} || true"]
-        if plugin_name == "fs.template":
+        if plugin_name == "fs.file.template":
             return [f"install -D {_q(params.get('src', '/tmp/template'))} {_q(params.get('dest', '/tmp/dest'))}"]
-        if plugin_name == "fs.write":
+        if plugin_name == "fs.file.write":
             return [heredoc_to_file(path, params.get("content", ""))]
 
     if plugin_name in {"fstab.entry", "mount.present"}:

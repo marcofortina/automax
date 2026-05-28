@@ -15,12 +15,12 @@ tasks:
   - id: catalog
     substeps:
     - id: fs_acl
-      use: fs.acl
+      use: fs.acl.set
       with:
         path: /tmp/automax-demo
         acl: u:ubuntu:rw
     - id: fs_acl_assert
-      use: fs.acl.assert
+      use: fs.acl.check
       with:
         path: /tmp/automax-demo
         acl: u:ubuntu:rw
@@ -32,11 +32,20 @@ tasks:
       use: fs.acl.restore
       with:
         file: /etc/sysctl.d/99-automax.conf
-    - id: fs_attr
-      use: fs.attr
+    - id: fs_attr_set
+      use: fs.attr.set
       with:
         path: /tmp/automax-demo
-        attrs: +i
+        attrs: i
+    - id: fs_attr_get
+      use: fs.attr.get
+      with:
+        path: /tmp/automax-demo
+    - id: fs_attr_check
+      use: fs.attr.check
+      with:
+        path: /tmp/automax-demo
+        attrs: i
     - id: fs_bind_mount
       use: fs.bind_mount
       with:
@@ -47,17 +56,17 @@ tasks:
       with:
         path: /tmp/automax-demo
     - id: fs_chmod
-      use: fs.chmod
+      use: fs.permission.mode
       with:
         path: /tmp/automax-demo
         mode: '0644'
     - id: fs_chown
-      use: fs.chown
+      use: fs.permission.owner
       with:
         path: /tmp/automax-demo
         owner: ubuntu
     - id: fs_copy
-      use: fs.copy
+      use: fs.object.copy
       with:
         src: /tmp/source
         dest: /tmp/dest
@@ -97,7 +106,7 @@ tasks:
         retries: 1
         interval: 1
     - id: fs_find
-      use: fs.find
+      use: fs.object.find
       with:
         path: /tmp/automax-demo
     - id: fs_inode_usage_assert
@@ -106,12 +115,12 @@ tasks:
         path: /tmp
         max_percent: 99
     - id: fs_line
-      use: fs.line
+      use: fs.file.line
       with:
         path: /tmp/automax-demo
         line: KEY=value
     - id: fs_move
-      use: fs.move
+      use: fs.object.move
       with:
         src: /tmp/source
         dest: /tmp/dest
@@ -121,7 +130,7 @@ tasks:
         target: automax_smoke_user
         mountpoint: /
     - id: fs_read
-      use: fs.read
+      use: fs.file.read
       with:
         path: /tmp/automax-demo
     - id: fs_dir_remove
@@ -134,7 +143,7 @@ tasks:
       with:
         path: /tmp/automax-demo-file
     - id: fs_replace
-      use: fs.replace
+      use: fs.file.replace
       with:
         path: /tmp/automax-demo
         pattern: KEY=.*
@@ -145,7 +154,7 @@ tasks:
         device: /dev/sdb
         fstype: xfs
     - id: fs_stat
-      use: fs.stat
+      use: fs.object.stat
       with:
         path: /tmp/automax-demo
     - id: fs_symlink_create
@@ -169,14 +178,14 @@ tasks:
       with:
         path: /tmp/automax-demo
     - id: fs_template
-      use: fs.template
+      use: fs.file.template
       with:
         src: ./templates/app.conf.j2
         dest: /etc/myapp/app.conf
         mode: '0644'
         sudo: true
     - id: fs_write
-      use: fs.write
+      use: fs.file.write
       with:
         path: /tmp/automax-demo
         content: managed by automax

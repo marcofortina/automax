@@ -378,9 +378,9 @@ RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
     "fs.dir.wait": {"data.state": "Desired directory state.", "data.attempts": "Polling attempts used."},
     "fs.file.wait": {"data.state": "Desired regular-file state.", "data.attempts": "Polling attempts used."},
     "fs.symlink.wait": {"data.state": "Desired symlink state.", "data.attempts": "Polling attempts used."},
-    "fs.stat": {"data.exists": "Boolean path existence result.", "data.size": "Path size in bytes.", "data.mode": "POSIX mode.", "data.owner": "Owner name.", "data.group": "Group name."},
-    "fs.read": {"stdout": "Remote file content.", "data.path": "Read remote path."},
-    "fs.template": {"data.src": "Rendered template path.", "data.dest": "Remote destination path"},
+    "fs.object.stat": {"data.exists": "Boolean path existence result.", "data.size": "Path size in bytes.", "data.mode": "POSIX mode.", "data.owner": "Owner name.", "data.group": "Group name."},
+    "fs.file.read": {"stdout": "Remote file content.", "data.path": "Read remote path."},
+    "fs.file.template": {"data.src": "Rendered template path.", "data.dest": "Remote destination path"},
     "db.health": {"data.engine": "Database engine checked.", "data.checks": "Boolean check results.", "data.latency_ms": "Measured health-check duration in milliseconds."},
     "db.sqlite.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
     "db.postgres.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
@@ -616,7 +616,7 @@ SAMPLE_VALUES: dict[str, Any] = {
 }
 
 PLUGIN_EXAMPLES: dict[str, str] = {
-    "fs.template": "use: fs.template\nwith:\n  src: ./templates/app.conf.j2\n  dest: /etc/myapp/app.conf\n  mode: '0644'\n  sudo: true",
+    "fs.file.template": "use: fs.file.template\nwith:\n  src: ./templates/app.conf.j2\n  dest: /etc/myapp/app.conf\n  mode: '0644'\n  sudo: true",
     "db.sqlite.query": "use: db.sqlite.query\nwith:\n  connection:\n    path: /tmp/automax.sqlite\n  query: SELECT 1 AS value\n  output: rows",
     "remote.command": "use: remote.command\nwith:\n  command: systemctl is-active sshd\n  success_rc: 0",
     "ssh.authorized_key": "use: ssh.authorized_key\nwith:\n  user: deploy\n  key: '{{ vars.deploy_public_key }}'\n  state: present\n  sudo: true",

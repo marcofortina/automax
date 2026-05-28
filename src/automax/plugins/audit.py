@@ -152,7 +152,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["archive"] = "/tmp/automax-demo.gz"
     if plugin.name == "block.wipe_signatures":
         params["force"] = True
-    if plugin.name == "fs.template":
+    if plugin.name == "fs.file.template":
         params["src"] = "README.md"
     if plugin.name == "network.link.interface":
         params["backend"] = "runtime"
@@ -181,7 +181,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["max_stratum"] = 16
     if plugin.name == "network.firewall.iptables.counter_assert":
         params["min_packets"] = 1
-    if plugin.name == "fs.replace":
+    if plugin.name == "fs.file.replace":
         params["count"] = 0
         params["match_count_assert"] = 1
     if plugin.name == "sshd.config":

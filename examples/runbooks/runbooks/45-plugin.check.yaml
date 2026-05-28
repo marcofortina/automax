@@ -17,4 +17,4 @@ tasks:
     - id: plugin_requirements
       use: plugin.requirements
       with:
-        plugin: fs.write
+        plugin: fs.file.write

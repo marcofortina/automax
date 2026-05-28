@@ -460,10 +460,10 @@ def test_plugins_audit_command_reports_builtin_readiness():
 
 def test_plugins_describe_outputs_parameter_metadata():
     runner = CliRunner()
-    result = runner.invoke(cli, ["plugins", "describe", "fs.template"])
+    result = runner.invoke(cli, ["plugins", "describe", "fs.file.template"])
 
     assert result.exit_code == 0, result.output
-    assert "Name: fs.template" in result.output
+    assert "Name: fs.file.template" in result.output
     assert "src" in result.output
     assert "dest" in result.output
     assert "Remote session: true" in result.output
@@ -511,7 +511,7 @@ def test_generated_plugin_reference_is_in_sync(tmp_path: Path):
     expected = Path("docs/plugins/generated.md").read_text(encoding="utf-8")
     actual = (tmp_path / "generated.md").read_text(encoding="utf-8")
     assert actual == expected
-    assert "### `fs.template`" in actual
+    assert "### `fs.file.template`" in actual
     assert "| `src` | yes | `path`" in actual
 
 

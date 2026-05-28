@@ -34,7 +34,7 @@ tasks:
               path: /tmp/automax-example
           - id: chmod
             tags: [safe]
-            use: fs.chmod
+            use: fs.permission.mode
             with:
               path: /tmp/automax-example
               mode: "0755"

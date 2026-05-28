@@ -24,8 +24,8 @@ outputs      values registered by previous substeps
 step_state   values shared by plugins in the same step
 ```
 
-`fs.template` also exposes `values`, the explicit mapping passed through
-`fs.template.with.values`.
+`fs.file.template` also exposes `values`, the explicit mapping passed through
+`fs.file.template.with.values`.
 
 ## Variables
 
@@ -61,7 +61,7 @@ Registered outputs can be reused later in the same run:
 
 ```yaml
 - id: stat_app
-  use: fs.stat
+  use: fs.object.stat
   with:
     path: /opt/app
   register: app_stat

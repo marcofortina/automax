@@ -14,7 +14,7 @@ tasks:
       - id: write_template
         substeps:
           - id: render_app_config
-            use: fs.template
+            use: fs.file.template
             with:
               src: examples/next/templates/app.conf.j2
               dest: /tmp/automax-app.conf

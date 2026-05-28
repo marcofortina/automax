@@ -220,8 +220,8 @@ automax artifacts path <run-id> --state-dir .automax/runs
 
 ```bash
 automax plugins list
-automax plugins describe fs.template
-automax plugins describe fs.template --json
+automax plugins describe fs.file.template
+automax plugins describe fs.file.template --json
 automax plugins audit
 ```
 

@@ -19,7 +19,7 @@ def _diff(path: str, content: str, kind: str) -> list[Dict[str, Any]]:
 
 
 class FsAclPlugin(BasePlugin):
-    name = "fs.acl"
+    name = "fs.acl.set"
     description = "Ensure or remove POSIX ACL entries with getfacl backup support."
     required_params = ("path", "acl")
     optional_params = ("state", "recursive", "backup", "backup_path", "sudo")
@@ -33,7 +33,7 @@ class FsAclPlugin(BasePlugin):
         self.validate(params)
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
-            raise PluginValidationError("fs.acl state must be present or absent")
+            raise PluginValidationError("fs.acl.set state must be present or absent")
         sudo = sudo_prefix(params, default=True)
         path = quote(params["path"])
         commands = []
@@ -49,11 +49,11 @@ class FsAclPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="fs.acl failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="fs.acl.set failed")
 
 
 class FsAttrPlugin(BasePlugin):
-    name = "fs.attr"
+    name = "fs.attr.set"
     description = "Set or clear Linux filesystem attributes with chattr."
     required_params = ("path", "attrs")
     optional_params = ("state", "recursive", "sudo")
@@ -66,14 +66,73 @@ class FsAttrPlugin(BasePlugin):
         self.validate(params)
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
-            raise PluginValidationError("fs.attr state must be present or absent")
+            raise PluginValidationError("fs.attr.set state must be present or absent")
         op = "+" if state == "present" else "-"
         flag = "-R " if bool(params.get("recursive", False)) else ""
         return [f"{sudo_prefix(params, default=True)}chattr {flag}{op}{quote(params['attrs'])} {quote(params['path'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="fs.attr failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="fs.attr.set failed")
+
+
+def _attr_entries(value: Any) -> list[str]:
+    return [char for char in str(value) if char not in {"+", "-", "=", ",", " "}]
+
+
+class FsAttrGetPlugin(BasePlugin):
+    name = "fs.attr.get"
+    description = "Read Linux filesystem attributes with lsattr."
+    required_params = ("path",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [f"{sudo_prefix(params, default=True)}lsattr -d {quote(params['path'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.attr.get failed")
+        attrs = out.split(None, 1)[0] if out.split() else ""
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"attrs": attrs, "path": params["path"]})
+
+
+class FsAttrCheckPlugin(BasePlugin):
+    name = "fs.attr.check"
+    description = "Check whether Linux filesystem attributes are present or absent."
+    required_params = ("path", "attrs")
+    optional_params = ("state", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        self.validate(params)
+        return _diff(str(params["path"]), f"{params.get('state', 'present')} {params['attrs']}\n", "attr-check-plan")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        state = str(params.get("state", "present"))
+        if state not in {"present", "absent"}:
+            raise PluginValidationError("fs.attr.check state must be present or absent")
+        attrs = _attr_entries(params["attrs"])
+        if not attrs:
+            raise PluginValidationError("fs.attr.check attrs must contain at least one attribute")
+        checks = []
+        attr_source = f"{sudo_prefix(params, default=True)}lsattr -d {quote(params['path'])} | awk '{{print $1}}'"
+        for attr in attrs:
+            grep_cmd = f"{attr_source} | grep -F -- {quote(attr)} >/dev/null"
+            checks.append(grep_cmd if state == "present" else f"! {grep_cmd}")
+        return checks
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        command = " && ".join(self.manual_commands(params, context))
+        rc, out, err = exec_remote(context, command)
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.attr.check failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"path": params["path"], "attrs": _attr_entries(params["attrs"])})
 
 
 class FsQuotaPlugin(BasePlugin):
@@ -129,8 +188,8 @@ class FsAclGetPlugin(BasePlugin):
 
 
 class FsAclAssertPlugin(BasePlugin):
-    name = "fs.acl.assert"
-    description = "Assert that POSIX ACL entries are present or absent."
+    name = "fs.acl.check"
+    description = "Check whether POSIX ACL entries are present or absent."
     required_params = ("path", "acl")
     optional_params = ("state", "sudo")
     opens_remote_session = True
@@ -139,13 +198,13 @@ class FsAclAssertPlugin(BasePlugin):
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         self.validate(params)
         desired = "\n".join(f"{params.get('state', 'present')} {entry}" for entry in _acl_entries(params["acl"])) + "\n"
-        return _diff(str(params["path"]), desired, "acl-assert-plan")
+        return _diff(str(params["path"]), desired, "acl-check-plan")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
-            raise PluginValidationError("fs.acl.assert state must be present or absent")
+            raise PluginValidationError("fs.acl.check state must be present or absent")
         commands = []
         acl_source = f"{sudo_prefix(params, default=True)}getfacl -cp {quote(params['path'])}"
         for entry in _acl_entries(params["acl"]):
@@ -160,7 +219,7 @@ class FsAclAssertPlugin(BasePlugin):
         command = " && ".join(self.manual_commands(params, context))
         rc, out, err = exec_remote(context, command)
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.acl.assert failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.acl.check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"path": params["path"], "acl": _acl_entries(params["acl"])})
 
 

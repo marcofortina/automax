@@ -41,7 +41,7 @@ category.action
 Good examples:
 
 ```text
-fs.template
+fs.file.template
 pkg.install
 systemctl.enable
 transfer.upload
@@ -62,7 +62,7 @@ Avoid shortened or ambiguous names. Public DSL names should stay canonical, expl
 Use `automax plugins describe` to inspect a builtin or externally loaded plugin:
 
 ```bash
-automax plugins describe fs.template
+automax plugins describe fs.file.template
 automax plugins audit --plugin-path ./plugins
 ```
 

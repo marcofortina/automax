@@ -44,9 +44,9 @@ remote user. It covers:
 
 - `remote.command`
 - `fs.dir.create`, `fs.dir.remove`, `fs.dir.exists`, `fs.dir.wait`
-- `fs.file.exists`, `fs.file.wait`, `fs.cd`, `fs.write`, `fs.read`, `fs.stat`
-- `fs.line`, `fs.replace`, `fs.copy`, `fs.move`, `fs.symlink.create`, `fs.symlink.remove`
-- `fs.find`, `fs.chmod`
+- `fs.file.exists`, `fs.file.wait`, `fs.cd`, `fs.file.write`, `fs.file.read`, `fs.object.stat`
+- `fs.file.line`, `fs.file.replace`, `fs.object.copy`, `fs.object.move`, `fs.symlink.create`, `fs.symlink.remove`
+- `fs.object.find`, `fs.permission.mode`
 - `archive.tar`, `archive.untar`, `archive.zip`, `archive.unzip`
 - `transfer.upload`, `transfer.download`, `transfer.sync`
 - `wait.process`

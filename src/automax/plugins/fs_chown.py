@@ -17,7 +17,7 @@ from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, 
 class FsChownPlugin(BasePlugin):
     """Change remote file ownership with idempotent non-recursive checks."""
 
-    name = "fs.chown"
+    name = "fs.permission.owner"
     description = "Set remote file or directory owner/group."
     required_params = ("path",)
     optional_params = ("owner", "group", "recursive", "cwd")
@@ -26,7 +26,7 @@ class FsChownPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if not params.get("owner") and not params.get("group"):
-            raise ValueError("plugin 'fs.chown' requires owner, group or both")
+            raise ValueError("plugin 'fs.permission.owner' requires owner, group or both")
 
     def dry_run(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         return PluginResult.success(
@@ -67,7 +67,7 @@ class FsChownPlugin(BasePlugin):
             rc=rc,
             stdout=out,
             stderr=err,
-            message="fs.chown failed",
+            message="fs.permission.owner failed",
             data={
                 "path": params["path"],
                 "owner": params.get("owner"),

@@ -318,7 +318,7 @@ def test_builtin_filesystem_plugins_are_registered():
 
     assert result.exit_code == 0, result.output
     output_names = set(result.output.splitlines())
-    for name in ("fs.cd", "fs.chmod", "fs.chown", "fs.dir.create"):
+    for name in ("fs.cd", "fs.permission.mode", "fs.permission.owner", "fs.dir.create"):
         assert name in output_names
     for alias in ("cd", "chmod", "chown", "mkdir", "fs.mkdir"):
         assert alias not in output_names
@@ -420,7 +420,7 @@ tasks:
       - id: filesystem
         substeps:
           - id: copy
-            use: fs.copy
+            use: fs.object.copy
             with:
               src: /tmp/source.txt
               dest: /tmp/dest.txt
@@ -516,18 +516,18 @@ def test_filesystem_plugin_names_are_canonical():
         "fs.file.remove",
         "fs.file.exists",
         "fs.file.wait",
-        "fs.stat",
-        "fs.read",
-        "fs.write",
-        "fs.template",
-        "fs.line",
-        "fs.replace",
-        "fs.move",
+        "fs.object.stat",
+        "fs.file.read",
+        "fs.file.write",
+        "fs.file.template",
+        "fs.file.line",
+        "fs.file.replace",
+        "fs.object.move",
         "fs.symlink.create",
         "fs.symlink.remove",
         "fs.symlink.exists",
         "fs.symlink.wait",
-        "fs.find",
+        "fs.object.find",
     ):
         assert name in names
 
@@ -726,7 +726,7 @@ tasks:
 
 
 def test_fs_template_supports_explicit_values():
-    plugin = AutomaxEngine().plugin_registry.get("fs.template")
+    plugin = AutomaxEngine().plugin_registry.get("fs.file.template")
 
     plugin.validate(
         {
@@ -1202,7 +1202,7 @@ tasks:
 
 
 def test_plugin_metadata_contains_structured_parameters_and_examples():
-    metadata = AutomaxEngine().plugin_registry.describe("fs.template")
+    metadata = AutomaxEngine().plugin_registry.describe("fs.file.template")
 
     assert metadata["category"] == "fs"
     assert any(item["name"] == "src" and item["required"] for item in metadata["parameters"])
@@ -1212,17 +1212,17 @@ def test_plugin_metadata_contains_structured_parameters_and_examples():
 
 
 def test_plugins_describe_json_outputs_structured_metadata():
-    result = CliRunner().invoke(cli, ["plugins", "describe", "fs.template", "--json"])
+    result = CliRunner().invoke(cli, ["plugins", "describe", "fs.file.template", "--json"])
 
     assert result.exit_code == 0, result.output
     payload = json.loads(result.output)
-    assert payload["name"] == "fs.template"
+    assert payload["name"] == "fs.file.template"
     assert payload["category"] == "fs"
     assert any(item["name"] == "dest" for item in payload["parameters"])
 
 
 def test_plugin_describe_human_output_includes_rich_metadata():
-    result = CliRunner().invoke(cli, ["plugins", "describe", "fs.template"])
+    result = CliRunner().invoke(cli, ["plugins", "describe", "fs.file.template"])
 
     assert result.exit_code == 0, result.output
     assert "Category: fs" in result.output
@@ -1546,13 +1546,13 @@ def test_plugins_describe_uses_complete_metadata():
 def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
     script = Path("scripts/ssh-smoke.sh").read_text(encoding="utf-8")
     required_snippets = [
-        "fs.write",
-        "fs.read",
+        "fs.file.write",
+        "fs.file.read",
         "fs.file.exists",
-        "fs.stat",
-        "fs.line",
-        "fs.replace",
-        "fs.move",
+        "fs.object.stat",
+        "fs.file.line",
+        "fs.file.replace",
+        "fs.object.move",
         "fs.symlink.create",
         "fs.symlink.remove",
         "archive.tar",
@@ -2769,7 +2769,7 @@ tasks:
       - id: s1
         substeps:
           - id: write
-            use: fs.write
+            use: fs.file.write
             with:
               path: /etc/demo.conf
               content: "token={{ secrets.token }}\n"
@@ -2797,7 +2797,7 @@ tasks:
 
     assert result.exit_code == 0, result.output
     assert "Job: diff-preview" in result.output
-    assert "# controller task.t1:step.s1:substep.write fs.write /etc/demo.conf" in result.output
+    assert "# controller task.t1:step.s1:substep.write fs.file.write /etc/demo.conf" in result.output
     assert "+++ /etc/demo.conf (desired)" in result.output
     assert "+token=***" in result.output
     assert "super-secret" not in result.output
@@ -2819,7 +2819,7 @@ tasks:
       - id: s1
         substeps:
           - id: template
-            use: fs.template
+            use: fs.file.template
             with:
               src: {template}
               dest: /etc/template.conf
@@ -2954,7 +2954,7 @@ tasks:
       - id: s1
         substeps:
           - id: stat
-            use: fs.stat
+            use: fs.object.stat
             with:
               path: /tmp/demo
 """,
@@ -3295,7 +3295,7 @@ tasks:
       - id: s1
         substeps:
           - id: stat
-            use: fs.stat
+            use: fs.object.stat
             with:
               path: /tmp/demo
 """,
@@ -3310,7 +3310,7 @@ tasks:
     assert result.exit_code == 0, result.output
     payload = json.loads(result.output)
     assert payload["diffs"][0]["available"] is True
-    assert payload["diffs"][0]["plugin"] == "fs.stat"
+    assert payload["diffs"][0]["plugin"] == "fs.object.stat"
     assert payload["diffs"][0]["kind"] == "operation-plan"
     assert "stat /tmp/demo" in payload["diffs"][0]["diff"]
 
@@ -3330,7 +3330,7 @@ tasks:
       - id: s1
         substeps:
           - id: stat
-            use: fs.stat
+            use: fs.object.stat
             with:
               path: /tmp/demo
 """,
@@ -3789,10 +3789,28 @@ def test_lvm_extra_plugins_render_destructive_and_snapshot_operations():
 
 
 def test_filesystem_acl_attr_quota_plugins_render_safe_commands():
-    from automax.plugins.fs_system import FsAclAssertPlugin, FsAclGetPlugin, FsAclPlugin, FsAclRestorePlugin, FsAttrPlugin, FsQuotaPlugin
+    from automax.plugins.fs_system import (
+        FsAclAssertPlugin,
+        FsAclGetPlugin,
+        FsAclPlugin,
+        FsAclRestorePlugin,
+        FsAttrCheckPlugin,
+        FsAttrGetPlugin,
+        FsAttrPlugin,
+        FsQuotaPlugin,
+    )
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("fs.acl", "fs.acl.get", "fs.acl.assert", "fs.acl.restore", "fs.attr", "fs.quota"):
+    for name in (
+        "fs.acl.set",
+        "fs.acl.get",
+        "fs.acl.check",
+        "fs.acl.restore",
+        "fs.attr.set",
+        "fs.attr.get",
+        "fs.attr.check",
+        "fs.quota",
+    ):
         assert name in names
     context = _sysops_preview_context()
     assert "getfacl" in " && ".join(FsAclPlugin().manual_commands({"path": "/data", "acl": "u:app:rwx"}, context))
@@ -3802,6 +3820,8 @@ def test_filesystem_acl_attr_quota_plugins_render_safe_commands():
     assert "setfacl --restore=/tmp/data.acl" in FsAclRestorePlugin().manual_commands({"file": "/tmp/data.acl"}, context)[0]
     assert "setfacl --test --restore=/tmp/data.acl" in FsAclRestorePlugin().manual_commands({"file": "/tmp/data.acl", "test_only": True}, context)[0]
     assert "chattr +i" in FsAttrPlugin().manual_commands({"path": "/data/file", "attrs": "i"}, context)[0]
+    assert "lsattr -d /data/file" in FsAttrGetPlugin().manual_commands({"path": "/data/file"}, context)[0]
+    assert "grep -F -- i" in FsAttrCheckPlugin().manual_commands({"path": "/data/file", "attrs": "i"}, context)[0]
     assert "setquota -u app" in FsQuotaPlugin().manual_commands({"target": "app", "mountpoint": "/data"}, context)[0]
 
 
@@ -4379,11 +4399,11 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["content"] = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----\n"
     if plugin.name == "selinux.mode":
         params["state"] = "enforcing"
-    if plugin.name in {"fs.acl", "fs.acl.assert"}:
+    if plugin.name in {"fs.acl.set", "fs.acl.check"}:
         params["acl"] = "u:app:rwx"
-    if plugin.name == "fs.attr":
+    if plugin.name in {"fs.attr.set", "fs.attr.check"}:
         params["attrs"] = "i"
-    if plugin.name == "fs.chown":
+    if plugin.name == "fs.permission.owner":
         params["owner"] = "demo"
     if plugin.name == "fs.quota":
         params["type"] = "user"
@@ -4401,7 +4421,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["max_stratum"] = 16
     if plugin.name == "network.firewall.iptables.counter_assert":
         params["min_packets"] = 1
-    if plugin.name == "fs.replace":
+    if plugin.name == "fs.file.replace":
         params["count"] = 0
         params["match_count_assert"] = 1
     if plugin.name == "sshd.config":
@@ -4823,7 +4843,7 @@ def test_fs_write_template_metadata_exposes_atomic_option():
     from automax.plugins.registry import build_builtin_registry
 
     registry = build_builtin_registry()
-    for name in ("fs.write", "fs.template"):
+    for name in ("fs.file.write", "fs.file.template"):
         params = {parameter["name"] for parameter in registry.get(name).metadata()["parameters"]}
         assert "atomic" in params
 

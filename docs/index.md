@@ -85,7 +85,7 @@ automax runs show <run-id>
 
 ```bash
 automax plugins list
-automax plugins describe fs.template
+automax plugins describe fs.file.template
 automax docs generate-plugins --output docs/plugins/generated.md
 ```
 

@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Template workflows
 
-Automax supports configuration rendering through the `fs.template` plugin.
+Automax supports configuration rendering through the `fs.file.template` plugin.
 Templates are regular local Jinja2 files rendered by the controller and uploaded
 to the remote target through the active step-scoped SSH connection.
 
@@ -17,7 +17,7 @@ outputs.
 
 ```yaml
 - id: render_config
-  use: fs.template
+  use: fs.file.template
   with:
     src: ./templates/app.conf.j2
     dest: /etc/myapp/app.conf
@@ -48,7 +48,7 @@ vars         merged external/job/CLI/server variables
 secrets      resolved env/file secrets
 outputs      registered outputs from previous substeps
 step_state   state shared by substeps within the same step
-values       explicit per-template values from fs.template.with.values
+values       explicit per-template values from fs.file.template.with.values
 ```
 
 Example template:
@@ -63,7 +63,7 @@ port={{ values.port }}
 
 ## Idempotency
 
-`fs.template` uploads rendered content to a remote temporary file and installs it
+`fs.file.template` uploads rendered content to a remote temporary file and installs it
 only when content differs from the destination. If the file already has the same
 content, the plugin returns `changed=false`.
 

@@ -140,8 +140,8 @@ job
  step_state
 ```
 
-`fs.template` adds one extra namespace: `values`, taken from
-`fs.template.with.values`.
+`fs.file.template` adds one extra namespace: `values`, taken from
+`fs.file.template.with.values`.
 
 ## SSH security options
 
