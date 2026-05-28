@@ -265,8 +265,8 @@ process.kill
 process.signal
 process.wait
 remote.command
-resolver.config
-resolver.facts
+network.dns
+network.dns_facts
 secret.redact_assert
 secret.scan_output
 secret.scan_preview

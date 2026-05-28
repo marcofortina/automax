@@ -188,7 +188,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["match_count_assert"] = 1
     if plugin.name == "sshd.config":
         params["match_blocks"] = [{"match": "User deploy", "settings": {"X11Forwarding": "no"}}]
-    if plugin.name in {"network.dns", "resolver.config"}:
+    if plugin.name == "network.dns":
         params["backend"] = "plain-file"
     if plugin.name in {"network.interface", "network.bond", "network.vlan"}:
         params["state"] = "up"

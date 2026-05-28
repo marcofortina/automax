@@ -718,6 +718,27 @@ def test_plugin_smoke_runbooks_match_auditd_search_user_schema():
     assert all(isinstance((substep.get("with") or {}).get("user"), str) for substep in search_substeps)
 
 
+def test_plugin_smoke_runbooks_use_valid_node_ids():
+    node_id_pattern = re.compile(r"^[A-Za-z0-9_.-]+$")
+    offenders = []
+    for runbook_path in sorted(Path("examples/runbooks/runbooks").glob("*.check.yaml")):
+        data = yaml.safe_load(runbook_path.read_text(encoding="utf-8"))
+        for task in data.get("tasks", []):
+            task_id = task.get("id")
+            if not isinstance(task_id, str) or not node_id_pattern.match(task_id):
+                offenders.append(f"{runbook_path}: task id: {task_id!r}")
+            for step in task.get("steps", []):
+                step_id = step.get("id")
+                if not isinstance(step_id, str) or not node_id_pattern.match(step_id):
+                    offenders.append(f"{runbook_path}: step id: {step_id!r}")
+                for substep in step.get("substeps", []):
+                    substep_id = substep.get("id")
+                    if not isinstance(substep_id, str) or not node_id_pattern.match(substep_id):
+                        offenders.append(f"{runbook_path}: substep id: {substep_id!r}")
+
+    assert offenders == []
+
+
 def test_plugin_smoke_runbooks_validate_against_builtin_schemas():
     from automax.plugins.registry import build_builtin_registry
 
@@ -765,7 +786,6 @@ def test_rendered_file_install_mixin_covers_managed_file_plugins():
         "limits.dropin",
         "network.dns",
         "password.policy",
-        "resolver.config",
         "ssh.config",
         "sshd.config",
         "sudo.rule",
@@ -815,6 +835,23 @@ def test_read_only_command_plugin_is_shared_base_class():
     assert len(readonly_plugins) >= 40
 
 
+
+
+
+def test_resolver_namespace_is_not_public_plugin_surface():
+    from automax.plugins.registry import build_builtin_registry
+
+    names = set(build_builtin_registry().names())
+    assert "network.dns" in names
+    assert "network.dns_facts" in names
+    assert not any(name.startswith("resolver.") for name in names)
+
+    docs = "\n".join(
+        Path(path).read_text(encoding="utf-8")
+        for path in ["docs/plugins/index.md", "docs/plugins/linux-operations.md", "docs/plugins/generated.md"]
+    )
+    assert ".".join(("resolver", "config")) not in docs
+    assert ".".join(("resolver", "facts")) not in docs
 
 def test_firewall_plugins_share_command_mixin_without_public_merge():
     from automax.core.models import ExecutionContext, Target

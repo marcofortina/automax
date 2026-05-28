@@ -6624,6 +6624,35 @@ with:
     - example.com
 ```
 
+### `network.dns_facts`
+
+Detect the active DNS resolver backend without changing resolver configuration.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.dns_facts
+with:
+  sudo: true
+```
+
 ### `network.interface`
 
 Apply runtime and optional persistent interface state/address configuration.
@@ -8565,77 +8594,6 @@ use: remote.command
 with:
   command: systemctl is-active sshd
   success_rc: 0
-```
-
-## resolver
-
-### `resolver.config`
-
-Manage DNS resolver settings safely using explicit plain-file, systemd-resolved, NetworkManager or resolvconf backends.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `backend` | no | `string` |  | Operation backend such as auto, runtime, networkmanager, systemd-networkd, ifcfg, plain-file, systemd-resolved or resolvconf. |
-| `nameservers` | no | `list` |  | Resolver nameserver addresses. |
-| `search` | no | `list` |  | Resolver search domains. |
-| `options` | no | `list` |  | Resolver options. |
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `nm_connection` | no | `string` |  | NetworkManager connection profile used for persistent DNS changes. |
-| `force` | no | `boolean` | `False` | Force the operation when supported. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: resolver.config
-with:
-  backend: auto
-  nameservers:
-    - 192.0.2.53
-```
-
-### `resolver.facts`
-
-Detect the active DNS resolver backend without changing resolver configuration.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: resolver.facts
-with:
-  sudo: true
 ```
 
 ## secret

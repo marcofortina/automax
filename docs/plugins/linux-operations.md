@@ -65,11 +65,11 @@ pam.access / pam.faillock / pam.pwhistory / pam.succeed_if
 pam.service_line / pam.validate / pam.stack_facts / pam.authselect
 hosts.entry
 hostname.set
-resolver.config
+network.dns
 chrony.servers / chrony.sources_assert
 ```
 
-`resolver.config` is deliberately careful: with `backend: auto`, it refuses to
+`network.dns` is deliberately careful: with `backend: auto`, it refuses to
 replace a symlinked `/etc/resolv.conf` unless `force: true` or an explicit backend
 is provided. This avoids corrupting systems managed by systemd-resolved,
 NetworkManager, resolvconf or cloud-init.
@@ -109,7 +109,7 @@ structured `plan --diff` previews before applying storage changes.
 
 Use `network.interface`, `network.route`, `network.bond`, `network.vlan` and
 `network.dns` for runtime network setup and DNS resolver changes. DNS handling is
-backend-aware through the same safety rules as `resolver.config`: managed or
+backend-aware through the same safety rules as `network.dns`: managed or
 symlinked resolver files are not overwritten silently.
 
 
@@ -186,7 +186,7 @@ Useful families include:
 
 ```text
 platform.facts
-resolver.facts
+network.dns_facts
 pkg.version_pin / pkg.repo_priority
 network.interface / network.route / network.bond / network.vlan with persist/backend
 pki.ca_install with trust_store=system

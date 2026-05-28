@@ -3380,7 +3380,8 @@ def test_storage_and_linux_ops_plugins_are_registered():
         "pam.limits",
         "hosts.entry",
         "hostname.set",
-        "resolver.config",
+        "network.dns",
+        "network.dns_facts",
         "chrony.servers",
         "chrony.sources_assert",
         "env.set",
@@ -3425,7 +3426,7 @@ def test_storage_manual_commands_cover_scsi_id_partprobe_and_backups():
 
 def test_linux_ops_manual_commands_cover_resolver_env_download_and_sysctl():
     from automax.plugins.kernel import SysctlReloadPlugin
-    from automax.plugins.linux_ops import DownloadFilePlugin, EnvSetPlugin, ResolverConfigPlugin
+    from automax.plugins.linux_ops import DownloadFilePlugin, EnvSetPlugin, NetworkDnsConfigBase
 
     context = ExecutionContext(
         run_id="test-run",
@@ -3440,7 +3441,7 @@ def test_linux_ops_manual_commands_cover_resolver_env_download_and_sysctl():
         secrets={},
     )
 
-    resolver = "\n".join(ResolverConfigPlugin().manual_commands({"nameservers": ["192.0.2.53"]}, context))
+    resolver = "\n".join(NetworkDnsConfigBase().manual_commands({"nameservers": ["192.0.2.53"]}, context))
     assert "refusing to manage symlinked /etc/resolv.conf" in resolver
     assert "install -D -m 0644" in resolver
     env = EnvSetPlugin().manual_commands({"variables": {"APP_HOME": "/opt/app"}}, context)[0]
@@ -3759,21 +3760,24 @@ def test_platform_facts_plugin_renders_backend_detection():
     assert "read-only backend detection" in PlatformFactsPlugin().diff_preview_reason({}, context)
 
 
-def test_resolver_backend_aware_plugins_render_safe_backends():
-    from automax.plugins.linux_ops import ResolverConfigPlugin, ResolverFactsPlugin
+def test_network_dns_backend_aware_plugins_render_safe_backends():
+    from automax.plugins.linux_ops import NetworkDnsFactsPlugin
+    from automax.plugins.network import NetworkDnsPlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    assert "resolver.facts" in names
-    assert "resolver.config" in names
+    assert "network.dns_facts" in names
+    assert "network.dns" in names
+    assert ".".join(("resolver", "facts")) not in names
+    assert ".".join(("resolver", "config")) not in names
     context = _sysops_preview_context()
-    facts = ResolverFactsPlugin().manual_commands({}, context)[0]
+    facts = NetworkDnsFactsPlugin().manual_commands({}, context)[0]
     assert "backend=" in facts
-    resolved = "\n".join(ResolverConfigPlugin().manual_commands({"backend": "systemd-resolved", "nameservers": ["192.0.2.53"]}, context))
+    resolved = "\n".join(NetworkDnsPlugin().manual_commands({"backend": "systemd-resolved", "nameservers": ["192.0.2.53"]}, context))
     assert "/etc/systemd/resolved.conf.d/99-automax.conf" in resolved
     assert "systemctl restart systemd-resolved" in resolved
-    nm = " && ".join(ResolverConfigPlugin().manual_commands({"backend": "networkmanager", "nm_connection": "eth0", "nameservers": ["192.0.2.53"]}, context))
+    nm = " && ".join(NetworkDnsPlugin().manual_commands({"backend": "networkmanager", "nm_connection": "eth0", "nameservers": ["192.0.2.53"]}, context))
     assert "nmcli connection modify eth0" in nm
-    assert ResolverConfigPlugin().diff_preview({"backend": "resolvconf", "nameservers": ["192.0.2.53"]}, context)[0]["kind"] == "resolver-plan"
+    assert NetworkDnsPlugin().diff_preview({"backend": "resolvconf", "nameservers": ["192.0.2.53"]}, context)[0]["kind"] == "resolver-plan"
 
 
 def test_lvm_extra_plugins_render_destructive_and_snapshot_operations():
@@ -4416,8 +4420,6 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "sshd.config":
         params["match_blocks"] = [{"match": "User deploy", "settings": {"X11Forwarding": "no"}}]
     if plugin.name == "network.dns":
-        params["backend"] = "plain-file"
-    if plugin.name == "resolver.config":
         params["backend"] = "plain-file"
     if plugin.name in {"network.interface", "network.bond", "network.vlan"}:
         params["state"] = "up"

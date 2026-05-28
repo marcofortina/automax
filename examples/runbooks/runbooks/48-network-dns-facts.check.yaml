@@ -2,25 +2,25 @@
 apiVersion: automax.io/v1
 kind: Job
 metadata:
-  name: plugin-smoke-check-resolver
+  name: plugin-smoke-check-network-dns-facts
 tasks:
-- id: resolver
-  description: Check-mode catalog for resolver plugins.
+- id: network_dns
+  description: Check-mode catalog for network DNS plugins.
   targets: all
   tags:
   - all-functions
   - check
-  - resolver
+  - network_dns
   steps:
   - id: catalog
     substeps:
-    - id: resolver_config
-      use: resolver.config
+    - id: network_dns
+      use: network.dns
       with:
         backend: auto
         nameservers:
         - 192.0.2.53
-    - id: resolver_facts
-      use: resolver.facts
+    - id: network_dns_facts
+      use: network.dns_facts
       with:
         sudo: true

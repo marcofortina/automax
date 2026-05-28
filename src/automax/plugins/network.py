@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.linux_ops import ResolverConfigPlugin
+from automax.plugins.linux_ops import NetworkDnsConfigBase
 from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
@@ -266,7 +266,7 @@ class NetworkVlanPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="network.vlan failed")
 
 
-class NetworkDnsPlugin(ResolverConfigPlugin):
+class NetworkDnsPlugin(NetworkDnsConfigBase):
     name = "network.dns"
     description = "Configure DNS resolver settings using the backend-aware resolver implementation."
 
