@@ -11,120 +11,133 @@ from typing import Any, Dict
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.file_utils import upload_text_to_temp
-from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, quote, result_from_remote, shell_var_ref, sudo_prefix, tempfile_command
+from automax.plugins.remote_utils import CHANGE_MARKER, cleanup_trap_command, exec_remote, quote, result_from_remote, shell_var_ref, sudo_prefix, tempfile_command
 
+class FirewallCommandMixin:
+    """Shared firewall command helpers without changing public plugin names."""
+
+    def firewall_state(self, params: Dict[str, Any]) -> str:
+        state = str(params.get("state", "present"))
+        if state not in {"present", "absent"}:
+            raise PluginValidationError("state must be present or absent")
+        return state
+
+    def firewall_sudo(self, params: Dict[str, Any]) -> str:
+        return sudo_prefix(params, default=True)
+
+    def firewall_stateful_command(self, query_command: str, change_command: str, state: str) -> str:
+        expected = "0" if state == "present" else "1"
+        return (
+            f"if {query_command} >/dev/null 2>&1; then present=0; else present=1; fi; "
+            f"if [ \"$present\" = {expected} ]; then true; "
+            f"else {change_command} && echo {CHANGE_MARKER}; fi"
+        )
+
+    def firewalld_scope(self, params: Dict[str, Any]) -> str:
+        if bool(params.get("runtime", False)):
+            return ""
+        return "--permanent " if bool(params.get("permanent", True)) else ""
+
+    def firewalld_zone(self, params: Dict[str, Any]) -> str:
+        return f"--zone={quote(params['zone'])} " if params.get("zone") else ""
+
+    def firewalld_reload_command(self, params: Dict[str, Any]) -> str:
+        mode = str(params.get("reload_mode", "reload" if bool(params.get("reload", False)) else "none"))
+        if mode == "none":
+            return ""
+        if mode == "reload":
+            return f"; {self.firewall_sudo(params)}firewall-cmd --reload >/dev/null"
+        if mode == "complete-reload":
+            return f"; {self.firewall_sudo(params)}firewall-cmd --complete-reload >/dev/null"
+        raise PluginValidationError("reload_mode must be none, reload or complete-reload")
+
+    def firewalld_rule_command(
+        self,
+        params: Dict[str, Any],
+        *,
+        query_action: str,
+        present_action: str,
+        absent_action: str,
+        value: str,
+    ) -> str:
+        state = self.firewall_state(params)
+        zone = self.firewalld_zone(params)
+        permanent = self.firewalld_scope(params)
+        sudo = self.firewall_sudo(params)
+        query_command = f"{sudo}firewall-cmd {zone}{permanent}--{query_action}={quote(value)}"
+        if bool(params.get("query_only", False)):
+            return query_command
+        change_action = present_action if state == "present" else absent_action
+        change_command = f"{sudo}firewall-cmd {zone}{permanent}--{change_action}={quote(value)}"
+        return self.firewall_stateful_command(query_command, change_command, state) + self.firewalld_reload_command(params)
 
 
 def _state(params: Dict[str, Any]) -> str:
-    state = str(params.get("state", "present"))
-    if state not in {"present", "absent"}:
-        raise PluginValidationError("state must be present or absent")
-    return state
+    return FirewallCommandMixin().firewall_state(params)
 
-
-def _firewalld_scope(params: Dict[str, Any]) -> str:
-    if bool(params.get("runtime", False)):
-        return ""
-    return "--permanent " if bool(params.get("permanent", True)) else ""
-
-
-def _reload_command(params: Dict[str, Any]) -> str:
-    mode = str(params.get("reload_mode", "reload" if bool(params.get("reload", False)) else "none"))
-    if mode == "none":
-        return ""
-    if mode == "reload":
-        return f"; {sudo_prefix(params, default=True)}firewall-cmd --reload >/dev/null"
-    if mode == "complete-reload":
-        return f"; {sudo_prefix(params, default=True)}firewall-cmd --complete-reload >/dev/null"
-    raise PluginValidationError("reload_mode must be none, reload or complete-reload")
-
-
-class FirewalldPortPlugin(BasePlugin):
+class FirewalldPortPlugin(FirewallCommandMixin, BasePlugin):
     name = "firewalld.port"
     description = "Manage a firewalld port rule."
     required_params = ("port",)
     optional_params = ("protocol", "zone", "state", "permanent", "runtime", "reload", "reload_mode", "query_only", "sudo")
     opens_remote_session = True
 
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        state = _state(params)
         protocol = str(params.get("protocol", "tcp"))
-        port_spec = f"{params['port']}/{protocol}"
-        zone = f"--zone={quote(params['zone'])} " if params.get("zone") else ""
-        permanent = _firewalld_scope(params)
-        action = "add-port" if state == "present" else "remove-port"
-        query = "query-port"
-        expected = "0" if state == "present" else "1"
-        command = (
-            f"if {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{query}={quote(port_spec)} >/dev/null 2>&1; "
-            f"then present=0; else present=1; fi; "
-            f"if [ \"$present\" = {expected} ]; then true; "
-            f"else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(port_spec)} && echo {CHANGE_MARKER}; fi"
-        )
-        if bool(params.get("query_only", False)):
-            command = f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{query}={quote(port_spec)}"
-        else:
-            command += _reload_command(params)
-        rc, out, err = exec_remote(context, command)
+        return [self.firewalld_rule_command(
+            params,
+            query_action="query-port",
+            present_action="add-port",
+            absent_action="remove-port",
+            value=f"{params['port']}/{protocol}",
+        )]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="firewalld.port failed")
 
-
-class FirewalldServicePlugin(BasePlugin):
+class FirewalldServicePlugin(FirewallCommandMixin, BasePlugin):
     name = "firewalld.service"
     description = "Manage a firewalld service rule."
     required_params = ("service",)
     optional_params = ("zone", "state", "permanent", "runtime", "reload", "reload_mode", "query_only", "sudo")
     opens_remote_session = True
 
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        state = _state(params)
-        zone = f"--zone={quote(params['zone'])} " if params.get("zone") else ""
-        permanent = _firewalld_scope(params)
-        action = "add-service" if state == "present" else "remove-service"
-        expected = "0" if state == "present" else "1"
-        command = (
-            f"if {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-service={quote(params['service'])} >/dev/null 2>&1; "
-            f"then present=0; else present=1; fi; "
-            f"if [ \"$present\" = {expected} ]; then true; "
-            f"else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(params['service'])} && echo {CHANGE_MARKER}; fi"
-        )
-        if bool(params.get("query_only", False)):
-            command = f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-service={quote(params['service'])}"
-        else:
-            command += _reload_command(params)
-        rc, out, err = exec_remote(context, command)
+        return [self.firewalld_rule_command(
+            params,
+            query_action="query-service",
+            present_action="add-service",
+            absent_action="remove-service",
+            value=str(params["service"]),
+        )]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="firewalld.service failed")
 
-
-class FirewalldRichRulePlugin(BasePlugin):
+class FirewalldRichRulePlugin(FirewallCommandMixin, BasePlugin):
     name = "firewalld.rich_rule"
     description = "Manage a firewalld rich rule."
     required_params = ("rich_rule",)
     optional_params = ("zone", "state", "permanent", "runtime", "reload", "reload_mode", "query_only", "sudo")
     opens_remote_session = True
 
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        state = _state(params)
-        zone = f"--zone={quote(params['zone'])} " if params.get("zone") else ""
-        permanent = _firewalld_scope(params)
-        action = "add-rich-rule" if state == "present" else "remove-rich-rule"
-        expected = "0" if state == "present" else "1"
-        command = (
-            f"if {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-rich-rule={quote(params['rich_rule'])} >/dev/null 2>&1; "
-            f"then present=0; else present=1; fi; "
-            f"if [ \"$present\" = {expected} ]; then true; "
-            f"else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(params['rich_rule'])} && echo {CHANGE_MARKER}; fi"
-        )
-        if bool(params.get("query_only", False)):
-            command = f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-rich-rule={quote(params['rich_rule'])}"
-        else:
-            command += _reload_command(params)
-        rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="firewalld.rich_rule failed")
+        return [self.firewalld_rule_command(
+            params,
+            query_action="query-rich-rule",
+            present_action="add-rich-rule",
+            absent_action="remove-rich-rule",
+            value=str(params["rich_rule"]),
+        )]
 
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="firewalld.rich_rule failed")
 
 class FirewalldReloadPlugin(BasePlugin):
     name = "firewalld.reload"
@@ -135,7 +148,6 @@ class FirewalldReloadPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, f"{sudo_prefix(params, default=True)}firewall-cmd --reload && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="firewalld.reload failed")
-
 
 class FirewalldStatusPlugin(BasePlugin):
     name = "firewalld.status"
@@ -156,7 +168,6 @@ class FirewalldStatusPlugin(BasePlugin):
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="firewalld.status failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"status": out})
-
 
 class FirewalldListPlugin(BasePlugin):
     name = "firewalld.list"
@@ -180,15 +191,13 @@ class FirewalldListPlugin(BasePlugin):
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="firewalld.list failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"rules": out})
 
-
 class FirewalldZonePlugin(FirewalldListPlugin):
     name = "firewalld.zone"
     description = "Read one firewalld zone configuration."
     required_params = ("zone",)
     optional_params = ("permanent", "sudo")
 
-
-class UfwRulePlugin(BasePlugin):
+class UfwRulePlugin(FirewallCommandMixin, BasePlugin):
     name = "ufw.rule"
     description = "Manage a UFW allow/deny/reject rule."
     required_params = ("rule",)
@@ -240,7 +249,6 @@ class UfwRulePlugin(BasePlugin):
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="ufw.rule failed")
 
-
 class UfwStatusPlugin(BasePlugin):
     name = "ufw.status"
     description = "Read UFW status."
@@ -253,7 +261,6 @@ class UfwStatusPlugin(BasePlugin):
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="ufw.status failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"status": out})
 
-
 class UfwEnablePlugin(BasePlugin):
     name = "ufw.enable"
     description = "Enable UFW when inactive."
@@ -265,7 +272,6 @@ class UfwEnablePlugin(BasePlugin):
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="ufw.enable failed")
 
-
 class UfwDisablePlugin(BasePlugin):
     name = "ufw.disable"
     description = "Disable UFW when active."
@@ -276,7 +282,6 @@ class UfwDisablePlugin(BasePlugin):
         command = f"{sudo_prefix(params, default=True)}ufw status | grep -qi '^Status: inactive' || {{ {sudo_prefix(params, default=True)}ufw --force disable && echo {CHANGE_MARKER}; }}"
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="ufw.disable failed")
-
 
 class NftablesValidatePlugin(BasePlugin):
     name = "nftables.validate"
@@ -356,7 +361,6 @@ class NftablesListPlugin(BasePlugin):
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="nftables.list failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"ruleset": out})
 
-
 class NftablesExportPlugin(NftablesListPlugin):
     name = "nftables.export"
     description = "Export the active nftables ruleset to stdout or a remote file."
@@ -381,8 +385,7 @@ class NftablesExportPlugin(NftablesListPlugin):
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="nftables.export failed")
         return PluginResult.success(changed=bool(params.get("dest")), rc=rc, stdout=out, stderr=err, data={"dest": params.get("dest")})
 
-
-class IptablesRulePlugin(BasePlugin):
+class IptablesRulePlugin(FirewallCommandMixin, BasePlugin):
     name = "iptables.rule"
     description = "Ensure an iptables rule is present or absent in a table and chain."
     required_params = ("chain", "rule")
@@ -432,6 +435,7 @@ class IptablesRulePlugin(BasePlugin):
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.rule failed")
 
+
 class IptablesSavePlugin(BasePlugin):
     name = "iptables.save"
     description = "Save current iptables or ip6tables rules to a persistent file."
@@ -451,6 +455,7 @@ class IptablesSavePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.save failed")
+
 
 class IptablesRestorePlugin(BasePlugin):
     name = "iptables.restore"
@@ -476,7 +481,6 @@ class IptablesRestorePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.restore failed")
-
 
 class IptablesListPlugin(BasePlugin):
     name = "iptables.list"
@@ -510,7 +514,6 @@ class IptablesListPlugin(BasePlugin):
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="iptables.list failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"rules": out})
-
 
 class IptablesPolicyPlugin(BasePlugin):
     name = "iptables.policy"
@@ -548,7 +551,6 @@ class IptablesPolicyPlugin(BasePlugin):
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="iptables.policy failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"policy": out.strip()})
 
-
 class IptablesChainPlugin(BasePlugin):
     name = "iptables.chain"
     description = "Read one iptables or ip6tables chain."
@@ -568,83 +570,3 @@ class IptablesChainPlugin(BasePlugin):
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="iptables.chain failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"chain": out})
-
-
-
-def _firewalld_port_manual(self: FirewalldPortPlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-    self.validate(params)
-    state = _state(params)
-    protocol = str(params.get("protocol", "tcp"))
-    port_spec = f"{params['port']}/{protocol}"
-    zone = f"--zone={quote(params['zone'])} " if params.get("zone") else ""
-    permanent = _firewalld_scope(params)
-    action = "add-port" if state == "present" else "remove-port"
-    query = "query-port"
-    expected = "0" if state == "present" else "1"
-    if bool(params.get("query_only", False)):
-        return [f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{query}={quote(port_spec)}"]
-    command = (
-        f"if {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{query}={quote(port_spec)} >/dev/null 2>&1; "
-        f"then present=0; else present=1; fi; "
-        f"if [ \"$present\" = {expected} ]; then true; "
-        f"else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(port_spec)} && echo {CHANGE_MARKER}; fi"
-    )
-    return [command + _reload_command(params)]
-
-
-def _firewalld_service_manual(self: FirewalldServicePlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-    self.validate(params)
-    state = _state(params)
-    zone = f"--zone={quote(params['zone'])} " if params.get("zone") else ""
-    permanent = _firewalld_scope(params)
-    action = "add-service" if state == "present" else "remove-service"
-    expected = "0" if state == "present" else "1"
-    if bool(params.get("query_only", False)):
-        return [f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-service={quote(params['service'])}"]
-    command = (
-        f"if {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-service={quote(params['service'])} >/dev/null 2>&1; "
-        f"then present=0; else present=1; fi; "
-        f"if [ \"$present\" = {expected} ]; then true; "
-        f"else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(params['service'])} && echo {CHANGE_MARKER}; fi"
-    )
-    return [command + _reload_command(params)]
-
-
-def _firewalld_rich_rule_manual(self: FirewalldRichRulePlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-    self.validate(params)
-    state = _state(params)
-    zone = f"--zone={quote(params['zone'])} " if params.get("zone") else ""
-    permanent = _firewalld_scope(params)
-    action = "add-rich-rule" if state == "present" else "remove-rich-rule"
-    expected = "0" if state == "present" else "1"
-    if bool(params.get("query_only", False)):
-        return [f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-rich-rule={quote(params['rich_rule'])}"]
-    command = (
-        f"if {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-rich-rule={quote(params['rich_rule'])} >/dev/null 2>&1; "
-        f"then present=0; else present=1; fi; "
-        f"if [ \"$present\" = {expected} ]; then true; "
-        f"else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(params['rich_rule'])} && echo {CHANGE_MARKER}; fi"
-    )
-    return [command + _reload_command(params)]
-
-
-
-class ExtendedFirewalldPortPlugin(FirewalldPortPlugin):
-    """firewalld.port with query-only and reload-mode controls."""
-
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        return _firewalld_port_manual(self, params, context)
-
-
-class ExtendedFirewalldServicePlugin(FirewalldServicePlugin):
-    """firewalld.service with query-only and reload-mode controls."""
-
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        return _firewalld_service_manual(self, params, context)
-
-
-class ExtendedFirewalldRichRulePlugin(FirewalldRichRulePlugin):
-    """firewalld.rich_rule with query-only and reload-mode controls."""
-
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        return _firewalld_rich_rule_manual(self, params, context)

@@ -814,6 +814,33 @@ def test_read_only_command_plugin_is_shared_base_class():
     ]
     assert len(readonly_plugins) >= 40
 
+
+
+def test_firewall_plugins_share_command_mixin_without_public_merge():
+    from automax.core.models import ExecutionContext, Target
+    from automax.plugins.firewall import (
+        FirewallCommandMixin,
+        FirewalldPortPlugin,
+        FirewalldRichRulePlugin,
+        FirewalldServicePlugin,
+        IptablesRulePlugin,
+        UfwRulePlugin,
+    )
+    from automax.plugins.registry import build_builtin_registry
+
+    registry = build_builtin_registry()
+    context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
+    for name in ("firewalld.port", "firewalld.service", "firewalld.rich_rule", "ufw.rule", "iptables.rule"):
+        assert isinstance(registry.get(name), FirewallCommandMixin)
+
+    assert FirewalldPortPlugin().firewalld_scope({"runtime": True, "permanent": True}) == ""
+    assert FirewalldPortPlugin().firewalld_scope({"permanent": True}) == "--permanent "
+    assert "query-port=443/tcp" in FirewalldPortPlugin().manual_commands({"port": 443, "query_only": True}, context)[0]
+    assert "add-service=ssh" in FirewalldServicePlugin().manual_commands({"service": "ssh"}, context)[0]
+    assert "add-rich-rule=" in FirewalldRichRulePlugin().manual_commands({"rich_rule": "rule service name=ssh accept"}, context)[0]
+    assert UfwRulePlugin().firewall_state({"state": "present"}) == "present"
+    assert IptablesRulePlugin().firewall_state({"state": "absent"}) == "absent"
+
 def test_builtin_plugins_do_not_patch_methods_after_class_definition():
     pattern = re.compile(r"\b\w+Plugin\.(execute|manual_commands|validate|_command|_command_parts|_content)\s*=")
     offenders = []
