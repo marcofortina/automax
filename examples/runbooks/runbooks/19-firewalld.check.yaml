@@ -2,39 +2,39 @@
 apiVersion: automax.io/v1
 kind: Job
 metadata:
-  name: plugin-smoke-check-firewalld
+  name: plugin-smoke-check-network-firewall-firewalld
 tasks:
-- id: firewalld
-  description: Check-mode catalog for firewalld plugins.
+- id: network_firewall_firewalld
+  description: Check-mode catalog for network.firewall.firewalld plugins.
   targets: all
   tags:
   - all-functions
   - check
-  - firewalld
+  - network-firewall-firewalld
   steps:
   - id: catalog
     substeps:
-    - id: firewalld_forward_port
-      use: firewalld.forward_port
+    - id: network_firewall_firewalld_forward_port
+      use: network.firewall.firewalld.forward_port
       with:
         port: 2222
         to_port: 22
-    - id: firewalld_icmp_block
-      use: firewalld.icmp_block
+    - id: network_firewall_firewalld_icmp_block
+      use: network.firewall.firewalld.icmp_block
       with:
         icmp_type: echo-request
-    - id: firewalld_list
-      use: firewalld.list
+    - id: network_firewall_firewalld_list
+      use: network.firewall.firewalld.list
       with:
         zone: public
         permanent: true
-    - id: firewalld_masquerade
-      use: firewalld.masquerade
+    - id: network_firewall_firewalld_masquerade
+      use: network.firewall.firewalld.masquerade
       with:
         zone: public
         state: present
-    - id: firewalld_port
-      use: firewalld.port
+    - id: network_firewall_firewalld_port
+      use: network.firewall.firewalld.port
       with:
         port: 443
         protocol: tcp
@@ -43,27 +43,27 @@ tasks:
         permanent: true
         reload: true
         sudo: true
-    - id: firewalld_reload
-      use: firewalld.reload
+    - id: network_firewall_firewalld_reload
+      use: network.firewall.firewalld.reload
       with:
         sudo: true
-    - id: firewalld_rich_rule
-      use: firewalld.rich_rule
+    - id: network_firewall_firewalld_rich_rule
+      use: network.firewall.firewalld.rich_rule
       with:
         rich_rule: rule family=ipv4 source address=10.0.0.0/8 service name=ssh accept
-    - id: firewalld_service
-      use: firewalld.service
+    - id: network_firewall_firewalld_service
+      use: network.firewall.firewalld.service
       with:
         service: sshd
-    - id: firewalld_source
-      use: firewalld.source
+    - id: network_firewall_firewalld_source
+      use: network.firewall.firewalld.source
       with:
         source: 10.0.0.0/8
-    - id: firewalld_status
-      use: firewalld.status
+    - id: network_firewall_firewalld_status
+      use: network.firewall.firewalld.status
       with:
         sudo: true
-    - id: firewalld_zone
-      use: firewalld.zone
+    - id: network_firewall_firewalld_zone
+      use: network.firewall.firewalld.zone
       with:
         zone: public

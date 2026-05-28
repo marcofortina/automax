@@ -2,57 +2,57 @@
 apiVersion: automax.io/v1
 kind: Job
 metadata:
-  name: plugin-smoke-check-iptables
+  name: plugin-smoke-check-network-firewall-iptables
 tasks:
-- id: iptables
-  description: Check-mode catalog for iptables plugins.
+- id: network_firewall_iptables
+  description: Check-mode catalog for network.firewall.iptables plugins.
   targets: all
   tags:
   - all-functions
   - check
-  - iptables
+  - network-firewall-iptables
   steps:
   - id: catalog
     substeps:
-    - id: iptables_chain
-      use: iptables.chain
+    - id: network_firewall_iptables_chain
+      use: network.firewall.iptables.chain
       with:
         chain: INPUT
-    - id: iptables_counter_assert
-      use: iptables.counter_assert
+    - id: network_firewall_iptables_counter_assert
+      use: network.firewall.iptables.counter_assert
       with:
         chain: INPUT
-    - id: iptables_delete
-      use: iptables.delete
+    - id: network_firewall_iptables_delete
+      use: network.firewall.iptables.delete
       with:
         chain: INPUT
         rule: -p tcp --dport 18080 -j ACCEPT
         confirm: true
-    - id: iptables_exists_assert
-      use: iptables.exists_assert
+    - id: network_firewall_iptables_exists_assert
+      use: network.firewall.iptables.exists_assert
       with:
         chain: INPUT
         rule: -p tcp --dport 18080 -j ACCEPT
-    - id: iptables_list
-      use: iptables.list
+    - id: network_firewall_iptables_list
+      use: network.firewall.iptables.list
       with:
         table: main
-    - id: iptables_policy
-      use: iptables.policy
+    - id: network_firewall_iptables_policy
+      use: network.firewall.iptables.policy
       with:
         chain: INPUT
         policy: ACCEPT
-    - id: iptables_restore
-      use: iptables.restore
+    - id: network_firewall_iptables_restore
+      use: network.firewall.iptables.restore
       with:
         src: /tmp/source
         confirm: true
-    - id: iptables_rule
-      use: iptables.rule
+    - id: network_firewall_iptables_rule
+      use: network.firewall.iptables.rule
       with:
         chain: INPUT
         rule: -p tcp --dport 18080 -j ACCEPT
-    - id: iptables_save
-      use: iptables.save
+    - id: network_firewall_iptables_save
+      use: network.firewall.iptables.save
       with:
         dest: /tmp/dest

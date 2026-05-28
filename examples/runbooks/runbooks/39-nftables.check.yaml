@@ -2,43 +2,43 @@
 apiVersion: automax.io/v1
 kind: Job
 metadata:
-  name: plugin-smoke-check-nftables
+  name: plugin-smoke-check-network-firewall-nftables
 tasks:
-- id: nftables
-  description: Check-mode catalog for nftables plugins.
+- id: network_firewall_nftables
+  description: Check-mode catalog for network.firewall.nftables plugins.
   targets: all
   tags:
   - all-functions
   - check
-  - nftables
+  - network-firewall-nftables
   steps:
   - id: catalog
     substeps:
-    - id: nftables_apply
-      use: nftables.apply
+    - id: network_firewall_nftables_apply
+      use: network.firewall.nftables.apply
       with:
         src: ./firewall/prod.nft
         sudo: true
-    - id: nftables_export
-      use: nftables.export
+    - id: network_firewall_nftables_export
+      use: network.firewall.nftables.export
       with:
         family: inet
         table: main
-    - id: nftables_list
-      use: nftables.list
+    - id: network_firewall_nftables_list
+      use: network.firewall.nftables.list
       with:
         family: inet
         table: main
-    - id: nftables_rollback_file
-      use: nftables.rollback_file
+    - id: network_firewall_nftables_rollback_file
+      use: network.firewall.nftables.rollback_file
       with:
         file: /etc/sysctl.d/99-automax.conf
         confirm: true
-    - id: nftables_ruleset_assert
-      use: nftables.ruleset_assert
+    - id: network_firewall_nftables_ruleset_assert
+      use: network.firewall.nftables.ruleset_assert
       with:
         fragment: table inet
-    - id: nftables_validate
-      use: nftables.validate
+    - id: network_firewall_nftables_validate
+      use: network.firewall.nftables.validate
       with:
         content: "table inet automax {\n chain input { type filter hook input priority 0; policy accept; }\n}\n"

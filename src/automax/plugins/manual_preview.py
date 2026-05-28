@@ -162,36 +162,36 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
         return ["uname -a && cat /etc/os-release 2>/dev/null || true"]
 
     if plugin_name.startswith("firewalld."):
-        if plugin_name == "firewalld.port":
+        if plugin_name == "network.firewall.firewalld.port":
             port = f"{params.get('port', 22)}/{params.get('protocol', 'tcp')}"
             verb = "--remove-port" if params.get("state") == "absent" else "--add-port"
             return [_firewalld(params, f"{verb}={_q(port)}")]
-        if plugin_name == "firewalld.service":
+        if plugin_name == "network.firewall.firewalld.service":
             verb = "--remove-service" if params.get("state") == "absent" else "--add-service"
             return [_firewalld(params, f"{verb}={_q(params.get('service', 'ssh'))}")]
-        if plugin_name == "firewalld.rich_rule":
+        if plugin_name == "network.firewall.firewalld.rich_rule":
             verb = "--remove-rich-rule" if params.get("state") == "absent" else "--add-rich-rule"
             return [_firewalld(params, f"{verb}={_q(params.get('rich_rule', 'rule family=ipv4 service name=ssh accept'))}")]
-        if plugin_name == "firewalld.reload":
+        if plugin_name == "network.firewall.firewalld.reload":
             return [f"{sudo}firewall-cmd --reload"]
 
     if plugin_name.startswith("ufw."):
-        if plugin_name == "ufw.enable":
+        if plugin_name == "network.firewall.ufw.enable":
             return [f"{sudo}ufw --force enable"]
-        if plugin_name == "ufw.disable":
+        if plugin_name == "network.firewall.ufw.disable":
             return [f"{sudo}ufw disable"]
-        if plugin_name == "ufw.status":
+        if plugin_name == "network.firewall.ufw.status":
             return [f"{sudo}ufw status verbose"]
-        if plugin_name == "ufw.rule":
+        if plugin_name == "network.firewall.ufw.rule":
             state = str(params.get("state", "allow"))
             rule = str(params.get("rule", state))
             return [f"{sudo}ufw {rule}"]
 
     if plugin_name.startswith("nftables."):
-        if plugin_name == "nftables.validate":
+        if plugin_name == "network.firewall.nftables.validate":
             src = params.get("src")
             return [f"{sudo}nft -c -f {_q(src)}" if src else heredoc_to_stdin(f"{sudo}nft -c -f -", params.get("content", ""))]
-        if plugin_name == "nftables.apply":
+        if plugin_name == "network.firewall.nftables.apply":
             src = params.get("src")
             return [f"{sudo}nft -f {_q(src)}" if src else heredoc_to_stdin(f"{sudo}nft -f -", params.get("content", ""))]
 

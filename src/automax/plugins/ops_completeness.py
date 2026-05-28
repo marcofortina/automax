@@ -527,73 +527,73 @@ class PamRestorePlugin(PamBackupPlugin):
 
 # Firewall backend-specific extras
 class FirewalldSourcePlugin(BasePlugin):
-    name="firewalld.source"; description="Manage a firewalld source in a zone."; required_params=("source",); optional_params=("zone","state","permanent","reload","sudo"); parameter_schema={"source": {"type": "string", "description": "firewalld source address, network or ipset."}}; opens_remote_session=True
+    name="network.firewall.firewalld.source"; description="Manage a firewalld source in a zone."; required_params=("source",); optional_params=("zone","state","permanent","reload","sudo"); parameter_schema={"source": {"type": "string", "description": "firewalld source address, network or ipset."}}; opens_remote_session=True
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-source" if state=="present" else "remove-source"; query_cmd=f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-source={quote(params['source'])}"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(params['source'])} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {sudo_prefix(params, default=True)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
-        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]); return result_from_remote(rc=rc, stdout=out, stderr=err, message="firewalld.source failed")
+        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]); return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.firewalld.source failed")
 
 class FirewalldIcmpBlockPlugin(FirewalldSourcePlugin):
-    name="firewalld.icmp_block"; description="Manage a firewalld ICMP block."; required_params=("icmp_type",); optional_params=("zone","state","permanent","reload","sudo")
+    name="network.firewall.firewalld.icmp_block"; description="Manage a firewalld ICMP block."; required_params=("icmp_type",); optional_params=("zone","state","permanent","reload","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-icmp-block" if state=="present" else "remove-icmp-block"; query_cmd=f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-icmp-block={quote(params['icmp_type'])}"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(params['icmp_type'])} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {sudo_prefix(params, default=True)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
 
 class FirewalldMasqueradePlugin(FirewalldSourcePlugin):
-    name="firewalld.masquerade"; description="Manage firewalld masquerading for a zone."; required_params=(); optional_params=("zone","state","permanent","reload","sudo")
+    name="network.firewall.firewalld.masquerade"; description="Manage firewalld masquerading for a zone."; required_params=(); optional_params=("zone","state","permanent","reload","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-masquerade" if state=="present" else "remove-masquerade"; query_cmd=f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-masquerade"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {sudo_prefix(params, default=True)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
 
 class FirewalldForwardPortPlugin(FirewalldSourcePlugin):
-    name="firewalld.forward_port"; description="Manage firewalld forward-port rules."; required_params=("port","to_port"); optional_params=("protocol","to_addr","zone","state","permanent","reload","sudo")
+    name="network.firewall.firewalld.forward_port"; description="Manage firewalld forward-port rules."; required_params=("port","to_port"); optional_params=("protocol","to_addr","zone","state","permanent","reload","sudo")
     def _spec(self, params: Dict[str, Any])->str:
         spec=f"port={params['port']}:proto={params.get('protocol','tcp')}:toport={params['to_port']}"; return spec + (f":toaddr={params['to_addr']}" if params.get("to_addr") else "")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-forward-port" if state=="present" else "remove-forward-port"; spec=self._spec(params); query_cmd=f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-forward-port={quote(spec)}"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(spec)} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {sudo_prefix(params, default=True)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
 
 class NftablesRulesetAssertPlugin(ReadOnlyCommandPlugin):
-    name="nftables.ruleset_assert"; description="Assert the active nftables ruleset contains a fragment."; required_params=("fragment",); optional_params=("sudo",)
+    name="network.firewall.nftables.ruleset_assert"; description="Assert the active nftables ruleset contains a fragment."; required_params=("fragment",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{sudo_prefix(params, default=True)}nft list ruleset | grep -F -- {quote(params['fragment'])}"]
 
 class NftablesRollbackFilePlugin(BasePlugin):
-    name="nftables.rollback_file"; description="Apply an nftables rollback ruleset file after explicit confirmation."; required_params=("file",); optional_params=("confirm","sudo"); opens_remote_session=True
+    name="network.firewall.nftables.rollback_file"; description="Apply an nftables rollback ruleset file after explicit confirmation."; required_params=("file",); optional_params=("confirm","sudo"); opens_remote_session=True
     def validate(self, params: Dict[str, Any])->None:
         super().validate(params)
-        if not bool(params.get("confirm", False)): raise PluginValidationError("nftables.rollback_file requires confirm=true")
+        if not bool(params.get("confirm", False)): raise PluginValidationError("network.firewall.nftables.rollback_file requires confirm=true")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: self.validate(params); return [f"{sudo_prefix(params, default=True)}nft -c -f {quote(params['file'])} && {sudo_prefix(params, default=True)}nft -f {quote(params['file'])}"]
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
-        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="nftables.rollback_file failed")
+        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.nftables.rollback_file failed")
 
 class IptablesDeletePlugin(BasePlugin):
-    name="iptables.delete"; description="Delete an iptables rule after explicit confirmation."; required_params=("chain","rule"); optional_params=("table","ipv6","confirm","sudo"); opens_remote_session=True
+    name="network.firewall.iptables.delete"; description="Delete an iptables rule after explicit confirmation."; required_params=("chain","rule"); optional_params=("table","ipv6","confirm","sudo"); opens_remote_session=True
     def validate(self, params: Dict[str, Any])->None:
         super().validate(params)
-        if not bool(params.get("confirm", False)): raise PluginValidationError("iptables.delete requires confirm=true")
+        if not bool(params.get("confirm", False)): raise PluginValidationError("network.firewall.iptables.delete requires confirm=true")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         self.validate(params); binary="ip6tables" if bool(params.get("ipv6",False)) else "iptables"; table=str(params.get("table","filter")); return [f"{sudo_prefix(params, default=True)}{binary} -t {quote(table)} -C {quote(params['chain'])} {params['rule']} >/dev/null 2>&1 && {sudo_prefix(params, default=True)}{binary} -t {quote(table)} -D {quote(params['chain'])} {params['rule']} || true"]
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
-        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.delete failed")
+        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.iptables.delete failed")
 
 class IptablesExistsAssertPlugin(ReadOnlyCommandPlugin):
-    name="iptables.exists_assert"; description="Assert an iptables rule exists."; required_params=("chain","rule"); optional_params=("table","ipv6","sudo")
+    name="network.firewall.iptables.exists_assert"; description="Assert an iptables rule exists."; required_params=("chain","rule"); optional_params=("table","ipv6","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         binary="ip6tables" if bool(params.get("ipv6",False)) else "iptables"; table=str(params.get("table","filter")); return [f"{sudo_prefix(params, default=True)}{binary} -t {quote(table)} -C {quote(params['chain'])} {params['rule']}"]
 
 class IptablesCounterAssertPlugin(ReadOnlyCommandPlugin):
-    name="iptables.counter_assert"; description="Assert iptables chain packet counters are above a threshold."; required_params=("chain",); optional_params=("table","min_packets","ipv6","sudo")
+    name="network.firewall.iptables.counter_assert"; description="Assert iptables chain packet counters are above a threshold."; required_params=("chain",); optional_params=("table","min_packets","ipv6","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         binary="ip6tables" if bool(params.get("ipv6",False)) else "iptables"; table=str(params.get("table","filter")); minp=int(params.get("min_packets",1)); return [f"{sudo_prefix(params, default=True)}{binary} -t {quote(table)} -L {quote(params['chain'])} -v -n -x | awk 'NR>2 && $1+0>={minp} {{found=1}} END {{exit !found}}'"]
 
 class UfwDeletePlugin(BasePlugin):
-    name="ufw.delete"; description="Delete a UFW rule after explicit confirmation."; required_params=("rule",); optional_params=("confirm","sudo"); opens_remote_session=True
+    name="network.firewall.ufw.delete"; description="Delete a UFW rule after explicit confirmation."; required_params=("rule",); optional_params=("confirm","sudo"); opens_remote_session=True
     def validate(self, params: Dict[str, Any])->None:
         super().validate(params)
-        if not bool(params.get("confirm",False)): raise PluginValidationError("ufw.delete requires confirm=true")
+        if not bool(params.get("confirm",False)): raise PluginValidationError("network.firewall.ufw.delete requires confirm=true")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: self.validate(params); return [f"{sudo_prefix(params, default=True)}ufw --force delete {params['rule']}"]
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
-        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="ufw.delete failed")
+        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.ufw.delete failed")
 
 class UfwResetPlugin(UfwDeletePlugin):
-    name="ufw.reset"; description="Reset UFW after explicit confirmation."; required_params=(); optional_params=("confirm","sudo")
+    name="network.firewall.ufw.reset"; description="Reset UFW after explicit confirmation."; required_params=(); optional_params=("confirm","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: self.validate(params); return [f"{sudo_prefix(params, default=True)}ufw --force reset"]
 
 # Parameter schema disambiguation for names that have plugin-specific meaning.

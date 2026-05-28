@@ -2,45 +2,45 @@
 apiVersion: automax.io/v1
 kind: Job
 metadata:
-  name: plugin-smoke-check-ufw
+  name: plugin-smoke-check-network-firewall-ufw
 tasks:
-- id: ufw
-  description: Check-mode catalog for ufw plugins.
+- id: network_firewall_ufw
+  description: Check-mode catalog for network.firewall.ufw plugins.
   targets: all
   tags:
   - all-functions
   - check
-  - ufw
+  - network-firewall-ufw
   steps:
   - id: catalog
     substeps:
-    - id: ufw_delete
-      use: ufw.delete
+    - id: network_firewall_ufw_delete
+      use: network.firewall.ufw.delete
       with:
         rule: allow
         confirm: true
-    - id: ufw_disable
-      use: ufw.disable
+    - id: network_firewall_ufw_disable
+      use: network.firewall.ufw.disable
       with:
         sudo: true
-    - id: ufw_enable
-      use: ufw.enable
+    - id: network_firewall_ufw_enable
+      use: network.firewall.ufw.enable
       with:
         sudo: true
-    - id: ufw_reset
-      use: ufw.reset
+    - id: network_firewall_ufw_reset
+      use: network.firewall.ufw.reset
       with:
         sudo: true
         confirm: true
-    - id: ufw_rule
-      use: ufw.rule
+    - id: network_firewall_ufw_rule
+      use: network.firewall.ufw.rule
       with:
         rule: allow
         port: 22
         protocol: tcp
         from: 10.0.0.0/8
         sudo: true
-    - id: ufw_status
-      use: ufw.status
+    - id: network_firewall_ufw_status
+      use: network.firewall.ufw.status
       with:
         sudo: true

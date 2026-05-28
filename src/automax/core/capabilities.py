@@ -63,15 +63,15 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "fs.acl.assert": ("getfacl",),
     "fs.acl.get": ("getfacl",),
     "fs.acl.restore": ("setfacl",),
-    "iptables.chain": ("iptables",),
-    "iptables.counter_assert": ("iptables",),
-    "iptables.delete": ("iptables",),
-    "iptables.exists_assert": ("iptables",),
-    "iptables.list": ("iptables",),
-    "iptables.policy": ("iptables",),
-    "iptables.restore": ("iptables-restore",),
-    "iptables.rule": ("iptables",),
-    "iptables.save": ("iptables-save",),
+    "network.firewall.iptables.chain": ("iptables",),
+    "network.firewall.iptables.counter_assert": ("iptables",),
+    "network.firewall.iptables.delete": ("iptables",),
+    "network.firewall.iptables.exists_assert": ("iptables",),
+    "network.firewall.iptables.list": ("iptables",),
+    "network.firewall.iptables.policy": ("iptables",),
+    "network.firewall.iptables.restore": ("iptables-restore",),
+    "network.firewall.iptables.rule": ("iptables",),
+    "network.firewall.iptables.save": ("iptables-save",),
     "lvm.facts": ("pvs", "vgs", "lvs"),
     "lvm.lv_assert": ("lvs",),
     "lvm.lv_present": ("lvcreate", "lvs"),
@@ -84,12 +84,12 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "mount.facts": ("findmnt",),
     "mount.options_assert": ("findmnt",),
     "network.port_check": ("nc",),
-    "nftables.apply": ("nft",),
-    "nftables.export": ("nft",),
-    "nftables.list": ("nft",),
-    "nftables.rollback_file": ("nft",),
-    "nftables.ruleset_assert": ("nft",),
-    "nftables.validate": ("nft",),
+    "network.firewall.nftables.apply": ("nft",),
+    "network.firewall.nftables.export": ("nft",),
+    "network.firewall.nftables.list": ("nft",),
+    "network.firewall.nftables.rollback_file": ("nft",),
+    "network.firewall.nftables.ruleset_assert": ("nft",),
+    "network.firewall.nftables.validate": ("nft",),
     "pam.validate": ("awk",),
     "pkg.pin": ("install",),
     "pkg.repo_priority": ("install",),
@@ -131,12 +131,12 @@ DEBIAN_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "pkg.install": ("apt-get", "dpkg-query"),
     "pkg.remove": ("apt-get", "dpkg-query"),
     "pkg.upgrade": ("apt-get",),
-    "ufw.delete": ("ufw",),
-    "ufw.disable": ("ufw",),
-    "ufw.enable": ("ufw",),
-    "ufw.reset": ("ufw",),
-    "ufw.rule": ("ufw",),
-    "ufw.status": ("ufw",),
+    "network.firewall.ufw.delete": ("ufw",),
+    "network.firewall.ufw.disable": ("ufw",),
+    "network.firewall.ufw.enable": ("ufw",),
+    "network.firewall.ufw.reset": ("ufw",),
+    "network.firewall.ufw.rule": ("ufw",),
+    "network.firewall.ufw.status": ("ufw",),
 }
 
 RHEL_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
@@ -169,11 +169,11 @@ PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
 
 DEBIAN_PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "apparmor.": ("apparmor_parser",),
-    "ufw.": ("ufw",),
+    "network.firewall.ufw.": ("ufw",),
 }
 
 RHEL_PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
-    "firewalld.": ("firewall-cmd",),
+    "network.firewall.firewalld.": ("firewall-cmd",),
     "selinux.": ("semanage",),
 }
 
@@ -308,8 +308,8 @@ RHEL_PACKAGES: Dict[str, str] = {
     "zip": "zip",
 }
 
-DEBIAN_ONLY_PREFIXES = ("apparmor.", "ufw.")
-RHEL_ONLY_PREFIXES = ("firewalld.", "selinux.")
+DEBIAN_ONLY_PREFIXES = ("apparmor.", "network.firewall.ufw.")
+RHEL_ONLY_PREFIXES = ("network.firewall.firewalld.", "selinux.")
 DEBIAN_ONLY_EXACT = frozenset[str]()
 RHEL_ONLY_EXACT = frozenset({"authselect.profile", "kernel.boot_param", "kernel.boot_param_absent", "pam.authselect"})
 

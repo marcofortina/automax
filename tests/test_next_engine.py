@@ -4068,7 +4068,7 @@ def test_process_assert_count_plugin_renders_count_assertion():
 def test_iptables_rule_plugin_renders_check_and_update():
     from automax.plugins.firewall import IptablesRulePlugin
 
-    assert "iptables.rule" in AutomaxEngine().plugin_registry.names()
+    assert "network.firewall.iptables.rule" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = IptablesRulePlugin().manual_commands({"chain": "INPUT", "rule": "-p tcp --dport 443 -j ACCEPT"}, context)[0]
     assert "iptables -t filter -C INPUT -p tcp --dport 443 -j ACCEPT" in command
@@ -4079,7 +4079,7 @@ def test_iptables_rule_plugin_renders_check_and_update():
 def test_iptables_save_plugin_renders_ruleset_export():
     from automax.plugins.firewall import IptablesSavePlugin
 
-    assert "iptables.save" in AutomaxEngine().plugin_registry.names()
+    assert "network.firewall.iptables.save" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = IptablesSavePlugin().manual_commands({"dest": "/etc/iptables/rules.v4"}, context)[0]
     assert "iptables-save" in command
@@ -4089,7 +4089,7 @@ def test_iptables_save_plugin_renders_ruleset_export():
 def test_iptables_restore_plugin_requires_confirm_or_test_only():
     from automax.plugins.firewall import IptablesRestorePlugin
 
-    assert "iptables.restore" in AutomaxEngine().plugin_registry.names()
+    assert "network.firewall.iptables.restore" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     with pytest.raises(PluginValidationError):
         IptablesRestorePlugin().manual_commands({"src": "/etc/iptables/rules.v4"}, context)
@@ -4346,7 +4346,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "db.health":
         params["engine"] = "sqlite"
         params["connection"] = {"path": "/tmp/automax.sqlite"}
-    if plugin.name in {"lvm.lv_remove", "lvm.vg_remove", "lvm.pv_remove", "backup.restore", "backup.prune", "backup.rotate", "iptables.restore"}:
+    if plugin.name in {"lvm.lv_remove", "lvm.vg_remove", "lvm.pv_remove", "backup.restore", "backup.prune", "backup.rotate", "network.firewall.iptables.restore"}:
         params["confirm"] = True
     if plugin.name == "plugin.requirements":
         params["plugin"] = "transfer.rsync"
@@ -4368,7 +4368,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "cron.entry":
         params["schedule"] = "* * * * *"
         params["command"] = "true"
-    if plugin.name == "nftables.apply" or plugin.name == "nftables.validate":
+    if plugin.name == "network.firewall.nftables.apply" or plugin.name == "network.firewall.nftables.validate":
         params["content"] = "flush ruleset\n"
     if plugin.name == "pki.ca_install":
         params["name"] = "automax-demo"
@@ -4383,7 +4383,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["owner"] = "demo"
     if plugin.name == "fs.quota":
         params["type"] = "user"
-    if plugin.name == "ufw.rule":
+    if plugin.name == "network.firewall.ufw.rule":
         params["rule"] = "allow"
         params["port"] = 22
         params["protocol"] = "tcp"
@@ -4395,7 +4395,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "chrony.tracking_assert":
         params["max_offset"] = 1.0
         params["max_stratum"] = 16
-    if plugin.name == "iptables.counter_assert":
+    if plugin.name == "network.firewall.iptables.counter_assert":
         params["min_packets"] = 1
     if plugin.name == "fs.replace":
         params["count"] = 0
@@ -4448,15 +4448,15 @@ def test_firewall_readback_plugins_render_manual_commands():
     context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
     registry = build_builtin_registry()
 
-    assert "firewall-cmd --state" in registry.get("firewalld.status").manual_commands({}, context)[0]
-    assert "firewall-cmd --zone=public --list-all" in registry.get("firewalld.zone").manual_commands({"zone": "public", "permanent": False}, context)[0]
-    assert "nft -a list ruleset" in registry.get("nftables.list").manual_commands({"handle": True}, context)[0]
-    assert "nft list ruleset" in registry.get("nftables.export").manual_commands({"dest": "/tmp/rules.nft", "sudo": False}, context)[0]
-    assert "iptables -t filter -L INPUT -n" in registry.get("iptables.list").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
-    assert "iptables -t filter -S INPUT" in registry.get("iptables.policy").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
-    assert "iptables -t filter -L INPUT -n" in registry.get("iptables.chain").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
-    assert "ufw allow 18080/tcp" == registry.get("ufw.rule").manual_commands({"rule": "allow", "port": 18080, "protocol": "tcp", "sudo": False}, context)[0]
-    assert "ufw allow from 10.0.0.0/8 to any port 22 proto tcp" == registry.get("ufw.rule").manual_commands({"rule": "allow", "from": "10.0.0.0/8", "port": 22, "protocol": "tcp", "sudo": False}, context)[0]
+    assert "firewall-cmd --state" in registry.get("network.firewall.firewalld.status").manual_commands({}, context)[0]
+    assert "firewall-cmd --zone=public --list-all" in registry.get("network.firewall.firewalld.zone").manual_commands({"zone": "public", "permanent": False}, context)[0]
+    assert "nft -a list ruleset" in registry.get("network.firewall.nftables.list").manual_commands({"handle": True}, context)[0]
+    assert "nft list ruleset" in registry.get("network.firewall.nftables.export").manual_commands({"dest": "/tmp/rules.nft", "sudo": False}, context)[0]
+    assert "iptables -t filter -L INPUT -n" in registry.get("network.firewall.iptables.list").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
+    assert "iptables -t filter -S INPUT" in registry.get("network.firewall.iptables.policy").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
+    assert "iptables -t filter -L INPUT -n" in registry.get("network.firewall.iptables.chain").manual_commands({"chain": "INPUT", "sudo": False}, context)[0]
+    assert "ufw allow 18080/tcp" == registry.get("network.firewall.ufw.rule").manual_commands({"rule": "allow", "port": 18080, "protocol": "tcp", "sudo": False}, context)[0]
+    assert "ufw allow from 10.0.0.0/8 to any port 22 proto tcp" == registry.get("network.firewall.ufw.rule").manual_commands({"rule": "allow", "from": "10.0.0.0/8", "port": 22, "protocol": "tcp", "sudo": False}, context)[0]
 
 
 def test_package_inspection_plugins_render_manual_commands():
@@ -4688,13 +4688,13 @@ def test_firewall_lifecycle_options_render_manual_commands():
     context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
     registry = build_builtin_registry()
 
-    firewalld = registry.get("firewalld.port").manual_commands({"port": 443, "runtime": True, "query_only": True, "sudo": False}, context)[0]
+    firewalld = registry.get("network.firewall.firewalld.port").manual_commands({"port": 443, "runtime": True, "query_only": True, "sudo": False}, context)[0]
     assert "--query-port=443/tcp" in firewalld
-    iptables = registry.get("iptables.rule").manual_commands({"chain": "INPUT", "rule": "-p tcp --dport 22 -j ACCEPT", "position": 1, "comment": "ssh", "wait": 5, "save_after": True, "sudo": False}, context)[0]
+    iptables = registry.get("network.firewall.iptables.rule").manual_commands({"chain": "INPUT", "rule": "-p tcp --dport 22 -j ACCEPT", "position": 1, "comment": "ssh", "wait": 5, "save_after": True, "sudo": False}, context)[0]
     assert "-I INPUT 1" in iptables
     assert "--comment ssh" in iptables
     assert "iptables-save" in iptables
-    nft = registry.get("nftables.apply").metadata()
+    nft = registry.get("network.firewall.nftables.apply").metadata()
     assert {"backup_before", "persistent_file", "reload_service", "check_only"}.issubset({parameter["name"] for parameter in nft["parameters"]})
 
 
@@ -5104,11 +5104,11 @@ tasks:
       - id: firewall
         substeps:
           - id: firewalld
-            use: firewalld.port
+            use: network.firewall.firewalld.port
             with:
               port: 8443
           - id: ufw
-            use: ufw.rule
+            use: network.firewall.ufw.rule
             with:
               rule: allow
               port: 8443
@@ -5135,7 +5135,7 @@ tasks:
     assert "apt-get" in target["tools"]
     assert "ufw" in target["tools"]
     assert "firewall-cmd" not in target["tools"]
-    assert any(item["plugin"] == "firewalld.port" for item in target["skipped_plugins"])
+    assert any(item["plugin"] == "network.firewall.firewalld.port" for item in target["skipped_plugins"])
 
 
 def test_capability_install_maps_only_missing_tools_to_packages(tmp_path: Path, monkeypatch):

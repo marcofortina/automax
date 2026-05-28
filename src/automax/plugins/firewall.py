@@ -76,7 +76,7 @@ def _state(params: Dict[str, Any]) -> str:
     return FirewallCommandMixin().firewall_state(params)
 
 class FirewalldPortPlugin(FirewallCommandMixin, BasePlugin):
-    name = "firewalld.port"
+    name = "network.firewall.firewalld.port"
     description = "Manage a firewalld port rule."
     required_params = ("port",)
     optional_params = ("protocol", "zone", "state", "permanent", "runtime", "reload", "reload_mode", "query_only", "sudo")
@@ -95,10 +95,10 @@ class FirewalldPortPlugin(FirewallCommandMixin, BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="firewalld.port failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.firewalld.port failed")
 
 class FirewalldServicePlugin(FirewallCommandMixin, BasePlugin):
-    name = "firewalld.service"
+    name = "network.firewall.firewalld.service"
     description = "Manage a firewalld service rule."
     required_params = ("service",)
     optional_params = ("zone", "state", "permanent", "runtime", "reload", "reload_mode", "query_only", "sudo")
@@ -116,10 +116,10 @@ class FirewalldServicePlugin(FirewallCommandMixin, BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="firewalld.service failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.firewalld.service failed")
 
 class FirewalldRichRulePlugin(FirewallCommandMixin, BasePlugin):
-    name = "firewalld.rich_rule"
+    name = "network.firewall.firewalld.rich_rule"
     description = "Manage a firewalld rich rule."
     required_params = ("rich_rule",)
     optional_params = ("zone", "state", "permanent", "runtime", "reload", "reload_mode", "query_only", "sudo")
@@ -137,27 +137,27 @@ class FirewalldRichRulePlugin(FirewallCommandMixin, BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="firewalld.rich_rule failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.firewalld.rich_rule failed")
 
 class FirewalldReloadPlugin(BasePlugin):
-    name = "firewalld.reload"
+    name = "network.firewall.firewalld.reload"
     description = "Reload firewalld configuration."
     optional_params = ("sudo",)
     opens_remote_session = True
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, f"{sudo_prefix(params, default=True)}firewall-cmd --reload && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="firewalld.reload failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.firewalld.reload failed")
 
 class FirewalldStatusPlugin(BasePlugin):
-    name = "firewalld.status"
+    name = "network.firewall.firewalld.status"
     description = "Read firewalld daemon state, default zone and active zones."
     optional_params = ("sudo",)
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "firewalld.status is a read-only firewall state query"
+        return "network.firewall.firewalld.status is a read-only firewall state query"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         sudo = sudo_prefix(params, default=True)
@@ -166,18 +166,18 @@ class FirewalldStatusPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="firewalld.status failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.firewall.firewalld.status failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"status": out})
 
 class FirewalldListPlugin(BasePlugin):
-    name = "firewalld.list"
+    name = "network.firewall.firewalld.list"
     description = "List firewalld rules for one zone or all zones."
     optional_params = ("zone", "permanent", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "firewalld.list is a read-only firewall rule listing"
+        return "network.firewall.firewalld.list is a read-only firewall rule listing"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         permanent = " --permanent" if bool(params.get("permanent", False)) else ""
@@ -188,17 +188,17 @@ class FirewalldListPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="firewalld.list failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.firewall.firewalld.list failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"rules": out})
 
 class FirewalldZonePlugin(FirewalldListPlugin):
-    name = "firewalld.zone"
+    name = "network.firewall.firewalld.zone"
     description = "Read one firewalld zone configuration."
     required_params = ("zone",)
     optional_params = ("permanent", "sudo")
 
 class UfwRulePlugin(FirewallCommandMixin, BasePlugin):
-    name = "ufw.rule"
+    name = "network.firewall.ufw.rule"
     description = "Manage a UFW allow/deny/reject rule."
     required_params = ("rule",)
     optional_params = ("port", "protocol", "from", "to", "state", "comment", "sudo")
@@ -207,9 +207,9 @@ class UfwRulePlugin(FirewallCommandMixin, BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if str(params["rule"]) not in {"allow", "deny", "reject", "limit"}:
-            raise PluginValidationError("ufw.rule rule must be allow, deny, reject or limit")
+            raise PluginValidationError("network.firewall.ufw.rule rule must be allow, deny, reject or limit")
         if params.get("protocol") and not params.get("port"):
-            raise PluginValidationError("ufw.rule protocol requires port")
+            raise PluginValidationError("network.firewall.ufw.rule protocol requires port")
         _state(params)
 
     def _rule_parts(self, params: Dict[str, Any]) -> list[str]:
@@ -247,10 +247,10 @@ class UfwRulePlugin(FirewallCommandMixin, BasePlugin):
         else:
             command = f"{sudo_prefix(params, default=True)}ufw status | grep -F -- {quote(grep_text)} >/dev/null && {{ {sudo_prefix(params, default=True)}ufw --force delete {rule_args} && echo {CHANGE_MARKER}; }} || true"
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="ufw.rule failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.ufw.rule failed")
 
 class UfwStatusPlugin(BasePlugin):
-    name = "ufw.status"
+    name = "network.firewall.ufw.status"
     description = "Read UFW status."
     optional_params = ("sudo",)
     opens_remote_session = True
@@ -258,11 +258,11 @@ class UfwStatusPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, f"{sudo_prefix(params, default=True)}ufw status verbose")
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="ufw.status failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.firewall.ufw.status failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"status": out})
 
 class UfwEnablePlugin(BasePlugin):
-    name = "ufw.enable"
+    name = "network.firewall.ufw.enable"
     description = "Enable UFW when inactive."
     optional_params = ("sudo",)
     opens_remote_session = True
@@ -270,10 +270,10 @@ class UfwEnablePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         command = f"{sudo_prefix(params, default=True)}ufw status | grep -qi '^Status: active' || {{ {sudo_prefix(params, default=True)}ufw --force enable && echo {CHANGE_MARKER}; }}"
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="ufw.enable failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.ufw.enable failed")
 
 class UfwDisablePlugin(BasePlugin):
-    name = "ufw.disable"
+    name = "network.firewall.ufw.disable"
     description = "Disable UFW when active."
     optional_params = ("sudo",)
     opens_remote_session = True
@@ -281,17 +281,17 @@ class UfwDisablePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         command = f"{sudo_prefix(params, default=True)}ufw status | grep -qi '^Status: inactive' || {{ {sudo_prefix(params, default=True)}ufw --force disable && echo {CHANGE_MARKER}; }}"
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="ufw.disable failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.ufw.disable failed")
 
 class NftablesValidatePlugin(BasePlugin):
-    name = "nftables.validate"
+    name = "network.firewall.nftables.validate"
     description = "Validate nftables rules from inline content or a controller file."
     optional_params = ("content", "src", "sudo")
     opens_remote_session = True
 
     def validate(self, params: Dict[str, Any]) -> None:
         if bool(params.get("content")) == bool(params.get("src")):
-            raise PluginValidationError("nftables.validate requires exactly one of content or src")
+            raise PluginValidationError("network.firewall.nftables.validate requires exactly one of content or src")
 
     def _upload(self, params: Dict[str, Any], context: ExecutionContext) -> str:
         if params.get("src"):
@@ -305,12 +305,12 @@ class NftablesValidatePlugin(BasePlugin):
         remote_path = self._upload(params, context)
         rc, out, err = exec_remote(context, f"{sudo_prefix(params, default=True)}nft -c -f {quote(remote_path)}; rm -f {quote(remote_path)}")
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="nftables.validate failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.firewall.nftables.validate failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
 class NftablesApplyPlugin(NftablesValidatePlugin):
-    name = "nftables.apply"
+    name = "network.firewall.nftables.apply"
     description = "Validate and apply nftables rules from inline content or a controller file."
     optional_params = ("content", "src", "backup_before", "persistent_file", "reload_service", "check_only", "sudo")
 
@@ -336,17 +336,17 @@ class NftablesApplyPlugin(NftablesValidatePlugin):
         rc, out, err = exec_remote(context, " && ".join(commands))
         if bool(params.get("check_only", False)) and rc == 0:
             return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="nftables.apply failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.nftables.apply failed")
 
 class NftablesListPlugin(BasePlugin):
-    name = "nftables.list"
+    name = "network.firewall.nftables.list"
     description = "List the active nftables ruleset or one table."
     optional_params = ("family", "table", "handle", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "nftables.list is a read-only ruleset query"
+        return "network.firewall.nftables.list is a read-only ruleset query"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         handle = " -a" if bool(params.get("handle", False)) else ""
@@ -358,11 +358,11 @@ class NftablesListPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="nftables.list failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.firewall.nftables.list failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"ruleset": out})
 
 class NftablesExportPlugin(NftablesListPlugin):
-    name = "nftables.export"
+    name = "network.firewall.nftables.export"
     description = "Export the active nftables ruleset to stdout or a remote file."
     optional_params = ("family", "table", "handle", "dest", "backup", "backup_suffix", "sudo")
 
@@ -382,11 +382,11 @@ class NftablesExportPlugin(NftablesListPlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="nftables.export failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.firewall.nftables.export failed")
         return PluginResult.success(changed=bool(params.get("dest")), rc=rc, stdout=out, stderr=err, data={"dest": params.get("dest")})
 
 class IptablesRulePlugin(FirewallCommandMixin, BasePlugin):
-    name = "iptables.rule"
+    name = "network.firewall.iptables.rule"
     description = "Ensure an iptables rule is present or absent in a table and chain."
     required_params = ("chain", "rule")
     optional_params = ("table", "state", "ipv6", "position", "comment", "wait", "save_after", "dest", "backup_before", "sudo")
@@ -407,7 +407,7 @@ class IptablesRulePlugin(FirewallCommandMixin, BasePlugin):
         return str(params.get("table", "filter"))
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "iptables.rule changes runtime firewall state; use manual commands for the exact rule operation"
+        return "network.firewall.iptables.rule changes runtime firewall state; use manual commands for the exact rule operation"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -433,18 +433,18 @@ class IptablesRulePlugin(FirewallCommandMixin, BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.rule failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.iptables.rule failed")
 
 
 class IptablesSavePlugin(BasePlugin):
-    name = "iptables.save"
+    name = "network.firewall.iptables.save"
     description = "Save current iptables or ip6tables rules to a persistent file."
     required_params = ("dest",)
     optional_params = ("ipv6", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "iptables.save writes the current kernel firewall ruleset to a file"
+        return "network.firewall.iptables.save writes the current kernel firewall ruleset to a file"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -454,11 +454,11 @@ class IptablesSavePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.save failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.iptables.save failed")
 
 
 class IptablesRestorePlugin(BasePlugin):
-    name = "iptables.restore"
+    name = "network.firewall.iptables.restore"
     description = "Restore iptables or ip6tables rules from a ruleset file."
     required_params = ("src",)
     optional_params = ("confirm", "ipv6", "test_only", "sudo")
@@ -467,10 +467,10 @@ class IptablesRestorePlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if params.get("confirm") is not True and not bool(params.get("test_only", False)):
-            raise PluginValidationError("iptables.restore requires confirm: true unless test_only=true")
+            raise PluginValidationError("network.firewall.iptables.restore requires confirm: true unless test_only=true")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "iptables.restore replaces runtime firewall state from an explicit ruleset file"
+        return "network.firewall.iptables.restore replaces runtime firewall state from an explicit ruleset file"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -480,10 +480,10 @@ class IptablesRestorePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.restore failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.iptables.restore failed")
 
 class IptablesListPlugin(BasePlugin):
-    name = "iptables.list"
+    name = "network.firewall.iptables.list"
     description = "List iptables or ip6tables rules for a table or chain."
     optional_params = ("table", "chain", "ipv6", "numeric", "verbose", "sudo")
     opens_remote_session = True
@@ -493,7 +493,7 @@ class IptablesListPlugin(BasePlugin):
         return "ip6tables" if bool(params.get("ipv6", False)) else "iptables"
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "iptables.list is a read-only firewall rule listing"
+        return "network.firewall.iptables.list is a read-only firewall rule listing"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         table = str(params.get("table", "filter"))
@@ -512,11 +512,11 @@ class IptablesListPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="iptables.list failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.firewall.iptables.list failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"rules": out})
 
 class IptablesPolicyPlugin(BasePlugin):
-    name = "iptables.policy"
+    name = "network.firewall.iptables.policy"
     description = "Read or set an iptables built-in chain default policy."
     required_params = ("chain",)
     optional_params = ("table", "policy", "ipv6", "sudo")
@@ -527,7 +527,7 @@ class IptablesPolicyPlugin(BasePlugin):
         return "ip6tables" if bool(params.get("ipv6", False)) else "iptables"
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "iptables.policy reads or updates a chain default policy; use manual commands for the exact operation"
+        return "network.firewall.iptables.policy reads or updates a chain default policy; use manual commands for the exact operation"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         table = str(params.get("table", "filter"))
@@ -538,7 +538,7 @@ class IptablesPolicyPlugin(BasePlugin):
             return [f"{sudo}{binary} -t {quote(table)} -S {quote(chain)} | sed -n '1p'"]
         policy = str(params["policy"]).upper()
         if policy not in {"ACCEPT", "DROP", "QUEUE", "RETURN"}:
-            raise PluginValidationError("iptables.policy policy must be ACCEPT, DROP, QUEUE or RETURN")
+            raise PluginValidationError("network.firewall.iptables.policy policy must be ACCEPT, DROP, QUEUE or RETURN")
         return [f"{sudo}{binary} -t {quote(table)} -S {quote(chain)} | grep -Fx -- {quote('-P ' + chain + ' ' + policy)} >/dev/null || {sudo}{binary} -t {quote(table)} -P {quote(chain)} {quote(policy)}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -546,13 +546,13 @@ class IptablesPolicyPlugin(BasePlugin):
         marker = f" && echo {CHANGE_MARKER}" if params.get("policy") else ""
         rc, out, err = exec_remote(context, command + marker)
         if params.get("policy"):
-            return result_from_remote(rc=rc, stdout=out, stderr=err, message="iptables.policy failed")
+            return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.iptables.policy failed")
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="iptables.policy failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.firewall.iptables.policy failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"policy": out.strip()})
 
 class IptablesChainPlugin(BasePlugin):
-    name = "iptables.chain"
+    name = "network.firewall.iptables.chain"
     description = "Read one iptables or ip6tables chain."
     required_params = ("chain",)
     optional_params = ("table", "ipv6", "numeric", "verbose", "sudo")
@@ -560,7 +560,7 @@ class IptablesChainPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "iptables.chain is a read-only chain query"
+        return "network.firewall.iptables.chain is a read-only chain query"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return IptablesListPlugin().manual_commands({**params, "chain": params["chain"]}, context)
@@ -568,5 +568,5 @@ class IptablesChainPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="iptables.chain failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.firewall.iptables.chain failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"chain": out})

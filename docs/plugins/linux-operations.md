@@ -207,9 +207,9 @@ existing configuration files.
 
 ## iptables
 
-`iptables.rule` manages legacy iptables/ip6tables runtime rules as a backend separate from firewalld, UFW and nftables.
-`iptables.save` exports the current runtime ruleset to an explicit persistent file.
-`iptables.restore` loads an explicit ruleset file and requires `confirm: true` unless `test_only: true`.
+`network.firewall.iptables.rule` manages legacy iptables/ip6tables runtime rules as a backend separate from firewalld, UFW and nftables.
+`network.firewall.iptables.save` exports the current runtime ruleset to an explicit persistent file.
+`network.firewall.iptables.restore` loads an explicit ruleset file and requires `confirm: true` unless `test_only: true`.
 
 ## Certificate operations
 

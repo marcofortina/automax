@@ -138,7 +138,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
     if plugin.name == "db.health":
         params["engine"] = "sqlite"
         params["connection"] = {"path": "/tmp/automax.sqlite"}
-    if plugin.name in {"backup.prune", "backup.restore", "backup.rotate", "iptables.restore", "lvm.lv_remove", "lvm.pv_remove", "lvm.vg_remove"}:
+    if plugin.name in {"backup.prune", "backup.restore", "backup.rotate", "network.firewall.iptables.restore", "lvm.lv_remove", "lvm.pv_remove", "lvm.vg_remove"}:
         params["confirm"] = True
     if plugin.name == "plugin.requirements":
         params["plugin"] = "transfer.rsync"
@@ -162,7 +162,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
     if plugin.name == "mail.send":
         params["from"] = "automax@example.invalid"
         params["to"] = ["ops@example.invalid"]
-    if plugin.name == "nftables.apply" or plugin.name == "nftables.validate":
+    if plugin.name == "network.firewall.nftables.apply" or plugin.name == "network.firewall.nftables.validate":
         params["content"] = "flush ruleset\n"
     if plugin.name == "pki.ca_install":
         params["name"] = "automax-demo"
@@ -179,7 +179,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
     if plugin.name == "chrony.tracking_assert":
         params["max_offset"] = 1.0
         params["max_stratum"] = 16
-    if plugin.name == "iptables.counter_assert":
+    if plugin.name == "network.firewall.iptables.counter_assert":
         params["min_packets"] = 1
     if plugin.name == "fs.replace":
         params["count"] = 0

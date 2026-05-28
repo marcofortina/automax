@@ -869,6 +869,73 @@ def test_resolver_namespace_is_not_public_plugin_surface():
     assert ".".join(("resolver", "config")) not in docs
     assert ".".join(("resolver", "facts")) not in docs
 
+
+
+def test_top_level_firewall_namespaces_are_not_public_plugin_surface():
+    import re
+
+    from automax.plugins.registry import build_builtin_registry
+
+    old_names = [
+        "iptables.chain",
+        "iptables.counter_assert",
+        "iptables.delete",
+        "iptables.exists_assert",
+        "iptables.list",
+        "iptables.policy",
+        "iptables.restore",
+        "iptables.rule",
+        "iptables.save",
+        "firewalld.forward_port",
+        "firewalld.icmp_block",
+        "firewalld.list",
+        "firewalld.masquerade",
+        "firewalld.port",
+        "firewalld.reload",
+        "firewalld.rich_rule",
+        "firewalld.service",
+        "firewalld.source",
+        "firewalld.status",
+        "firewalld.zone",
+        "nftables.apply",
+        "nftables.export",
+        "nftables.list",
+        "nftables.rollback_file",
+        "nftables.ruleset_assert",
+        "nftables.validate",
+        "ufw.delete",
+        "ufw.disable",
+        "ufw.enable",
+        "ufw.reset",
+        "ufw.rule",
+        "ufw.status",
+    ]
+    names = set(build_builtin_registry().names())
+    assert not (names & set(old_names))
+    assert {
+        "network.firewall.firewalld.port",
+        "network.firewall.iptables.rule",
+        "network.firewall.nftables.apply",
+        "network.firewall.ufw.rule",
+    } <= names
+
+    old_public_reference = re.compile(r"(?<!network[.]firewall[.])(" + "|".join(re.escape(name) for name in old_names) + r")")
+    searched = [
+        Path("docs/guides/firewall.md"),
+        Path("docs/plugins/firewall.md"),
+        Path("docs/plugins/index.md"),
+        Path("docs/plugins/linux-operations.md"),
+        Path("docs/plugins/generated.md"),
+        Path("examples/runbooks/RUNBOOK_INDEX.md"),
+        *Path("examples/runbooks/runbooks").glob("*.check.yaml"),
+    ]
+    offenders = []
+    for path in searched:
+        text = path.read_text(encoding="utf-8")
+        if old_public_reference.search(text):
+            offenders.append(str(path))
+    assert offenders == []
+
 def test_firewall_plugins_share_command_mixin_without_public_merge():
     from automax.core.models import ExecutionContext, Target
     from automax.plugins.firewall import (
@@ -883,7 +950,7 @@ def test_firewall_plugins_share_command_mixin_without_public_merge():
 
     registry = build_builtin_registry()
     context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
-    for name in ("firewalld.port", "firewalld.service", "firewalld.rich_rule", "ufw.rule", "iptables.rule"):
+    for name in ("network.firewall.firewalld.port", "network.firewall.firewalld.service", "network.firewall.firewalld.rich_rule", "network.firewall.ufw.rule", "network.firewall.iptables.rule"):
         assert isinstance(registry.get(name), FirewallCommandMixin)
 
     assert FirewalldPortPlugin().firewalld_scope({"runtime": True, "permanent": True}) == ""
@@ -917,7 +984,7 @@ def test_ambiguous_plugin_parameters_have_plugin_specific_schemas():
         ("archive.decompress", "archive"): ("path",),
         ("backup.restore", "archive"): ("boolean",),
         ("cron.list", "user"): ("string",),
-        ("firewalld.source", "source"): ("string",),
+        ("network.firewall.firewalld.source", "source"): ("string",),
         ("selinux.boolean", "value"): ("boolean", "string"),
         ("sysctl.set", "value"): ("string",),
         ("systemctl.start", "user"): ("boolean",),
@@ -932,7 +999,7 @@ def test_ambiguous_plugin_parameters_have_plugin_specific_schemas():
             actual = (actual,)
         assert tuple(actual) == expected_types
 
-    registry.get("firewalld.source").validate({"source": "10.0.0.0/8"})
+    registry.get("network.firewall.firewalld.source").validate({"source": "10.0.0.0/8"})
     registry.get("transfer.rsync").validate({"src": "/tmp/src", "dest": "/tmp/dest", "archive": True})
 
     firewalld_runbook = Path("examples/runbooks/runbooks/19-firewalld.check.yaml").read_text(encoding="utf-8")

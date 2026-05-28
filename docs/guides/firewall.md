@@ -11,7 +11,7 @@ Automax provides backend-specific firewall plugins instead of hiding backend dif
 
 ```yaml
 - id: open_https
-  use: firewalld.port
+  use: network.firewall.firewalld.port
   with:
     port: 443
     protocol: tcp
@@ -22,13 +22,13 @@ Automax provides backend-specific firewall plugins instead of hiding backend dif
     sudo: true
 ```
 
-Use `firewalld.service`, `firewalld.rich_rule` and `firewalld.reload` for service-based and rich-rule workflows.
+Use `network.firewall.firewalld.service`, `network.firewall.firewalld.rich_rule` and `network.firewall.firewalld.reload` for service-based and rich-rule workflows.
 
 ## UFW
 
 ```yaml
 - id: allow_ssh_from_private_net
-  use: ufw.rule
+  use: network.firewall.ufw.rule
   with:
     rule: allow
     port: 22
@@ -37,15 +37,15 @@ Use `firewalld.service`, `firewalld.rich_rule` and `firewalld.reload` for servic
     sudo: true
 ```
 
-`ufw.status`, `ufw.enable` and `ufw.disable` are also available.
+`network.firewall.ufw.status`, `network.firewall.ufw.enable` and `network.firewall.ufw.disable` are also available.
 
 ## nftables
 
-Use `nftables.validate` before applying larger policies and `nftables.apply` for validated application.
+Use `network.firewall.nftables.validate` before applying larger policies and `network.firewall.nftables.apply` for validated application.
 
 ```yaml
 - id: apply_nftables_policy
-  use: nftables.apply
+  use: network.firewall.nftables.apply
   with:
     src: ./firewall/prod.nft
     sudo: true

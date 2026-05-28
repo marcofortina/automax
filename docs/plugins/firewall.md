@@ -10,57 +10,57 @@ operator needs backend-specific syntax, persistence and rollback behavior.
 
 ## firewalld
 
-Use `firewalld.port`, `firewalld.service`, `firewalld.rich_rule` and
-`firewalld.reload` on systems managed by firewalld. These plugins render
+Use `network.firewall.firewalld.port`, `network.firewall.firewalld.service`, `network.firewall.firewalld.rich_rule` and
+`network.firewall.firewalld.reload` on systems managed by firewalld. These plugins render
 `firewall-cmd` commands and keep `permanent` and `reload` explicit.
 
 ## UFW
 
-Use `ufw.rule`, `ufw.status`, `ufw.enable` and `ufw.disable` on Ubuntu-style UFW
-hosts. `ufw.status` is read-only; enable/disable operations remain explicit
+Use `network.firewall.ufw.rule`, `network.firewall.ufw.status`, `network.firewall.ufw.enable` and `network.firewall.ufw.disable` on Ubuntu-style UFW
+hosts. `network.firewall.ufw.status` is read-only; enable/disable operations remain explicit
 because they affect the active firewall policy.
 
 ## nftables
 
-Use `nftables.validate` to run a syntax check before applying a ruleset, then
-`nftables.apply` to install it. Keep the source ruleset under version control so
+Use `network.firewall.nftables.validate` to run a syntax check before applying a ruleset, then
+`network.firewall.nftables.apply` to install it. Keep the source ruleset under version control so
 manual preview and job review can compare the intended policy.
 
 ## iptables
 
-Use `iptables.rule` for one explicit rule, `iptables.save` to persist the active
-ruleset to a file, and `iptables.restore` to load a saved ruleset. These plugins
+Use `network.firewall.iptables.rule` for one explicit rule, `network.firewall.iptables.save` to persist the active
+ruleset to a file, and `network.firewall.iptables.restore` to load a saved ruleset. These plugins
 are intentionally separate from nftables/firewalld/UFW because compatibility
 layers and persistence paths differ by distribution.
 
 ## Readback and export plugins
 
-Use `firewalld.status`, `firewalld.list` and `firewalld.zone` for firewalld
-precheck and postcheck readback. Use `nftables.list` and `nftables.export` to
-inspect or archive the active nftables ruleset. Use `iptables.list`,
-`iptables.policy` and `iptables.chain` to inspect legacy iptables state before
+Use `network.firewall.firewalld.status`, `network.firewall.firewalld.list` and `network.firewall.firewalld.zone` for firewalld
+precheck and postcheck readback. Use `network.firewall.nftables.list` and `network.firewall.nftables.export` to
+inspect or archive the active nftables ruleset. Use `network.firewall.iptables.list`,
+`network.firewall.iptables.policy` and `network.firewall.iptables.chain` to inspect legacy iptables state before
 and after runtime rule changes.
 
 ## Lifecycle safeguards
 
-`firewalld.*` operations expose explicit runtime/permanent selection,
-`query_only` readback and `reload_mode`. `iptables.rule` supports ordered
+`network.firewall.firewalld.*` operations expose explicit runtime/permanent selection,
+`query_only` readback and `reload_mode`. `network.firewall.iptables.rule` supports ordered
 insertion, comments, `-w` wait handling, pre-change backups and `save_after`.
-`nftables.apply` supports check-only validation, pre-apply backup, persistent
+`network.firewall.nftables.apply` supports check-only validation, pre-apply backup, persistent
 ruleset installation and service reload.
 
 ## Backend-specific firewall extras
 
 firewalld backend extras manage source bindings, ICMP blocks, masquerading and
-forward-port rules through explicit plugins: `firewalld.source`,
-`firewalld.icmp_block`, `firewalld.masquerade` and `firewalld.forward_port`.
+forward-port rules through explicit plugins: `network.firewall.firewalld.source`,
+`network.firewall.firewalld.icmp_block`, `network.firewall.firewalld.masquerade` and `network.firewall.firewalld.forward_port`.
 
-nftables extras provide readback assertion and rollback: `nftables.ruleset_assert`
-and `nftables.rollback_file`. Rollback requires `confirm: true`.
+nftables extras provide readback assertion and rollback: `network.firewall.nftables.ruleset_assert`
+and `network.firewall.nftables.rollback_file`. Rollback requires `confirm: true`.
 
 iptables extras provide deletion, rule existence assertion and counter assertion:
-`iptables.delete`, `iptables.exists_assert` and `iptables.counter_assert`.
+`network.firewall.iptables.delete`, `network.firewall.iptables.exists_assert` and `network.firewall.iptables.counter_assert`.
 Deletion requires `confirm: true`.
 
-UFW extras provide `ufw.delete` and `ufw.reset`. Both require `confirm: true`
+UFW extras provide `network.firewall.ufw.delete` and `network.firewall.ufw.reset`. Both require `confirm: true`
 because they remove firewall state.
