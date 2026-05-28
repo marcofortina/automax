@@ -9,8 +9,8 @@ from difflib import unified_diff
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, heredoc_to_stdin, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.plugins.base import BasePlugin, PluginValidationError, RenderedFileInstallMixin
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_stdin, quote, result_from_remote, sudo_prefix
 
 
 
@@ -22,12 +22,14 @@ def _mapping_lines(values: Dict[str, Any]) -> str:
     return "".join(f"{key} {value}\n" for key, value in sorted(values.items()))
 
 
-class SshConfigPlugin(BasePlugin):
+class SshConfigPlugin(RenderedFileInstallMixin, BasePlugin):
     name = "ssh.config"
     description = "Install SSH client or sshd config drop-ins with backup and optional reload."
     required_params = ("name", "settings")
     optional_params = ("scope", "path", "match", "backup", "backup_suffix", "reload", "sudo")
     opens_remote_session = True
+    rendered_file_temp_prefix = "ssh-config"
+    rendered_file_diff_kind = "ssh-config-plan"
 
     def _path(self, params: Dict[str, Any]) -> str:
         if params.get("path"):
@@ -52,28 +54,17 @@ class SshConfigPlugin(BasePlugin):
         lines.append(_mapping_lines(settings))
         return "".join(lines)
 
-    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
-        return _diff(self._path(params), self._content(params), "ssh-config-plan")
+    def rendered_file_path(self, params: Dict[str, Any]) -> str:
+        return self._path(params)
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        self.validate(params)
-        content = self._content(params)
-        path = self._path(params)
-        sudo = sudo_prefix(params, default=True)
-        temp_var = "automax_ssh_config_tmp"
-        temp = shell_var_ref(temp_var)
-        commands = [tempfile_command(temp_var, "ssh-config"), cleanup_trap_command(temp_var), heredoc_to_file_expr(temp, content)]
-        if bool(params.get("backup", True)):
-            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        commands.append(f"{sudo}install -D -m 0644 {temp} {quote(path)}")
-        commands.append(f"rm -f {temp}")
+    def rendered_file_content(self, params: Dict[str, Any]) -> str:
+        return self._content(params)
+
+    def rendered_file_post_install_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         if str(params.get("scope", "client")) == "server" and bool(params.get("reload", True)):
-            commands.append(f"{sudo}sshd -t && ({sudo}systemctl reload sshd || {sudo}systemctl reload ssh)")
-        return commands
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="ssh.config failed")
+            sudo = self.rendered_file_sudo(params)
+            return [f"{sudo}sshd -t && ({sudo}systemctl reload sshd || {sudo}systemctl reload ssh)"]
+        return []
 
 
 class SshKnownHostsPlugin(BasePlugin):

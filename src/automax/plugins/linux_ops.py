@@ -9,7 +9,7 @@ from difflib import unified_diff
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin, PluginValidationError
+from automax.plugins.base import BasePlugin, PluginValidationError, RenderedFileInstallMixin
 from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, heredoc_to_stdin, shell_var_ref, tempfile_command, tempfile_path_command, normalize_env_mapping, quote, render_env_prefix, result_from_remote, sudo_prefix
 
 
@@ -123,12 +123,13 @@ class SwapAbsentPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="swap.absent failed")
 
 
-class LimitsDropinPlugin(BasePlugin):
+class LimitsDropinPlugin(RenderedFileInstallMixin, BasePlugin):
     name = "limits.dropin"
     description = "Install an /etc/security/limits.d drop-in from structured entries."
     required_params = ("name", "entries")
     optional_params = ("backup", "backup_suffix", "sudo")
     opens_remote_session = True
+    rendered_file_temp_prefix = "limits"
 
     def _content(self, params: Dict[str, Any]) -> str:
         entries = params.get("entries")
@@ -141,26 +142,11 @@ class LimitsDropinPlugin(BasePlugin):
             lines.append("{domain} {type} {item} {value}\n".format(domain=entry["domain"], type=entry["type"], item=entry["item"], value=entry["value"]))
         return "".join(lines)
 
-    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
-        return _lines_diff(f"/etc/security/limits.d/{params['name']}.conf", self._content(params).splitlines(keepends=True))
+    def rendered_file_path(self, params: Dict[str, Any]) -> str:
+        return f"/etc/security/limits.d/{params['name']}.conf"
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        self.validate(params)
-        content = self._content(params)
-        path = f"/etc/security/limits.d/{params['name']}.conf"
-        sudo = sudo_prefix(params, default=True)
-        temp_var = "automax_limits_tmp"
-        temp = shell_var_ref(temp_var)
-        commands = [tempfile_command(temp_var, "limits"), cleanup_trap_command(temp_var), heredoc_to_file_expr(temp, content)]
-        if bool(params.get("backup", True)):
-            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")
-        commands.append(f"rm -f {temp}")
-        return [" && ".join(commands)]
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="limits.dropin failed")
+    def rendered_file_content(self, params: Dict[str, Any]) -> str:
+        return self._content(params)
 
 
 class PamLimitsPlugin(BasePlugin):
@@ -299,12 +285,14 @@ printf 'backend=%s\npath=%s\ntarget=%s\n' "$backend" "$path" "$target"
         return PluginResult.success(changed=False, stdout=out, stderr=err, data=data)
 
 
-class ResolverConfigPlugin(BasePlugin):
+class ResolverConfigPlugin(RenderedFileInstallMixin, BasePlugin):
     name = "resolver.config"
     description = "Manage DNS resolver settings safely using explicit plain-file, systemd-resolved, NetworkManager or resolvconf backends."
     required_params: tuple[str, ...] = ()
     optional_params = ("backend", "nameservers", "search", "options", "path", "nm_connection", "force", "backup", "backup_suffix", "sudo")
     opens_remote_session = True
+    rendered_file_temp_prefix = "resolver"
+    rendered_file_diff_kind = "resolver-plan"
 
     def _nameservers(self, params: Dict[str, Any]) -> list[str]:
         values = params.get("nameservers", []) or []
@@ -366,8 +354,7 @@ class ResolverConfigPlugin(BasePlugin):
         if backend == "networkmanager":
             desired = f"connection={params.get('nm_connection', '<required>')} dns={','.join(self._nameservers(params))} search={','.join(self._search(params))}"
             return _state_diff("NetworkManager DNS", "current connection DNS", desired, "resolver-plan")
-        content = self._resolved_content(params) if backend == "systemd-resolved" else self._content(params)
-        return _lines_diff(self._path_for_backend(params), content.splitlines(keepends=True), "resolver-plan")
+        return RenderedFileInstallMixin.diff_preview(self, params, context)
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         backend = self._backend(params)
@@ -385,34 +372,36 @@ class ResolverConfigPlugin(BasePlugin):
                 commands.append(f"{sudo}nmcli connection modify {quote(connection)} ipv4.dns-search {quote(search)}")
             commands.append(f"{sudo}nmcli connection up {quote(connection)}")
             return commands
-        path = self._path_for_backend(params)
-        content = self._resolved_content(params) if backend == "systemd-resolved" else self._content(params)
-        temp_var = "automax_resolver_tmp"
-        temp = shell_var_ref(temp_var)
-        commands = [tempfile_command(temp_var, "resolver"), cleanup_trap_command(temp_var), heredoc_to_file_expr(temp, content)]
-        if backend == "plain-file" and not bool(params.get("force", False)):
-            commands.append("if [ -L /etc/resolv.conf ]; then echo 'refusing to manage symlinked /etc/resolv.conf with backend=plain-file' >&2; exit 1; fi")
-        if bool(params.get("backup", True)):
-            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        commands.append(f"{sudo}install -D -m 0644 {temp} {quote(path)}")
-        commands.append(f"rm -f {temp}")
+        return RenderedFileInstallMixin.manual_commands(self, params, context)
+
+    def rendered_file_path(self, params: Dict[str, Any]) -> str:
+        return self._path_for_backend(params)
+
+    def rendered_file_content(self, params: Dict[str, Any]) -> str:
+        return self._resolved_content(params) if self._backend(params) == "systemd-resolved" else self._content(params)
+
+    def rendered_file_validate_commands(self, params: Dict[str, Any], context: ExecutionContext, temp_path: str) -> list[str]:
+        if self._backend(params) == "plain-file" and not bool(params.get("force", False)):
+            return ["if [ -L /etc/resolv.conf ]; then echo 'refusing to manage symlinked /etc/resolv.conf with backend=plain-file' >&2; exit 1; fi"]
+        return []
+
+    def rendered_file_post_install_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        backend = self._backend(params)
+        sudo = self.rendered_file_sudo(params)
         if backend == "systemd-resolved":
-            commands.append(f"{sudo}systemctl restart systemd-resolved")
+            return [f"{sudo}systemctl restart systemd-resolved"]
         if backend == "resolvconf":
-            commands.append(f"{sudo}resolvconf -u")
-        return [" && ".join(commands)]
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="resolver.config failed")
+            return [f"{sudo}resolvconf -u"]
+        return []
 
 
-class ChronyServersPlugin(BasePlugin):
+class ChronyServersPlugin(RenderedFileInstallMixin, BasePlugin):
     name = "chrony.servers"
     description = "Install a chrony server drop-in and optionally restart chronyd."
     required_params = ("servers",)
     optional_params = ("path", "backup", "backup_suffix", "reload", "sudo")
     opens_remote_session = True
+    rendered_file_temp_prefix = "chrony"
 
     def _content(self, params: Dict[str, Any]) -> str:
         servers = params.get("servers")
@@ -422,28 +411,17 @@ class ChronyServersPlugin(BasePlugin):
             raise PluginValidationError("chrony.servers requires a non-empty servers list")
         return "# Managed by automax\n" + "".join(f"server {server} iburst\n" for server in servers)
 
-    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
-        path = str(params.get("path", "/etc/chrony.d/99-automax.conf"))
-        return _lines_diff(path, self._content(params).splitlines(keepends=True))
+    def rendered_file_path(self, params: Dict[str, Any]) -> str:
+        return str(params.get("path", "/etc/chrony.d/99-automax.conf"))
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        content = self._content(params)
-        path = str(params.get("path", "/etc/chrony.d/99-automax.conf"))
-        sudo = sudo_prefix(params, default=True)
-        temp_var = "automax_chrony_tmp"
-        temp = shell_var_ref(temp_var)
-        commands = [tempfile_command(temp_var, "chrony"), cleanup_trap_command(temp_var), heredoc_to_file_expr(temp, content)]
-        if bool(params.get("backup", True)):
-            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        commands.append(f"{sudo}install -m 0644 {temp} {quote(path)}")
-        commands.append(f"rm -f {temp}")
+    def rendered_file_content(self, params: Dict[str, Any]) -> str:
+        return self._content(params)
+
+    def rendered_file_post_install_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         if bool(params.get("reload", True)):
-            commands.append(f"{sudo}systemctl restart chronyd || {sudo}systemctl restart chrony")
-        return [" && ".join(commands)]
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="chrony.servers failed")
+            sudo = self.rendered_file_sudo(params)
+            return [f"{sudo}systemctl restart chronyd || {sudo}systemctl restart chrony"]
+        return []
 
 
 class ChronySourcesAssertPlugin(BasePlugin):

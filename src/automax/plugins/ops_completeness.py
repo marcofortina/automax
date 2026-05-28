@@ -9,7 +9,7 @@ from difflib import unified_diff
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin, PluginValidationError, ReadOnlyCommandPlugin
+from automax.plugins.base import BasePlugin, PluginValidationError, ReadOnlyCommandPlugin, RenderedFileInstallMixin
 from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, SUDO_NON_INTERACTIVE, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
@@ -245,6 +245,8 @@ class KernelModuleBlacklistPlugin(BasePlugin):
     required_params = ("module",)
     optional_params = ("state", "file", "backup", "backup_suffix", "sudo")
     opens_remote_session = True
+    rendered_file_temp_prefix = "sysctl"
+    rendered_file_diff_kind = "sysctl-dropin-plan"
 
     def _path(self, params: Dict[str, Any]) -> str:
         return str(params.get("file") or f"/etc/modprobe.d/automax-{params['module']}.conf")
@@ -333,7 +335,7 @@ class SysctlFactsPlugin(ReadOnlyCommandPlugin):
         return [f"{sudo_prefix(params, default=True)}sysctl -a" if not names else f"{sudo_prefix(params, default=True)}sysctl {' '.join(quote(item) for item in names)}"]
 
 
-class SysctlDropinPlugin(BasePlugin):
+class SysctlDropinPlugin(RenderedFileInstallMixin, BasePlugin):
     name = "sysctl.dropin"
     description = "Install a sysctl.d drop-in and reload sysctl values."
     required_params = ("name", "settings")
@@ -349,22 +351,16 @@ class SysctlDropinPlugin(BasePlugin):
             raise PluginValidationError("sysctl.dropin settings must be a non-empty mapping")
         return "".join(f"{k} = {v}\n" for k,v in sorted(settings.items()))
 
-    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
-        return _diff(self._path(params), self._content(params), "sysctl-dropin-plan")
+    def rendered_file_path(self, params: Dict[str, Any]) -> str:
+        return self._path(params)
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        path=self._path(params); content=self._content(params); tmp_var="automax_sysctl_tmp"; tmp=shell_var_ref(tmp_var); cmds=[tempfile_command(tmp_var, "sysctl"), cleanup_trap_command(tmp_var), heredoc_to_file_expr(tmp, content)]
-        if bool(params.get("backup", True)):
-            cmds.append(f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix','.bak')))}")
-        cmds.append(f"{sudo_prefix(params, default=True)}install -D -m 0644 {tmp} {quote(path)}")
-        cmds.append(f"rm -f {tmp}")
+    def rendered_file_content(self, params: Dict[str, Any]) -> str:
+        return self._content(params)
+
+    def rendered_file_post_install_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         if bool(params.get("reload", True)):
-            cmds.append(f"{sudo_prefix(params, default=True)}sysctl --system")
-        return cmds
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc,out,err=exec_remote(context," && ".join(self.manual_commands(params,context))+f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="sysctl.dropin failed")
+            return [f"{self.rendered_file_sudo(params)}sysctl --system"]
+        return []
 
 
 class TimedatectlStatusPlugin(ReadOnlyCommandPlugin):

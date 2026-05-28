@@ -3440,8 +3440,9 @@ def test_linux_ops_manual_commands_cover_resolver_env_download_and_sysctl():
         secrets={},
     )
 
-    resolver = ResolverConfigPlugin().manual_commands({"nameservers": ["192.0.2.53"]}, context)[0]
+    resolver = "\n".join(ResolverConfigPlugin().manual_commands({"nameservers": ["192.0.2.53"]}, context))
     assert "refusing to manage symlinked /etc/resolv.conf" in resolver
+    assert "install -D -m 0644" in resolver
     env = EnvSetPlugin().manual_commands({"variables": {"APP_HOME": "/opt/app"}}, context)[0]
     assert env == "export APP_HOME=/opt/app"
     download = DownloadFilePlugin().manual_commands({"url": "https://example.invalid/file.rpm", "dest": "/tmp/file.rpm"}, context)
@@ -3767,7 +3768,7 @@ def test_resolver_backend_aware_plugins_render_safe_backends():
     context = _sysops_preview_context()
     facts = ResolverFactsPlugin().manual_commands({}, context)[0]
     assert "backend=" in facts
-    resolved = ResolverConfigPlugin().manual_commands({"backend": "systemd-resolved", "nameservers": ["192.0.2.53"]}, context)[0]
+    resolved = "\n".join(ResolverConfigPlugin().manual_commands({"backend": "systemd-resolved", "nameservers": ["192.0.2.53"]}, context))
     assert "/etc/systemd/resolved.conf.d/99-automax.conf" in resolved
     assert "systemctl restart systemd-resolved" in resolved
     nm = " && ".join(ResolverConfigPlugin().manual_commands({"backend": "networkmanager", "nm_connection": "eth0", "nameservers": ["192.0.2.53"]}, context))

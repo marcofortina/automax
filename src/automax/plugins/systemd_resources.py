@@ -8,9 +8,9 @@ from __future__ import annotations
 from difflib import unified_diff
 from typing import Any, Dict
 
-from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.core.models import ExecutionContext
+from automax.plugins.base import BasePlugin, PluginValidationError, RenderedFileInstallMixin
+from automax.plugins.remote_utils import cleanup_trap_command, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, sudo_prefix
 
 
 
@@ -36,33 +36,32 @@ def _content(params: Dict[str, Any]) -> str:
     return str(params["content"])
 
 
-class SystemdUnitPlugin(BasePlugin):
+class SystemdUnitPlugin(RenderedFileInstallMixin, BasePlugin):
     name = "systemd.unit"
     description = "Install a systemd unit file with backup, daemon-reload and optional enable/start."
     required_params = ("name", "content")
     optional_params = ("path", "enable", "start", "backup", "backup_suffix", "sudo")
     opens_remote_session = True
+    rendered_file_temp_prefix = "systemd"
+    rendered_file_diff_kind = "systemd-unit-plan"
 
     def _path(self, params: Dict[str, Any]) -> str:
         return str(params.get("path", f"/etc/systemd/system/{params['name']}"))
 
-    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
-        self.validate(params)
-        return _diff(self._path(params), _content(params), "systemd-unit-plan")
+    def rendered_file_path(self, params: Dict[str, Any]) -> str:
+        return self._path(params)
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        self.validate(params)
-        sudo = sudo_prefix(params, default=True)
-        commands = [_install_cmd(self._path(params), _content(params), "0644", params), f"{sudo}systemctl daemon-reload"]
+    def rendered_file_content(self, params: Dict[str, Any]) -> str:
+        return _content(params)
+
+    def rendered_file_post_install_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        sudo = self.rendered_file_sudo(params)
+        commands = [f"{sudo}systemctl daemon-reload"]
         if bool(params.get("enable", False)):
             commands.append(f"{sudo}systemctl enable {quote(params['name'])}")
         if bool(params.get("start", False)):
             commands.append(f"{sudo}systemctl start {quote(params['name'])}")
         return commands
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="systemd.unit failed")
 
 
 class SystemdTimerPlugin(SystemdUnitPlugin):
@@ -76,12 +75,14 @@ class SystemdTimerPlugin(SystemdUnitPlugin):
         return str(params.get("path", f"/etc/systemd/system/{name}"))
 
 
-class SystemdTmpfilesPlugin(BasePlugin):
+class SystemdTmpfilesPlugin(RenderedFileInstallMixin, BasePlugin):
     name = "systemd.tmpfiles"
     description = "Install a tmpfiles.d drop-in and optionally apply it immediately."
     required_params = ("name", "content")
     optional_params = ("path", "apply", "backup", "backup_suffix", "sudo")
     opens_remote_session = True
+    rendered_file_temp_prefix = "systemd"
+    rendered_file_diff_kind = "systemd-unit-plan"
 
     def _path(self, params: Dict[str, Any]) -> str:
         name = str(params["name"])
@@ -89,18 +90,16 @@ class SystemdTmpfilesPlugin(BasePlugin):
             name += ".conf"
         return str(params.get("path", f"/etc/tmpfiles.d/{name}"))
 
-    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
-        return _diff(self._path(params), _content(params), "tmpfiles-plan")
+    def rendered_file_path(self, params: Dict[str, Any]) -> str:
+        return self._path(params)
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        commands = [_install_cmd(self._path(params), _content(params), "0644", params)]
+    def rendered_file_content(self, params: Dict[str, Any]) -> str:
+        return _content(params)
+
+    def rendered_file_post_install_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         if bool(params.get("apply", False)):
-            commands.append(f"{sudo_prefix(params, default=True)}systemd-tmpfiles --create {quote(self._path(params))}")
-        return commands
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="systemd.tmpfiles failed")
+            return [f"{self.rendered_file_sudo(params)}systemd-tmpfiles --create {quote(self._path(params))}"]
+        return []
 
 
 class SystemdSysusersPlugin(SystemdTmpfilesPlugin):
@@ -113,8 +112,7 @@ class SystemdSysusersPlugin(SystemdTmpfilesPlugin):
             name += ".conf"
         return str(params.get("path", f"/etc/sysusers.d/{name}"))
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        commands = [_install_cmd(self._path(params), _content(params), "0644", params)]
+    def rendered_file_post_install_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         if bool(params.get("apply", False)):
-            commands.append(f"{sudo_prefix(params, default=True)}systemd-sysusers {quote(self._path(params))}")
-        return commands
+            return [f"{self.rendered_file_sudo(params)}systemd-sysusers {quote(self._path(params))}"]
+        return []

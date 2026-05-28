@@ -9,8 +9,8 @@ from difflib import unified_diff
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.plugins.base import BasePlugin, PluginValidationError, RenderedFileInstallMixin
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
 
 
 
@@ -22,12 +22,14 @@ def _diff(path: str, content: str, kind: str) -> list[Dict[str, Any]]:
     return [{"path": path, "kind": kind, "diff": "".join(unified_diff([], content.splitlines(keepends=True), fromfile=f"{path} (current)", tofile=f"{path} (desired)"))}]
 
 
-class SshdConfigPlugin(BasePlugin):
+class SshdConfigPlugin(RenderedFileInstallMixin, BasePlugin):
     name = "sshd.config"
     description = "Install an sshd_config.d hardening drop-in with sshd syntax validation."
     required_params = ("name", "settings")
     optional_params = ("path", "backup", "backup_suffix", "reload", "sudo")
     opens_remote_session = True
+    rendered_file_temp_prefix = "sshd"
+    rendered_file_diff_kind = "sshd-config-plan"
 
     def _path(self, params: Dict[str, Any]) -> str:
         name = str(params["name"])
@@ -41,27 +43,18 @@ class SshdConfigPlugin(BasePlugin):
             raise PluginValidationError("sshd.config settings must be a non-empty mapping")
         return "# Managed by automax\n" + _settings_content(settings)
 
-    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
-        return _diff(self._path(params), self._content(params), "sshd-config-plan")
+    def rendered_file_path(self, params: Dict[str, Any]) -> str:
+        return self._path(params)
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        self.validate(params)
-        path = self._path(params)
-        content = self._content(params)
-        sudo = sudo_prefix(params, default=True)
-        tmp_var = "automax_sshd_tmp"
-        tmp = shell_var_ref(tmp_var)
-        commands = [tempfile_command(tmp_var, "sshd"), cleanup_trap_command(tmp_var), heredoc_to_file_expr(tmp, content)]
-        if bool(params.get("backup", True)):
-            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        commands.extend([f"{sudo}install -D -m 0644 {tmp} {quote(path)}", f"rm -f {tmp}", f"{sudo}sshd -t"])
+    def rendered_file_content(self, params: Dict[str, Any]) -> str:
+        return self._content(params)
+
+    def rendered_file_post_install_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        sudo = self.rendered_file_sudo(params)
+        commands = [f"{sudo}sshd -t"]
         if bool(params.get("reload", True)):
             commands.append(f"{sudo}systemctl reload sshd || {sudo}systemctl reload ssh")
         return commands
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="sshd.config failed")
 
 class LoginDefsPlugin(BasePlugin):
     name = "login.defs"
@@ -69,6 +62,8 @@ class LoginDefsPlugin(BasePlugin):
     required_params = ("settings",)
     optional_params = ("path", "backup", "backup_suffix", "sudo")
     opens_remote_session = True
+    rendered_file_temp_prefix = "pwquality"
+    rendered_file_diff_kind = "password-policy-plan"
 
     def _path(self, params: Dict[str, Any]) -> str:
         return str(params.get("path", "/etc/login.defs"))
@@ -99,12 +94,14 @@ class LoginDefsPlugin(BasePlugin):
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="login.defs failed")
 
-class PasswordPolicyPlugin(BasePlugin):
+class PasswordPolicyPlugin(RenderedFileInstallMixin, BasePlugin):
     name = "password.policy"
     description = "Install a pwquality password policy drop-in."
     required_params = ("name", "settings")
     optional_params = ("path", "backup", "backup_suffix", "sudo")
     opens_remote_session = True
+    rendered_file_temp_prefix = "pwquality"
+    rendered_file_diff_kind = "password-policy-plan"
 
     def _path(self, params: Dict[str, Any]) -> str:
         name = str(params["name"])
@@ -118,25 +115,11 @@ class PasswordPolicyPlugin(BasePlugin):
             raise PluginValidationError("password.policy settings must be a non-empty mapping")
         return "# Managed by automax\n" + _settings_content(settings, " = ")
 
-    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
-        return _diff(self._path(params), self._content(params), "password-policy-plan")
+    def rendered_file_path(self, params: Dict[str, Any]) -> str:
+        return self._path(params)
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        self.validate(params)
-        path = self._path(params)
-        content = self._content(params)
-        sudo = sudo_prefix(params, default=True)
-        tmp_var = "automax_pwquality_tmp"
-        tmp = shell_var_ref(tmp_var)
-        commands = [tempfile_command(tmp_var, "pwquality"), cleanup_trap_command(tmp_var), heredoc_to_file_expr(tmp, content)]
-        if bool(params.get("backup", True)):
-            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        commands.extend([f"{sudo}install -D -m 0644 {tmp} {quote(path)}", f"rm -f {tmp}"])
-        return commands
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="password.policy failed")
+    def rendered_file_content(self, params: Dict[str, Any]) -> str:
+        return self._content(params)
 
 class AuthselectProfilePlugin(BasePlugin):
     name = "authselect.profile"
@@ -182,13 +165,6 @@ def _sshd_content_extended(self: SshdConfigPlugin, params: Dict[str, Any]) -> st
             content += f"    {key} {value}\n"
     return content
 
-def _sshd_manual_extended(self: SshdConfigPlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-    commands = SshdConfigPlugin.manual_commands(self, params, context)
-    if not bool(params.get("validate_before_reload", True)):
-        commands = [cmd for cmd in commands if "sshd -t" not in cmd]
-    return commands
-
-
 class ExtendedSshdConfigPlugin(SshdConfigPlugin):
     """sshd.config with Match block and validation controls."""
 
@@ -197,5 +173,12 @@ class ExtendedSshdConfigPlugin(SshdConfigPlugin):
     def _content(self, params: Dict[str, Any]) -> str:
         return _sshd_content_extended(self, params)
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        return _sshd_manual_extended(self, params, context)
+    def rendered_file_post_install_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        if not bool(params.get("validate_before_reload", True)):
+            commands: list[str] = []
+        else:
+            commands = [f"{self.rendered_file_sudo(params)}sshd -t"]
+        if bool(params.get("reload", True)):
+            sudo = self.rendered_file_sudo(params)
+            commands.append(f"{sudo}systemctl reload sshd || {sudo}systemctl reload ssh")
+        return commands

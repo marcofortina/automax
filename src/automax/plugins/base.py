@@ -195,6 +195,117 @@ class BasePlugin(ABC):
         """Execute a plugin action."""
 
 
+class RenderedFileInstallMixin:
+    """Shared implementation for plugins that render and install one managed file."""
+
+    rendered_file_temp_prefix = "automax-file"
+    rendered_file_diff_kind = "managed-file-plan"
+    rendered_file_default_mode = "0644"
+    rendered_file_default_backup = True
+    rendered_file_default_sudo = True
+
+    def rendered_file_path(self, params: Dict[str, Any]) -> str:
+        """Return the managed destination path."""
+        return str(params["path"])
+
+    def rendered_file_content(self, params: Dict[str, Any]) -> str:
+        """Return the desired file content."""
+        raise PluginValidationError(f"plugin '{self.name}' must implement rendered_file_content")
+
+    def rendered_file_mode(self, params: Dict[str, Any]) -> str:
+        """Return the install mode for the rendered file."""
+        return str(params.get("mode", self.rendered_file_default_mode))
+
+    def rendered_file_sudo(self, params: Dict[str, Any]) -> str:
+        """Return sudo prefix for managed-file commands."""
+        from automax.plugins.remote_utils import sudo_prefix
+
+        return sudo_prefix(params, default=self.rendered_file_default_sudo)
+
+    def rendered_file_backup_enabled(self, params: Dict[str, Any]) -> bool:
+        """Return whether the existing destination should be backed up."""
+        return bool(params.get("backup", self.rendered_file_default_backup))
+
+    def rendered_file_backup_suffix(self, params: Dict[str, Any]) -> str:
+        """Return the suffix used for pre-install backups."""
+        return str(params.get("backup_suffix", ".bak"))
+
+    def rendered_file_validate_commands(self, params: Dict[str, Any], context: ExecutionContext, temp_path: str) -> list[str]:
+        """Return validation commands to run after rendering and before install."""
+        return []
+
+    def rendered_file_post_install_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        """Return commands to run after the managed file is installed."""
+        return []
+
+    def rendered_file_result_data(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Return structured result data for the managed file operation."""
+        return {"path": self.rendered_file_path(params)}
+
+    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
+        self.validate(params)
+        from difflib import unified_diff
+
+        path = self.rendered_file_path(params)
+        content = self.rendered_file_content(params)
+        diff = "".join(
+            unified_diff(
+                [],
+                content.splitlines(keepends=True),
+                fromfile=f"{path} (current)",
+                tofile=f"{path} (desired)",
+            )
+        )
+        return [{"path": path, "kind": self.rendered_file_diff_kind, "diff": diff}]
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        from automax.plugins.remote_utils import (
+            cleanup_trap_command,
+            heredoc_to_file_expr,
+            quote,
+            shell_var_ref,
+            tempfile_command,
+        )
+
+        content = self.rendered_file_content(params)
+        path = self.rendered_file_path(params)
+        mode = self.rendered_file_mode(params)
+        sudo = self.rendered_file_sudo(params)
+        temp_var = f"{self.name.replace('.', '_').replace('-', '_')}_tmp"
+        temp = shell_var_ref(temp_var)
+        commands = [
+            tempfile_command(temp_var, self.rendered_file_temp_prefix),
+            cleanup_trap_command(temp_var),
+            heredoc_to_file_expr(temp, content),
+        ]
+        commands.extend(self.rendered_file_validate_commands(params, context, temp))
+        if self.rendered_file_backup_enabled(params):
+            backup = path + self.rendered_file_backup_suffix(params)
+            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(backup)}")
+        commands.append(f"{sudo}install -D -m {quote(mode)} {temp} {quote(path)}")
+        if params.get("owner") or params.get("group"):
+            owner = str(params.get("owner", ""))
+            group = str(params.get("group", ""))
+            spec = f"{owner}:{group}" if group else owner
+            commands.append(f"{sudo}chown {quote(spec)} {quote(path)}")
+        commands.append(f"rm -f {temp}")
+        commands.extend(self.rendered_file_post_install_commands(params, context))
+        return commands
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, result_from_remote
+
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
+        return result_from_remote(
+            rc=rc,
+            stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out,
+            stderr=err,
+            message=f"{self.name} failed",
+            data=self.rendered_file_result_data(params) if rc == 0 else {},
+        )
+
+
 class ReadOnlyCommandPlugin(BasePlugin):
     """Base class for read-only plugins rendered as shell commands."""
 

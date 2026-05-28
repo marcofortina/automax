@@ -5,12 +5,11 @@
 
 from __future__ import annotations
 
-from difflib import unified_diff
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin, PluginValidationError, ReadOnlyCommandPlugin
-from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.plugins.base import BasePlugin, PluginValidationError, ReadOnlyCommandPlugin, RenderedFileInstallMixin
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, result_from_remote, sudo_prefix
 
 
 
@@ -23,12 +22,15 @@ def _rules(params: Dict[str, Any]) -> list[str]:
     raise PluginValidationError("auditd.rule requires rule or rules")
 
 
-class AuditdRulePlugin(BasePlugin):
+class AuditdRulePlugin(RenderedFileInstallMixin, BasePlugin):
     name = "auditd.rule"
     description = "Install an auditd rules.d drop-in with backup and optional reload."
     required_params = ("name",)
     optional_params = ("rule", "rules", "path", "backup", "backup_suffix", "reload", "sudo")
     opens_remote_session = True
+    rendered_file_temp_prefix = "auditd"
+    rendered_file_diff_kind = "auditd-plan"
+    rendered_file_default_mode = "0640"
 
     def _path(self, params: Dict[str, Any]) -> str:
         name = str(params["name"])
@@ -39,29 +41,17 @@ class AuditdRulePlugin(BasePlugin):
     def _content(self, params: Dict[str, Any]) -> str:
         return "# Managed by automax\n" + "\n".join(_rules(params)) + "\n"
 
-    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
-        diff = "".join(unified_diff([], self._content(params).splitlines(keepends=True), fromfile=f"{self._path(params)} (current)", tofile=f"{self._path(params)} (desired)"))
-        return [{"path": self._path(params), "kind": "auditd-plan", "diff": diff}]
+    def rendered_file_path(self, params: Dict[str, Any]) -> str:
+        return self._path(params)
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        self.validate(params)
-        content = self._content(params)
-        path = self._path(params)
-        sudo = sudo_prefix(params, default=True)
-        temp_var = "automax_auditd_tmp"
-        temp = shell_var_ref(temp_var)
-        commands = [tempfile_command(temp_var, "auditd"), cleanup_trap_command(temp_var), heredoc_to_file_expr(temp, content)]
-        if bool(params.get("backup", True)):
-            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        commands.append(f"{sudo}install -D -m 0640 {temp} {quote(path)}")
-        commands.append(f"rm -f {temp}")
-        if bool(params.get("reload", True)):
-            commands.append(f"if command -v augenrules >/dev/null 2>&1; then {sudo}augenrules --load; else {sudo}service auditd restart; fi")
-        return commands
+    def rendered_file_content(self, params: Dict[str, Any]) -> str:
+        return self._content(params)
 
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="auditd.rule failed")
+    def rendered_file_post_install_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        if not bool(params.get("reload", True)):
+            return []
+        sudo = self.rendered_file_sudo(params)
+        return [f"if command -v augenrules >/dev/null 2>&1; then {sudo}augenrules --load; else {sudo}service auditd restart; fi"]
 
 
 class AuditdStatusPlugin(ReadOnlyCommandPlugin):

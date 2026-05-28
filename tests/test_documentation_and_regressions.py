@@ -752,6 +752,43 @@ def test_plugin_specific_user_and_boolean_value_schemas_do_not_use_global_fallba
 
 
 
+
+
+def test_rendered_file_install_mixin_covers_managed_file_plugins():
+    from automax.plugins.base import RenderedFileInstallMixin
+    from automax.plugins.registry import build_builtin_registry
+
+    registry = build_builtin_registry()
+    expected = {
+        "auditd.rule",
+        "chrony.servers",
+        "limits.dropin",
+        "network.dns",
+        "password.policy",
+        "resolver.config",
+        "ssh.config",
+        "sshd.config",
+        "sudo.rule",
+        "sysctl.dropin",
+        "systemd.sysusers",
+        "systemd.timer",
+        "systemd.tmpfiles",
+        "systemd.unit",
+        "udev.rule",
+    }
+    for name in expected:
+        assert isinstance(registry.get(name), RenderedFileInstallMixin)
+
+    sudo_commands = registry.get("sudo.rule").manual_commands(
+        {"name": "ops", "subject": "%ops", "commands": ["/usr/bin/systemctl"]},
+        ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={}),
+    )
+    rendered = "\n".join(sudo_commands)
+    assert "mktemp" in rendered
+    assert "trap 'rm -f" in rendered
+    assert "visudo -cf" in rendered
+    assert "install -D -m 0440" in rendered
+
 def test_read_only_command_plugin_is_shared_base_class():
     from automax.plugins.base import ReadOnlyCommandPlugin
     from automax.plugins.ops_completeness import __dict__ as ops_symbols

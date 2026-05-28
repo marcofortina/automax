@@ -5,12 +5,11 @@
 
 from __future__ import annotations
 
-from difflib import unified_diff
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.plugins.base import BasePlugin, PluginValidationError, RenderedFileInstallMixin
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
 
 
 
@@ -49,7 +48,7 @@ def _render_rules(params: Dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-class UdevRulePlugin(BasePlugin):
+class UdevRulePlugin(RenderedFileInstallMixin, BasePlugin):
     """Install a udev rules file with optional pre-change backup."""
 
     name = "udev.rule"
@@ -57,41 +56,23 @@ class UdevRulePlugin(BasePlugin):
     required_params = ("path",)
     optional_params = ("content", "rules", "backup", "backup_suffix", "mode", "owner", "group", "sudo")
     opens_remote_session = True
+    rendered_file_temp_prefix = "udev-rule"
+    rendered_file_diff_kind = "unified"
 
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         _render_rules(params)
 
-    def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
-        content = _render_rules(params)
-        path = str(params["path"])
-        diff = "".join(unified_diff([], content.splitlines(keepends=True), fromfile=f"{path} (current)", tofile=f"{path} (desired)"))
-        return [{"path": path, "diff": diff, "kind": "unified"}]
+    def rendered_file_content(self, params: Dict[str, Any]) -> str:
+        return _render_rules(params)
 
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        self.validate(params)
-        content = _render_rules(params)
-        sudo = sudo_prefix(params, default=False)
-        temp_var = "automax_udev_rule_tmp"
-        temp = shell_var_ref(temp_var)
-        path = str(params["path"])
-        backup_suffix = str(params.get("backup_suffix", ".bak"))
-        mode = str(params.get("mode", "0644"))
-        commands = [tempfile_command(temp_var, "udev-rule"), cleanup_trap_command(temp_var), heredoc_to_file_expr(temp, content)]
-        if bool(params.get("backup", True)):
-            commands.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + backup_suffix)}")
-        commands.append(f"{sudo}install -m {quote(mode)} {temp} {quote(path)}")
-        if params.get("owner") or params.get("group"):
-            owner = str(params.get("owner", ""))
-            group = str(params.get("group", ""))
-            spec = f"{owner}:{group}" if group else owner
-            commands.append(f"{sudo}chown {quote(spec)} {quote(path)}")
-        commands.append(f"rm -f {temp}")
-        return [" && ".join(commands)]
+    def rendered_file_sudo(self, params: Dict[str, Any]) -> str:
+        from automax.plugins.remote_utils import sudo_prefix
 
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="udev.rule failed", data={"path": params["path"]})
+        return sudo_prefix(params, default=False)
+
+    def rendered_file_result_data(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        return {"path": params["path"]}
 
 
 class UdevReloadPlugin(BasePlugin):
