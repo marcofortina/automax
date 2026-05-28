@@ -133,8 +133,6 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
         return [f"{sudo}aa-status"]
 
     if plugin_name.startswith("assert."):
-        if plugin_name == "assert.command":
-            return [str(params.get("command", "true"))]
         if plugin_name in {"assert.file", "assert.path"}:
             return [f"test -e {_q(path)}"]
         if plugin_name == "assert.disk":
@@ -312,8 +310,6 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
     if plugin_name.startswith("wait."):
         timeout = params.get("timeout", 60)
         interval = params.get("interval", 2)
-        if plugin_name == "wait.command":
-            return [f"timeout {_q(timeout)} sh -c 'until {params.get('command', 'true')}; do sleep {_q(interval)}; done'"]
         if plugin_name in {"wait.file", "wait.path"}:
             return [f"timeout {_q(timeout)} sh -c 'until test -e {_q(path)}; do sleep {_q(interval)}; done'"]
         if plugin_name == "wait.process":

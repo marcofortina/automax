@@ -111,11 +111,6 @@ tasks:
               ssh_smoke_output: stdout.trim
             artifacts:
               stdout: core/read-marker.txt
-          - id: assert_marker
-            use: assert.command
-            with:
-              command: "cat result.txt"
-              equals: automax-ssh-ok
           - id: exists_marker
             use: fs.exists
             with:
@@ -253,13 +248,6 @@ tasks:
               path: ${WORK_DIR}/untar
               state: present
               type: directory
-              timeout: 10
-              interval: 1
-          - id: wait_command
-            use: wait.command
-            with:
-              command: "cat ${WORK_DIR}/result.txt"
-              contains: line=new
               timeout: 10
               interval: 1
           - id: start_background_process

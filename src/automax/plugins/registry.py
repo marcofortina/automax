@@ -198,12 +198,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     )
     from automax.plugins.http import HttpAssertPlugin, HttpRequestPlugin, HttpWaitPlugin
     from automax.plugins.wait_assert import (
-        AssertCommandPlugin,
         AssertDiskPlugin,
         AssertFilePlugin,
         AssertPathPlugin,
         AssertTcpPlugin,
-        WaitCommandPlugin,
         WaitFilePlugin,
         WaitPathPlugin,
         WaitProcessPlugin,
@@ -512,12 +510,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FactsServicesPlugin(),
         PlatformFactsPlugin(),
         WaitTcpPlugin(),
-        WaitCommandPlugin(),
         WaitFilePlugin(),
         WaitPathPlugin(),
         WaitProcessPlugin(),
         AssertTcpPlugin(),
-        AssertCommandPlugin(),
         AssertFilePlugin(),
         AssertPathPlugin(),
         AssertDiskPlugin(),

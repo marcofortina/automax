@@ -7,7 +7,7 @@ Per-plugin runbooks only. No combined runbook, no reused runtime smoke flow, and
 | `runbooks/01-alternatives.check.yaml` | `alternatives` | 3 |
 | `runbooks/02-apparmor.check.yaml` | `apparmor` | 8 |
 | `runbooks/03-archive.check.yaml` | `archive` | 6 |
-| `runbooks/04-assert.check.yaml` | `assert` | 5 |
+| `runbooks/04-assert.check.yaml` | `assert` | 4 |
 | `runbooks/05-auditd.check.yaml` | `auditd` | 8 |
 | `runbooks/06-authselect.check.yaml` | `authselect` | 1 |
 | `runbooks/07-backup.check.yaml` | `backup` | 9 |
@@ -68,4 +68,4 @@ Per-plugin runbooks only. No combined runbook, no reused runtime smoke flow, and
 | `runbooks/63-udev.check.yaml` | `udev` | 7 |
 | `runbooks/64-ufw.check.yaml` | `ufw` | 6 |
 | `runbooks/65-user.check.yaml` | `user` | 11 |
-| `runbooks/66-wait.check.yaml` | `wait` | 5 |
+| `runbooks/66-wait.check.yaml` | `wait` | 4 |

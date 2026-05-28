@@ -14,10 +14,6 @@ tasks:
   steps:
   - id: catalog
     substeps:
-    - id: wait_command
-      use: wait.command
-      with:
-        command: echo automax
     - id: wait_file
       use: wait.file
       with:

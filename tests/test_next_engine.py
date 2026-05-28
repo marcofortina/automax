@@ -618,12 +618,10 @@ def test_wait_and_assert_plugins_are_registered():
 
     for name in (
         "wait.tcp",
-        "wait.command",
         "wait.file",
         "wait.path",
         "wait.process",
         "assert.tcp",
-        "assert.command",
         "assert.file",
         "assert.path",
         "assert.disk",
@@ -660,11 +658,6 @@ tasks:
             with:
               path: /tmp
               type: directory
-          - id: assert_command
-            use: assert.command
-            with:
-              command: "printf ok"
-              equals: ok
           - id: assert_disk
             use: assert.disk
             with:
@@ -1530,11 +1523,9 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "transfer.upload",
         "transfer.download",
         "transfer.sync",
-        "wait.command",
         "wait.file",
         "wait.path",
         "wait.process",
-        "assert.command",
         "assert.file",
         "assert.path",
         "assert.disk",

@@ -42,18 +42,6 @@ def _tcp_check(host: str, port: int, timeout: float) -> tuple[bool, str]:
         return False, str(exc)
 
 
-def _expected_match(params: Dict[str, Any], stdout: str, rc: int) -> bool:
-    if "rc" in params and rc != int(params["rc"]):
-        return False
-    if "equals" in params and stdout.strip() != str(params["equals"]):
-        return False
-    if "contains" in params and str(params["contains"]) not in stdout:
-        return False
-    if "not_contains" in params and str(params["not_contains"]) in stdout:
-        return False
-    return True
-
-
 def _path_test_command(params: Dict[str, Any]) -> str:
     state = str(params.get("state", "present"))
     path_type = str(params.get("type", "path"))
@@ -133,77 +121,6 @@ class AssertTcpPlugin(BasePlugin):
             message="TCP endpoint is reachable",
             data={"host": params["host"], "port": int(params["port"])},
         )
-
-
-class WaitCommandPlugin(BasePlugin):
-    """Wait until a remote command matches rc/stdout expectations."""
-
-    name = "wait.command"
-    description = "Wait until a remote command matches the requested condition."
-    required_params = ("command",)
-    optional_params = (
-        "timeout",
-        "interval",
-        "rc",
-        "equals",
-        "contains",
-        "not_contains",
-        "sudo",
-        "get_pty",
-    )
-    opens_remote_session = True
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        self.validate(params)
-        timeout = _timeout(params)
-        interval = _interval(params)
-        deadline = time.monotonic() + timeout
-        last_rc = 1
-        last_out = ""
-        last_err = ""
-        command = f"{sudo_prefix(params, default=False)}{params['command']}"
-        while time.monotonic() <= deadline:
-            last_rc, last_out, last_err = exec_remote(
-                context,
-                command,
-                get_pty=bool(params.get("get_pty", params.get("sudo", False))),
-            )
-            if _expected_match(params, last_out, last_rc):
-                return PluginResult.success(
-                    changed=False,
-                    rc=last_rc,
-                    stdout=last_out,
-                    stderr=last_err,
-                    message="command condition matched",
-                )
-            time.sleep(interval)
-        return PluginResult.failure(
-            rc=last_rc,
-            stdout=last_out,
-            stderr=last_err,
-            message="wait.command timed out",
-        )
-
-
-class AssertCommandPlugin(BasePlugin):
-    """Assert that a remote command matches rc/stdout expectations."""
-
-    name = "assert.command"
-    description = "Assert that a remote command matches the requested condition."
-    required_params = ("command",)
-    optional_params = ("rc", "equals", "contains", "not_contains", "sudo", "get_pty")
-    opens_remote_session = True
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        self.validate(params)
-        rc, out, err = exec_remote(
-            context,
-            f"{sudo_prefix(params, default=False)}{params['command']}",
-            get_pty=bool(params.get("get_pty", params.get("sudo", False))),
-        )
-        if not _expected_match(params, out, rc):
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="assert.command failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
 class WaitFilePlugin(BasePlugin):

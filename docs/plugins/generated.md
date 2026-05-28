@@ -581,41 +581,6 @@ with:
 
 ## assert
 
-### `assert.command`
-
-Assert that a remote command matches the requested condition.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `command` | yes | `string` |  | Command line to execute. |
-| `rc` | no | `integer` | `0` | Expected process return code. |
-| `equals` | no | `string` |  | Expected stdout value after trimming whitespace. |
-| `contains` | no | `string` |  | Required substring in stdout or HTTP response body. |
-| `not_contains` | no | `string` |  | Substring that must not appear in stdout. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `get_pty` | no | `boolean` | `False` | Request a pseudo-terminal for the remote command. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: assert.command
-with:
-  command: echo automax
-```
-
 ### `assert.disk`
 
 Assert remote disk capacity thresholds.
@@ -11319,43 +11284,6 @@ with:
 ```
 
 ## wait
-
-### `wait.command`
-
-Wait until a remote command matches the requested condition.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `command` | yes | `string` |  | Command line to execute. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `interval` | no | `number` | `2` | Polling interval in seconds. |
-| `rc` | no | `integer` | `0` | Expected process return code. |
-| `equals` | no | `string` |  | Expected stdout value after trimming whitespace. |
-| `contains` | no | `string` |  | Required substring in stdout or HTTP response body. |
-| `not_contains` | no | `string` |  | Substring that must not appear in stdout. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `get_pty` | no | `boolean` | `False` | Request a pseudo-terminal for the remote command. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: wait.command
-with:
-  command: echo automax
-```
 
 ### `wait.file`
 

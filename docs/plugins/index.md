@@ -34,7 +34,6 @@ archive.tar
 archive.untar
 archive.unzip
 archive.zip
-assert.command
 assert.disk
 assert.file
 assert.path
@@ -205,6 +204,7 @@ network.bond
 network.bridge
 network.dns
 network.dns_assert
+network.dns_facts
 network.interface
 network.link_assert
 network.port_check
@@ -261,8 +261,6 @@ process.kill
 process.signal
 process.wait
 remote.command
-network.dns
-network.dns_facts
 secret.redact_assert
 secret.scan_output
 secret.scan_preview
@@ -348,12 +346,10 @@ user.remove
 user.set_password
 user.shell_assert
 user.unlock
-wait.command
 wait.file
 wait.path
 wait.process
 wait.tcp
-
 ```
 
 ## Manuals by category

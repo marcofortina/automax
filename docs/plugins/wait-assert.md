@@ -31,29 +31,6 @@ TCP checks run from the controller.
     port: 443
 ```
 
-## `wait.command` and `assert.command`
-
-Command checks run on the remote target.
-
-```yaml
-- id: wait_service_active
-  use: wait.command
-  with:
-    command: "systemctl is-active nginx"
-    equals: active
-    timeout: 120
-    interval: 5
-    sudo: true
-
-- id: assert_version
-  use: assert.command
-  with:
-    command: "/opt/myapp/bin/myapp --version"
-    contains: "{{ vars.version }}"
-```
-
-Supported expectations are `rc`, `equals`, `contains` and `not_contains`.
-
 ## `wait.file`, `wait.path`, `assert.file`, `assert.path`
 
 Remote file/path checks.

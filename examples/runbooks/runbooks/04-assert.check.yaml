@@ -14,10 +14,6 @@ tasks:
   steps:
   - id: catalog
     substeps:
-    - id: assert_command
-      use: assert.command
-      with:
-        command: echo automax
     - id: assert_disk
       use: assert.disk
       with:

@@ -48,8 +48,8 @@ remote user. It covers:
 - `fs.find`, `fs.chmod`, `fs.remove`
 - `archive.tar`, `archive.untar`, `archive.zip`, `archive.unzip`
 - `transfer.upload`, `transfer.download`, `transfer.sync`
-- `wait.command`, `wait.file`, `wait.path`, `wait.process`
-- `assert.command`, `assert.file`, `assert.path`, `assert.disk`, `assert.tcp`
+- `wait.file`, `wait.path`, `wait.process`
+- `assert.file`, `assert.path`, `assert.disk`, `assert.tcp`
 - artifact capture for stdout/stderr/data
 - resume helpers through the normal run state store
 
