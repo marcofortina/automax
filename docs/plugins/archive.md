@@ -8,13 +8,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 Archive plugins operate on remote paths through SSH and use standard remote
 commands: `tar`, `gzip`, `bzip2`, `xz`, `zip` and `unzip`.
 
-## `archive.tar`
+## `data.archive.tar.create`
 
 Creates a tar archive from a remote source path.
 
 ```yaml
 - id: pack_logs
-  use: archive.tar
+  use: data.archive.tar.create
   with:
     source: /var/log/myapp
     dest: /tmp/myapp-logs.tar.gz
@@ -27,13 +27,13 @@ Creates a tar archive from a remote source path.
 
 `compression` can be `auto`, `none`, `gzip`, `bzip2` or `xz`. `auto` is the default and derives the tar mode from the archive suffix when possible.
 
-## `archive.untar`
+## `data.archive.tar.extract`
 
 Extracts a tar archive on the remote target.
 
 ```yaml
 - id: unpack_release
-  use: archive.untar
+  use: data.archive.tar.extract
   with:
     archive: /tmp/myapp.tar.gz
     dest: /opt/myapp/releases/{{ vars.release_id }}
@@ -41,41 +41,41 @@ Extracts a tar archive on the remote target.
     creates: /opt/myapp/releases/{{ vars.release_id }}/bin/myapp
 ```
 
-## `archive.compress`
+## `data.compression.gzip.compress`
 
 Compresses one remote file to a standalone gzip, bzip2 or xz file. Tar archive
-compression such as `.tar.gz` remains handled by `archive.tar`; use this plugin
+compression such as `.tar.gz` remains handled by `data.archive.tar.create`; use this plugin
 for single-file `.gz`, `.bz2` or `.xz` outputs.
 
 ```yaml
 - id: compress_report
-  use: archive.compress
+  use: data.compression.gzip.compress
   with:
     source: /tmp/report.log
     dest: /tmp/report.log.gz
     compression: auto
 ```
 
-## `archive.decompress`
+## `data.compression.gzip.decompress`
 
 Decompresses one standalone gzip, bzip2 or xz file to a remote destination file.
 
 ```yaml
 - id: decompress_report
-  use: archive.decompress
+  use: data.compression.gzip.decompress
   with:
     archive: /tmp/report.log.bz2
     dest: /tmp/report.log
     compression: auto
 ```
 
-## `archive.zip`
+## `data.archive.zip.create`
 
 Creates a zip archive from a remote source path.
 
 ```yaml
 - id: zip_report
-  use: archive.zip
+  use: data.archive.zip.create
   with:
     source: /tmp/report
     dest: /tmp/report.zip
@@ -83,13 +83,13 @@ Creates a zip archive from a remote source path.
       - "*.bak"
 ```
 
-## `archive.unzip`
+## `data.archive.zip.extract`
 
 Extracts a zip archive on the remote target.
 
 ```yaml
 - id: unzip_package
-  use: archive.unzip
+  use: data.archive.zip.extract
   with:
     archive: /tmp/package.zip
     dest: /opt/package
@@ -98,11 +98,11 @@ Extracts a zip archive on the remote target.
 ```
 
 
-Archive plugins do not add `sudo` themselves. Run them as a user with the required remote permissions, or wrap exceptional privileged archive operations with an explicit `remote.command` until privileged archive support is added.
+Archive plugins do not add `sudo` themselves. Run them as a user with the required remote permissions, or wrap exceptional privileged archive operations with an explicit `command.remote.run` until privileged archive support is added.
 
 ## Safe extraction
 
-`archive.untar` and `archive.unzip` support checksum verification and safe
+`data.archive.tar.extract` and `data.archive.zip.extract` support checksum verification and safe
 extraction checks that reject absolute paths or `..` traversal before extracting.
 They also support include/exclude filtering and post-extract owner/group/mode
 handling.

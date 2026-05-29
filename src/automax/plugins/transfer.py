@@ -130,7 +130,7 @@ def _download_dir(sftp, src: str, dest: Path, *, preserve_times: bool = False) -
 class TransferUploadPlugin(BasePlugin):
     """Upload a file or directory from the controller to a remote target."""
 
-    name = "transfer.upload"
+    name = "data.transfer.upload"
     description = "Upload a local file or directory to a remote target."
     required_params = ("src", "dest")
     optional_params = ("recursive", "sudo", "mode", "owner", "group", "checksum", "overwrite", "backup_existing", "backup_suffix", "preserve_times")
@@ -143,13 +143,13 @@ class TransferUploadPlugin(BasePlugin):
             return
         src = Path(src_value).expanduser()
         if not src.exists():
-            raise PluginValidationError(f"transfer.upload source not found: {src}")
+            raise PluginValidationError(f"data.transfer.upload source not found: {src}")
         if src.is_dir() and not bool(params.get("recursive", False)):
-            raise PluginValidationError("transfer.upload requires recursive=true for directories")
+            raise PluginValidationError("data.transfer.upload requires recursive=true for directories")
         if src.is_dir() and bool(params.get("sudo", False)):
-            raise PluginValidationError("transfer.upload sudo=true is supported only for files")
+            raise PluginValidationError("data.transfer.upload sudo=true is supported only for files")
         if params.get("checksum") and src.is_dir():
-            raise PluginValidationError("transfer.upload checksum is supported only for files")
+            raise PluginValidationError("data.transfer.upload checksum is supported only for files")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -178,7 +178,7 @@ class TransferUploadPlugin(BasePlugin):
                 group=params.get("group"),
             )
             if rc != 0:
-                return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="transfer.upload failed")
+                return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="data.transfer.upload failed")
             changed = "__AUTOMAX_CHANGED__" in out
             return PluginResult.success(changed=changed, stdout=out.replace("__AUTOMAX_CHANGED__", "").strip(), data={"src": str(src), "dest": dest})
 
@@ -200,7 +200,7 @@ class TransferUploadPlugin(BasePlugin):
 class TransferDownloadPlugin(BasePlugin):
     """Download a file or directory from a remote target to the controller."""
 
-    name = "transfer.download"
+    name = "data.transfer.download"
     description = "Download a remote file or directory to the controller."
     required_params = ("src", "dest")
     optional_params = ("recursive", "checksum", "overwrite", "backup_existing", "backup_suffix", "mode", "owner", "group", "preserve_times")
@@ -227,7 +227,7 @@ class TransferDownloadPlugin(BasePlugin):
             attrs = sftp.stat(src)
             if stat.S_ISDIR(attrs.st_mode):
                 if not bool(params.get("recursive", False)):
-                    raise PluginValidationError("transfer.download requires recursive=true for directories")
+                    raise PluginValidationError("data.transfer.download requires recursive=true for directories")
                 _download_dir(sftp, src, dest, preserve_times=bool(params.get("preserve_times", False)))
             else:
                 _download_file(sftp, src, dest, preserve_times=bool(params.get("preserve_times", False)))
@@ -243,7 +243,7 @@ class TransferDownloadPlugin(BasePlugin):
 class TransferSyncPlugin(BasePlugin):
     """Upload a local directory tree to a remote directory."""
 
-    name = "transfer.sync"
+    name = "data.transfer.sync"
     description = "Sync a local directory tree to a remote directory."
     required_params = ("src", "dest")
     optional_params = ()
@@ -256,7 +256,7 @@ class TransferSyncPlugin(BasePlugin):
             return
         src = Path(src_value).expanduser()
         if not src.is_dir():
-            raise PluginValidationError("transfer.sync source must be a directory")
+            raise PluginValidationError("data.transfer.sync source must be a directory")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -276,7 +276,7 @@ class TransferSyncPlugin(BasePlugin):
 class TransferRsyncPlugin(BasePlugin):
     """Synchronize files using the local rsync executable."""
 
-    name = "transfer.rsync"
+    name = "data.transfer.rsync"
     description = "Synchronize files with rsync using the current target as the default remote endpoint."
     required_params = ("src", "dest")
     optional_params = ("direction", "archive", "compress", "delete", "checksum", "dry_run", "excludes", "ssh_options", "rsync_path", "timeout")
@@ -288,7 +288,7 @@ class TransferRsyncPlugin(BasePlugin):
         super().validate(params)
         direction = str(params.get("direction", "upload"))
         if direction not in {"upload", "download", "local"}:
-            raise PluginValidationError("transfer.rsync direction must be upload, download or local")
+            raise PluginValidationError("data.transfer.rsync direction must be upload, download or local")
 
     def _target_prefix(self, context: ExecutionContext) -> str:
         user = f"{context.target.user}@" if context.target.user else ""
@@ -335,7 +335,7 @@ class TransferRsyncPlugin(BasePlugin):
         return parts
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "transfer.rsync previews changes with rsync --dry-run rather than a deterministic file diff"
+        return "data.transfer.rsync previews changes with rsync --dry-run rather than a deterministic file diff"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return [" ".join(quote(part) for part in self._command_parts(params, context))]
@@ -344,7 +344,7 @@ class TransferRsyncPlugin(BasePlugin):
         command = self._command_parts(params, context)
         completed = subprocess.run(command, text=True, capture_output=True, timeout=float(params.get("timeout", 0)) or None, check=False)
         if completed.returncode != 0:
-            return PluginResult.failure(rc=completed.returncode, stdout=completed.stdout, stderr=completed.stderr, message="transfer.rsync failed")
+            return PluginResult.failure(rc=completed.returncode, stdout=completed.stdout, stderr=completed.stderr, message="data.transfer.rsync failed")
         changed = bool(completed.stdout.strip()) and not (bool(params.get("dry_run", False)) or context.dry_run)
         return PluginResult.success(changed=changed, rc=completed.returncode, stdout=completed.stdout, stderr=completed.stderr, data={"command": command})
 
@@ -368,7 +368,7 @@ def _rsync_parts_extended(self: TransferRsyncPlugin, params: Dict[str, Any], con
 
 
 class ExtendedTransferRsyncPlugin(TransferRsyncPlugin):
-    """transfer.rsync with extended operator controls."""
+    """data.transfer.rsync with extended operator controls."""
 
     optional_params = ("direction", "archive", "compress", "delete", "checksum", "dry_run", "excludes", "ssh_options", "rsync_path", "timeout", "partial", "bwlimit", "numeric_ids", "itemize_changes", "stats")
 

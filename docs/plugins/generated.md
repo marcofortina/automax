@@ -12,231 +12,6 @@ Do not edit plugin parameter lists here by hand; update plugin metadata and rege
 automax docs generate-plugins --output docs/plugins/generated.md
 ```
 
-## archive
-
-### `archive.compress`
-
-Compress one remote file to gzip, bzip2 or xz.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `source` | yes | `path` |  | Remote source path to archive. |
-| `dest` | yes | `path` |  | Destination path. |
-| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
-| `force` | no | `boolean` | `False` | Force the operation when supported. |
-| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: archive.compress
-with:
-  source: /var/log/app
-  dest: /tmp/dest
-```
-
-### `archive.decompress`
-
-Decompress one remote gzip, bzip2 or xz file.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `archive` | yes | `path` |  | Remote archive path to extract. |
-| `dest` | yes | `path` |  | Destination path. |
-| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
-| `force` | no | `boolean` | `False` | Force the operation when supported. |
-| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: archive.decompress
-with:
-  archive: /tmp/app.tar.gz
-  dest: /tmp/dest
-```
-
-### `archive.tar`
-
-Create a remote tar archive.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `source` | yes | `path` |  | Remote source path to archive. |
-| `dest` | yes | `path` |  | Destination path. |
-| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
-| `excludes` | no | `list` |  | Glob patterns excluded from archive creation. |
-| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: archive.tar
-with:
-  source: /var/log/app
-  dest: /tmp/dest
-```
-
-### `archive.untar`
-
-Extract a remote tar archive.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `archive` | yes | `path` |  | Remote archive path to extract. |
-| `dest` | yes | `path` |  | Destination path. |
-| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
-| `strip_components` | no | `integer` | `0` | Path components stripped while extracting a tar archive. |
-| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-| `safe_extract` | no | `boolean` | `True` | Reject unsafe archive paths before extraction. |
-| `checksum_verify` | no | `string` |  | Expected checksum for archive or file verification. |
-| `include` | no | `string` |  | PAM include/substack target name. |
-| `exclude` | no | `list` |  | Package or archive excludes. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: archive.untar
-with:
-  archive: /tmp/app.tar.gz
-  dest: /tmp/dest
-```
-
-### `archive.unzip`
-
-Extract a remote zip archive.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `archive` | yes | `path` |  | Remote archive path to extract. |
-| `dest` | yes | `path` |  | Destination path. |
-| `overwrite` | no | `boolean` | `False` | Replace an existing destination when supported. |
-| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-| `safe_extract` | no | `boolean` | `True` | Reject unsafe archive paths before extraction. |
-| `checksum_verify` | no | `string` |  | Expected checksum for archive or file verification. |
-| `include` | no | `string` |  | PAM include/substack target name. |
-| `exclude` | no | `list` |  | Package or archive excludes. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: archive.unzip
-with:
-  archive: /tmp/app.tar.gz
-  dest: /tmp/dest
-```
-
-### `archive.zip`
-
-Create a remote zip archive.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `source` | yes | `path` |  | Remote source path to archive. |
-| `dest` | yes | `path` |  | Destination path. |
-| `recursive` | no | `boolean` | `False` | Recurse into directories. |
-| `excludes` | no | `list` |  | Glob patterns excluded from archive creation. |
-| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: archive.zip
-with:
-  source: /var/log/app
-  dest: /tmp/dest
-```
-
 ## backup
 
 ### `backup.directory`
@@ -546,6 +321,889 @@ with:
   path: /tmp/automax-demo
 ```
 
+## data
+
+### `data.archive.tar.check`
+
+Assert a remote tar archive is readable and optionally contains entries.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `archive` | yes | `path` |  | Remote archive path to extract. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `contains` | no | `string` |  | Required substring in stdout or HTTP response body. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.archive.tar.check
+with:
+  archive: /tmp/app.tar.gz
+```
+
+### `data.archive.tar.create`
+
+Create a remote tar archive.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `source` | yes | `path` |  | Remote source path to archive. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `excludes` | no | `list` |  | Glob patterns excluded from archive creation. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.archive.tar.create
+with:
+  source: /var/log/app
+  dest: /tmp/dest
+```
+
+### `data.archive.tar.extract`
+
+Extract a remote tar archive.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `archive` | yes | `path` |  | Remote archive path to extract. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `strip_components` | no | `integer` | `0` | Path components stripped while extracting a tar archive. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+| `safe_extract` | no | `boolean` | `True` | Reject unsafe archive paths before extraction. |
+| `checksum_verify` | no | `string` |  | Expected checksum for archive or file verification. |
+| `include` | no | `string` |  | PAM include/substack target name. |
+| `exclude` | no | `list` |  | Package or archive excludes. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.archive.tar.extract
+with:
+  archive: /tmp/app.tar.gz
+  dest: /tmp/dest
+```
+
+### `data.archive.tar.list`
+
+List files inside a remote tar archive.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `archive` | yes | `path` |  | Remote archive path to extract. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.archive.tar.list
+with:
+  archive: /tmp/app.tar.gz
+```
+
+### `data.archive.zip.check`
+
+Assert a remote zip archive is readable and optionally contains entries.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `archive` | yes | `path` |  | Remote archive path to extract. |
+| `contains` | no | `string` |  | Required substring in stdout or HTTP response body. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.archive.zip.check
+with:
+  archive: /tmp/app.tar.gz
+```
+
+### `data.archive.zip.create`
+
+Create a remote zip archive.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `source` | yes | `path` |  | Remote source path to archive. |
+| `dest` | yes | `path` |  | Destination path. |
+| `recursive` | no | `boolean` | `False` | Recurse into directories. |
+| `excludes` | no | `list` |  | Glob patterns excluded from archive creation. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.archive.zip.create
+with:
+  source: /var/log/app
+  dest: /tmp/dest
+```
+
+### `data.archive.zip.extract`
+
+Extract a remote zip archive.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `archive` | yes | `path` |  | Remote archive path to extract. |
+| `dest` | yes | `path` |  | Destination path. |
+| `overwrite` | no | `boolean` | `False` | Replace an existing destination when supported. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+| `safe_extract` | no | `boolean` | `True` | Reject unsafe archive paths before extraction. |
+| `checksum_verify` | no | `string` |  | Expected checksum for archive or file verification. |
+| `include` | no | `string` |  | PAM include/substack target name. |
+| `exclude` | no | `list` |  | Package or archive excludes. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.archive.zip.extract
+with:
+  archive: /tmp/app.tar.gz
+  dest: /tmp/dest
+```
+
+### `data.archive.zip.list`
+
+List files inside a remote zip archive.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `archive` | yes | `path` |  | Remote archive path to extract. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.archive.zip.list
+with:
+  archive: /tmp/app.tar.gz
+```
+
+### `data.compression.bzip2.check`
+
+Assert a remote bzip2 file is readable.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.compression.bzip2.check
+with:
+  path: /tmp/automax-demo
+```
+
+### `data.compression.bzip2.compress`
+
+Compress one remote file with bzip2.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `source` | yes | `path` |  | Remote source path to archive. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.compression.bzip2.compress
+with:
+  source: /var/log/app
+  dest: /tmp/dest
+```
+
+### `data.compression.bzip2.decompress`
+
+Decompress one remote bzip2 file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `archive` | yes | `path` |  | Remote archive path to extract. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.compression.bzip2.decompress
+with:
+  archive: /tmp/app.tar.gz
+  dest: /tmp/dest
+```
+
+### `data.compression.gzip.check`
+
+Assert a remote gzip file is readable.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.compression.gzip.check
+with:
+  path: /tmp/automax-demo
+```
+
+### `data.compression.gzip.compress`
+
+Compress one remote file with gzip.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `source` | yes | `path` |  | Remote source path to archive. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.compression.gzip.compress
+with:
+  source: /var/log/app
+  dest: /tmp/dest
+```
+
+### `data.compression.gzip.decompress`
+
+Decompress one remote gzip file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `archive` | yes | `path` |  | Remote archive path to extract. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.compression.gzip.decompress
+with:
+  archive: /tmp/app.tar.gz
+  dest: /tmp/dest
+```
+
+### `data.compression.xz.check`
+
+Assert a remote xz file is readable.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.compression.xz.check
+with:
+  path: /tmp/automax-demo
+```
+
+### `data.compression.xz.compress`
+
+Compress one remote file with xz.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `source` | yes | `path` |  | Remote source path to archive. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.compression.xz.compress
+with:
+  source: /var/log/app
+  dest: /tmp/dest
+```
+
+### `data.compression.xz.decompress`
+
+Decompress one remote xz file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `archive` | yes | `path` |  | Remote archive path to extract. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.compression.xz.decompress
+with:
+  archive: /tmp/app.tar.gz
+  dest: /tmp/dest
+```
+
+### `data.compression.zstd.check`
+
+Assert a remote zstd file is readable.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.compression.zstd.check
+with:
+  path: /tmp/automax-demo
+```
+
+### `data.compression.zstd.compress`
+
+Compress one remote file with zstd.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `source` | yes | `path` |  | Remote source path to archive. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.compression.zstd.compress
+with:
+  source: /var/log/app
+  dest: /tmp/dest
+```
+
+### `data.compression.zstd.decompress`
+
+Decompress one remote zstd file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `archive` | yes | `path` |  | Remote archive path to extract. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `creates` | no | `path` |  | Remote path that makes the operation idempotent when already present. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.compression.zstd.decompress
+with:
+  archive: /tmp/app.tar.gz
+  dest: /tmp/dest
+```
+
+### `data.download.url`
+
+Download a URL on the remote target using curl or wget, with optional checksum and backup.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `url` | yes | `string` |  | HTTP URL. |
+| `dest` | yes | `path` |  | Destination path. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.download.url
+with:
+  url: https://example.invalid/health
+  dest: /tmp/dest
+```
+
+### `data.transfer.download`
+
+Download a remote file or directory to the controller.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `recursive` | no | `boolean` | `False` | Recurse into directories. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `overwrite` | no | `boolean` | `False` | Replace an existing destination when supported. |
+| `backup_existing` | no | `boolean` | `False` | Create a backup of an existing destination before replacing it. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `preserve_times` | no | `boolean` | `False` | Preserve source access and modification timestamps when transferring files. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.src`: Remote source path.
+- `data.dest`: Local destination path.
+
+Example:
+
+```yaml
+use: data.transfer.download
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+```
+
+### `data.transfer.rsync`
+
+Synchronize files with rsync using the current target as the default remote endpoint.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `direction` | no | `string` | `upload` | Transfer direction such as upload, download or local. |
+| `archive` | no | `boolean` | `True` | Use rsync archive mode. |
+| `compress` | no | `boolean` | `False` | Enable stream compression when supported. |
+| `delete` | no | `boolean` | `False` | Delete extraneous destination files when supported. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `dry_run` | no | `boolean` | `False` | Render or run without applying changes when supported. |
+| `excludes` | no | `list` |  | Glob patterns excluded from archive creation. |
+| `ssh_options` | no | `list` |  | Extra ssh options used by rsync. |
+| `rsync_path` | no | `path` |  | Remote rsync executable path. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `partial` | no | `boolean` | `False` | Keep partially transferred files. |
+| `bwlimit` | no | `integer` |  | Bandwidth limit. |
+| `numeric_ids` | no | `boolean` | `False` | Preserve numeric UID/GID values. |
+| `itemize_changes` | no | `boolean` | `False` | Show per-file rsync changes. |
+| `stats` | no | `boolean` | `False` | Show transfer statistics. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.command`: Executed rsync argument vector.
+
+Example:
+
+```yaml
+use: data.transfer.rsync
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+```
+
+### `data.transfer.sync`
+
+Sync a local directory tree to a remote directory.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.src`: Local source directory.
+- `data.dest`: Remote destination directory.
+
+Example:
+
+```yaml
+use: data.transfer.sync
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+```
+
+### `data.transfer.upload`
+
+Upload a local file or directory to a remote target.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `recursive` | no | `boolean` | `False` | Recurse into directories. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `overwrite` | no | `boolean` | `False` | Replace an existing destination when supported. |
+| `backup_existing` | no | `boolean` | `False` | Create a backup of an existing destination before replacing it. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `preserve_times` | no | `boolean` | `False` | Preserve source access and modification timestamps when transferring files. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.src`: Local source path.
+- `data.dest`: Remote destination path
+
+Example:
+
+```yaml
+use: data.transfer.upload
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+```
+
 ## db
 
 ### `db.health`
@@ -746,47 +1404,6 @@ with:
     path: /tmp/automax.sqlite
   query: SELECT 1 AS value
   output: rows
-```
-
-## download
-
-### `download.file`
-
-Download a URL on the remote target using curl or wget, with optional checksum and backup.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `url` | yes | `string` |  | HTTP URL. |
-| `dest` | yes | `path` |  | Destination path. |
-| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
-| `force` | no | `boolean` | `False` | Force the operation when supported. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: download.file
-with:
-  url: https://example.invalid/health
-  dest: /tmp/dest
 ```
 
 ## facts
@@ -12151,173 +12768,6 @@ with:
   name: nginx
   content: managed by automax
 
-```
-
-## transfer
-
-### `transfer.download`
-
-Download a remote file or directory to the controller.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `dest` | yes | `path` |  | Destination path. |
-| `recursive` | no | `boolean` | `False` | Recurse into directories. |
-| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
-| `overwrite` | no | `boolean` | `False` | Replace an existing destination when supported. |
-| `backup_existing` | no | `boolean` | `False` | Create a backup of an existing destination before replacing it. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `preserve_times` | no | `boolean` | `False` | Preserve source access and modification timestamps when transferring files. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.src`: Remote source path.
-- `data.dest`: Local destination path.
-
-Example:
-
-```yaml
-use: transfer.download
-with:
-  src: /tmp/source
-  dest: /tmp/dest
-```
-
-### `transfer.rsync`
-
-Synchronize files with rsync using the current target as the default remote endpoint.
-
-- Remote session: `false`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `dest` | yes | `path` |  | Destination path. |
-| `direction` | no | `string` | `upload` | Transfer direction such as upload, download or local. |
-| `archive` | no | `boolean` | `True` | Use rsync archive mode. |
-| `compress` | no | `boolean` | `False` | Enable stream compression when supported. |
-| `delete` | no | `boolean` | `False` | Delete extraneous destination files when supported. |
-| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
-| `dry_run` | no | `boolean` | `False` | Render or run without applying changes when supported. |
-| `excludes` | no | `list` |  | Glob patterns excluded from archive creation. |
-| `ssh_options` | no | `list` |  | Extra ssh options used by rsync. |
-| `rsync_path` | no | `path` |  | Remote rsync executable path. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `partial` | no | `boolean` | `False` | Keep partially transferred files. |
-| `bwlimit` | no | `integer` |  | Bandwidth limit. |
-| `numeric_ids` | no | `boolean` | `False` | Preserve numeric UID/GID values. |
-| `itemize_changes` | no | `boolean` | `False` | Show per-file rsync changes. |
-| `stats` | no | `boolean` | `False` | Show transfer statistics. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.command`: Executed rsync argument vector.
-
-Example:
-
-```yaml
-use: transfer.rsync
-with:
-  src: /tmp/source
-  dest: /tmp/dest
-```
-
-### `transfer.sync`
-
-Sync a local directory tree to a remote directory.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `dest` | yes | `path` |  | Destination path. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.src`: Local source directory.
-- `data.dest`: Remote destination directory.
-
-Example:
-
-```yaml
-use: transfer.sync
-with:
-  src: /tmp/source
-  dest: /tmp/dest
-```
-
-### `transfer.upload`
-
-Upload a local file or directory to a remote target.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `dest` | yes | `path` |  | Destination path. |
-| `recursive` | no | `boolean` | `False` | Recurse into directories. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
-| `overwrite` | no | `boolean` | `False` | Replace an existing destination when supported. |
-| `backup_existing` | no | `boolean` | `False` | Create a backup of an existing destination before replacing it. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `preserve_times` | no | `boolean` | `False` | Preserve source access and modification timestamps when transferring files. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.src`: Local source path.
-- `data.dest`: Remote destination path
-
-Example:
-
-```yaml
-use: transfer.upload
-with:
-  src: /tmp/source
-  dest: /tmp/dest
 ```
 
 ## udev

@@ -199,7 +199,7 @@ packages:      os.package.*
 systemd:       systemctl.*
 users/groups:  user.*, group.*
 processes:     process.*
-transfer:      transfer.*
+transfer:      data.transfer.*
 http/api:      http.*
 wait/assert:   wait.*, assert.*
 database:      db.sqlite.query, db.postgres.query, db.mysql.query, db.oracle.query

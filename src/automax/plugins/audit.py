@@ -141,15 +141,17 @@ def sample_params(plugin: Any) -> dict[str, Any]:
     if plugin.name in {"backup.prune", "backup.restore", "backup.rotate", "network.firewall.iptables.restore", "storage.lvm.lv.remove", "storage.lvm.pv.remove", "storage.lvm.vg.remove"}:
         params["confirm"] = True
     if plugin.name == "plugin.requirements":
-        params["plugin"] = "transfer.rsync"
+        params["plugin"] = "data.transfer.rsync"
     if plugin.name == "backup.directory":
         params["compression"] = "none"
     if plugin.name == "backup.verify":
         params["checksum"] = "sha256"
-    if plugin.name == "archive.compress":
+    if plugin.name.startswith("data.compression.") and plugin.name.endswith(".compress"):
         params["dest"] = "/tmp/automax-demo.gz"
-    if plugin.name == "archive.decompress":
+    if plugin.name.startswith("data.compression.") and plugin.name.endswith(".decompress"):
         params["archive"] = "/tmp/automax-demo.gz"
+    if plugin.name.startswith("data.compression.") and plugin.name.endswith(".check"):
+        params["path"] = "/tmp/automax-demo.gz"
     if plugin.name == "storage.block.signatures.wipe":
         params["force"] = True
     if plugin.name == "fs.file.template":

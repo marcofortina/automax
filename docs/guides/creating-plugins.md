@@ -44,7 +44,7 @@ Good examples:
 fs.file.template
 os.package.install
 system.service.enable
-transfer.upload
+data.transfer.upload
 ```
 
 Avoid shortened or ambiguous names. Public DSL names should stay canonical, explicit and stable.

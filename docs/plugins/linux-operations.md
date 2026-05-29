@@ -90,7 +90,7 @@ with:
 `system.reboot` requests a reboot. Use the rendered manual command and follow-up
 connectivity, process and service check substeps to validate that SSH and services are back.
 
-`download.file` is the remote wget/curl-like macro. It downloads with curl or
+`data.download.url` is the remote wget/curl-like macro. It downloads with curl or
 wget, supports SHA256 verification, backs up an existing destination by default,
 and can install mode/owner/group metadata.
 

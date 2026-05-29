@@ -684,19 +684,19 @@ def test_plugin_smoke_runbooks_keep_file_modes_as_strings():
 
 
 def test_plugin_smoke_runbooks_match_archive_decompress_parameters():
-    runbook_path = Path("examples/runbooks/runbooks/03-archive.check.yaml")
+    runbook_path = Path("examples/runbooks/runbooks/03-data-archive.check.yaml")
     data = yaml.safe_load(runbook_path.read_text(encoding="utf-8"))
     offenders = []
     for task in data.get("tasks", []):
         for step in task.get("steps", []):
             for substep in step.get("substeps", []):
-                if substep.get("use") != "archive.decompress":
+                if not str(substep.get("use", "")).startswith("data.compression.") or not str(substep.get("use", "")).endswith(".decompress"):
                     continue
                 params = substep.get("with") or {}
                 if "source" in params:
                     offenders.append(
                         f"{runbook_path}:{substep.get('id')}: "
-                        "source is not valid for archive.decompress"
+                        "source is not valid for compression decompress plugins"
                     )
 
     assert offenders == []
@@ -1422,8 +1422,8 @@ def test_ambiguous_plugin_parameters_have_plugin_specific_schemas():
     expected = {
         ("security.audit.search", "user"): ("string",),
         ("security.audit.search", "start"): ("string",),
-        ("archive.compress", "source"): ("path",),
-        ("archive.decompress", "archive"): ("path",),
+        ("data.compression.gzip.compress", "source"): ("path",),
+        ("data.compression.gzip.decompress", "archive"): ("path",),
         ("backup.restore", "archive"): ("boolean",),
         ("system.cron.entry.list", "user"): ("string",),
         ("network.firewall.firewalld.source", "source"): ("string",),
@@ -1431,7 +1431,7 @@ def test_ambiguous_plugin_parameters_have_plugin_specific_schemas():
         ("system.kernel.sysctl.set", "value"): ("string",),
         ("system.service.start", "user"): ("boolean",),
         ("system.systemd.unit", "start"): ("boolean",),
-        ("transfer.rsync", "archive"): ("boolean",),
+        ("data.transfer.rsync", "archive"): ("boolean",),
     }
 
     for (plugin_name, param_name), expected_types in expected.items():
@@ -1442,7 +1442,7 @@ def test_ambiguous_plugin_parameters_have_plugin_specific_schemas():
         assert tuple(actual) == expected_types
 
     registry.get("network.firewall.firewalld.source").validate({"source": "10.0.0.0/8"})
-    registry.get("transfer.rsync").validate({"src": "/tmp/src", "dest": "/tmp/dest", "archive": True})
+    registry.get("data.transfer.rsync").validate({"src": "/tmp/src", "dest": "/tmp/dest", "archive": True})
 
     firewalld_runbook = Path("examples/runbooks/runbooks/19-firewalld.check.yaml").read_text(encoding="utf-8")
     assert "source: 10.0.0.0/8" in firewalld_runbook

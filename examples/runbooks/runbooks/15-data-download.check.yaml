@@ -1,0 +1,18 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-data-download
+tasks:
+- id: data_download
+  description: Check-mode catalog for data.download plugins.
+  targets: all
+  tags: [all-functions, check, data, download]
+  steps:
+  - id: catalog
+    substeps:
+    - id: data_download_url
+      use: data.download.url
+      with:
+        url: https://example.invalid/artifact.tgz
+        dest: /tmp/artifact.tgz

@@ -21,6 +21,26 @@ class CapabilityRequirement:
 
 
 EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
+    "data.archive.tar.check": ("tar",),
+    "data.archive.tar.create": ("tar",),
+    "data.archive.tar.extract": ("tar",),
+    "data.archive.tar.list": ("tar",),
+    "data.archive.zip.check": ("unzip",),
+    "data.archive.zip.create": ("zip",),
+    "data.archive.zip.extract": ("unzip",),
+    "data.archive.zip.list": ("unzip",),
+    "data.compression.gzip.check": ("gzip",),
+    "data.compression.gzip.compress": ("gzip",),
+    "data.compression.gzip.decompress": ("gzip",),
+    "data.compression.bzip2.check": ("bzip2",),
+    "data.compression.bzip2.compress": ("bzip2",),
+    "data.compression.bzip2.decompress": ("bzip2",),
+    "data.compression.xz.check": ("xz",),
+    "data.compression.xz.compress": ("xz",),
+    "data.compression.xz.decompress": ("xz",),
+    "data.compression.zstd.check": ("zstd",),
+    "data.compression.zstd.compress": ("zstd",),
+    "data.compression.zstd.decompress": ("zstd",),
     "os.alternatives.get": ("update-alternatives",),
     "os.alternatives.list": ("update-alternatives",),
     "os.alternatives.set": ("update-alternatives",),
@@ -154,7 +174,7 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "os.time.timezone.check": ("timedatectl",),
     "os.time.timezone.get": ("timedatectl",),
     "os.time.timezone.set": ("timedatectl",),
-    "transfer.rsync": ("rsync",),
+    "data.transfer.rsync": ("rsync",),
     "udev.facts": ("udevadm",),
     "udev.reload": ("udevadm",),
     "udev.settle": ("udevadm",),
@@ -228,8 +248,8 @@ PARAM_TOOL_REQUIREMENTS: Dict[tuple[str, str], tuple[str, ...]] = {
     ("fs.file.template", "validate_command"): ("sh",),
     ("fs.file.line", "validate_command"): ("sh",),
     ("fs.file.replace", "validate_command"): ("sh",),
-    ("archive.untar", "checksum"): ("sha256sum",),
-    ("archive.unzip", "checksum"): ("sha256sum",),
+    ("data.archive.tar.extract", "checksum"): ("sha256sum",),
+    ("data.archive.zip.extract", "checksum"): ("sha256sum",),
 }
 
 DEBIAN_PACKAGES: Dict[str, str] = {

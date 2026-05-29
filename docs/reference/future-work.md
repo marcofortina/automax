@@ -57,7 +57,7 @@ different guardrails to the same job definition in lab and production.
 
 ```text
 low: fs.dir.exists, fs.file.exists, fs.symlink.exists
-medium: system.service.restart, fs.file.template, transfer.upload
+medium: system.service.restart, fs.file.template, data.transfer.upload
 high: os.package.upgrade, identity.user.remove, fs.dir.remove recursive=true
 ```
 
@@ -96,8 +96,8 @@ pipelines without coupling those integrations to SQLite internals.
 Automax already has the primitives for release-style workflows:
 
 ```text
-transfer.upload
-archive.untar
+data.transfer.upload
+data.archive.tar.extract
 fs.symlink.create
 fs.symlink.remove
 system.service.restart

@@ -430,36 +430,36 @@ tasks:
             with:
               path: /tmp/dest.txt
           - id: tar
-            use: archive.tar
+            use: data.archive.tar.create
             with:
               source: /tmp/source-dir
               dest: /tmp/source-dir.tar.gz
               compression: gzip
           - id: untar
-            use: archive.untar
+            use: data.archive.tar.extract
             with:
               archive: /tmp/source-dir.tar.gz
               dest: /tmp/extracted
               strip_components: 1
           - id: compress
-            use: archive.compress
+            use: data.compression.gzip.compress
             with:
               source: /tmp/source.log
               dest: /tmp/source.log.gz
               compression: gzip
           - id: decompress
-            use: archive.decompress
+            use: data.compression.gzip.decompress
             with:
               archive: /tmp/source.log.gz
               dest: /tmp/source.log
               compression: gzip
           - id: zip
-            use: archive.zip
+            use: data.archive.zip.create
             with:
               source: /tmp/source-dir
               dest: /tmp/source-dir.zip
           - id: unzip
-            use: archive.unzip
+            use: data.archive.zip.extract
             with:
               archive: /tmp/source-dir.zip
               dest: /tmp/unzipped
@@ -604,9 +604,9 @@ def test_extended_systemctl_plugins_are_registered():
         "system.service.enabled_check",
         "system.service.mask",
         "system.service.unmask",
-        "transfer.download",
-        "transfer.sync",
-        "transfer.upload",
+        "data.transfer.download",
+        "data.transfer.sync",
+        "data.transfer.upload",
         "identity.user.create",
         "identity.user.modify",
         "identity.user.remove",
@@ -639,9 +639,9 @@ def test_user_group_process_plugins_are_registered():
 def test_transfer_plugins_are_registered():
     names = AutomaxEngine().plugin_registry.names()
 
-    assert "transfer.upload" in names
-    assert "transfer.download" in names
-    assert "transfer.sync" in names
+    assert "data.transfer.upload" in names
+    assert "data.transfer.download" in names
+    assert "data.transfer.sync" in names
     assert "upload" not in names
 
 
@@ -1536,7 +1536,7 @@ def test_generated_plugin_reference_is_in_sync():
 
 
 def test_plugins_describe_uses_complete_metadata():
-    result = CliRunner().invoke(cli, ["plugins", "describe", "archive.tar"])
+    result = CliRunner().invoke(cli, ["plugins", "describe", "data.archive.tar.create"])
 
     assert result.exit_code == 0, result.output
     assert "source (required, path): Remote source path to archive." in result.output
@@ -1556,15 +1556,15 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "fs.object.move",
         "fs.symlink.create",
         "fs.symlink.remove",
-        "archive.tar",
-        "archive.untar",
-        "archive.compress",
-        "archive.decompress",
-        "archive.zip",
-        "archive.unzip",
-        "transfer.upload",
-        "transfer.download",
-        "transfer.sync",
+        "data.archive.tar.create",
+        "data.archive.tar.extract",
+        "data.compression.gzip.compress",
+        "data.compression.gzip.decompress",
+        "data.archive.zip.create",
+        "data.archive.zip.extract",
+        "data.transfer.upload",
+        "data.transfer.download",
+        "data.transfer.sync",
         "fs.file.wait",
         "fs.dir.wait",
         "system.process.wait",
@@ -3379,7 +3379,7 @@ def test_storage_and_linux_ops_plugins_are_registered():
         "os.time.chrony.sources.check",
         "os.env.set",
         "system.reboot",
-        "download.file",
+        "data.download.url",
     ):
         assert name in names
 
@@ -3968,7 +3968,7 @@ def test_transfer_rsync_plugin_renders_secret_free_manual_command():
     from automax.plugins.transfer import TransferRsyncPlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    assert "transfer.rsync" in names
+    assert "data.transfer.rsync" in names
     context = _sysops_preview_context()
     command = TransferRsyncPlugin().manual_commands(
         {"src": "./dist/", "dest": "/opt/app/", "delete": True, "dry_run": True, "excludes": ["*.tmp"]},
@@ -4376,7 +4376,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name in {"storage.lvm.lv.remove", "storage.lvm.vg.remove", "storage.lvm.pv.remove", "backup.restore", "backup.prune", "backup.rotate", "network.firewall.iptables.restore"}:
         params["confirm"] = True
     if plugin.name == "plugin.requirements":
-        params["plugin"] = "transfer.rsync"
+        params["plugin"] = "data.transfer.rsync"
     if plugin.name == "fs.dir.remove":
         params["path"] = "/tmp/automax-demo-dir"
         params["recursive"] = True
@@ -4709,8 +4709,8 @@ def test_transfer_upload_download_metadata_include_safety_options():
     from automax.plugins.registry import build_builtin_registry
 
     registry = build_builtin_registry()
-    upload = registry.get("transfer.upload").metadata()
-    download = registry.get("transfer.download").metadata()
+    upload = registry.get("data.transfer.upload").metadata()
+    download = registry.get("data.transfer.download").metadata()
     upload_params = {parameter["name"] for parameter in upload["parameters"]}
     download_params = {parameter["name"] for parameter in download["parameters"]}
 
@@ -5001,7 +5001,7 @@ tasks:
       - id: transfer
         substeps:
           - id: sync
-            use: transfer.rsync
+            use: data.transfer.rsync
             with:
               src: /tmp/src
               dest: /tmp/dest
@@ -5024,7 +5024,7 @@ tasks:
     target = payload["targets"][0]
     assert "rsync" in target["tools"]
     assert "setfacl" in target["tools"]
-    assert target["plugins"]["rsync"] == ["transfer.rsync"]
+    assert target["plugins"]["rsync"] == ["data.transfer.rsync"]
 
     result = CliRunner().invoke(
         cli,
@@ -5063,7 +5063,7 @@ def test_capability_and_redaction_plugins_render_safe_previews():
     assert registry.get("os.tool.exists").manual_commands({"name": "rsync"}, context) == ["command -v rsync"]
     assert "grep -F" in registry.get("os.tool.version_check").manual_commands({"name": "rsync", "contains": "rsync"}, context)[0]
     assert "command -v setfacl" in registry.get("os.capability.check").manual_commands({"tools": ["setfacl"]}, context)[0]
-    assert registry.get("plugin.requirements").execute({"plugin": "transfer.rsync"}, context).data["requirements"]["transfer.rsync"] == ["rsync"]
+    assert registry.get("plugin.requirements").execute({"plugin": "data.transfer.rsync"}, context).data["requirements"]["data.transfer.rsync"] == ["rsync"]
 
     redacted = registry.get("security.secret.scan_output").execute({"text": "token=super-secret-token password=abc"}, context)
     assert redacted.ok
@@ -5198,7 +5198,7 @@ tasks:
             with:
               file: /tmp/acls.txt
           - id: zip
-            use: archive.zip
+            use: data.archive.zip.create
             with:
               source: /tmp/src
               dest: /tmp/a.zip
@@ -5326,7 +5326,7 @@ metadata:
             with:
               file: /tmp/acls.txt
           - id: zip
-            use: archive.zip
+            use: data.archive.zip.create
             with:
               source: /tmp/src
               dest: /tmp/a.zip

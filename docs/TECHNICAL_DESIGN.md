@@ -114,7 +114,7 @@ archive:       archive.*
 packages:      os.package.*
 system:       system.service.*, system.systemd.*, system.kernel.*, system.process.*, system.cron.*, system.journal.*, system.log.*
 identity:      identity.user.*, identity.group.*
-transfer:      transfer.*
+transfer:      data.transfer.*
 http/api:      http.*
 connectivity:   network.connectivity.*
 storage:        storage.*

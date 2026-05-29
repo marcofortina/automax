@@ -6,7 +6,7 @@ Per-plugin runbooks only. No combined runbook, no reused runtime smoke flow, and
 |---|---:|---:|
 | `runbooks/01-os-alternatives.check.yaml` | `os.alternatives` | 4 |
 | `runbooks/02-apparmor.check.yaml` | `security.apparmor` | 8 |
-| `runbooks/03-archive.check.yaml` | `archive` | 6 |
+| `runbooks/03-data-archive.check.yaml` | `data.archive` | 6 |
 | `runbooks/05-auditd.check.yaml` | `security.audit` | 8 |
 | `runbooks/06-authselect.check.yaml` | `security.authselect` | 1 |
 | `runbooks/07-backup.check.yaml` | `backup` | 9 |
@@ -15,7 +15,7 @@ Per-plugin runbooks only. No combined runbook, no reused runtime smoke flow, and
 | `runbooks/12-os-time-chrony.check.yaml` | `os.time.chrony` | 5 |
 | `runbooks/13-system-cron.check.yaml` | `system.cron.entry` | 5 |
 | `runbooks/14-db.check.yaml` | `db` | 5 |
-| `runbooks/15-download.check.yaml` | `download` | 1 |
+| `runbooks/15-data-download.check.yaml` | `data.download` | 1 |
 | `runbooks/16-os-env.check.yaml` | `os.env` | 5 |
 | `runbooks/17-facts.check.yaml` | `facts/os` | 6 |
 | `runbooks/19-firewalld.check.yaml` | `network.firewall.firewalld` | 11 |
@@ -54,7 +54,7 @@ Per-plugin runbooks only. No combined runbook, no reused runtime smoke flow, and
 | `runbooks/59-system-systemd.check.yaml` | `system.systemd` | 4 |
 | `runbooks/60-os-time.check.yaml` | `os.time` | 7 |
 | `runbooks/61-os-tool.check.yaml` | `os.tool` | 2 |
-| `runbooks/62-transfer.check.yaml` | `transfer` | 4 |
+| `runbooks/62-data-transfer.check.yaml` | `data.transfer` | 4 |
 | `runbooks/63-udev.check.yaml` | `udev` | 7 |
 | `runbooks/64-ufw.check.yaml` | `network.firewall.ufw` | 6 |
 | `runbooks/65-user.check.yaml` | `identity.user` | 11 |

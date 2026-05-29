@@ -324,14 +324,14 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
     if plugin_name == "security.sudo.dropin":
         return [f"{sudo}visudo -cf {_q(params.get('path', '/etc/sudoers'))}"]
 
-    if plugin_name.startswith("transfer."):
+    if plugin_name.startswith("data.transfer."):
         src = params.get("src", "/tmp/source")
         dest = params.get("dest", "/tmp/dest")
-        if plugin_name == "transfer.download":
+        if plugin_name == "data.transfer.download":
             return [f"scp{_ssh_opts(params)} {_q(str(src))} {_q(str(dest))}"]
-        if plugin_name == "transfer.upload":
+        if plugin_name == "data.transfer.upload":
             return [f"scp{_ssh_opts(params)} {_q(str(src))} {_q(str(dest))}"]
-        if plugin_name == "transfer.sync":
+        if plugin_name == "data.transfer.sync":
             return [f"rsync -a {_q(str(src))}/ {_q(str(dest))}/"]
 
     if plugin_name in {"system.cron.entry.add", "system.cron.file"}:

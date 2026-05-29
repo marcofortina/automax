@@ -532,7 +532,7 @@ class SystemRebootPlugin(BasePlugin):
 
 
 class DownloadFilePlugin(BasePlugin):
-    name = "download.file"
+    name = "data.download.url"
     description = "Download a URL on the remote target using curl or wget, with optional checksum and backup."
     required_params = ("url", "dest")
     optional_params = ("checksum", "force", "backup", "backup_suffix", "mode", "owner", "group", "sudo")
@@ -579,7 +579,7 @@ class DownloadFilePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="download.file failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="data.download.url failed")
 
 
 class HostsEntryRemovePlugin(HostsEntryPlugin):

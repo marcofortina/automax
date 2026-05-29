@@ -119,8 +119,8 @@ job shape.
 
 ## Compress or decompress standalone files
 
-`archive.tar` already supports `.tar.gz`, `.tar.bz2` and `.tar.xz` through
-`compression: auto`. Use `archive.compress` / `archive.decompress` for standalone
+`data.archive.tar.create` already supports `.tar.gz`, `.tar.bz2` and `.tar.xz` through
+`compression: auto`. Use `data.compression.gzip.compress` / `data.compression.gzip.decompress` for standalone
 `.gz`, `.bz2` and `.xz` files that are not tar containers.
 
 ## Preserve file content before regex replacements

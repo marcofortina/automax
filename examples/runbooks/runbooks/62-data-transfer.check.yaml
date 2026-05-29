@@ -1,0 +1,25 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-data-transfer
+tasks:
+- id: data_transfer
+  description: Check-mode catalog for data.transfer plugins.
+  targets: all
+  tags: [all-functions, check, data, transfer]
+  steps:
+  - id: catalog
+    substeps:
+    - id: data_transfer_download
+      use: data.transfer.download
+      with: {src: README.md, dest: /tmp/dest}
+    - id: data_transfer_rsync
+      use: data.transfer.rsync
+      with: {src: docs, dest: /tmp/dest}
+    - id: data_transfer_sync
+      use: data.transfer.sync
+      with: {src: docs, dest: /tmp/dest}
+    - id: data_transfer_upload
+      use: data.transfer.upload
+      with: {src: README.md, dest: /tmp/dest}

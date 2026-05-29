@@ -1,0 +1,73 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-data-archive
+tasks:
+- id: data_archive
+  description: Check-mode catalog for data archive and compression plugins.
+  targets: all
+  tags: [all-functions, check, data, archive]
+  steps:
+  - id: catalog
+    substeps:
+    - id: data_archive_tar_check
+      use: data.archive.tar.check
+      with: {archive: /tmp/app.tar.gz}
+    - id: data_archive_tar_create
+      use: data.archive.tar.create
+      with: {source: /var/log/app, dest: /tmp/app.tar.gz, compression: gzip}
+    - id: data_archive_tar_extract
+      use: data.archive.tar.extract
+      with: {archive: /tmp/app.tar.gz, dest: /tmp/dest}
+    - id: data_archive_tar_list
+      use: data.archive.tar.list
+      with: {archive: /tmp/app.tar.gz}
+    - id: data_archive_zip_check
+      use: data.archive.zip.check
+      with: {archive: /tmp/app.zip}
+    - id: data_archive_zip_create
+      use: data.archive.zip.create
+      with: {source: /var/log/app, dest: /tmp/app.zip}
+    - id: data_archive_zip_extract
+      use: data.archive.zip.extract
+      with: {archive: /tmp/app.zip, dest: /tmp/dest}
+    - id: data_archive_zip_list
+      use: data.archive.zip.list
+      with: {archive: /tmp/app.zip}
+    - id: data_compression_gzip_check
+      use: data.compression.gzip.check
+      with: {path: /tmp/app.log.gz}
+    - id: data_compression_gzip_compress
+      use: data.compression.gzip.compress
+      with: {source: /tmp/app.log, dest: /tmp/app.log.gz}
+    - id: data_compression_gzip_decompress
+      use: data.compression.gzip.decompress
+      with: {archive: /tmp/app.log.gz, dest: /tmp/app.log}
+    - id: data_compression_bzip2_check
+      use: data.compression.bzip2.check
+      with: {path: /tmp/app.log.bz2}
+    - id: data_compression_bzip2_compress
+      use: data.compression.bzip2.compress
+      with: {source: /tmp/app.log, dest: /tmp/app.log.bz2}
+    - id: data_compression_bzip2_decompress
+      use: data.compression.bzip2.decompress
+      with: {archive: /tmp/app.log.bz2, dest: /tmp/app.log}
+    - id: data_compression_xz_check
+      use: data.compression.xz.check
+      with: {path: /tmp/app.log.xz}
+    - id: data_compression_xz_compress
+      use: data.compression.xz.compress
+      with: {source: /tmp/app.log, dest: /tmp/app.log.xz}
+    - id: data_compression_xz_decompress
+      use: data.compression.xz.decompress
+      with: {archive: /tmp/app.log.xz, dest: /tmp/app.log}
+    - id: data_compression_zstd_check
+      use: data.compression.zstd.check
+      with: {path: /tmp/app.log.zst}
+    - id: data_compression_zstd_compress
+      use: data.compression.zstd.compress
+      with: {source: /tmp/app.log, dest: /tmp/app.log.zst}
+    - id: data_compression_zstd_decompress
+      use: data.compression.zstd.decompress
+      with: {archive: /tmp/app.log.zst, dest: /tmp/app.log}

@@ -171,63 +171,63 @@ tasks:
               path: moved.txt
               mode: "0600"
           - id: upload_file
-            use: transfer.upload
+            use: data.transfer.upload
             with:
               src: ${TMP_DIR}/payload/upload.txt
               dest: ${WORK_DIR}/uploaded.txt
           - id: upload_dir
-            use: transfer.upload
+            use: data.transfer.upload
             with:
               src: ${TMP_DIR}/payload/dir
               dest: ${WORK_DIR}/uploaded-dir
               recursive: true
           - id: sync_dir
-            use: transfer.sync
+            use: data.transfer.sync
             with:
               src: ${TMP_DIR}/payload
               dest: ${WORK_DIR}/synced
           - id: download_file
-            use: transfer.download
+            use: data.transfer.download
             with:
               src: ${WORK_DIR}/uploaded.txt
               dest: ${TMP_DIR}/downloads/uploaded.txt
           - id: tar_workspace
-            use: archive.tar
+            use: data.archive.tar.create
             with:
               source: ${WORK_DIR}/uploaded-dir
               dest: ${WORK_DIR}/uploaded-dir.tar.gz
               compression: gzip
               creates: ${WORK_DIR}/uploaded-dir.tar.gz
           - id: untar_workspace
-            use: archive.untar
+            use: data.archive.tar.extract
             with:
               archive: ${WORK_DIR}/uploaded-dir.tar.gz
               dest: ${WORK_DIR}/untar
               compression: gzip
               creates: ${WORK_DIR}/untar/uploaded-dir/nested.txt
           - id: compress_uploaded_file
-            use: archive.compress
+            use: data.compression.gzip.compress
             with:
               source: ${WORK_DIR}/uploaded.txt
               dest: ${WORK_DIR}/uploaded.txt.gz
               compression: gzip
               creates: ${WORK_DIR}/uploaded.txt.gz
           - id: decompress_uploaded_file
-            use: archive.decompress
+            use: data.compression.gzip.decompress
             with:
               archive: ${WORK_DIR}/uploaded.txt.gz
               dest: ${WORK_DIR}/uploaded.txt.roundtrip
               compression: gzip
               creates: ${WORK_DIR}/uploaded.txt.roundtrip
           - id: zip_workspace
-            use: archive.zip
+            use: data.archive.zip.create
             with:
               source: ${WORK_DIR}/uploaded-dir
               dest: ${WORK_DIR}/uploaded-dir.zip
               recursive: true
               creates: ${WORK_DIR}/uploaded-dir.zip
           - id: unzip_workspace
-            use: archive.unzip
+            use: data.archive.zip.extract
             with:
               archive: ${WORK_DIR}/uploaded-dir.zip
               dest: ${WORK_DIR}/unzip

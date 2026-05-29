@@ -394,9 +394,9 @@ RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
     "http.wait": {"data.status": "HTTP response status code.", "data.body": "Decoded response body."},
     "network.connectivity.port_wait": {"data.host": "Checked host.", "data.port": "Checked TCP port."},
     "network.connectivity.port_check": {"data.host": "Checked host.", "data.port": "Checked TCP port."},
-    "transfer.upload": {"data.src": "Local source path.", "data.dest": "Remote destination path"},
-    "transfer.download": {"data.src": "Remote source path.", "data.dest": "Local destination path."},
-    "transfer.rsync": {"data.command": "Executed rsync argument vector."},
+    "data.transfer.upload": {"data.src": "Local source path.", "data.dest": "Remote destination path"},
+    "data.transfer.download": {"data.src": "Remote source path.", "data.dest": "Local destination path."},
+    "data.transfer.rsync": {"data.command": "Executed rsync argument vector."},
     "identity.user.exists": {"data.exists": "Whether the remote user exists.", "data.name": "Checked username."},
     "identity.group.exists": {"data.exists": "Whether the remote group exists.", "data.name": "Checked group name."},
     "network.firewall.ufw.status": {"data.status": "Raw UFW status output."},
@@ -413,7 +413,7 @@ RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
     "os.package.facts": {"data.packages": "Installed package facts."},
     "facts.services": {"data.services": "systemd service facts."},
     "security.sudo.dropin": {"data.path": "Installed sudoers drop-in path."},
-    "transfer.sync": {"data.src": "Local source directory.", "data.dest": "Remote destination directory."},
+    "data.transfer.sync": {"data.src": "Local source directory.", "data.dest": "Remote destination directory."},
 }
 
 SAMPLE_VALUES: dict[str, Any] = {

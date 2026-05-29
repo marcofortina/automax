@@ -32,14 +32,14 @@ tasks:
               mode: "0644"
 
           - id: tar
-            use: archive.tar
+            use: data.archive.tar.create
             with:
               source: /tmp/automax-macros
               dest: /tmp/automax-macros.tar.gz
               compression: gzip
 
           - id: untar
-            use: archive.untar
+            use: data.archive.tar.extract
             with:
               archive: /tmp/automax-macros.tar.gz
               dest: /tmp/automax-macros-extracted
