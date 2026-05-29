@@ -92,20 +92,18 @@ tasks:
             with:
               path: ${WORK_DIR}
               mode: "0700"
-          - id: cd
-            use: fs.cd
-            with:
-              path: ${WORK_DIR}
           - id: write_marker
             use: fs.file.write
             with:
               path: result.txt
+              cwd: ${WORK_DIR}
               content: "automax-ssh-ok\n"
               mode: "0600"
           - id: read_marker
             use: fs.file.read
             with:
               path: result.txt
+              cwd: ${WORK_DIR}
             register:
               ssh_smoke_output: stdout.trim
             artifacts:
@@ -114,61 +112,76 @@ tasks:
             use: fs.file.check
             with:
               path: result.txt
+              cwd: ${WORK_DIR}
             register:
               marker_exists: data.exists
           - id: stat_marker
-            use: fs.object.stat
+            use: fs.path.stat
             with:
               path: result.txt
+              cwd: ${WORK_DIR}
             artifacts:
               data: core/stat-marker.json
           - id: ensure_line
             use: fs.file.line
             with:
               path: result.txt
+              cwd: ${WORK_DIR}
+              line: "line=old"
+              state: present
+          - id: check_line
+            use: fs.file.line.check
+            with:
+              path: result.txt
+              cwd: ${WORK_DIR}
               line: "line=old"
               state: present
           - id: replace_line
             use: fs.file.replace
             with:
               path: result.txt
+              cwd: ${WORK_DIR}
               pattern: "line=old"
               replacement: "line=new"
           - id: copy_marker
-            use: fs.object.copy
+            use: fs.path.copy
             with:
               src: result.txt
               dest: copied.txt
+              cwd: ${WORK_DIR}
               overwrite: true
           - id: move_marker
-            use: fs.object.move
+            use: fs.path.move
             with:
               src: copied.txt
               dest: moved.txt
+              cwd: ${WORK_DIR}
               overwrite: true
           - id: symlink_create
             use: fs.symlink.create
             with:
               src: moved.txt
-              dest: moved.link
+              dest: ${WORK_DIR}/moved.link
               force: true
           - id: symlink_remove
             use: fs.symlink.remove
             with:
-              path: moved.link
+              path: ${WORK_DIR}/moved.link
           - id: find_files
-            use: fs.object.find
+            use: fs.path.find
             with:
               path: .
+              cwd: ${WORK_DIR}
               patterns: ["*.txt"]
               type: file
               max_depth: 1
             artifacts:
               stdout: core/find-files.txt
           - id: chmod_marker
-            use: fs.permission.mode
+            use: fs.permission.mode.set
             with:
               path: moved.txt
+              cwd: ${WORK_DIR}
               mode: "0600"
           - id: upload_file
             use: data.transfer.upload

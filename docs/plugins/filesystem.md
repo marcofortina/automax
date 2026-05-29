@@ -66,13 +66,13 @@ when the path exists with a different type. `*.wait` uses `retries` and
     recursive: true
 ```
 
-## `fs.object.stat`
+## `fs.path.stat`
 
 Returns metadata for a remote path.
 
 ```yaml
 - id: stat_binary
-  use: fs.object.stat
+  use: fs.path.stat
   with:
     path: /usr/local/bin/myapp
   register:
@@ -169,13 +169,13 @@ default the backup path is the original path plus `.bak`; use `backup_suffix` or
     sudo: true
 ```
 
-## `fs.object.copy`
+## `fs.path.copy`
 
 Copies a remote source path to a remote destination path.
 
 ```yaml
 - id: copy_config_backup
-  use: fs.object.copy
+  use: fs.path.copy
   with:
     src: /etc/myapp/app.conf
     dest: /etc/myapp/app.conf.bak
@@ -183,13 +183,13 @@ Copies a remote source path to a remote destination path.
     sudo: true
 ```
 
-## `fs.object.move`
+## `fs.path.move`
 
 Moves or renames a remote path.
 
 ```yaml
 - id: activate_file
-  use: fs.object.move
+  use: fs.path.move
   with:
     src: /tmp/myapp.conf
     dest: /etc/myapp/app.conf
@@ -223,13 +223,13 @@ as already absent. If the path exists but is a file or directory, it fails.
     sudo: true
 ```
 
-## `fs.object.find`
+## `fs.path.find`
 
 Finds paths under a root path.
 
 ```yaml
 - id: find_logs
-  use: fs.object.find
+  use: fs.path.find
   with:
     path: /var/log/myapp
     name: "*.log"
@@ -238,13 +238,13 @@ Finds paths under a root path.
     log_files: data.paths
 ```
 
-## `fs.permission.owner` and `fs.permission.mode`
+## `fs.permission.owner.set` and `fs.permission.mode.set`
 
 Manage ownership and permissions.
 
 ```yaml
 - id: fix_owner
-  use: fs.permission.owner
+  use: fs.permission.owner.set
   with:
     path: /opt/myapp
     owner: myapp
@@ -253,33 +253,45 @@ Manage ownership and permissions.
     sudo: true
 
 - id: fix_mode
-  use: fs.permission.mode
+  use: fs.permission.mode.set
   with:
     path: /opt/myapp/bin/myapp
     mode: "0755"
     sudo: true
 ```
 
-## `fs.cd`
+## File operation working directories
 
-Sets the step-local working directory used by later remote plugins in the same
-step.
+`fs.file.read`, `fs.file.write`, `fs.file.template`, `fs.file.line`,
+`fs.file.line.check` and `fs.file.replace` accept `cwd` for relative remote
+paths where applicable. `fs.file.read` also accepts `sudo` for privileged reads.
 
-```yaml
-- id: enter_release_dir
-  use: fs.cd
-  with:
-    path: /opt/myapp/current
+## Line predicate checks
 
-- id: run_from_current
-  use: command.remote.run
-  with:
-    command: "./bin/myapp --version"
-```
+`fs.file.line.check` checks whether an exact line is present or absent without
+modifying the file. It returns `data.matches=true|false` and only fails for
+technical errors such as unreadable files or invalid parameters.
 
-`fs.cd` does not keep a shell open. It updates Automax `step_state` and later
-remote commands are prefixed with `cd <path> &&` where supported.
+## Symlink readback and target checks
 
+`fs.symlink.get` reads the literal symlink target, the resolved target path,
+and whether the link is currently broken. Broken links are reported with
+`data.broken=true` and `data.target_exists=false`; they are not failures because
+cluster active/passive layouts can intentionally point at targets that are not
+mounted on the current node.
+
+`fs.symlink.check` keeps predicate semantics: absence or target mismatch returns
+`ok=true` with `data.exists=false` or `data.matches=false`. It fails only when
+the checked path exists but is not a symlink, because that is an incompatible
+filesystem type for this plugin.
+
+## Idempotent ACL and attribute setters
+
+`fs.acl.set` and `fs.attr.set` check the current non-recursive state before
+applying changes. If the requested ACL entry or attribute state is already
+satisfied, they return `changed=false`. Recursive ACL/attribute operations still
+apply the command to the tree because a single root-level predicate is not enough
+to prove every descendant already matches.
 
 ## Operational backups
 
@@ -353,5 +365,5 @@ protected root-level paths such as `/`, `/etc`, `/usr`, `/var` and `/tmp`.
 and backup-before semantics for configuration file edits. `fs.file.write` and
 `fs.file.template` expose an explicit `atomic` option, defaulting to true, so generated
 content is installed through a temporary path and final rename where possible.
-`fs.file.replace` also supports `match_count_assert` to prevent zero-match or
+`fs.file.replace` also supports `required_match_count` to prevent zero-match or
 broad-match regex changes.

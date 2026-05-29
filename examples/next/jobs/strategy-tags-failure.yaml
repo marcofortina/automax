@@ -27,14 +27,9 @@ tasks:
             with:
               path: /tmp/automax-example
               mode: "0755"
-          - id: cd
-            tags: [safe]
-            use: fs.cd
-            with:
-              path: /tmp/automax-example
           - id: chmod
             tags: [safe]
-            use: fs.permission.mode
+            use: fs.permission.mode.set
             with:
               path: /tmp/automax-example
               mode: "0755"
@@ -43,3 +38,4 @@ tasks:
             use: command.remote.run
             with:
               command: "printf '{{ server.name }}' > marker.txt"
+              cwd: /tmp/automax-example

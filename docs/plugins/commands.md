@@ -43,4 +43,4 @@ transfer, database or HTTP operations, prefer the dedicated plugin names.
 
 `command.local.run` uses the controller shell for string commands, matching Python `subprocess.run(..., shell=True)`. Keep it for trusted operator-authored jobs and prefer list-style commands in future extensions when shell parsing is not desired.
 
-`command.remote.run` accepts `cwd`, `timeout`, `stdin`, `pty`, `encoding`, `success_rc` and `changed`. `fs.cd` sets step-local `cwd` for later remote plugins without keeping an interactive shell open.
+`command.remote.run` accepts `cwd`, `timeout`, `stdin`, `pty`, `encoding`, `success_rc` and `changed`. Use explicit `cwd` on the substep that needs a working directory instead of relying on implicit shell state.

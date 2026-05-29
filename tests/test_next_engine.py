@@ -21,6 +21,7 @@ from automax.core.models import ExecutionContext, Target
 from automax.core.state import StateStore
 from automax.plugins.base import PluginValidationError
 import automax.plugins.fs_extra as fs_extra
+import automax.plugins.fs_system as fs_system
 import automax.plugins.fs_typed as fs_typed
 
 
@@ -318,7 +319,7 @@ def test_builtin_filesystem_plugins_are_registered():
 
     assert result.exit_code == 0, result.output
     output_names = set(result.output.splitlines())
-    for name in ("fs.cd", "fs.permission.mode", "fs.permission.owner", "fs.dir.create"):
+    for name in ("fs.permission.mode.set", "fs.permission.owner.set", "fs.dir.create"):
         assert name in output_names
     for alias in ("cd", "chmod", "chown", "mkdir", "fs.mkdir"):
         assert alias not in output_names
@@ -397,6 +398,165 @@ def test_typed_filesystem_plugins_are_strict_about_wrong_path_types(monkeypatch)
     assert 'is_file() { run test -f "$path" && ! run test -L "$path"; }' in remove_command
 
 
+
+
+
+
+
+
+
+
+def test_fs_file_read_supports_sudo_and_cwd(monkeypatch):
+    context = ExecutionContext(
+        run_id="run-1",
+        dry_run=False,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="host", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+    commands = []
+
+    def fake_exec_remote(context, command, **kwargs):
+        commands.append(command)
+        return 0, "secret", ""
+
+    monkeypatch.setattr(fs_extra, "exec_remote", fake_exec_remote)
+
+    result = fs_extra.FsReadPlugin().execute({"path": "app.conf", "cwd": "/etc/myapp", "sudo": True}, context)
+
+    assert result.ok
+    assert result.data["content"] == "secret"
+    assert commands == ["cd /etc/myapp && sudo -n cat app.conf"]
+
+
+def test_acl_and_attr_set_skip_when_predicate_already_matches(monkeypatch):
+    context = ExecutionContext(
+        run_id="run-1",
+        dry_run=False,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="host", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+    calls = []
+
+    def fake_exec_remote(context, command, **kwargs):
+        calls.append(command)
+        return 0, "", ""
+
+    monkeypatch.setattr(fs_system, "exec_remote", fake_exec_remote)
+
+    acl_result = fs_system.FsAclPlugin().execute({"path": "/tmp/demo", "acl": "user:app:r--"}, context)
+    attr_result = fs_system.FsAttrPlugin().execute({"path": "/tmp/demo", "attrs": "i"}, context)
+
+    assert acl_result.ok and not acl_result.changed
+    assert attr_result.ok and not attr_result.changed
+    assert all("setfacl" not in command and "chattr" not in command for command in calls)
+
+
+def test_fs_file_line_check_returns_predicate_result(monkeypatch):
+    context = ExecutionContext(
+        run_id="run-1",
+        dry_run=False,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="host", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+
+    def fake_exec_remote(context, command, **kwargs):
+        return 0, json.dumps({"path": "/etc/app.conf", "exists": True, "line_present": False, "state": "present", "matches": False}), ""
+
+    monkeypatch.setattr(fs_extra, "exec_remote", fake_exec_remote)
+
+    result = fs_extra.FsLineCheckPlugin().execute({"path": "/etc/app.conf", "line": "enabled=true"}, context)
+
+    assert result.ok
+    assert result.data["matches"] is False
+    assert result.data["line_present"] is False
+
+
+def test_symlink_check_reports_broken_target_without_failure(monkeypatch):
+    context = ExecutionContext(
+        run_id="run-1",
+        dry_run=False,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="host", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+    context.ssh_client = object()
+
+    def fake_exec_remote(context, command, **kwargs):
+        payload = {
+            "exists": True,
+            "is_symlink": True,
+            "path": "/opt/app/current",
+            "target": "/mnt/passive/app/releases/v42",
+            "expected_target": "/mnt/passive/app/releases/v42",
+            "resolved_target": "/mnt/passive/app/releases/v42",
+            "target_exists": False,
+            "broken": True,
+            "matches": True,
+        }
+        return 0, json.dumps(payload), ""
+
+    monkeypatch.setattr(fs_typed, "exec_remote", fake_exec_remote)
+
+    result = fs_typed.FsSymlinkCheckPlugin().execute(
+        {"path": "/opt/app/current", "target": "/mnt/passive/app/releases/v42"},
+        context,
+    )
+
+    assert result.ok
+    assert result.data["matches"] is True
+    assert result.data["broken"] is True
+    assert result.data["target_exists"] is False
+
+
+def test_symlink_get_reports_non_symlink_without_failure(monkeypatch):
+    context = ExecutionContext(
+        run_id="run-1",
+        dry_run=False,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="host", host="127.0.0.1"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+    context.ssh_client = object()
+
+    def fake_exec_remote(context, command, **kwargs):
+        return 20, json.dumps({"exists": True, "is_symlink": False, "actual_type": "directory", "path": "/opt/app/current"}), ""
+
+    monkeypatch.setattr(fs_typed, "exec_remote", fake_exec_remote)
+
+    result = fs_typed.FsSymlinkGetPlugin().execute({"path": "/opt/app/current"}, context)
+
+    assert result.ok
+    assert result.data == {"exists": True, "is_symlink": False, "actual_type": "directory", "path": "/opt/app/current"}
+
+
 def test_ssh_smoke_script_is_syntax_valid():
     script = Path("scripts/ssh-smoke.sh")
     assert script.exists()
@@ -420,7 +580,7 @@ tasks:
       - id: filesystem
         substeps:
           - id: copy
-            use: fs.object.copy
+            use: fs.path.copy
             with:
               src: /tmp/source.txt
               dest: /tmp/dest.txt
@@ -516,18 +676,20 @@ def test_filesystem_plugin_names_are_canonical():
         "fs.file.remove",
         "fs.file.check",
         "fs.file.wait",
-        "fs.object.stat",
+        "fs.path.stat",
         "fs.file.read",
         "fs.file.write",
         "fs.file.template",
         "fs.file.line",
+        "fs.file.line.check",
         "fs.file.replace",
-        "fs.object.move",
+        "fs.path.move",
         "fs.symlink.create",
         "fs.symlink.remove",
         "fs.symlink.check",
+        "fs.symlink.get",
         "fs.symlink.wait",
-        "fs.object.find",
+        "fs.path.find",
     ):
         assert name in names
 
@@ -1549,10 +1711,11 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "fs.file.write",
         "fs.file.read",
         "fs.file.check",
-        "fs.object.stat",
+        "fs.path.stat",
         "fs.file.line",
+        "fs.file.line.check",
         "fs.file.replace",
-        "fs.object.move",
+        "fs.path.move",
         "fs.symlink.create",
         "fs.symlink.remove",
         "data.archive.tar.create",
@@ -2953,7 +3116,7 @@ tasks:
       - id: s1
         substeps:
           - id: stat
-            use: fs.object.stat
+            use: fs.path.stat
             with:
               path: /tmp/demo
 """,
@@ -3294,7 +3457,7 @@ tasks:
       - id: s1
         substeps:
           - id: stat
-            use: fs.object.stat
+            use: fs.path.stat
             with:
               path: /tmp/demo
 """,
@@ -3309,7 +3472,7 @@ tasks:
     assert result.exit_code == 0, result.output
     payload = json.loads(result.output)
     assert payload["diffs"][0]["available"] is True
-    assert payload["diffs"][0]["plugin"] == "fs.object.stat"
+    assert payload["diffs"][0]["plugin"] == "fs.path.stat"
     assert payload["diffs"][0]["kind"] == "operation-plan"
     assert "stat /tmp/demo" in payload["diffs"][0]["diff"]
 
@@ -3329,7 +3492,7 @@ tasks:
       - id: s1
         substeps:
           - id: stat
-            use: fs.object.stat
+            use: fs.path.stat
             with:
               path: /tmp/demo
 """,
@@ -4407,7 +4570,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["acl"] = "u:app:rwx"
     if plugin.name in {"fs.attr.set", "fs.attr.check"}:
         params["attrs"] = "i"
-    if plugin.name == "fs.permission.owner":
+    if plugin.name == "fs.permission.owner.set":
         params["owner"] = "demo"
     if plugin.name == "storage.quota.set":
         params["type"] = "user"
@@ -4429,7 +4592,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["min_packets"] = 1
     if plugin.name == "fs.file.replace":
         params["count"] = 0
-        params["match_count_assert"] = 1
+        params["required_match_count"] = 1
     if plugin.name == "security.sshd.config":
         params["match_blocks"] = [{"match": "User deploy", "settings": {"X11Forwarding": "no"}}]
     if plugin.name == "network.dns.config":

@@ -48,6 +48,15 @@ class FsAclPlugin(BasePlugin):
         return commands
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        state = str(params.get("state", "present"))
+        if not bool(params.get("recursive", False)):
+            check = FsAclAssertPlugin()
+            check_result = check.execute({"path": params["path"], "acl": params["acl"], "state": state, "sudo": params.get("sudo", True)}, context)
+            if check_result.ok and check_result.data.get("matches") is True:
+                return PluginResult.success(changed=False, rc=0, data={"path": params["path"], "acl": _acl_entries(params["acl"]), "state": state})
+            if not check_result.ok and check_result.rc not in {1, None}:
+                return check_result
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
         return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="fs.acl.set failed")
 
@@ -72,6 +81,16 @@ class FsAttrPlugin(BasePlugin):
         return [f"{sudo_prefix(params, default=True)}chattr {flag}{op}{quote(params['attrs'])} {quote(params['path'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        state = str(params.get("state", "present"))
+        attrs = _attr_entries(params["attrs"])
+        if not bool(params.get("recursive", False)):
+            check = FsAttrCheckPlugin()
+            check_result = check.execute({"path": params["path"], "attrs": params["attrs"], "state": state, "sudo": params.get("sudo", True)}, context)
+            if check_result.ok and check_result.data.get("matches") is True:
+                return PluginResult.success(changed=False, rc=0, data={"path": params["path"], "attrs": attrs, "state": state})
+            if not check_result.ok and check_result.rc not in {1, None}:
+                return check_result
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="fs.attr.set failed")
 

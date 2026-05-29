@@ -7,6 +7,7 @@ Type-strict filesystem resource plugins.
 
 from __future__ import annotations
 
+import json
 import posixpath
 import time
 from typing import Any, Dict
@@ -20,6 +21,7 @@ from automax.plugins.remote_utils import (
     heredoc_to_stdin,
     quote,
     result_from_remote,
+    sudo_command,
     sudo_shell_run_function,
 )
 
@@ -487,6 +489,81 @@ class FsFileRemovePlugin(_TypedRemovePlugin):
     kind_label = "file"
 
 
+_SYMLINK_STATUS_SCRIPT = r'''
+import json
+import os
+import stat
+import sys
+
+path = sys.argv[1]
+expected_target = sys.argv[2] or None
+
+def actual_type_for(path: str) -> str:
+    try:
+        mode = os.lstat(path).st_mode
+    except OSError:
+        return "unknown"
+    if stat.S_ISDIR(mode):
+        return "directory"
+    if stat.S_ISREG(mode):
+        return "file"
+    if stat.S_ISCHR(mode):
+        return "char-device"
+    if stat.S_ISBLK(mode):
+        return "block-device"
+    if stat.S_ISFIFO(mode):
+        return "fifo"
+    if stat.S_ISSOCK(mode):
+        return "socket"
+    return "other"
+
+data = {"path": path}
+if expected_target is not None:
+    data["expected_target"] = expected_target
+
+if not os.path.lexists(path):
+    data.update({"exists": False, "is_symlink": False})
+    print(json.dumps(data, sort_keys=True))
+    sys.exit(10)
+
+if not os.path.islink(path):
+    data.update({"exists": True, "is_symlink": False, "actual_type": actual_type_for(path)})
+    print(json.dumps(data, sort_keys=True))
+    sys.exit(20)
+
+target = os.readlink(path)
+resolved_target = target if os.path.isabs(target) else os.path.normpath(os.path.join(os.path.dirname(path), target))
+target_exists = os.path.exists(resolved_target)
+data.update(
+    {
+        "exists": True,
+        "is_symlink": True,
+        "target": target,
+        "resolved_target": resolved_target,
+        "target_exists": target_exists,
+        "broken": not target_exists,
+    }
+)
+if expected_target is not None:
+    data["matches"] = target == expected_target
+print(json.dumps(data, sort_keys=True))
+'''
+
+
+def _symlink_status_command(params: Dict[str, Any], context: ExecutionContext) -> str:
+    python = sudo_command(params, "python3", default=False)
+    command = heredoc_to_stdin(
+        f"{python} - {quote(params['path'])} {quote(params.get('target', ''))}",
+        _SYMLINK_STATUS_SCRIPT,
+        prefix="AUTOMAX_PY",
+    )
+    return apply_cwd(command, context, params.get("cwd"))
+
+
+def _parse_symlink_status(stdout: str) -> Dict[str, Any]:
+    return json.loads(stdout.strip() or "{}")
+
+
 class FsDirCheckPlugin(_TypedExistsPlugin):
     """Check whether a real directory exists."""
 
@@ -505,13 +582,76 @@ class FsFileCheckPlugin(_TypedExistsPlugin):
     kind_label = "file"
 
 
-class FsSymlinkCheckPlugin(_TypedExistsPlugin):
-    """Check whether a symbolic link exists."""
+class FsSymlinkCheckPlugin(_TypedFilesystemPlugin):
+    """Check whether a symlink exists and optionally matches a literal target."""
 
     name = "fs.symlink.check"
-    description = "Check whether a symbolic link exists, failing if another path type exists there."
+    description = "Check whether a symlink exists and optionally whether it points to a target."
     kind = "symlink"
     kind_label = "symlink"
+    required_params = ("path",)
+    optional_params = ("target", "sudo", "cwd")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        self._validate_path(params)
+        if context.ssh_client is None:
+            return PluginResult.failure(message=f"{self.name} requires an SSH session")
+        rc, out, err = exec_remote(
+            context,
+            _symlink_status_command(params, context),
+            get_pty=bool(params.get("sudo", False)),
+        )
+        try:
+            data = _parse_symlink_status(out)
+        except json.JSONDecodeError as exc:
+            return PluginResult.failure(rc=1, stdout=out, stderr=str(exc), message="fs.symlink.check could not parse status output")
+        if rc in {0, 10}:
+            if "target" in params and "matches" not in data:
+                data["matches"] = False
+            return PluginResult.success(changed=False, rc=0, stdout=out, stderr=err, data=data)
+        if rc == 20:
+            return PluginResult.failure(
+                rc=rc,
+                stdout=out,
+                stderr=err,
+                message="fs.symlink.check found a different filesystem type",
+                data=data,
+            )
+        return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.symlink.check failed", data=data)
+
+
+class FsSymlinkGetPlugin(_TypedFilesystemPlugin):
+    """Read symlink target state without treating non-symlinks as check failures."""
+
+    name = "fs.symlink.get"
+    description = "Read symlink target, resolved target and broken-link state."
+    kind = "symlink"
+    kind_label = "symlink"
+    required_params = ("path",)
+    optional_params = ("sudo", "cwd")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        self._validate_path(params)
+        if context.ssh_client is None:
+            return PluginResult.failure(message=f"{self.name} requires an SSH session")
+        rc, out, err = exec_remote(
+            context,
+            _symlink_status_command(params, context),
+            get_pty=bool(params.get("sudo", False)),
+        )
+        try:
+            data = _parse_symlink_status(out)
+        except json.JSONDecodeError as exc:
+            return PluginResult.failure(rc=1, stdout=out, stderr=str(exc), message="fs.symlink.get could not parse status output")
+        if rc in {0, 10, 20}:
+            return PluginResult.success(changed=False, rc=0, stdout=out, stderr=err, data=data)
+        return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.symlink.get failed", data=data)
 
 
 class FsDirWaitPlugin(_TypedWaitPlugin):

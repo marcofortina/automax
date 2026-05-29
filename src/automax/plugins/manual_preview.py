@@ -249,9 +249,7 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
             return [f"getent group {_q(name)}"]
 
     if plugin_name.startswith("fs."):
-        if plugin_name == "fs.cd":
-            return [f"cd {_q(path)}"]
-        if plugin_name == "fs.object.copy":
+        if plugin_name == "fs.path.copy":
             return [f"cp {'-a ' if params.get('preserve') else ''}{'-r ' if params.get('recursive') else ''}{_q(params.get('src', '/tmp/source'))} {_q(params.get('dest', '/tmp/dest'))}"]
         if plugin_name == "fs.dir.create":
             return [f"test -d {_q(path)} && ! test -L {_q(path)} || mkdir -p -- {_q(path)}"]
@@ -273,15 +271,29 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
             return [f"test -L {_q(path)}"]
         if plugin_name == "fs.symlink.wait":
             return [f"for i in $(seq 1 {_q(params.get('retries', 12))}); do test -L {_q(path)} && exit 0; sleep {_q(params.get('interval', 5))}; done; exit 1"]
-        if plugin_name == "fs.object.find":
+        if plugin_name == "fs.path.find":
             return [f"find {_q(path)}"]
         if plugin_name == "fs.file.line":
             return [f"grep -Fqx {_q(params.get('line', 'line'))} {_q(path)} || printf '%s\\n' {_q(params.get('line', 'line'))} >> {_q(path)}"]
-        if plugin_name == "fs.object.move":
+        if plugin_name == "fs.path.move":
             return [f"mv {_q(params.get('src', '/tmp/source'))} {_q(params.get('dest', '/tmp/dest'))}"]
         if plugin_name == "fs.file.read":
-            return [f"cat {_q(path)}"]
-        if plugin_name == "fs.object.stat":
+            prefix = "sudo " if params.get("sudo") else ""
+            return [f"{prefix}cat {_q(path)}"]
+        if plugin_name == "fs.permission.mode.get":
+            return [f"stat -c %a {_q(path)}"]
+        if plugin_name == "fs.permission.mode.check":
+            return [f'test -e {_q(path)} && test "$(stat -c %a {_q(path)})" = {_q(params.get("mode", "0644"))} || true']
+        if plugin_name == "fs.permission.mode.set":
+            return [f"chmod {_q(params.get('mode', '0644'))} {_q(path)}"]
+        if plugin_name == "fs.permission.owner.get":
+            return [f"stat -c '%U|%G' {_q(path)}"]
+        if plugin_name == "fs.permission.owner.check":
+            return [f"test -e {_q(path)} && stat -c '%U|%G' {_q(path)} || true"]
+        if plugin_name == "fs.permission.owner.set":
+            owner_group = f"{params.get('owner', '')}:{params.get('group', '')}"
+            return [f"chown {_q(owner_group)} {_q(path)}"]
+        if plugin_name == "fs.path.stat":
             return [f"stat {_q(path)}"]
         if plugin_name == "fs.symlink.create":
             return [f"ln -sfn {_q(params.get('src', '/tmp/source'))} {_q(params.get('dest', '/tmp/dest'))}"]

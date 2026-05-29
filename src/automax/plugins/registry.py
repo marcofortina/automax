@@ -181,10 +181,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         UfwRulePlugin,
         UfwStatusPlugin,
     )
-    from automax.plugins.fs_cd import FsCdPlugin
     from automax.plugins.fs_advanced import FsBindMountPlugin, FsInodeUsageAssertPlugin
-    from automax.plugins.fs_chmod import FsChmodPlugin
-    from automax.plugins.fs_chown import FsChownPlugin
+    from automax.plugins.fs_chmod import FsChmodPlugin, FsModeCheckPlugin, FsModeGetPlugin
+    from automax.plugins.fs_chown import FsChownPlugin, FsOwnerCheckPlugin, FsOwnerGetPlugin
     from automax.plugins.fs_copy import FsCopyPlugin
     from automax.plugins.fs_system import (
         FsAclAssertPlugin,
@@ -202,6 +201,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     from automax.plugins.fs_extra import (
         FsFindPlugin,
         ExtendedFsLinePlugin,
+        FsLineCheckPlugin,
         FsMovePlugin,
         FsReadPlugin,
         ExtendedFsReplacePlugin,
@@ -232,6 +232,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsFileRemovePlugin,
         FsFileWaitPlugin,
         FsSymlinkCheckPlugin,
+        FsSymlinkGetPlugin,
         FsSymlinkWaitPlugin,
     )
     from automax.plugins.http import HttpAssertPlugin, HttpRequestPlugin, HttpWaitPlugin
@@ -715,7 +716,6 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         TransferUploadPlugin(),
         TransferDownloadPlugin(),
         ExtendedTransferRsyncPlugin(),
-        FsCdPlugin(),
         FsDirCreatePlugin(),
         FsDirRemovePlugin(),
         FsDirCheckPlugin(),
@@ -730,14 +730,20 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         ExtendedFsWritePlugin(),
         ExtendedFsTemplatePlugin(),
         ExtendedFsLinePlugin(),
+        FsLineCheckPlugin(),
         ExtendedFsReplacePlugin(),
         FsMovePlugin(),
         FsSymlinkCreatePlugin(),
         FsSymlinkRemovePlugin(),
         FsSymlinkCheckPlugin(),
+        FsSymlinkGetPlugin(),
         FsSymlinkWaitPlugin(),
         FsFindPlugin(),
+        FsOwnerCheckPlugin(),
+        FsOwnerGetPlugin(),
         FsChownPlugin(),
+        FsModeCheckPlugin(),
+        FsModeGetPlugin(),
         FsChmodPlugin(),
         FsAclPlugin(),
         FsAclGetPlugin(),

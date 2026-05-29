@@ -19,14 +19,14 @@ tasks:
               mode: "0755"
 
           - id: copy
-            use: fs.object.copy
+            use: fs.path.copy
             with:
               src: /etc/hosts
               dest: /tmp/automax-macros/hosts.copy
               overwrite: true
 
           - id: chmod
-            use: fs.permission.mode
+            use: fs.permission.mode.set
             with:
               path: /tmp/automax-macros/hosts.copy
               mode: "0644"

@@ -61,7 +61,7 @@ Registered outputs can be reused later in the same run:
 
 ```yaml
 - id: stat_app
-  use: fs.object.stat
+  use: fs.path.stat
   with:
     path: /opt/app
   register: app_stat

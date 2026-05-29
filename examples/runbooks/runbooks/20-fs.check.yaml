@@ -46,22 +46,18 @@ tasks:
       with:
         path: /tmp/automax-demo
         attrs: i
-    - id: fs_cd
-      use: fs.cd
-      with:
-        path: /tmp/automax-demo
     - id: fs_chmod
-      use: fs.permission.mode
+      use: fs.permission.mode.set
       with:
         path: /tmp/automax-demo
         mode: '0644'
     - id: fs_chown
-      use: fs.permission.owner
+      use: fs.permission.owner.set
       with:
         path: /tmp/automax-demo
         owner: ubuntu
     - id: fs_copy
-      use: fs.object.copy
+      use: fs.path.copy
       with:
         src: /tmp/source
         dest: /tmp/dest
@@ -96,7 +92,7 @@ tasks:
         retries: 1
         interval: 1
     - id: fs_find
-      use: fs.object.find
+      use: fs.path.find
       with:
         path: /tmp/automax-demo
     - id: fs_line
@@ -105,7 +101,7 @@ tasks:
         path: /tmp/automax-demo
         line: KEY=value
     - id: fs_move
-      use: fs.object.move
+      use: fs.path.move
       with:
         src: /tmp/source
         dest: /tmp/dest
@@ -129,7 +125,7 @@ tasks:
         pattern: KEY=.*
         replacement: KEY=new-value
     - id: fs_stat
-      use: fs.object.stat
+      use: fs.path.stat
       with:
         path: /tmp/automax-demo
     - id: fs_symlink_create

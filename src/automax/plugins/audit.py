@@ -185,7 +185,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["min_packets"] = 1
     if plugin.name == "fs.file.replace":
         params["count"] = 0
-        params["match_count_assert"] = 1
+        params["required_match_count"] = 1
     if plugin.name == "security.sshd.config":
         params["match_blocks"] = [{"match": "User deploy", "settings": {"X11Forwarding": "no"}}]
     if plugin.name == "network.dns.config":
