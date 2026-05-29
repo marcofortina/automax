@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """
-Remote archive macro plugins.
+Remote archive plugins.
 """
 
 from __future__ import annotations

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """
-Remote chmod macro plugins.
+Remote chmod plugins.
 """
 
 from __future__ import annotations

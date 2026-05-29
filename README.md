@@ -108,24 +108,24 @@ python -m pytest -q
 
 ```bash
 python -m automax validate \
-  --job examples/next/jobs/local-smoke.yaml \
-  --inventory examples/next/inventory/local.yaml
+  --job examples/jobs/local-smoke.yaml \
+  --inventory examples/inventory/local.yaml
 ```
 
 For a local-only plan:
 
 ```bash
 python -m automax plan \
-  --job examples/next/jobs/local-smoke.yaml \
-  --inventory examples/next/inventory/local.yaml
+  --job examples/jobs/local-smoke.yaml \
+  --inventory examples/inventory/local.yaml
 ```
 
 For machine-readable output:
 
 ```bash
 python -m automax plan \
-  --job examples/next/jobs/local-smoke.yaml \
-  --inventory examples/next/inventory/local.yaml \
+  --job examples/jobs/local-smoke.yaml \
+  --inventory examples/inventory/local.yaml \
   --format=json
 
 python -m automax schema export --kind job --format=json --output /tmp/automax-job.schema.json

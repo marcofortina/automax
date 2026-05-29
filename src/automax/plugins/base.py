@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """
-Plugin base contract for Automax next engine.
+Plugin base contract for Automax engine.
 """
 
 from __future__ import annotations

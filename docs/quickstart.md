@@ -21,8 +21,8 @@ python -m pip install -e '.[dev]'
 
 ```bash
 automax validate \
-  --job examples/next/jobs/local-smoke.yaml \
-  --inventory examples/next/inventory/local.yaml
+  --job examples/jobs/local-smoke.yaml \
+  --inventory examples/inventory/local.yaml
 ```
 
 Validation checks the YAML shape, inventory resolution, plugin names and plugin
@@ -32,8 +32,8 @@ parameters before a run starts.
 
 ```bash
 automax plan \
-  --job examples/next/jobs/local-smoke.yaml \
-  --inventory examples/next/inventory/local.yaml
+  --job examples/jobs/local-smoke.yaml \
+  --inventory examples/inventory/local.yaml
 ```
 
 Typical output:
@@ -46,8 +46,8 @@ controller task.smoke:step.local:substep.echo plugin=command.local.run tags=-
 
 ```bash
 automax run \
-  --job examples/next/jobs/local-smoke.yaml \
-  --inventory examples/next/inventory/local.yaml \
+  --job examples/jobs/local-smoke.yaml \
+  --inventory examples/inventory/local.yaml \
   --state-dir .automax/runs
 ```
 

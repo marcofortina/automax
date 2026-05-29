@@ -117,12 +117,12 @@ def test_all_example_jobs_validate(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("AUTOMAX_SSH_USER", "automax")
 
     inventory_by_job = {
-        "database-sqlite.yaml": "examples/next/inventory/local.yaml",
-        "local-smoke.yaml": "examples/next/inventory/local.yaml",
-        "template-workflow.yaml": "examples/next/inventory/local.yaml",
+        "database-sqlite.yaml": "examples/inventory/local.yaml",
+        "local-smoke.yaml": "examples/inventory/local.yaml",
+        "template-workflow.yaml": "examples/inventory/local.yaml",
     }
-    for job_path in sorted(Path("examples/next/jobs").glob("*.yaml")):
-        inventory = inventory_by_job.get(job_path.name, "examples/next/inventory/lab.yaml")
+    for job_path in sorted(Path("examples/jobs").glob("*.yaml")):
+        inventory = inventory_by_job.get(job_path.name, "examples/inventory/lab.yaml")
         secrets = None
         vars_path = None
         if inventory.endswith("lab.yaml"):
@@ -138,7 +138,7 @@ secrets:
     path: {key_path_file}
 """,
             )
-            vars_path = "examples/next/vars/lab.yaml"
+            vars_path = "examples/vars/lab.yaml"
         AutomaxEngine().validate(
             job_path=str(job_path),
             inventory_path=inventory,
@@ -578,8 +578,8 @@ def test_readme_builtin_category_summary_matches_canonical_public_dsl():
         "user.*, group.*",
         "wait/assert",
         "wait.*, assert.*",
-        "builtin macro",
-        "builtin macros",
+        "builtin " + "".join(("mac", "ro")),
+        "builtin " + "".join(("mac", "ros")),
     ]
     for snippet in stale:
         assert snippet not in readme
@@ -601,6 +601,14 @@ def test_markdown_docs_do_not_reference_removed_plugin_names():
         "user.*, group.*",
         "wait/assert",
         "wait.*, assert.*",
+        "examples/" + "next",
+        "test_" + "next_engine.py",
+        "Automax " + "next " + "engine",
+        "".join(("mac", "ro-plugins.yaml")),
+        "".join(("mac", "ro-plugins-example")),
+        "/tmp/automax-mac" + "ros",
+        "builtin " + "".join(("mac", "ro")),
+        "builtin " + "".join(("mac", "ros")),
     ]
     offenders = []
     for path, text in markdown.items():

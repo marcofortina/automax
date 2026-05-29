@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """
-Command-line interface for Automax next engine.
+Command-line interface for Automax engine.
 """
 
 from __future__ import annotations

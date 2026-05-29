@@ -563,18 +563,18 @@ def test_ssh_smoke_script_is_syntax_valid():
     assert os.system(f"bash -n {script}") == 0
 
 
-def test_new_macro_plugins_validate_in_job_yaml(tmp_path: Path):
+def test_new_plugin_workflows_validate_in_job_yaml(tmp_path: Path):
     job = write(
         tmp_path / "job.yaml",
         """
 apiVersion: automax.io/v1
 kind: Job
 metadata:
-  name: macro-validate
+  name: plugin-validate
 failurePolicy:
   onFailure: continue
 tasks:
-  - id: macros
+  - id: plugins
     targets: all
     steps:
       - id: filesystem
@@ -651,7 +651,7 @@ tasks:
     AutomaxEngine().validate(job_path=str(job), inventory_path=str(inventory))
 
 
-def test_builtin_macro_plugins_are_registered_with_canonical_names_only():
+def test_builtin_plugins_are_registered_with_canonical_names_only():
     result = CliRunner().invoke(cli, ["plugins", "list"])
 
     assert result.exit_code == 0, result.output
@@ -892,7 +892,7 @@ def test_fs_template_supports_explicit_values():
 
     plugin.validate(
         {
-            "src": "examples/next/templates/app.conf.j2",
+            "src": "examples/templates/app.conf.j2",
             "dest": "/tmp/automax-app.conf",
             "values": {"app_name": "demo", "port": 8080},
         }

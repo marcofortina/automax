@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """
-Public Python API for Automax next engine.
+Public Python API for Automax engine.
 """
 
 from __future__ import annotations

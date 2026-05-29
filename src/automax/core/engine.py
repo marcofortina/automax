@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """
-Automax next execution engine.
+Automax execution engine.
 """
 
 from __future__ import annotations

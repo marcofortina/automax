@@ -66,12 +66,12 @@ For a first real SSH job against a remote host, use
 
 ```bash
 python -m automax validate \
-  --job examples/next/jobs/local-smoke.yaml \
-  --inventory examples/next/inventory/local.yaml
+  --job examples/jobs/local-smoke.yaml \
+  --inventory examples/inventory/local.yaml
 
 python -m automax run \
-  --job examples/next/jobs/local-smoke.yaml \
-  --inventory examples/next/inventory/local.yaml
+  --job examples/jobs/local-smoke.yaml \
+  --inventory examples/inventory/local.yaml
 ```
 
 Inspect the run:

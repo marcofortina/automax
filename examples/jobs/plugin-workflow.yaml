@@ -4,7 +4,7 @@
 apiVersion: automax.io/v1
 kind: Job
 metadata:
-  name: macro-plugins-example
+  name: plugin-workflow-example
 tasks:
   - id: filesystem
     targets: group:ssh
@@ -15,40 +15,40 @@ tasks:
           - id: mkdir
             use: fs.dir.create
             with:
-              path: /tmp/automax-macros
+              path: /tmp/automax-plugins
               mode: "0755"
 
           - id: copy
             use: fs.path.copy
             with:
               src: /etc/hosts
-              dest: /tmp/automax-macros/hosts.copy
+              dest: /tmp/automax-plugins/hosts.copy
               overwrite: true
 
           - id: chmod
             use: fs.permission.mode.set
             with:
-              path: /tmp/automax-macros/hosts.copy
+              path: /tmp/automax-plugins/hosts.copy
               mode: "0644"
 
           - id: tar
             use: data.archive.tar.create
             with:
-              source: /tmp/automax-macros
-              dest: /tmp/automax-macros.tar.gz
+              source: /tmp/automax-plugins
+              dest: /tmp/automax-plugins.tar.gz
               compression: gzip
 
           - id: untar
             use: data.archive.tar.extract
             with:
-              archive: /tmp/automax-macros.tar.gz
-              dest: /tmp/automax-macros-extracted
-              creates: /tmp/automax-macros-extracted/automax-macros/hosts.copy
+              archive: /tmp/automax-plugins.tar.gz
+              dest: /tmp/automax-plugins-extracted
+              creates: /tmp/automax-plugins-extracted/automax-plugins/hosts.copy
 
           - id: remove
             use: fs.dir.remove
             with:
-              path: /tmp/automax-macros-extracted
+              path: /tmp/automax-plugins-extracted
               recursive: true
 
   - id: services

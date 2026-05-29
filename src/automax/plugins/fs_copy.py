@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 """
-Remote filesystem copy macro plugin.
+Remote filesystem copy plugin.
 """
 
 from __future__ import annotations
