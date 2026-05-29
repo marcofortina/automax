@@ -112,7 +112,7 @@ symlinked resolver files are not overwritten silently.
 
 ## Runtime service checks
 
-Use `network.connectivity.port_check` for target-side TCP/UDP connectivity checks,
+Use `network.connectivity.port.check` for target-side TCP/UDP connectivity checks,
 `network.http.request` for controller-side HTTP probes, and the `system.process.*` family for
 process lifecycle checks. The former service-health wrapper namespace is
 intentionally not part of the public plugin surface.
@@ -221,7 +221,7 @@ existing configuration files.
 
 Use `network.link.bridge` for explicit runtime bridge creation/removal. Use
 `network.link.check`, `network.route.check`, `network.dns.check` and
-`network.connectivity.port_check` as precheck/postcheck guards around network operations.
+`network.connectivity.port.check` as precheck/postcheck guards around network operations.
 Use `network.link.facts` and `network.route.facts` for read-only iproute2 JSON
 readback without treating mismatched state as a failed assertion.
 

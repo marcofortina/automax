@@ -50,7 +50,7 @@ remote user. It covers:
 - `data.archive.tar.create`, `data.archive.tar.extract`, `data.archive.zip.create`, `data.archive.zip.extract`
 - `data.transfer.upload`, `data.transfer.download`, `data.transfer.rsync`
 - `system.process.wait`
-- `storage.usage.disk_check`, `network.connectivity.port_check`
+- `storage.usage.disk_check`, `network.connectivity.port.check`
 - artifact capture for stdout/stderr/data
 - resume helpers through the normal run state store
 

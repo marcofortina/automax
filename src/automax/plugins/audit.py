@@ -181,7 +181,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["max_stratum"] = 16
     if plugin.name == "os.package.check":
         params["state"] = "installed"
-    if plugin.name == "network.firewall.iptables.counter_check":
+    if plugin.name == "network.firewall.iptables.counter.check":
         params["min_packets"] = 1
     if plugin.name == "fs.file.replace":
         params["count"] = 0

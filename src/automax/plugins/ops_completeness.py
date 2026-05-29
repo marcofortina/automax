@@ -820,7 +820,7 @@ class FirewalldForwardPortPlugin(FirewalldSourcePlugin):
         state=_state(params); zone=f"--zone={quote(params['zone'])} " if params.get("zone") else ""; permanent="--permanent " if bool(params.get("permanent", True)) else ""; action="add-forward-port" if state=="present" else "remove-forward-port"; spec=self._spec(params); query_cmd=f"{sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--query-forward-port={quote(spec)}"; expected="0" if state=="present" else "1"; cmd=f"if {query_cmd} >/dev/null 2>&1; then present=0; else present=1; fi; if [ \"$present\" = {expected} ]; then true; else {sudo_prefix(params, default=True)}firewall-cmd {zone}{permanent}--{action}={quote(spec)} && echo {CHANGE_MARKER}; fi"; return [cmd + (f"; {sudo_prefix(params, default=True)}firewall-cmd --reload" if bool(params.get("reload", False)) else "")]
 
 class NftablesRulesetCheckPlugin(ReadOnlyCommandPlugin):
-    name="network.firewall.nftables.ruleset_check"; description="Assert the active nftables ruleset contains a fragment."; required_params=("fragment",); optional_params=("sudo",)
+    name="network.firewall.nftables.ruleset.check"; description="Assert the active nftables ruleset contains a fragment."; required_params=("fragment",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{sudo_prefix(params, default=True)}nft list ruleset | grep -F -- {quote(params['fragment'])}"]
 
 class NftablesRollbackFilePlugin(BasePlugin):
@@ -843,12 +843,12 @@ class IptablesDeletePlugin(BasePlugin):
         rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="network.firewall.iptables.delete failed")
 
 class IptablesRuleCheckPlugin(ReadOnlyCommandPlugin):
-    name="network.firewall.iptables.rule_check"; description="Assert an iptables rule exists."; required_params=("chain","rule"); optional_params=("table","ipv6","sudo")
+    name="network.firewall.iptables.rule.check"; description="Assert an iptables rule exists."; required_params=("chain","rule"); optional_params=("table","ipv6","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         binary="ip6tables" if bool(params.get("ipv6",False)) else "iptables"; table=str(params.get("table","filter")); return [f"{sudo_prefix(params, default=True)}{binary} -t {quote(table)} -C {quote(params['chain'])} {params['rule']}"]
 
 class IptablesCounterCheckPlugin(ReadOnlyCommandPlugin):
-    name="network.firewall.iptables.counter_check"; description="Assert iptables chain packet counters are above a threshold."; required_params=("chain",); optional_params=("table","min_packets","ipv6","sudo")
+    name="network.firewall.iptables.counter.check"; description="Assert iptables chain packet counters are above a threshold."; required_params=("chain",); optional_params=("table","min_packets","ipv6","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         binary="ip6tables" if bool(params.get("ipv6",False)) else "iptables"; table=str(params.get("table","filter")); minp=int(params.get("min_packets",1)); return [f"{sudo_prefix(params, default=True)}{binary} -t {quote(table)} -L {quote(params['chain'])} -v -n -x | awk 'NR>2 && $1+0>={minp} {{found=1}} END {{exit !found}}'"]
 

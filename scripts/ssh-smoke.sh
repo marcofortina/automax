@@ -285,7 +285,7 @@ tasks:
               path: ${WORK_DIR}
               min_free_mb: 1
           - id: assert_tcp
-            use: network.connectivity.port_check
+            use: network.connectivity.port.check
             with:
               host: ${AUTOMAX_SSH_HOST}
               port: ${PORT}

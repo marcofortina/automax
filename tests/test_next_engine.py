@@ -820,9 +820,9 @@ def test_wait_and_assert_plugins_are_registered():
     names = AutomaxEngine().plugin_registry.names()
 
     for name in (
-        "network.connectivity.port_wait",
+        "network.connectivity.port.wait",
         "system.process.wait",
-        "network.connectivity.port_check",
+        "network.connectivity.port.check",
         "storage.usage.disk_check",
     ):
         assert name in names
@@ -868,14 +868,14 @@ tasks:
       - id: controller_checks
         substeps:
           - id: wait_tcp
-            use: network.connectivity.port_wait
+            use: network.connectivity.port.wait
             with:
               host: 127.0.0.1
               port: 22
               retries: 1
               interval: 1
           - id: assert_tcp
-            use: network.connectivity.port_check
+            use: network.connectivity.port.check
             with:
               host: 127.0.0.1
               port: 22
@@ -1732,7 +1732,7 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "fs.file.check",
         "fs.dir.check",
         "storage.usage.disk_check",
-        "network.connectivity.port_check",
+        "network.connectivity.port.check",
         "system.service.status",
         "os.package.query",
         "identity.user.create",
@@ -3802,7 +3802,7 @@ def test_health_namespace_is_not_public_plugin_surface():
 
     assert not any(name.startswith("health.") for name in names)
     assert "network.http.request" in names
-    assert "network.connectivity.port_check" in names
+    assert "network.connectivity.port.check" in names
     assert "system.process.check" in names
     assert "system.process.count_check" in names
 
@@ -4588,7 +4588,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["max_stratum"] = 16
     if plugin.name == "os.package.check":
         params["state"] = "installed"
-    if plugin.name == "network.firewall.iptables.counter_check":
+    if plugin.name == "network.firewall.iptables.counter.check":
         params["min_packets"] = 1
     if plugin.name == "fs.file.replace":
         params["count"] = 0
@@ -4682,7 +4682,7 @@ def test_network_advanced_plugins_render_manual_commands():
     assert "ip link show dev eth0" in registry.get("network.link.check").manual_commands({"name": "eth0"}, context)[0]
     assert "ip route show" in registry.get("network.route.check").manual_commands({"dest": "default", "gateway": "192.0.2.1"}, context)[0]
     assert "nameserver" in " && ".join(registry.get("network.dns.check").manual_commands({"nameservers": ["192.0.2.53"]}, context))
-    assert "nc -z" in registry.get("network.connectivity.port_check").manual_commands({"host": "example.com", "port": 443}, context)[0]
+    assert "nc -z" in registry.get("network.connectivity.port.check").manual_commands({"host": "example.com", "port": 443}, context)[0]
     assert "ip -j link show" in registry.get("network.link.facts").manual_commands({}, context)[0]
     assert "ip -j route show" in registry.get("network.route.facts").manual_commands({}, context)[0]
 
@@ -5915,7 +5915,7 @@ def test_network_remote_check_plugins_return_predicates_on_condition_false():
     assert route.ok is True
     assert route.data["exists"] is False
 
-    port = registry.get("network.connectivity.port_check").execute(
+    port = registry.get("network.connectivity.port.check").execute(
         {"host": "example.com", "port": 443},
         _remote_context_for_result(1, stderr="timed out"),
     )
@@ -5942,7 +5942,7 @@ def test_http_check_returns_predicate_result_on_status_mismatch(monkeypatch):
     assert result.data["status_matches"] is False
 
 def test_command_backed_check_plugins_return_predicates_on_condition_false():
-    result = AutomaxEngine().plugin_registry.get("network.firewall.iptables.rule_check").execute(
+    result = AutomaxEngine().plugin_registry.get("network.firewall.iptables.rule.check").execute(
         {"chain": "INPUT", "rule": "-p tcp --dport 8443 -j ACCEPT", "sudo": False},
         _remote_context_for_result(1, stderr="rule missing"),
     )
@@ -5955,7 +5955,7 @@ def test_command_backed_check_plugins_return_predicates_on_condition_false():
 
 
 def test_command_backed_check_plugins_still_fail_on_technical_errors():
-    result = AutomaxEngine().plugin_registry.get("network.firewall.iptables.rule_check").execute(
+    result = AutomaxEngine().plugin_registry.get("network.firewall.iptables.rule.check").execute(
         {"chain": "INPUT", "rule": "-p tcp --dport 8443 -j ACCEPT", "sudo": False},
         _remote_context_for_result(2, stderr="iptables error"),
     )

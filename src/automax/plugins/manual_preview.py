@@ -139,9 +139,9 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
         if plugin_name == "storage.usage.disk_check":
             return [f"df -Pm {_q(path)}"]
 
-    if plugin_name == "network.connectivity.port_check":
+    if plugin_name == "network.connectivity.port.check":
         return [f"nc -z -w {_q(params.get('timeout', params.get('connect_timeout', 5)))} {_q(params.get('host', '127.0.0.1'))} {_q(params.get('port', 22))}"]
-    if plugin_name == "network.connectivity.port_wait":
+    if plugin_name == "network.connectivity.port.wait":
         return [f"i=0; until nc -z -w {_q(params.get('timeout', 5))} {_q(params.get('host', '127.0.0.1'))} {_q(params.get('port', 22))}; do i=$((i + 1)); [ $i -ge {_q(params.get('retries', 30))} ] && exit 1; sleep {_q(params.get('interval', 2))}; done"]
 
     if plugin_name.startswith("database.") and plugin_name.endswith(".query"):

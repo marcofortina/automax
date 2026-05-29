@@ -51,12 +51,12 @@ tasks:
       with:
         name: nginx
     - id: network_port_check
-      use: network.connectivity.port_check
+      use: network.connectivity.port.check
       with:
         host: 127.0.0.1
         port: 22
     - id: network_port_wait
-      use: network.connectivity.port_wait
+      use: network.connectivity.port.wait
       with:
         host: 127.0.0.1
         port: 22

@@ -3778,7 +3778,7 @@ with:
 
 ## network
 
-### `network.connectivity.port_check`
+### `network.connectivity.port.check`
 
 Check TCP or UDP connectivity from the remote target.
 
@@ -3809,13 +3809,13 @@ Result fields:
 Example:
 
 ```yaml
-use: network.connectivity.port_check
+use: network.connectivity.port.check
 with:
   host: 127.0.0.1
   port: 22
 ```
 
-### `network.connectivity.port_wait`
+### `network.connectivity.port.wait`
 
 Wait for TCP or UDP connectivity from the remote target.
 
@@ -3847,7 +3847,7 @@ Result fields:
 Example:
 
 ```yaml
-use: network.connectivity.port_wait
+use: network.connectivity.port.wait
 with:
   host: 127.0.0.1
   port: 22
@@ -4372,7 +4372,7 @@ with:
   chain: value
 ```
 
-### `network.firewall.iptables.counter_check`
+### `network.firewall.iptables.counter.check`
 
 Assert iptables chain packet counters are above a threshold.
 
@@ -4400,7 +4400,7 @@ Result fields:
 Example:
 
 ```yaml
-use: network.firewall.iptables.counter_check
+use: network.firewall.iptables.counter.check
 with:
   chain: value
 ```
@@ -4581,7 +4581,7 @@ with:
   rule: allow
 ```
 
-### `network.firewall.iptables.rule_check`
+### `network.firewall.iptables.rule.check`
 
 Assert an iptables rule exists.
 
@@ -4609,7 +4609,7 @@ Result fields:
 Example:
 
 ```yaml
-use: network.firewall.iptables.rule_check
+use: network.firewall.iptables.rule.check
 with:
   chain: value
   rule: allow
@@ -4782,7 +4782,7 @@ with:
   file: /etc/sysctl.d/99-automax.conf
 ```
 
-### `network.firewall.nftables.ruleset_check`
+### `network.firewall.nftables.ruleset.check`
 
 Assert the active nftables ruleset contains a fragment.
 
@@ -4807,7 +4807,7 @@ Result fields:
 Example:
 
 ```yaml
-use: network.firewall.nftables.ruleset_check
+use: network.firewall.nftables.ruleset.check
 with:
   fragment: value
 ```

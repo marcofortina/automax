@@ -19,7 +19,7 @@ tasks:
       with:
         chain: INPUT
     - id: network_firewall_iptables_counter_check
-      use: network.firewall.iptables.counter_check
+      use: network.firewall.iptables.counter.check
       with:
         chain: INPUT
     - id: network_firewall_iptables_delete
@@ -29,7 +29,7 @@ tasks:
         rule: -p tcp --dport 18080 -j ACCEPT
         confirm: true
     - id: network_firewall_iptables_rule_check
-      use: network.firewall.iptables.rule_check
+      use: network.firewall.iptables.rule.check
       with:
         chain: INPUT
         rule: -p tcp --dport 18080 -j ACCEPT

@@ -505,7 +505,7 @@ class NetworkDnsCheckPlugin(BasePlugin):
 
 
 class NetworkPortCheckPlugin(BasePlugin):
-    name = "network.connectivity.port_check"
+    name = "network.connectivity.port.check"
     description = "Check TCP or UDP connectivity from the remote target."
     required_params = ("host", "port")
     optional_params = ("protocol", "timeout", "sudo")
@@ -513,7 +513,7 @@ class NetworkPortCheckPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "network.connectivity.port_check is a read-only connectivity check"
+        return "network.connectivity.port.check is a read-only connectivity check"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -521,7 +521,7 @@ class NetworkPortCheckPlugin(BasePlugin):
         timeout = str(params.get("timeout", 5))
         udp = " -u" if protocol == "udp" else ""
         if protocol not in {"tcp", "udp"}:
-            raise PluginValidationError("network.connectivity.port_check protocol must be tcp or udp")
+            raise PluginValidationError("network.connectivity.port.check protocol must be tcp or udp")
         return [f"nc -z{udp} -w {quote(timeout)} {quote(params['host'])} {quote(params['port'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -530,20 +530,20 @@ class NetworkPortCheckPlugin(BasePlugin):
             rc=rc,
             stdout=out,
             stderr=err,
-            message="network.connectivity.port_check failed",
+            message="network.connectivity.port.check failed",
             data_key="reachable",
             data={"host": params["host"], "port": params["port"], "protocol": str(params.get("protocol", "tcp"))},
         )
 
 
 class NetworkPortWaitPlugin(NetworkPortCheckPlugin):
-    name = "network.connectivity.port_wait"
+    name = "network.connectivity.port.wait"
     description = "Wait for TCP or UDP connectivity from the remote target."
     optional_params = ("protocol", "timeout", "interval", "retries", "sudo")
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "network.connectivity.port_wait is a read-only connectivity wait"
+        return "network.connectivity.port.wait is a read-only connectivity wait"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -552,17 +552,17 @@ class NetworkPortWaitPlugin(NetworkPortCheckPlugin):
         interval = int(params.get("interval", 2))
         retries = int(params.get("retries", 30))
         if interval < 1:
-            raise PluginValidationError("network.connectivity.port_wait interval must be greater than zero")
+            raise PluginValidationError("network.connectivity.port.wait interval must be greater than zero")
         if retries < 1:
-            raise PluginValidationError("network.connectivity.port_wait retries must be greater than zero")
+            raise PluginValidationError("network.connectivity.port.wait retries must be greater than zero")
         udp = " -u" if protocol == "udp" else ""
         if protocol not in {"tcp", "udp"}:
-            raise PluginValidationError("network.connectivity.port_wait protocol must be tcp or udp")
+            raise PluginValidationError("network.connectivity.port.wait protocol must be tcp or udp")
         check = f"nc -z{udp} -w {quote(timeout)} {quote(params['host'])} {quote(params['port'])}"
         return [f"i=0; until {check}; do i=$((i + 1)); [ $i -ge {retries} ] && exit 1; sleep {interval}; done"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.connectivity.port_wait timed out")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.connectivity.port.wait timed out")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
