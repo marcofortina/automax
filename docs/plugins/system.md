@@ -97,4 +97,4 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 ```
 
 
-`system.service.active_check` accepts `fail_on_inactive: true` when the check should fail instead of returning `data.active=false`. `system.service.enabled_check` accepts `fail_on_disabled: true` for the same pattern.
+`system.service.active_check` and `system.service.enabled_check` return `ok=true` when the query runs successfully and expose the service state in `data.active` or `data.enabled`.

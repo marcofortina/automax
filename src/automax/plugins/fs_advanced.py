@@ -112,8 +112,10 @@ class FsInodeUsageAssertPlugin(BasePlugin):
         free_percent = (free / total * 100.0) if total else 0.0
         used_percent = float(used_percent_raw)
         data = {"total_inodes": total, "used_inodes": used, "free_inodes": free, "free_percent": free_percent, "used_percent": used_percent}
+        compliant = True
         if "max_used_percent" in params and used_percent > float(params["max_used_percent"]):
-            return PluginResult.failure(message="storage.usage.inode_check used percent threshold failed", data=data)
+            compliant = False
         if "min_free_percent" in params and free_percent < float(params["min_free_percent"]):
-            return PluginResult.failure(message="storage.usage.inode_check free percent threshold failed", data=data)
+            compliant = False
+        data["compliant"] = compliant
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data=data)

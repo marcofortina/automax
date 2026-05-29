@@ -5618,6 +5618,43 @@ def test_presence_check_plugins_return_predicates_without_failing_on_absence():
 
 
 
+
+
+def test_storage_and_process_checks_return_predicates_on_condition_false():
+    registry = AutomaxEngine().plugin_registry
+
+    for plugin_name, params, key in (
+        ("storage.mount.check", {"path": "/mnt/demo"}, "mounted"),
+        ("storage.swap.check", {"path": "/swapfile"}, "active"),
+        ("storage.fs.check", {"device": "/dev/sdb1"}, "matches"),
+        ("storage.lvm.lv.check", {"vg": "vg0", "name": "lv0"}, "matches"),
+        ("system.process.check", {"pattern": "missing-process"}, "matches"),
+        ("system.process.count_check", {"pattern": "missing-process", "count": 1}, "matches"),
+    ):
+        result = registry.get(plugin_name).execute(params, _remote_context_for_result(1, stderr="not found"))
+        assert result.ok is True
+        assert result.changed is False
+        assert result.rc == 0
+        assert result.data[key] is False
+
+
+def test_usage_checks_report_non_compliance_without_failing():
+    registry = AutomaxEngine().plugin_registry
+
+    disk = registry.get("storage.usage.disk_check").execute(
+        {"path": "/", "min_free_mb": 999999999},
+        _remote_context_for_result(0, stdout="1000 900 100 90\n"),
+    )
+    assert disk.ok is True
+    assert disk.data["compliant"] is False
+
+    inode = registry.get("storage.usage.inode_check").execute(
+        {"path": "/", "max_used_percent": 1},
+        _remote_context_for_result(0, stdout="1000 900 100 90\n"),
+    )
+    assert inode.ok is True
+    assert inode.data["compliant"] is False
+
 def test_os_check_plugins_return_predicates_on_condition_false():
     registry = AutomaxEngine().plugin_registry
 

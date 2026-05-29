@@ -10475,7 +10475,7 @@ with:
 
 ### `storage.lvm.lv.check`
 
-Assert that an LVM logical volume exists and optionally matches a requested size.
+Check whether an LVM logical volume exists and optionally matches a requested size.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -12556,7 +12556,6 @@ Check remote systemd active state.
 | `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
-| `fail_on_inactive` | no | `boolean` | `False` | Fail when the queried service is not active. |
 
 Result fields:
 
@@ -12650,7 +12649,6 @@ Check remote systemd enabled state.
 | `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
-| `fail_on_disabled` | no | `boolean` | `False` | Fail when the queried service is not enabled. |
 
 Result fields:
 

@@ -198,7 +198,6 @@ class SystemctlIsActivePlugin(_SystemctlServicePlugin):
     name = "system.service.active_check"
     description = "Check remote systemd active state."
     action = "is-active"
-    optional_params = (*_SystemctlServicePlugin.optional_params, "fail_on_inactive")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -206,8 +205,6 @@ class SystemctlIsActivePlugin(_SystemctlServicePlugin):
         service = quote(params["service"])
         rc, out, err = exec_remote(context, f"{systemctl} is-active {service}")
         active = rc == 0 and out.strip() == "active"
-        if not active and bool(params.get("fail_on_inactive", False)):
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="service is not active")
         return PluginResult.success(
             changed=False,
             stdout=out,
@@ -222,7 +219,6 @@ class SystemctlIsEnabledPlugin(_SystemctlServicePlugin):
     name = "system.service.enabled_check"
     description = "Check remote systemd enabled state."
     action = "is-enabled"
-    optional_params = (*_SystemctlServicePlugin.optional_params, "fail_on_disabled")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -230,8 +226,6 @@ class SystemctlIsEnabledPlugin(_SystemctlServicePlugin):
         service = quote(params["service"])
         rc, out, err = exec_remote(context, f"{systemctl} is-enabled {service}")
         enabled = rc == 0 and out.strip() == "enabled"
-        if not enabled and bool(params.get("fail_on_disabled", False)):
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="service is not enabled")
         return PluginResult.success(
             changed=False,
             stdout=out,

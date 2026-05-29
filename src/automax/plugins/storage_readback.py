@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin
-from automax.plugins.remote_utils import exec_remote, quote, sudo_prefix
+from automax.plugins.remote_utils import exec_remote, predicate_result_from_remote, quote, sudo_prefix
 
 
 def _lv_size_filter(size: Any) -> str:
@@ -49,14 +49,14 @@ class LvmFactsPlugin(BasePlugin):
 
 class LvmLvAssertPlugin(BasePlugin):
     name = "storage.lvm.lv.check"
-    description = "Assert that an LVM logical volume exists and optionally matches a requested size."
+    description = "Check whether an LVM logical volume exists and optionally matches a requested size."
     required_params = ("vg", "name")
     optional_params = ("size", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "storage.lvm.lv.check is a read-only LVM logical-volume assertion"
+        return "storage.lvm.lv.check is a read-only LVM logical-volume predicate"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         lv_path = f"/dev/{params['vg']}/{params['name']}"
@@ -67,9 +67,14 @@ class LvmLvAssertPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.lvm.lv.check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="storage.lvm.lv.check failed",
+            data_key="matches",
+            data={"vg": str(params["vg"]), "name": str(params["name"])},
+        )
 
 
 class MountFactsPlugin(BasePlugin):
@@ -159,9 +164,14 @@ class BlkidAssertPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.fs.check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="storage.fs.check failed",
+            data_key="matches",
+            data={"device": str(params["device"])},
+        )
 
 
 class StorageFsFactsPlugin(BasePlugin):
@@ -203,7 +213,7 @@ class StorageSwapCheckPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "storage.swap.check is a read-only swap assertion"
+        return "storage.swap.check is a read-only swap predicate"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -211,6 +221,11 @@ class StorageSwapCheckPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.swap.check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="storage.swap.check failed",
+            data_key="active",
+            data={"path": str(params["path"])},
+        )

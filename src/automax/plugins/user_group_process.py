@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, predicate_result_from_remote, quote, result_from_remote, sudo_prefix
 
 
 
@@ -303,9 +303,14 @@ class ProcessCheckPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="system.process.check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="system.process.check failed",
+            data_key="matches",
+            data={"state": str(params.get("state", "present"))},
+        )
 
 class ProcessAssertCountPlugin(BasePlugin):
     """Assert process count for a pattern."""
@@ -323,7 +328,7 @@ class ProcessAssertCountPlugin(BasePlugin):
             raise PluginValidationError("system.process.count_check requires count, min_count or max_count")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "system.process.count_check is a read-only process count assertion"
+        return "system.process.count_check is a read-only process count predicate"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -338,6 +343,11 @@ class ProcessAssertCountPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="system.process.count_check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="system.process.count_check failed",
+            data_key="matches",
+            data={"pattern": str(params["pattern"])},
+        )

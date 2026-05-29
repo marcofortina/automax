@@ -308,13 +308,11 @@ if [[ -n "${SMOKE_SERVICE}" ]]; then
             with:
               service: ${SMOKE_SERVICE}
               sudo: true
-              fail_on_inactive: false
           - id: is_enabled
             use: system.service.enabled_check
             with:
               service: ${SMOKE_SERVICE}
               sudo: true
-              fail_on_disabled: false
           - id: daemon_reload
             use: system.systemd.daemon_reload
             with:

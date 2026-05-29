@@ -81,10 +81,12 @@ class AssertDiskPlugin(BasePlugin):
             "free_percent": free_percent,
             "used_percent": used_percent,
         }
+        compliant = True
         if "min_free_mb" in params and free_mb < int(params["min_free_mb"]):
-            return PluginResult.failure(message="storage.usage.disk_check free MB threshold failed", data=data)
+            compliant = False
         if "min_free_percent" in params and free_percent < float(params["min_free_percent"]):
-            return PluginResult.failure(message="storage.usage.disk_check free percent threshold failed", data=data)
+            compliant = False
         if "max_used_percent" in params and used_percent > float(params["max_used_percent"]):
-            return PluginResult.failure(message="storage.usage.disk_check used percent threshold failed", data=data)
+            compliant = False
+        data["compliant"] = compliant
         return PluginResult.success(changed=False, data=data)
