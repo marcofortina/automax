@@ -219,8 +219,8 @@ and considered false only when it renders to `""`, `0`, `false`, `no` or `none`:
     sudo: true
 ```
 
-Use `if` with `then` and optional `else` to branch inside a step. Branches contain
-normal substeps and can use previous registered outputs:
+Use scalar `if` with `then` and optional `else` to branch inside a step.
+Branches contain normal substeps and can use previous registered outputs:
 
 ```yaml
 - id: check_service
@@ -243,6 +243,44 @@ normal substeps and can use previous registered outputs:
       with:
         service: myapp.service
         sudo: true
+```
+
+For multi-branch logic, `if` can also be a list of ordered branches. Automax
+executes the first branch whose `when` expression is true; `else` is optional and
+must be the last branch when present:
+
+```yaml
+- id: grade_branch
+  if:
+    - when: "{{ x < 50 }}"
+      then:
+        - id: grade_f
+          use: command.local.run
+          with:
+            command: "echo F"
+    - when: "{{ x < 60 }}"
+      then:
+        - id: grade_d
+          use: command.local.run
+          with:
+            command: "echo D"
+    - when: "{{ x < 70 }}"
+      then:
+        - id: grade_c
+          use: command.local.run
+          with:
+            command: "echo C"
+    - when: "{{ x < 80 }}"
+      then:
+        - id: grade_b
+          use: command.local.run
+          with:
+            command: "echo B"
+    - else:
+        - id: grade_a
+          use: command.local.run
+          with:
+            command: "echo A"
 ```
 
 Use `for` / `in` / `do` to repeat substeps for each value in a list. The loop

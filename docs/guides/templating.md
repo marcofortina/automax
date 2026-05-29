@@ -72,10 +72,11 @@ The full result then becomes available as `outputs.app_stat`.
 
 ## Flow-control values
 
-`if` conditions and `for` values use the same Jinja context as normal substep
-parameters. A pure expression such as `{{ outputs.members.data.members }}` keeps
-its native Python type, so a plugin result can feed a loop directly when it
-returns a list.
+`if`, branch `when` conditions, and `for` values use the same Jinja context as
+normal substep parameters. A pure expression such as `{{ outputs.members.data.members }}`
+keeps its native Python type, so a plugin result can feed a loop directly when it
+returns a list. Branch conditions can use normal Jinja boolean and membership
+operators such as `and`, `or`, `not`, `in` and `not in`.
 
 Inside a `for` block, Automax exposes the current value through the declared loop
 variable and through `item`. It also exposes `loop.index`, `loop.index0`,

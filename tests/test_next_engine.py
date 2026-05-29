@@ -6200,3 +6200,76 @@ tasks:
 
     assert result.exit_code == 0, result.output
     assert output.read_text(encoding="utf-8").strip() == "else"
+
+
+def test_job_flow_list_style_if_selects_first_matching_branch(tmp_path: Path):
+    output = tmp_path / "grade.txt"
+    job = write(
+        tmp_path / "job.yaml",
+        f'''
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: flow-list-if
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: score
+            use: command.local.run
+            with:
+              command: "printf 65"
+            register:
+              score: stdout.trim
+          - id: grade_branch
+            if:
+              - when: "{{{{ outputs.score | int < 50 }}}}"
+                then:
+                  - id: grade_f
+                    use: command.local.run
+                    with:
+                      command: "printf 'F\\n' >> {output}"
+              - when: "{{{{ outputs.score | int < 60 }}}}"
+                then:
+                  - id: grade_d
+                    use: command.local.run
+                    with:
+                      command: "printf 'D\\n' >> {output}"
+              - when: "{{{{ outputs.score | int < 70 }}}}"
+                then:
+                  - id: grade_c
+                    use: command.local.run
+                    with:
+                      command: "printf 'C\\n' >> {output}"
+              - when: "{{{{ outputs.score | int < 80 }}}}"
+                then:
+                  - id: grade_b
+                    use: command.local.run
+                    with:
+                      command: "printf 'B\\n' >> {output}"
+              - else:
+                  - id: grade_a
+                    use: command.local.run
+                    with:
+                      command: "printf 'A\\n' >> {output}"
+''',
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  localhost:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--state-dir",
+            str(tmp_path / "runs"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert output.read_text(encoding="utf-8").strip() == "C"

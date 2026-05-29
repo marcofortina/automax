@@ -401,15 +401,14 @@ class AutomaxEngine:
             pass
         if self._is_if_substep(substep):
             try:
-                branch = "then" if self._is_condition_true(substep.get("if"), template_context) else "else"
-                branches = [branch]
+                branches = [self._selected_if_branch(substep, template_context)]
             except Exception:
-                branches = ["then", "else"]
+                branches = self._if_branches(substep)
             for branch in branches:
-                for child in substep.get(branch, []) or []:
+                for child in branch["then"]:
                     yield from self._iter_rendered_substep_items(
                         resolved=resolved,
-                        item=self._child_item(item, child, branch),
+                        item=self._child_item(item, child, branch["segment"]),
                         dry_run=dry_run,
                         outputs=outputs,
                         step_state=step_state,
@@ -1233,12 +1232,11 @@ class AutomaxEngine:
     def _validate_flow_if_substep(self, substep: Dict[str, Any], label: str, *, strict: bool) -> None:
         if "use" in substep or "plugin" in substep:
             raise AutomaxError(f"{label} cannot combine 'if' flow control with 'use'")
-        if "then" not in substep and "else" not in substep:
-            raise AutomaxError(f"{label} if flow requires 'then' or 'else'")
-        if "then" in substep:
-            self._validate_substep_list(substep["then"], label=f"{label}:then", strict=strict)
-        if "else" in substep:
-            self._validate_substep_list(substep["else"], label=f"{label}:else", strict=strict)
+        branches = self._if_branches(substep, label=label)
+        if not branches:
+            raise AutomaxError(f"{label} if flow requires at least one branch")
+        for branch in branches:
+            self._validate_substep_list(branch["then"], label=f"{label}:{branch['segment']}", strict=strict)
 
     def _validate_flow_for_substep(self, substep: Dict[str, Any], label: str, *, strict: bool) -> None:
         if "use" in substep or "plugin" in substep:
@@ -1262,9 +1260,9 @@ class AutomaxEngine:
 
     def _validate_substep_strict(self, substep: Dict[str, Any], node_id: str) -> None:
         if self._is_if_substep(substep):
-            for branch in ("then", "else"):
-                for child in substep.get(branch, []) or []:
-                    self._validate_substep_strict(child, f"{node_id}:{branch}.{child.get('id')}")
+            for branch in self._if_branches(substep):
+                for child in branch["then"]:
+                    self._validate_substep_strict(child, f"{node_id}:{branch['segment']}.{child.get('id')}")
             return
         if self._is_for_substep(substep):
             for child in substep.get("do", []) or []:
@@ -2155,10 +2153,10 @@ class AutomaxEngine:
         context: Dict[str, Any],
     ) -> PluginResult:
         substep = item["substep"]
-        branch = "then" if self._is_condition_true(substep.get("if"), context) else "else"
+        selected = self._selected_if_branch(substep, context)
         executed = 0
-        for child in substep.get(branch, []) or []:
-            child_item = self._child_item(item, child, branch)
+        for child in selected["then"]:
+            child_item = self._child_item(item, child, selected["segment"])
             child_result = self._execute_item(
                 job=job,
                 item=child_item,
@@ -2176,8 +2174,8 @@ class AutomaxEngine:
             )
             executed += 1
             if not child_result.ok:
-                return PluginResult.failure(message=f"if {branch} branch failed", data={"flow": "if", "branch": branch, "executed": executed})
-        return PluginResult.success(changed=False, message=f"if {branch} branch executed", data={"flow": "if", "branch": branch, "executed": executed})
+                return PluginResult.failure(message=f"if {selected['segment']} branch failed", data={"flow": "if", "branch": selected["segment"], "executed": executed})
+        return PluginResult.success(changed=False, message=f"if {selected['segment']} branch executed", data={"flow": "if", "branch": selected["segment"], "executed": executed})
 
     def _execute_for_flow(
         self,
@@ -2255,6 +2253,60 @@ class AutomaxEngine:
         if isinstance(value, str) and not value.strip():
             return []
         return [value]
+
+    def _selected_if_branch(self, substep: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+        for branch in self._if_branches(substep):
+            condition = branch.get("condition")
+            if condition is None or self._is_condition_true(condition, context):
+                return branch
+        return {"segment": "none", "then": []}
+
+    @classmethod
+    def _if_branches(cls, substep: Dict[str, Any], *, label: str = "if flow") -> list[Dict[str, Any]]:
+        raw_if = substep.get("if")
+        if isinstance(raw_if, list):
+            if "then" in substep or "else" in substep:
+                raise AutomaxError(f"{label} list-style if cannot also define top-level 'then' or 'else'")
+            branches: list[Dict[str, Any]] = []
+            else_seen = False
+            for index, raw_branch in enumerate(raw_if):
+                if not isinstance(raw_branch, dict):
+                    raise AutomaxError(f"{label}:if[{index}] must be a mapping")
+                if "else" in raw_branch:
+                    if set(raw_branch) != {"else"}:
+                        raise AutomaxError(f"{label}:if[{index}] else branch cannot define other keys")
+                    if else_seen:
+                        raise AutomaxError(f"{label} can define only one else branch")
+                    else_seen = True
+                    branches.append({"segment": "else", "then": cls._substep_list(raw_branch.get("else"), f"{label}:else")})
+                    continue
+                if else_seen:
+                    raise AutomaxError(f"{label}:if[{index}] cannot appear after else branch")
+                if set(raw_branch) != {"when", "then"}:
+                    raise AutomaxError(f"{label}:if[{index}] requires exactly 'when' and 'then'")
+                branches.append(
+                    {
+                        "segment": f"if.{index}",
+                        "condition": raw_branch.get("when"),
+                        "then": cls._substep_list(raw_branch.get("then"), f"{label}:if[{index}]:then"),
+                    }
+                )
+            return branches
+
+        if "then" not in substep and "else" not in substep:
+            raise AutomaxError(f"{label} if flow requires 'then' or 'else'")
+        return [
+            {"segment": "then", "condition": raw_if, "then": cls._substep_list(substep.get("then"), f"{label}:then")},
+            {"segment": "else", "then": cls._substep_list(substep.get("else"), f"{label}:else")},
+        ]
+
+    @staticmethod
+    def _substep_list(value: Any, label: str) -> list[Dict[str, Any]]:
+        if value is None:
+            return []
+        if not isinstance(value, list):
+            raise AutomaxError(f"{label} must be a list")
+        return value
 
     @staticmethod
     def _child_item(parent: Dict[str, Any], child: Dict[str, Any], segment: str) -> Dict[str, Any]:
@@ -3074,8 +3126,8 @@ class AutomaxEngine:
         if self._is_if_substep(substep):
             return any(
                 self._substep_needs_ssh(child)
-                for branch in ("then", "else")
-                for child in substep.get(branch, []) or []
+                for branch in self._if_branches(substep)
+                for child in branch["then"]
             )
         if self._is_for_substep(substep):
             return any(self._substep_needs_ssh(child) for child in substep.get("do", []) or [])
