@@ -120,6 +120,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     from automax.plugins.backup import (
         BackupDirectoryPlugin,
         BackupFilePlugin,
+        BackupListPlugin,
         BackupManifestPlugin,
         BackupPrunePlugin,
         BackupRestorePlugin,
@@ -529,6 +530,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         AlternativesSetPlugin(),
         BackupFilePlugin(),
         BackupDirectoryPlugin(),
+        BackupListPlugin(),
         BackupRestorePlugin(),
         BackupVerifyPlugin(),
         BackupManifestPlugin(),

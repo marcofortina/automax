@@ -17,15 +17,6 @@ automax plugins list
 Current builtin plugins:
 
 ```text
-backup.directory
-backup.file
-backup.manifest
-backup.prune
-backup.restore
-backup.restore_preview
-backup.restore_verify
-backup.rotate
-backup.verify
 data.archive.tar.check
 data.archive.tar.create
 data.archive.tar.extract
@@ -34,6 +25,13 @@ data.archive.zip.check
 data.archive.zip.create
 data.archive.zip.extract
 data.archive.zip.list
+data.backup.directory.create
+data.backup.file.create
+data.backup.list
+data.backup.manifest.create
+data.backup.prune
+data.backup.rotate
+data.backup.verify
 data.compression.bzip2.check
 data.compression.bzip2.compress
 data.compression.bzip2.decompress
@@ -47,6 +45,9 @@ data.compression.zstd.check
 data.compression.zstd.compress
 data.compression.zstd.decompress
 data.download.url
+data.restore.apply
+data.restore.preview
+data.restore.verify
 data.transfer.download
 data.transfer.rsync
 data.transfer.sync

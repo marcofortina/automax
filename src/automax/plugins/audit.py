@@ -138,13 +138,13 @@ def sample_params(plugin: Any) -> dict[str, Any]:
     if plugin.name == "db.health":
         params["engine"] = "sqlite"
         params["connection"] = {"path": "/tmp/automax.sqlite"}
-    if plugin.name in {"backup.prune", "backup.restore", "backup.rotate", "network.firewall.iptables.restore", "storage.lvm.lv.remove", "storage.lvm.pv.remove", "storage.lvm.vg.remove"}:
+    if plugin.name in {"data.backup.prune", "data.restore.apply", "data.backup.rotate", "network.firewall.iptables.restore", "storage.lvm.lv.remove", "storage.lvm.pv.remove", "storage.lvm.vg.remove"}:
         params["confirm"] = True
     if plugin.name == "plugin.requirements":
         params["plugin"] = "data.transfer.rsync"
-    if plugin.name == "backup.directory":
+    if plugin.name == "data.backup.directory.create":
         params["compression"] = "none"
-    if plugin.name == "backup.verify":
+    if plugin.name == "data.backup.verify":
         params["checksum"] = "sha256"
     if plugin.name.startswith("data.compression.") and plugin.name.endswith(".compress"):
         params["dest"] = "/tmp/automax-demo.gz"

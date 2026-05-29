@@ -12,315 +12,6 @@ Do not edit plugin parameter lists here by hand; update plugin metadata and rege
 automax docs generate-plugins --output docs/plugins/generated.md
 ```
 
-## backup
-
-### `backup.directory`
-
-Create a compressed tar backup of a remote directory.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `dest` | yes | `path` |  | Destination path. |
-| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
-| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: backup.directory
-with:
-  src: /tmp/source
-  dest: /tmp/dest
-```
-
-### `backup.file`
-
-Create a timestampable backup copy of a remote file.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `dest` | yes | `path` |  | Destination path. |
-| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: backup.file
-with:
-  src: /tmp/source
-  dest: /tmp/dest
-```
-
-### `backup.manifest`
-
-Create or print a deterministic manifest for a backup directory or selected paths.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `root` | yes | `path` |  | Remote root directory for manifest or inventory operations. |
-| `dest` | no | `path` |  | Destination path. |
-| `paths` | no | `list` |  | Relative paths selected for manifest or inventory operations. |
-| `content_checksums` | no | `boolean` | `True` | Include per-file content checksums in generated backup manifests. |
-| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: backup.manifest
-with:
-  root: value
-```
-
-### `backup.prune`
-
-Prune backup artifacts by age and/or retention count.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `patterns` | no | `list` |  | Find-name patterns to match. |
-| `older_than_days` | no | `integer` |  | Age threshold in days for pruning old backup artifacts. |
-| `keep` | no | `integer` |  | Number of backup artifacts or rotated generations to retain. |
-| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: backup.prune
-with:
-  path: /tmp/automax-demo
-```
-
-### `backup.restore`
-
-Restore a remote file or tar archive from an explicit backup artifact.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `dest` | yes | `path` |  | Destination path. |
-| `confirm` | yes | `boolean` |  | Explicit destructive-operation confirmation flag. |
-| `archive` | no | `boolean` |  | Treat the source as an archive artifact. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: backup.restore
-with:
-  src: /tmp/source
-  dest: /tmp/dest
-  confirm: value
-```
-
-### `backup.restore_preview`
-
-Preview a restore artifact without changing the target.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `dest` | yes | `path` |  | Destination path. |
-| `archive` | no | `boolean` |  | Treat the source as an archive artifact. |
-| `checksum_file` | no | `path` |  | Checksum sidecar file path. |
-| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: backup.restore_preview
-with:
-  src: /tmp/source
-  dest: /tmp/dest
-```
-
-### `backup.restore_verify`
-
-Verify that restored content matches a backup artifact.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `dest` | yes | `path` |  | Destination path. |
-| `archive` | no | `boolean` |  | Treat the source as an archive artifact. |
-| `checksum_file` | no | `path` |  | Checksum sidecar file path. |
-| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: backup.restore_verify
-with:
-  src: /tmp/source
-  dest: /tmp/dest
-```
-
-### `backup.rotate`
-
-Rotate one backup artifact through numbered generations.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `keep` | yes | `integer` |  | Number of backup artifacts or rotated generations to retain. |
-| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: backup.rotate
-with:
-  path: /tmp/automax-demo
-  keep: value
-```
-
-### `backup.verify`
-
-Verify a remote backup artifact checksum without changing state.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `checksum_file` | no | `path` |  | Checksum sidecar file path. |
-| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: backup.verify
-with:
-  path: /tmp/automax-demo
-```
-
 ## data
 
 ### `data.archive.tar.check`
@@ -598,6 +289,238 @@ Example:
 use: data.archive.zip.list
 with:
   archive: /tmp/app.tar.gz
+```
+
+### `data.backup.directory.create`
+
+Create a compressed tar backup of a remote directory.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `compression` | no | `string` | `auto` | Archive compression: auto, none, gzip, bzip2 or xz. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.backup.directory.create
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+```
+
+### `data.backup.file.create`
+
+Create a timestampable backup copy of a remote file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.backup.file.create
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+```
+
+### `data.backup.list`
+
+List remote backup artifacts under a directory.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `patterns` | no | `list` |  | Find-name patterns to match. |
+| `max_depth` | no | `integer` |  | Maximum remote find traversal depth. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.backup.list
+with:
+  path: /tmp/automax-demo
+```
+
+### `data.backup.manifest.create`
+
+Create or print a deterministic manifest for a backup directory or selected paths.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `root` | yes | `path` |  | Remote root directory for manifest or inventory operations. |
+| `dest` | no | `path` |  | Destination path. |
+| `paths` | no | `list` |  | Relative paths selected for manifest or inventory operations. |
+| `content_checksums` | no | `boolean` | `True` | Include per-file content checksums in generated backup manifests. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.backup.manifest.create
+with:
+  root: value
+```
+
+### `data.backup.prune`
+
+Prune backup artifacts by age and/or retention count.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `patterns` | no | `list` |  | Find-name patterns to match. |
+| `older_than_days` | no | `integer` |  | Age threshold in days for pruning old backup artifacts. |
+| `keep` | no | `integer` |  | Number of backup artifacts or rotated generations to retain. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.backup.prune
+with:
+  path: /tmp/automax-demo
+```
+
+### `data.backup.rotate`
+
+Rotate one backup artifact through numbered generations.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `keep` | yes | `integer` |  | Number of backup artifacts or rotated generations to retain. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.backup.rotate
+with:
+  path: /tmp/automax-demo
+  keep: value
+```
+
+### `data.backup.verify`
+
+Verify a remote backup artifact checksum without changing state.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `checksum_file` | no | `path` |  | Checksum sidecar file path. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.backup.verify
+with:
+  path: /tmp/automax-demo
 ```
 
 ### `data.compression.bzip2.check`
@@ -1036,6 +959,113 @@ Example:
 use: data.download.url
 with:
   url: https://example.invalid/health
+  dest: /tmp/dest
+```
+
+### `data.restore.apply`
+
+Restore a remote file or tar archive from an explicit backup artifact.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `confirm` | yes | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `archive` | no | `boolean` |  | Treat the source as an archive artifact. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.restore.apply
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+  confirm: value
+```
+
+### `data.restore.preview`
+
+Preview a restore artifact without changing the target.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `archive` | no | `boolean` |  | Treat the source as an archive artifact. |
+| `checksum_file` | no | `path` |  | Checksum sidecar file path. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.restore.preview
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+```
+
+### `data.restore.verify`
+
+Verify that restored content matches a backup artifact.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `archive` | no | `boolean` |  | Treat the source as an archive artifact. |
+| `checksum_file` | no | `path` |  | Checksum sidecar file path. |
+| `checksum` | no | `string` |  | Expected SHA256 checksum for a downloaded file. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: data.restore.verify
+with:
+  src: /tmp/source
   dest: /tmp/dest
 ```
 

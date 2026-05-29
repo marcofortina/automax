@@ -3985,7 +3985,7 @@ def test_transfer_rsync_plugin_renders_secret_free_manual_command():
 def test_backup_file_plugin_renders_copy_and_checksum():
     from automax.plugins.backup import BackupFilePlugin
 
-    assert "backup.file" in AutomaxEngine().plugin_registry.names()
+    assert "data.backup.file.create" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = BackupFilePlugin().manual_commands({"src": "/etc/hosts", "dest": "/backup/hosts"}, context)[0]
     assert "cp -a /etc/hosts /backup/hosts" in command
@@ -3996,7 +3996,7 @@ def test_backup_file_plugin_renders_copy_and_checksum():
 def test_backup_directory_plugin_renders_tar_and_checksum():
     from automax.plugins.backup import BackupDirectoryPlugin
 
-    assert "backup.directory" in AutomaxEngine().plugin_registry.names()
+    assert "data.backup.directory.create" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = BackupDirectoryPlugin().manual_commands({"src": "/etc", "dest": "/backup/etc.tar.gz"}, context)[0]
     assert "tar -czf /backup/etc.tar.gz" in command
@@ -4006,7 +4006,7 @@ def test_backup_directory_plugin_renders_tar_and_checksum():
 def test_backup_restore_plugin_requires_confirmation_and_renders_restore():
     from automax.plugins.backup import BackupRestorePlugin
 
-    assert "backup.restore" in AutomaxEngine().plugin_registry.names()
+    assert "data.restore.apply" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     with pytest.raises(PluginValidationError):
         BackupRestorePlugin().manual_commands({"src": "/backup/hosts", "dest": "/etc/hosts"}, context)
@@ -4018,7 +4018,7 @@ def test_backup_restore_plugin_requires_confirmation_and_renders_restore():
 def test_backup_verify_plugin_renders_read_only_checksum():
     from automax.plugins.backup import BackupVerifyPlugin
 
-    assert "backup.verify" in AutomaxEngine().plugin_registry.names()
+    assert "data.backup.verify" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = BackupVerifyPlugin().manual_commands({"path": "/backup/hosts"}, context)[0]
     assert "sha256sum -c" in command
@@ -4373,7 +4373,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "db.health":
         params["engine"] = "sqlite"
         params["connection"] = {"path": "/tmp/automax.sqlite"}
-    if plugin.name in {"storage.lvm.lv.remove", "storage.lvm.vg.remove", "storage.lvm.pv.remove", "backup.restore", "backup.prune", "backup.rotate", "network.firewall.iptables.restore"}:
+    if plugin.name in {"storage.lvm.lv.remove", "storage.lvm.vg.remove", "storage.lvm.pv.remove", "data.restore.apply", "data.backup.prune", "data.backup.rotate", "network.firewall.iptables.restore"}:
         params["confirm"] = True
     if plugin.name == "plugin.requirements":
         params["plugin"] = "data.transfer.rsync"
@@ -4789,38 +4789,38 @@ def test_backup_completeness_plugins_render_manual_commands():
     context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
     registry = build_builtin_registry()
 
-    manifest = registry.get("backup.manifest").manual_commands({"root": "/var/backups", "dest": "/var/backups/manifest.txt", "sudo": False}, context)[0]
+    manifest = registry.get("data.backup.manifest.create").manual_commands({"root": "/var/backups", "dest": "/var/backups/manifest.txt", "sudo": False}, context)[0]
     assert "find . -type f" in manifest
     assert "tee /var/backups/manifest.txt" in manifest
 
-    sudo_manifest = registry.get("backup.manifest").manual_commands({"root": "/var/backups", "dest": "/var/backups/manifest.txt"}, context)[0]
+    sudo_manifest = registry.get("data.backup.manifest.create").manual_commands({"root": "/var/backups", "dest": "/var/backups/manifest.txt"}, context)[0]
     assert "sudo -n sha256sum" in sudo_manifest
     assert "sudo -n tee /var/backups/manifest.txt.sha256 >/dev/null" in sudo_manifest
 
-    restore = registry.get("backup.restore").manual_commands({"src": "/var/backups/file.txt", "dest": "/srv/file.txt", "confirm": True}, context)[0]
+    restore = registry.get("data.restore.apply").manual_commands({"src": "/var/backups/file.txt", "dest": "/srv/file.txt", "confirm": True}, context)[0]
     assert "if test -e /srv/file.txt; then sudo -n cp -a /srv/file.txt /srv/file.txt.pre-restore; fi" in restore
     assert "sudo -n cp -a /var/backups/file.txt /srv/file.txt" in restore
 
     try:
-        registry.get("backup.prune").manual_commands({"path": "/var/backups", "keep": 7}, context)
+        registry.get("data.backup.prune").manual_commands({"path": "/var/backups", "keep": 7}, context)
     except PluginValidationError as exc:
         assert "confirm: true" in str(exc)
     else:
         raise AssertionError("backup.prune must require confirm=true")
 
-    prune = registry.get("backup.prune").manual_commands({"path": "/var/backups", "keep": 7, "older_than_days": 30, "patterns": ["*.tar.gz"], "confirm": True, "sudo": False}, context)[0]
+    prune = registry.get("data.backup.prune").manual_commands({"path": "/var/backups", "keep": 7, "older_than_days": 30, "patterns": ["*.tar.gz"], "confirm": True, "sudo": False}, context)[0]
     assert "find /var/backups" in prune
     assert "older_than_days" not in prune
     assert "python3 - /var/backups 7" in prune
 
-    rotate = registry.get("backup.rotate").manual_commands({"path": "/var/backups/app.tar.gz", "keep": 3, "confirm": True, "sudo": False}, context)[0]
+    rotate = registry.get("data.backup.rotate").manual_commands({"path": "/var/backups/app.tar.gz", "keep": 3, "confirm": True, "sudo": False}, context)[0]
     assert "app.tar.gz.3" in rotate
     assert "app.tar.gz.1" in rotate
 
-    preview = registry.get("backup.restore_preview").manual_commands({"src": "/var/backups/app.tar.gz", "dest": "/srv/app", "archive": True, "sudo": False}, context)[0]
+    preview = registry.get("data.restore.preview").manual_commands({"src": "/var/backups/app.tar.gz", "dest": "/srv/app", "archive": True, "sudo": False}, context)[0]
     assert "tar -tf /var/backups/app.tar.gz" in preview
 
-    verify = registry.get("backup.restore_verify").manual_commands({"src": "/var/backups/app.tar.gz", "dest": "/srv/app", "archive": True, "sudo": False}, context)[0]
+    verify = registry.get("data.restore.verify").manual_commands({"src": "/var/backups/app.tar.gz", "dest": "/srv/app", "archive": True, "sudo": False}, context)[0]
     assert "tar -df /var/backups/app.tar.gz" in verify
 
 

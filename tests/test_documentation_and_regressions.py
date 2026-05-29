@@ -1424,7 +1424,7 @@ def test_ambiguous_plugin_parameters_have_plugin_specific_schemas():
         ("security.audit.search", "start"): ("string",),
         ("data.compression.gzip.compress", "source"): ("path",),
         ("data.compression.gzip.decompress", "archive"): ("path",),
-        ("backup.restore", "archive"): ("boolean",),
+        ("data.restore.apply", "archive"): ("boolean",),
         ("system.cron.entry.list", "user"): ("string",),
         ("network.firewall.firewalld.source", "source"): ("string",),
         ("security.selinux.boolean", "value"): ("boolean", "string"),

@@ -1,0 +1,43 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-data-backup-restore
+tasks:
+- id: data_backup_restore
+  description: Check-mode catalog for data backup and restore plugins.
+  targets: all
+  tags: [all-functions, check, data, backup, restore]
+  steps:
+  - id: catalog
+    substeps:
+    - id: data_backup_directory_create
+      use: data.backup.directory.create
+      with: {src: /tmp/source, dest: /tmp/dest}
+    - id: data_backup_file_create
+      use: data.backup.file.create
+      with: {src: /tmp/source, dest: /tmp/dest}
+    - id: data_backup_list
+      use: data.backup.list
+      with: {path: /tmp/automax-demo}
+    - id: data_backup_manifest_create
+      use: data.backup.manifest.create
+      with: {root: /tmp/automax-demo, dest: /tmp/automax-manifest.txt}
+    - id: data_backup_prune
+      use: data.backup.prune
+      with: {path: /tmp/automax-demo, confirm: true, keep: 1, patterns: ['*.old']}
+    - id: data_backup_rotate
+      use: data.backup.rotate
+      with: {path: /tmp/automax-demo, keep: 1, confirm: true}
+    - id: data_backup_verify
+      use: data.backup.verify
+      with: {path: /tmp/automax-demo}
+    - id: data_restore_apply
+      use: data.restore.apply
+      with: {src: /tmp/source, dest: /tmp/dest, confirm: true}
+    - id: data_restore_preview
+      use: data.restore.preview
+      with: {src: /tmp/source, dest: /tmp/dest}
+    - id: data_restore_verify
+      use: data.restore.verify
+      with: {src: /tmp/source, dest: /tmp/dest}

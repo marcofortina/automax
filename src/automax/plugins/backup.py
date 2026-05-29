@@ -13,6 +13,15 @@ from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_
 
 
 
+
+def _as_list(value: Any) -> list[Any]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
+
+
 def _checksum_cmd(path: str, params: Dict[str, Any]) -> str:
     checksum = str(params.get("checksum", "sha256"))
     if checksum == "none":
@@ -26,14 +35,14 @@ def _checksum_cmd(path: str, params: Dict[str, Any]) -> str:
 
 
 class BackupFilePlugin(BasePlugin):
-    name = "backup.file"
+    name = "data.backup.file.create"
     description = "Create a timestampable backup copy of a remote file."
     required_params = ("src", "dest")
     optional_params = ("checksum", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "backup.file creates a backup artifact; use manual commands for exact copy and checksum steps"
+        return "data.backup.file.create creates a backup artifact; use manual commands for exact copy and checksum steps"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -53,17 +62,17 @@ class BackupFilePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="backup.file failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="data.backup.file.create failed")
 
 class BackupDirectoryPlugin(BasePlugin):
-    name = "backup.directory"
+    name = "data.backup.directory.create"
     description = "Create a compressed tar backup of a remote directory."
     required_params = ("src", "dest")
     optional_params = ("compression", "checksum", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "backup.directory creates a tar artifact; use manual commands for exact archive and checksum steps"
+        return "data.backup.directory.create creates a tar artifact; use manual commands for exact archive and checksum steps"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -87,10 +96,10 @@ class BackupDirectoryPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="backup.directory failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="data.backup.directory.create failed")
 
 class BackupRestorePlugin(BasePlugin):
-    name = "backup.restore"
+    name = "data.restore.apply"
     description = "Restore a remote file or tar archive from an explicit backup artifact."
     required_params = ("src", "dest", "confirm")
     optional_params = ("archive", "backup", "backup_suffix", "sudo")
@@ -105,10 +114,10 @@ class BackupRestorePlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if params.get("confirm") is not True:
-            raise PluginValidationError("backup.restore requires confirm: true")
+            raise PluginValidationError("data.restore.apply requires confirm: true")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "backup.restore is a destructive restore operation guarded by confirm=true"
+        return "data.restore.apply is a destructive restore operation guarded by confirm=true"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -126,10 +135,10 @@ class BackupRestorePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="backup.restore failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="data.restore.apply failed")
 
 class BackupVerifyPlugin(BasePlugin):
-    name = "backup.verify"
+    name = "data.backup.verify"
     description = "Verify a remote backup artifact checksum without changing state."
     required_params = ("path",)
     optional_params = ("checksum_file", "checksum", "sudo")
@@ -137,21 +146,21 @@ class BackupVerifyPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "backup.verify is a read-only checksum verification operation"
+        return "data.backup.verify is a read-only checksum verification operation"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         path = str(params["path"])
         checksum = str(params.get("checksum", "sha256"))
         if checksum != "sha256":
-            raise PluginValidationError("backup.verify supports checksum=sha256")
+            raise PluginValidationError("data.backup.verify supports checksum=sha256")
         checksum_file = str(params.get("checksum_file", path + ".sha256"))
         return [f"cd $(dirname {quote(path)}) && {sudo_prefix(params, default=True)}sha256sum -c {quote(checksum_file)}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="backup.verify failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="data.backup.verify failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
@@ -164,7 +173,7 @@ def _patterns_expr(patterns: Any) -> str:
 
 
 class BackupManifestPlugin(BasePlugin):
-    name = "backup.manifest"
+    name = "data.backup.manifest.create"
     description = "Create or print a deterministic manifest for a backup directory or selected paths."
     required_params = ("root",)
     optional_params = ("dest", "paths", "content_checksums", "checksum", "sudo")
@@ -172,7 +181,7 @@ class BackupManifestPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "backup.manifest records backup inventory metadata and optional file checksums"
+        return "data.backup.manifest.create records backup inventory metadata and optional file checksums"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -205,14 +214,14 @@ class BackupManifestPlugin(BasePlugin):
         command = self.manual_commands(params, context)[0]
         rc, out, err = exec_remote(context, command + (f" && echo {CHANGE_MARKER}" if params.get("dest") else ""))
         if params.get("dest"):
-            return result_from_remote(rc=rc, stdout=out, stderr=err, message="backup.manifest failed")
+            return result_from_remote(rc=rc, stdout=out, stderr=err, message="data.backup.manifest.create failed")
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="backup.manifest failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="data.backup.manifest.create failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"manifest": out})
 
 
 class BackupPrunePlugin(BasePlugin):
-    name = "backup.prune"
+    name = "data.backup.prune"
     description = "Prune backup artifacts by age and/or retention count."
     required_params = ("path",)
     optional_params = ("patterns", "older_than_days", "keep", "confirm", "sudo")
@@ -221,16 +230,16 @@ class BackupPrunePlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if params.get("confirm") is not True:
-            raise PluginValidationError("backup.prune requires confirm: true")
+            raise PluginValidationError("data.backup.prune requires confirm: true")
         if params.get("older_than_days") is None and params.get("keep") is None:
-            raise PluginValidationError("backup.prune requires older_than_days and/or keep")
+            raise PluginValidationError("data.backup.prune requires older_than_days and/or keep")
         if params.get("keep") is not None and int(params["keep"]) < 0:
-            raise PluginValidationError("backup.prune keep must be >= 0")
+            raise PluginValidationError("data.backup.prune keep must be >= 0")
         if params.get("older_than_days") is not None and int(params["older_than_days"]) < 0:
-            raise PluginValidationError("backup.prune older_than_days must be >= 0")
+            raise PluginValidationError("data.backup.prune older_than_days must be >= 0")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "backup.prune deletes old backup artifacts and is guarded by confirm=true"
+        return "data.backup.prune deletes old backup artifacts and is guarded by confirm=true"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -271,11 +280,11 @@ for item in sorted(set(files), key=lambda p: p.stat().st_mtime, reverse=True)[ke
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="backup.prune failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="data.backup.prune failed")
 
 
 class BackupRotatePlugin(BasePlugin):
-    name = "backup.rotate"
+    name = "data.backup.rotate"
     description = "Rotate one backup artifact through numbered generations."
     required_params = ("path", "keep")
     optional_params = ("confirm", "sudo")
@@ -284,12 +293,12 @@ class BackupRotatePlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if params.get("confirm") is not True:
-            raise PluginValidationError("backup.rotate requires confirm: true")
+            raise PluginValidationError("data.backup.rotate requires confirm: true")
         if int(params["keep"]) < 1:
-            raise PluginValidationError("backup.rotate keep must be >= 1")
+            raise PluginValidationError("data.backup.rotate keep must be >= 1")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "backup.rotate renames backup generations and is guarded by confirm=true"
+        return "data.backup.rotate renames backup generations and is guarded by confirm=true"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -306,11 +315,11 @@ class BackupRotatePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="backup.rotate failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="data.backup.rotate failed")
 
 
 class BackupRestorePreviewPlugin(BasePlugin):
-    name = "backup.restore_preview"
+    name = "data.restore.preview"
     description = "Preview a restore artifact without changing the target."
     required_params = ("src", "dest")
     optional_params = ("archive", "checksum_file", "checksum", "sudo")
@@ -324,7 +333,7 @@ class BackupRestorePreviewPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "backup.restore_preview is a read-only restore plan and artifact inspection"
+        return "data.restore.preview is a read-only restore plan and artifact inspection"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -342,12 +351,12 @@ class BackupRestorePreviewPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="backup.restore_preview failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="data.restore.preview failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"preview": out})
 
 
 class BackupRestoreVerifyPlugin(BasePlugin):
-    name = "backup.restore_verify"
+    name = "data.restore.verify"
     description = "Verify that restored content matches a backup artifact."
     required_params = ("src", "dest")
     optional_params = ("archive", "checksum_file", "checksum", "sudo")
@@ -361,7 +370,7 @@ class BackupRestoreVerifyPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "backup.restore_verify is a read-only restore verification"
+        return "data.restore.verify is a read-only restore verification"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -379,5 +388,27 @@ class BackupRestoreVerifyPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="backup.restore_verify failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="data.restore.verify failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+
+
+class BackupListPlugin(BasePlugin):
+    name = "data.backup.list"
+    description = "List remote backup artifacts under a directory."
+    required_params = ("path",)
+    optional_params = ("patterns", "max_depth", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        sudo = sudo_prefix(params, default=False)
+        max_depth = int(params.get("max_depth", 1))
+        patterns = _as_list(params.get("patterns", "*"))
+        name_expr = " -o ".join(f"-name {quote(pattern)}" for pattern in patterns)
+        return [f"{sudo}find {quote(params['path'])} -maxdepth {max_depth} -type f \\( {name_expr} \\) -print | sort"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        artifacts = [line for line in out.splitlines() if line]
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="data.backup.list failed", data={"artifacts": artifacts})
