@@ -75,7 +75,7 @@ class ApparmorDisablePlugin(ApparmorEnforcePlugin):
 
 
 class ApparmorProfileAssertPlugin(ReadOnlyCommandPlugin):
-    name = "security.apparmor.profile_check"
+    name = "security.apparmor.profile.check"
     description = "Assert that an AppArmor profile is loaded in the expected mode."
     required_params = ("profile", "state")
     optional_params = ("sudo",)
@@ -84,7 +84,7 @@ class ApparmorProfileAssertPlugin(ReadOnlyCommandPlugin):
         self.validate(params)
         state = str(params["state"])
         if state not in {"enforce", "complain", "disabled"}:
-            raise PluginValidationError("security.apparmor.profile_check state must be enforce, complain or disabled")
+            raise PluginValidationError("security.apparmor.profile.check state must be enforce, complain or disabled")
         profile = quote(params["profile"])
         if state == "disabled":
             return [f"! {sudo_prefix(params, default=True)}aa-status 2>/dev/null | grep -F -- {profile}"]
@@ -180,7 +180,7 @@ class AuditdSearchPlugin(ReadOnlyCommandPlugin):
 
 
 class AuditdBacklogAssertPlugin(ReadOnlyCommandPlugin):
-    name = "security.audit.backlog_check"
+    name = "security.audit.backlog.check"
     description = "Assert auditd lost-event count and backlog are below thresholds."
     optional_params = ("max_lost", "max_backlog", "sudo")
 
@@ -766,16 +766,16 @@ class BlockNotMountedAssertPlugin(ReadOnlyCommandPlugin):
 
 # PAM stack helpers
 class PamIncludeAssertPlugin(ReadOnlyCommandPlugin):
-    name="security.pam.include_check"; description="Assert a PAM service includes another stack."; required_params=("service","include"); optional_params=("sudo",)
+    name="security.pam.include.check"; description="Assert a PAM service includes another stack."; required_params=("service","include"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"grep -Eq '(^|[[:space:]])(include|substack|@include)[[:space:]]+{params['include']}($|[[:space:]])' /etc/pam.d/{quote(params['service'])}"]
 
 class PamModuleAssertPlugin(ReadOnlyCommandPlugin):
-    name="security.pam.module_check"; description="Assert a PAM module line exists in a service."; required_params=("service","module"); optional_params=("type","sudo")
+    name="security.pam.module.check"; description="Assert a PAM module line exists in a service."; required_params=("service","module"); optional_params=("type","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         prefix=f"^{params.get('type')}[[:space:]]+" if params.get("type") else ""; return [f"grep -Eq {quote(prefix + '.*' + str(params['module']))} /etc/pam.d/{quote(params['service'])}"]
 
 class PamOrderAssertPlugin(ReadOnlyCommandPlugin):
-    name="security.pam.order_check"; description="Assert one PAM line appears before another."; required_params=("service","before","after"); optional_params=("sudo",)
+    name="security.pam.order.check"; description="Assert one PAM line appears before another."; required_params=("service","before","after"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"awk '/{params['before']}/{{b=NR}} /{params['after']}/{{a=NR}} END{{exit !(b && a && b<a)}}' /etc/pam.d/{quote(params['service'])}"]
 
 class PamBackupPlugin(BasePlugin):

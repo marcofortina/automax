@@ -38,7 +38,7 @@ tasks:
         state: enforce
         sudo: true
     - id: apparmor_profile_assert
-      use: security.apparmor.profile_check
+      use: security.apparmor.profile.check
       with:
         profile: /etc/apparmor.d/usr.sbin.nginx
         state: present

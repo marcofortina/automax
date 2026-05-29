@@ -24,7 +24,7 @@ tasks:
 
           '
     - id: pki_cert_expiry_assert
-      use: security.pki.cert.expiry_check
+      use: security.pki.cert.expiry.check
       with:
         path: /tmp/automax-demo
     - id: pki_key_permissions

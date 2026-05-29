@@ -171,9 +171,9 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["state"] = "enforcing"
     if plugin.name == "storage.quota.set":
         params["type"] = "user"
-    if plugin.name == "security.apparmor.profile_check":
+    if plugin.name == "security.apparmor.profile.check":
         params["state"] = "enforce"
-    if plugin.name == "security.audit.backlog_check":
+    if plugin.name == "security.audit.backlog.check":
         params["max_lost"] = 0
         params["max_backlog"] = 8192
     if plugin.name == "os.time.chrony.tracking.check":

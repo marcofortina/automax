@@ -72,8 +72,8 @@ operations auditable before and after access-control changes.
 
 ## Certificate assertions
 
-Use `security.pki.cert.fingerprint`, `security.pki.cert.key_match_check`, `security.pki.cert.san_check`,
-`security.pki.cert.subject_check`, `security.pki.cert.issuer_check` and `security.pki.trust.install_bundle` for
+Use `security.pki.cert.fingerprint`, `security.pki.cert.key_match.check`, `security.pki.cert.san.check`,
+`security.pki.cert.subject.check`, `security.pki.cert.issuer.check` and `security.pki.trust.install_bundle` for
 certificate prechecks, trust-bundle installation and post-install validation.
 
 ## SSH key generation safeguards
@@ -86,18 +86,18 @@ preview, public-key-only readback and fingerprint output after generation.
 
 AppArmor completeness plugins manage and validate profile modes explicitly:
 `security.apparmor.enforce`, `security.apparmor.complain`, `security.apparmor.disable`,
-`security.apparmor.profile_check` and `security.apparmor.validate`.
+`security.apparmor.profile.check` and `security.apparmor.validate`.
 
 Auditd readback and rule-builder plugins provide active/persistent rule facts,
 file watches, syscall rules, event search and backlog/lost-event assertions:
 `security.audit.rules.facts`, `security.audit.watch`, `security.audit.syscall`, `security.audit.search` and
-`security.audit.backlog_check`.
+`security.audit.backlog.check`.
 
 Sudo readback plugins verify effective privileges without changing sudoers:
 `security.sudo.list`, `security.sudo.check` and `security.sudo.can_run`.
 
 PAM stack assertion and backup plugins complement the mutating PAM plugins:
-`security.pam.include_check`, `security.pam.module_check`, `security.pam.order_check`, `security.pam.backup` and
+`security.pam.include.check`, `security.pam.module.check`, `security.pam.order.check`, `security.pam.backup` and
 `security.pam.restore`. `security.pam.restore` requires `confirm: true` because it can affect login
 paths.
 
@@ -112,4 +112,4 @@ os.capability.check
 automax.plugin.requirements
 ```
 
-Use `security.secret.redact_check`, `security.secret.scan_output` and `security.secret.scan_preview` to validate that previews, command output and registered payloads do not expose declared secret values or common secret-shaped assignments such as `password=...`, bearer tokens or private-key blocks.
+Use `security.secret.redact.check`, `security.secret.scan_output` and `security.secret.scan_preview` to validate that previews, command output and registered payloads do not expose declared secret values or common secret-shaped assignments such as `password=...`, bearer tokens or private-key blocks.

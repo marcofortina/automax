@@ -53,7 +53,7 @@ class CertSelfSignedPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.pki.cert.self_signed failed")
 
 class CertVerifyChainPlugin(BasePlugin):
-    name = "security.pki.cert.chain_check"
+    name = "security.pki.cert.chain.check"
     description = "Verify a certificate chain against a CA bundle with openssl verify."
     required_params = ("cert", "ca_file")
     optional_params = ("untrusted", "sudo")
@@ -61,7 +61,7 @@ class CertVerifyChainPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "security.pki.cert.chain_check is a read-only certificate chain verification"
+        return "security.pki.cert.chain.check is a read-only certificate chain verification"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -74,7 +74,7 @@ class CertVerifyChainPlugin(BasePlugin):
             rc=rc,
             stdout=out,
             stderr=err,
-            message="security.pki.cert.chain_check failed",
+            message="security.pki.cert.chain.check failed",
             data_key="valid",
             data={"cert": str(params["cert"]), "ca_file": str(params["ca_file"])},
             false_rcs=(1, 2),
@@ -162,7 +162,7 @@ class CertFingerprintPlugin(BasePlugin):
 
 
 class CertMatchesKeyPlugin(BasePlugin):
-    name = "security.pki.cert.key_match_check"
+    name = "security.pki.cert.key_match.check"
     description = "Check whether a certificate public key matches a private key."
     required_params = ("cert", "key")
     optional_params = ("sudo",)
@@ -170,7 +170,7 @@ class CertMatchesKeyPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "security.pki.cert.key_match_check is a read-only certificate/private-key predicate"
+        return "security.pki.cert.key_match.check is a read-only certificate/private-key predicate"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         sudo = sudo_prefix(params, default=True)
@@ -184,7 +184,7 @@ class CertMatchesKeyPlugin(BasePlugin):
             rc=rc,
             stdout=out,
             stderr=err,
-            message="security.pki.cert.key_match_check failed",
+            message="security.pki.cert.key_match.check failed",
             data_key="matches",
             data={"cert": str(params["cert"]), "key": str(params["key"])},
             false_rcs=(1, 2),
@@ -192,7 +192,7 @@ class CertMatchesKeyPlugin(BasePlugin):
 
 
 class CertSanAssertPlugin(BasePlugin):
-    name = "security.pki.cert.san_check"
+    name = "security.pki.cert.san.check"
     description = "Check whether a certificate contains required Subject Alternative Names."
     required_params = ("cert", "names")
     optional_params = ("sudo",)
@@ -200,7 +200,7 @@ class CertSanAssertPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "security.pki.cert.san_check is a read-only certificate SAN predicate"
+        return "security.pki.cert.san.check is a read-only certificate SAN predicate"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -217,7 +217,7 @@ class CertSanAssertPlugin(BasePlugin):
             rc=rc,
             stdout=out,
             stderr=err,
-            message="security.pki.cert.san_check failed",
+            message="security.pki.cert.san.check failed",
             data_key="matches",
             data={"cert": str(params["cert"])},
             false_rcs=(1, 2),
@@ -225,7 +225,7 @@ class CertSanAssertPlugin(BasePlugin):
 
 
 class CertSubjectAssertPlugin(BasePlugin):
-    name = "security.pki.cert.subject_check"
+    name = "security.pki.cert.subject.check"
     description = "Check whether a certificate subject contains an expected string."
     required_params = ("cert", "subject")
     optional_params = ("sudo",)
@@ -233,7 +233,7 @@ class CertSubjectAssertPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "security.pki.cert.subject_check is a read-only certificate subject predicate"
+        return "security.pki.cert.subject.check is a read-only certificate subject predicate"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return [f"{sudo_prefix(params, default=True)}openssl x509 -in {quote(params['cert'])} -noout -subject | grep -F -- {quote(params['subject'])}"]
@@ -244,7 +244,7 @@ class CertSubjectAssertPlugin(BasePlugin):
             rc=rc,
             stdout=out,
             stderr=err,
-            message="security.pki.cert.subject_check failed",
+            message="security.pki.cert.subject.check failed",
             data_key="matches",
             data={"cert": str(params["cert"]), "subject": str(params["subject"])},
             false_rcs=(1, 2),
@@ -252,7 +252,7 @@ class CertSubjectAssertPlugin(BasePlugin):
 
 
 class CertIssuerAssertPlugin(BasePlugin):
-    name = "security.pki.cert.issuer_check"
+    name = "security.pki.cert.issuer.check"
     description = "Check whether a certificate issuer contains an expected string."
     required_params = ("cert", "issuer")
     optional_params = ("sudo",)
@@ -260,7 +260,7 @@ class CertIssuerAssertPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "security.pki.cert.issuer_check is a read-only certificate issuer predicate"
+        return "security.pki.cert.issuer.check is a read-only certificate issuer predicate"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return [f"{sudo_prefix(params, default=True)}openssl x509 -in {quote(params['cert'])} -noout -issuer | grep -F -- {quote(params['issuer'])}"]
@@ -271,7 +271,7 @@ class CertIssuerAssertPlugin(BasePlugin):
             rc=rc,
             stdout=out,
             stderr=err,
-            message="security.pki.cert.issuer_check failed",
+            message="security.pki.cert.issuer.check failed",
             data_key="matches",
             data={"cert": str(params["cert"]), "issuer": str(params["issuer"])},
             false_rcs=(1, 2),

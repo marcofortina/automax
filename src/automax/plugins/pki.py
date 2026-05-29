@@ -117,14 +117,14 @@ class PkiKeyPermissionsPlugin(BasePlugin):
 
 
 class PkiCertExpiryAssertPlugin(BasePlugin):
-    name = "security.pki.cert.expiry_check"
+    name = "security.pki.cert.expiry.check"
     description = "Check whether a certificate remains valid for at least min_days."
     required_params = ("path",)
     optional_params = ("min_days", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "security.pki.cert.expiry_check is a read-only certificate expiry predicate with no file diff"
+        return "security.pki.cert.expiry.check is a read-only certificate expiry predicate with no file diff"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -137,7 +137,7 @@ class PkiCertExpiryAssertPlugin(BasePlugin):
             rc=rc,
             stdout=out,
             stderr=err,
-            message="security.pki.cert.expiry_check failed",
+            message="security.pki.cert.expiry.check failed",
             data_key="valid",
             data={"path": params["path"], "min_days": int(params.get("min_days", 30))},
             false_rcs=(1, 2),

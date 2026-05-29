@@ -15,7 +15,7 @@ tasks:
   - id: catalog
     substeps:
     - id: auditd_backlog_assert
-      use: security.audit.backlog_check
+      use: security.audit.backlog.check
       with: {}
     - id: auditd_reload
       use: security.audit.reload

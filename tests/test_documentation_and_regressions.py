@@ -820,7 +820,7 @@ def test_read_only_command_plugin_is_shared_base_class():
 
     registry = build_builtin_registry()
     expected = {
-        "security.apparmor.profile_check",
+        "security.apparmor.profile.check",
         "security.audit.status",
         "security.audit.search",
         "system.cron.entry.list",
@@ -902,6 +902,18 @@ def test_security_namespace_replaces_legacy_security_plugin_names():
         "sshd.config",
         "sshd.validate",
         "secret.redact_assert",
+        "security.apparmor.profile_check",
+        "security.audit.backlog_check",
+        "security.pam.include_check",
+        "security.pam.module_check",
+        "security.pam.order_check",
+        "security.pki.cert.chain_check",
+        "security.pki.cert.expiry_check",
+        "security.pki.cert.issuer_check",
+        "security.pki.cert.key_match_check",
+        "security.pki.cert.san_check",
+        "security.pki.cert.subject_check",
+        "security.secret.redact_check",
         "secret.scan_output",
         "secret.scan_preview",
         "cert.expiry_report",
@@ -922,15 +934,15 @@ def test_security_namespace_replaces_legacy_security_plugin_names():
     names = set(build_builtin_registry().names())
     assert not (names & set(old_names))
     assert {
-        "security.apparmor.profile_check",
+        "security.apparmor.profile.check",
         "security.audit.rules.facts",
         "security.authselect.profile",
         "security.authselect.check",
         "security.pam.stack.facts",
         "security.password.policy",
-        "security.pki.cert.expiry_check",
+        "security.pki.cert.expiry.check",
         "security.pki.trust.install_ca",
-        "security.secret.redact_check",
+        "security.secret.redact.check",
         "security.selinux.mode",
         "security.ssh.authorized_key.add",
         "security.ssh.authorized_key.check",

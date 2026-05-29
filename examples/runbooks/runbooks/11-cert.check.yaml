@@ -41,17 +41,17 @@ tasks:
         cert_dest: /tmp/automax-demo.crt
         key_dest: /tmp/automax-demo.key
     - id: cert_issuer_assert
-      use: security.pki.cert.issuer_check
+      use: security.pki.cert.issuer.check
       with:
         cert: /tmp/automax-demo.crt
         issuer: CN=Example CA
     - id: cert_matches_key
-      use: security.pki.cert.key_match_check
+      use: security.pki.cert.key_match.check
       with:
         cert: /tmp/automax-demo.crt
         key: /tmp/automax-demo.key
     - id: cert_san_assert
-      use: security.pki.cert.san_check
+      use: security.pki.cert.san.check
       with:
         cert: /tmp/automax-demo.crt
         names:
@@ -63,12 +63,12 @@ tasks:
         cert: /tmp/automax-demo.crt
         subject: /CN=automax-demo
     - id: cert_subject_assert
-      use: security.pki.cert.subject_check
+      use: security.pki.cert.subject.check
       with:
         cert: /tmp/automax-demo.crt
         subject: CN=automax-demo
     - id: cert_verify_chain
-      use: security.pki.cert.chain_check
+      use: security.pki.cert.chain.check
       with:
         cert: /tmp/automax-demo.crt
         ca_file: /tmp/automax-ca.crt

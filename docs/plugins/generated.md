@@ -7758,7 +7758,7 @@ with:
   sudo: true
 ```
 
-### `security.apparmor.profile_check`
+### `security.apparmor.profile.check`
 
 Assert that an AppArmor profile is loaded in the expected mode.
 
@@ -7784,7 +7784,7 @@ Result fields:
 Example:
 
 ```yaml
-use: security.apparmor.profile_check
+use: security.apparmor.profile.check
 with:
   profile: /etc/apparmor.d/usr.sbin.nginx
   state: present
@@ -7881,7 +7881,7 @@ with:
   profile: /etc/apparmor.d/usr.sbin.nginx
 ```
 
-### `security.audit.backlog_check`
+### `security.audit.backlog.check`
 
 Assert auditd lost-event count and backlog are below thresholds.
 
@@ -7907,7 +7907,7 @@ Result fields:
 Example:
 
 ```yaml
-use: security.audit.backlog_check
+use: security.audit.backlog.check
 ```
 
 ### `security.audit.reload`
@@ -8315,7 +8315,7 @@ with:
   settings: value
 ```
 
-### `security.pam.include_check`
+### `security.pam.include.check`
 
 Assert a PAM service includes another stack.
 
@@ -8341,7 +8341,7 @@ Result fields:
 Example:
 
 ```yaml
-use: security.pam.include_check
+use: security.pam.include.check
 with:
   service: sshd
   include: value
@@ -8380,7 +8380,7 @@ with:
     - /etc/pam.d/login
 ```
 
-### `security.pam.module_check`
+### `security.pam.module.check`
 
 Assert a PAM module line exists in a service.
 
@@ -8407,13 +8407,13 @@ Result fields:
 Example:
 
 ```yaml
-use: security.pam.module_check
+use: security.pam.module.check
 with:
   service: sshd
   module: br_netfilter
 ```
 
-### `security.pam.order_check`
+### `security.pam.order.check`
 
 Assert one PAM line appears before another.
 
@@ -8440,7 +8440,7 @@ Result fields:
 Example:
 
 ```yaml
-use: security.pam.order_check
+use: security.pam.order.check
 with:
   service: sshd
   before: value
@@ -8697,7 +8697,7 @@ with:
   sudo: true
 ```
 
-### `security.pki.cert.chain_check`
+### `security.pki.cert.chain.check`
 
 Verify a certificate chain against a CA bundle with openssl verify.
 
@@ -8724,13 +8724,13 @@ Result fields:
 Example:
 
 ```yaml
-use: security.pki.cert.chain_check
+use: security.pki.cert.chain.check
 with:
   cert: value
   ca_file: value
 ```
 
-### `security.pki.cert.expiry_check`
+### `security.pki.cert.expiry.check`
 
 Check whether a certificate remains valid for at least min_days.
 
@@ -8756,7 +8756,7 @@ Result fields:
 Example:
 
 ```yaml
-use: security.pki.cert.expiry_check
+use: security.pki.cert.expiry.check
 with:
   path: /tmp/automax-demo
 ```
@@ -8864,7 +8864,7 @@ with:
   key_dest: value
 ```
 
-### `security.pki.cert.issuer_check`
+### `security.pki.cert.issuer.check`
 
 Check whether a certificate issuer contains an expected string.
 
@@ -8890,13 +8890,13 @@ Result fields:
 Example:
 
 ```yaml
-use: security.pki.cert.issuer_check
+use: security.pki.cert.issuer.check
 with:
   cert: value
   issuer: CN=Example CA
 ```
 
-### `security.pki.cert.key_match_check`
+### `security.pki.cert.key_match.check`
 
 Check whether a certificate public key matches a private key.
 
@@ -8922,13 +8922,13 @@ Result fields:
 Example:
 
 ```yaml
-use: security.pki.cert.key_match_check
+use: security.pki.cert.key_match.check
 with:
   cert: value
   key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
 ```
 
-### `security.pki.cert.san_check`
+### `security.pki.cert.san.check`
 
 Check whether a certificate contains required Subject Alternative Names.
 
@@ -8954,7 +8954,7 @@ Result fields:
 Example:
 
 ```yaml
-use: security.pki.cert.san_check
+use: security.pki.cert.san.check
 with:
   cert: value
   names:
@@ -8998,7 +8998,7 @@ with:
   subject: Automax notification
 ```
 
-### `security.pki.cert.subject_check`
+### `security.pki.cert.subject.check`
 
 Check whether a certificate subject contains an expected string.
 
@@ -9024,7 +9024,7 @@ Result fields:
 Example:
 
 ```yaml
-use: security.pki.cert.subject_check
+use: security.pki.cert.subject.check
 with:
   cert: value
   subject: Automax notification
@@ -9178,7 +9178,7 @@ with:
   name: nginx
 ```
 
-### `security.secret.redact_check`
+### `security.secret.redact.check`
 
 Check whether a payload contains no declared secret values after redaction policy is applied.
 
@@ -9204,7 +9204,7 @@ Result fields:
 Example:
 
 ```yaml
-use: security.secret.redact_check
+use: security.secret.redact.check
 with:
   text: password=secret
   value: 1

@@ -23,7 +23,7 @@ def _payload(params: Dict[str, Any], context: ExecutionContext) -> str:
 
 
 class SecretRedactAssertPlugin(BasePlugin):
-    name = "security.secret.redact_check"
+    name = "security.secret.redact.check"
     description = "Check whether a payload contains no declared secret values after redaction policy is applied."
     optional_params = ("text", "value", "source")
     supports_check_mode = True
@@ -31,14 +31,14 @@ class SecretRedactAssertPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if not any(key in params for key in ("text", "value", "source")):
-            raise PluginValidationError("security.secret.redact_check requires text, value or source")
+            raise PluginValidationError("security.secret.redact.check requires text, value or source")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return ["# security.secret.redact_check is evaluated inside Automax before output persistence"]
+        return ["# security.secret.redact.check is evaluated inside Automax before output persistence"]
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "security.secret.redact_check is an in-process redaction policy predicate"
+        return "security.secret.redact.check is an in-process redaction policy predicate"
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         text = _payload(params, context)

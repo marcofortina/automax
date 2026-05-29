@@ -3811,7 +3811,7 @@ def test_pki_plugins_install_permissions_and_expiry_preview():
     from automax.plugins.pki import PkiCaInstallPlugin, PkiCertExpiryAssertPlugin, PkiKeyPermissionsPlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("security.pki.trust.install_ca", "security.pki.key.permissions", "security.pki.cert.expiry_check"):
+    for name in ("security.pki.trust.install_ca", "security.pki.key.permissions", "security.pki.cert.expiry.check"):
         assert name in names
 
     context = _sysops_preview_context()
@@ -4353,7 +4353,7 @@ def test_cert_self_signed_plugin_renders_openssl_x509_req():
 def test_cert_verify_chain_plugin_renders_read_only_verify():
     from automax.plugins.cert_ops import CertVerifyChainPlugin
 
-    assert "security.pki.cert.chain_check" in AutomaxEngine().plugin_registry.names()
+    assert "security.pki.cert.chain.check" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = CertVerifyChainPlugin().manual_commands({"cert": "/tmp/app.crt", "ca_file": "/tmp/ca.crt"}, context)[0]
     assert "openssl verify -CAfile /tmp/ca.crt /tmp/app.crt" in command
@@ -4578,9 +4578,9 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["rule"] = "allow"
         params["port"] = 22
         params["protocol"] = "tcp"
-    if plugin.name == "security.apparmor.profile_check":
+    if plugin.name == "security.apparmor.profile.check":
         params["state"] = "enforce"
-    if plugin.name == "security.audit.backlog_check":
+    if plugin.name == "security.audit.backlog.check":
         params["max_lost"] = 0
         params["max_backlog"] = 8192
     if plugin.name == "os.time.chrony.tracking.check":
@@ -4730,10 +4730,10 @@ def test_certificate_assert_plugins_render_manual_commands():
     registry = build_builtin_registry()
 
     assert "-fingerprint" in registry.get("security.pki.cert.fingerprint").manual_commands({"cert": "/tmp/cert.pem", "sudo": False}, context)[0]
-    assert "openssl pkey" in registry.get("security.pki.cert.key_match_check").manual_commands({"cert": "/tmp/cert.pem", "key": "/tmp/key.pem", "sudo": False}, context)[0]
-    assert "subjectAltName" in registry.get("security.pki.cert.san_check").manual_commands({"cert": "/tmp/cert.pem", "names": ["DNS:example.com"], "sudo": False}, context)[0]
-    assert "-subject" in registry.get("security.pki.cert.subject_check").manual_commands({"cert": "/tmp/cert.pem", "subject": "CN=example", "sudo": False}, context)[0]
-    assert "-issuer" in registry.get("security.pki.cert.issuer_check").manual_commands({"cert": "/tmp/cert.pem", "issuer": "CN=ca", "sudo": False}, context)[0]
+    assert "openssl pkey" in registry.get("security.pki.cert.key_match.check").manual_commands({"cert": "/tmp/cert.pem", "key": "/tmp/key.pem", "sudo": False}, context)[0]
+    assert "subjectAltName" in registry.get("security.pki.cert.san.check").manual_commands({"cert": "/tmp/cert.pem", "names": ["DNS:example.com"], "sudo": False}, context)[0]
+    assert "-subject" in registry.get("security.pki.cert.subject.check").manual_commands({"cert": "/tmp/cert.pem", "subject": "CN=example", "sudo": False}, context)[0]
+    assert "-issuer" in registry.get("security.pki.cert.issuer.check").manual_commands({"cert": "/tmp/cert.pem", "issuer": "CN=ca", "sudo": False}, context)[0]
     assert "install -D" in " && ".join(registry.get("security.pki.trust.install_bundle").manual_commands({"src": "/tmp/ca.pem", "dest": "/usr/local/share/ca-certificates/ca.crt", "sudo": False}, context))
 
 
@@ -5229,7 +5229,7 @@ def test_capability_and_redaction_plugins_render_safe_previews():
     assert redacted.data["changed_by_redaction"] is True
     assert "super-secret-token" not in redacted.data["redacted"]
     assert "password=***" in redacted.data["redacted"]
-    leaked = registry.get("security.secret.redact_check").execute({"text": "value=super-secret-token"}, context)
+    leaked = registry.get("security.secret.redact.check").execute({"text": "value=super-secret-token"}, context)
     assert leaked.ok
     assert leaked.data["clean"] is False
 
@@ -5802,12 +5802,12 @@ def test_security_and_filesystem_content_checks_return_predicates_on_condition_f
         ("fs.attr.check", {"path": "/tmp/demo", "attrs": "i"}, "matches"),
         ("fs.acl.check", {"path": "/tmp/demo", "acl": "user:demo:r--"}, "matches"),
         ("security.authselect.check", {"profile": "sssd"}, "matches"),
-        ("security.pki.cert.chain_check", {"cert": "/tmp/cert.pem", "ca_file": "/tmp/ca.pem"}, "valid"),
-        ("security.pki.cert.key_match_check", {"cert": "/tmp/cert.pem", "key": "/tmp/key.pem"}, "matches"),
-        ("security.pki.cert.san_check", {"cert": "/tmp/cert.pem", "names": ["DNS:example.com"]}, "matches"),
-        ("security.pki.cert.subject_check", {"cert": "/tmp/cert.pem", "subject": "CN=example"}, "matches"),
-        ("security.pki.cert.issuer_check", {"cert": "/tmp/cert.pem", "issuer": "CN=ca"}, "matches"),
-        ("security.pki.cert.expiry_check", {"path": "/tmp/cert.pem"}, "valid"),
+        ("security.pki.cert.chain.check", {"cert": "/tmp/cert.pem", "ca_file": "/tmp/ca.pem"}, "valid"),
+        ("security.pki.cert.key_match.check", {"cert": "/tmp/cert.pem", "key": "/tmp/key.pem"}, "matches"),
+        ("security.pki.cert.san.check", {"cert": "/tmp/cert.pem", "names": ["DNS:example.com"]}, "matches"),
+        ("security.pki.cert.subject.check", {"cert": "/tmp/cert.pem", "subject": "CN=example"}, "matches"),
+        ("security.pki.cert.issuer.check", {"cert": "/tmp/cert.pem", "issuer": "CN=ca"}, "matches"),
+        ("security.pki.cert.expiry.check", {"path": "/tmp/cert.pem"}, "valid"),
     ):
         result = registry.get(plugin_name).execute(params, _remote_context_for_result(1, stderr="no match"))
         assert result.ok is True

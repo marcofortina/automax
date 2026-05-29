@@ -36,7 +36,7 @@ tasks:
         settings:
           deny: '5'
     - id: pam_include_assert
-      use: security.pam.include_check
+      use: security.pam.include.check
       with:
         service: sshd
         include: common-auth
@@ -46,12 +46,12 @@ tasks:
         files:
         - /etc/pam.d/login
     - id: pam_module_assert
-      use: security.pam.module_check
+      use: security.pam.module.check
       with:
         service: sshd
         module: br_netfilter
     - id: pam_order_assert
-      use: security.pam.order_check
+      use: security.pam.order.check
       with:
         service: sshd
         before: pam_permit.so

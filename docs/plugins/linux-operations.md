@@ -120,7 +120,7 @@ intentionally not part of the public plugin surface.
 
 ## Certificate and PKI operations
 
-Use `security.pki.trust.install_ca`, `security.pki.key.permissions` and `security.pki.cert.expiry_check` to
+Use `security.pki.trust.install_ca`, `security.pki.key.permissions` and `security.pki.cert.expiry.check` to
 install CA certificates, enforce private-key permissions and validate certificate
 expiry windows. File-changing operations include preview data and backups where
 applicable.
@@ -213,7 +213,7 @@ existing configuration files.
 
 `security.pki.csr.generate` creates CSRs from existing keys using openssl.
 `security.pki.cert.self_signed` generates self-signed certificates from existing private keys.
-`security.pki.cert.chain_check` performs read-only openssl chain verification.
+`security.pki.cert.chain.check` performs read-only openssl chain verification.
 `security.pki.cert.install_keypair` installs certificate/key pairs with private-key mode `0600`.
 `security.pki.cert.expiry_report` reads certificate expiry and fails when inside the configured warning window.
 
