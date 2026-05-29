@@ -36,7 +36,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 ```
 
 `start` and `stop` check the current state first. `restart`, `reload` and
-`system.systemd.daemon_reload` marks the substep changed when they run.
+`system.systemd.daemon.reload` marks the substep changed when they run.
 
 ## Enablement and masking
 
@@ -77,12 +77,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later
     nginx_status: stdout.trim
 
 - id: is_active
-  use: system.service.active_check
+  use: system.service.active.check
   with:
     service: nginx.service
 
 - id: is_enabled
-  use: system.service.enabled_check
+  use: system.service.enabled.check
   with:
     service: nginx.service
 ```
@@ -91,10 +91,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 ```yaml
 - id: daemon_reload
-  use: system.systemd.daemon_reload
+  use: system.systemd.daemon.reload
   with:
     sudo: true
 ```
 
 
-`system.service.active_check` and `system.service.enabled_check` return `ok=true` when the query runs successfully and expose the service state in `data.active` or `data.enabled`.
+`system.service.active.check` and `system.service.enabled.check` return `ok=true` when the query runs successfully and expose the service state in `data.active` or `data.enabled`.

@@ -99,7 +99,7 @@ class SystemctlRestartPlugin(_SystemctlServicePlugin):
 class SystemctlDaemonReloadPlugin(BasePlugin):
     """Reload the remote systemd manager configuration."""
 
-    name = "system.systemd.daemon_reload"
+    name = "system.systemd.daemon.reload"
     description = "Run systemctl daemon-reload on a remote target."
     optional_params = ("sudo", "user")
     opens_remote_session = True
@@ -116,7 +116,7 @@ class SystemctlDaemonReloadPlugin(BasePlugin):
         if context.dry_run:
             return self.dry_run(params, context)
         if context.ssh_client is None:
-            return PluginResult.failure(message="system.systemd.daemon_reload requires an SSH session")
+            return PluginResult.failure(message="system.systemd.daemon.reload requires an SSH session")
         systemctl = _systemctl_prefix(params)
         command = f"{systemctl} daemon-reload && echo {CHANGE_MARKER}"
         rc, out, err = exec_remote(context, command)
@@ -124,7 +124,7 @@ class SystemctlDaemonReloadPlugin(BasePlugin):
             rc=rc,
             stdout=out,
             stderr=err,
-            message="system.systemd.daemon_reload failed",
+            message="system.systemd.daemon.reload failed",
             data={"action": "daemon-reload"},
         )
 
@@ -195,7 +195,7 @@ class SystemctlStatusPlugin(_SystemctlServicePlugin):
 class SystemctlIsActivePlugin(_SystemctlServicePlugin):
     """Check whether a service is active without changing the target."""
 
-    name = "system.service.active_check"
+    name = "system.service.active.check"
     description = "Check remote systemd active state."
     action = "is-active"
 
@@ -216,7 +216,7 @@ class SystemctlIsActivePlugin(_SystemctlServicePlugin):
 class SystemctlIsEnabledPlugin(_SystemctlServicePlugin):
     """Check whether a service is enabled without changing the target."""
 
-    name = "system.service.enabled_check"
+    name = "system.service.enabled.check"
     description = "Check remote systemd enabled state."
     action = "is-enabled"
 

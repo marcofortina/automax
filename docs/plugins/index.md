@@ -388,15 +388,15 @@ system.kernel.sysctl.set
 system.log.export
 system.log.grep
 system.process.check
-system.process.count_check
+system.process.count.check
 system.process.kill
 system.process.signal
 system.process.wait
 system.reboot
-system.service.active_check
+system.service.active.check
 system.service.disable
 system.service.enable
-system.service.enabled_check
+system.service.enabled.check
 system.service.facts
 system.service.mask
 system.service.reload
@@ -405,7 +405,7 @@ system.service.start
 system.service.status
 system.service.stop
 system.service.unmask
-system.systemd.daemon_reload
+system.systemd.daemon.reload
 system.systemd.sysusers
 system.systemd.timer
 system.systemd.tmpfiles

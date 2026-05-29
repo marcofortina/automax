@@ -12601,7 +12601,7 @@ with:
   pattern: KEY=.*
 ```
 
-### `system.process.count_check`
+### `system.process.count.check`
 
 Assert the number of remote processes matching a pattern.
 
@@ -12629,7 +12629,7 @@ Result fields:
 Example:
 
 ```yaml
-use: system.process.count_check
+use: system.process.count.check
 with:
   pattern: KEY=.*
 ```
@@ -12771,7 +12771,7 @@ with:
   delay: 3
 ```
 
-### `system.service.active_check`
+### `system.service.active.check`
 
 Check remote systemd active state.
 
@@ -12797,7 +12797,7 @@ Result fields:
 Example:
 
 ```yaml
-use: system.service.active_check
+use: system.service.active.check
 with:
   service: sshd
 ```
@@ -12864,7 +12864,7 @@ with:
   service: sshd
 ```
 
-### `system.service.enabled_check`
+### `system.service.enabled.check`
 
 Check remote systemd enabled state.
 
@@ -12890,7 +12890,7 @@ Result fields:
 Example:
 
 ```yaml
-use: system.service.enabled_check
+use: system.service.enabled.check
 with:
   service: sshd
 ```
@@ -13142,7 +13142,7 @@ with:
   service: sshd
 ```
 
-### `system.systemd.daemon_reload`
+### `system.systemd.daemon.reload`
 
 Run systemctl daemon-reload on a remote target.
 
@@ -13167,7 +13167,7 @@ Result fields:
 Example:
 
 ```yaml
-use: system.systemd.daemon_reload
+use: system.systemd.daemon.reload
 with:
   sudo: true
   user: deploy

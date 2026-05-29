@@ -19,7 +19,7 @@ tasks:
       with:
         pattern: KEY=.*
     - id: system-system_process_count_check
-      use: system.process.count_check
+      use: system.process.count.check
       with:
         pattern: automax-smoke
         min_count: 1

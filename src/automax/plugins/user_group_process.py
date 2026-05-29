@@ -315,7 +315,7 @@ class ProcessCheckPlugin(BasePlugin):
 class ProcessAssertCountPlugin(BasePlugin):
     """Assert process count for a pattern."""
 
-    name = "system.process.count_check"
+    name = "system.process.count.check"
     description = "Assert the number of remote processes matching a pattern."
     required_params = ("pattern",)
     optional_params = ("count", "min_count", "max_count", "sudo")
@@ -325,10 +325,10 @@ class ProcessAssertCountPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if not any(key in params for key in ("count", "min_count", "max_count")):
-            raise PluginValidationError("system.process.count_check requires count, min_count or max_count")
+            raise PluginValidationError("system.process.count.check requires count, min_count or max_count")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "system.process.count_check is a read-only process count predicate"
+        return "system.process.count.check is a read-only process count predicate"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -347,7 +347,7 @@ class ProcessAssertCountPlugin(BasePlugin):
             rc=rc,
             stdout=out,
             stderr=err,
-            message="system.process.count_check failed",
+            message="system.process.count.check failed",
             data_key="matches",
             data={"pattern": str(params["pattern"])},
         )

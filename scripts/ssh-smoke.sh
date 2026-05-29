@@ -317,17 +317,17 @@ if [[ -n "${SMOKE_SERVICE}" ]]; then
               service: ${SMOKE_SERVICE}
               sudo: true
           - id: is_active
-            use: system.service.active_check
+            use: system.service.active.check
             with:
               service: ${SMOKE_SERVICE}
               sudo: true
           - id: is_enabled
-            use: system.service.enabled_check
+            use: system.service.enabled.check
             with:
               service: ${SMOKE_SERVICE}
               sudo: true
           - id: daemon_reload
-            use: system.systemd.daemon_reload
+            use: system.systemd.daemon.reload
             with:
               sudo: true
 YAML

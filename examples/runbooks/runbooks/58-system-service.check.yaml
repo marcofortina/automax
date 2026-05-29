@@ -15,7 +15,7 @@ tasks:
   - id: catalog
     substeps:
     - id: system-service_daemon_reload
-      use: system.systemd.daemon_reload
+      use: system.systemd.daemon.reload
       with:
         sudo: true
         user: true
@@ -28,11 +28,11 @@ tasks:
       with:
         service: sshd
     - id: system-service_is_active
-      use: system.service.active_check
+      use: system.service.active.check
       with:
         service: sshd
     - id: system-service_is_enabled
-      use: system.service.enabled_check
+      use: system.service.enabled.check
       with:
         service: sshd
     - id: system-service_mask

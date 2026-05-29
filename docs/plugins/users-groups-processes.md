@@ -73,7 +73,7 @@ These plugins run on the remote target through SSH.
 
 `system.process.signal` sends a runtime signal by PID or pattern and renders the exact manual command for recovery.
 `system.process.check` is a read-only pgrep assertion used as a pre/post check.
-`system.process.count_check` gates process cardinality with exact, minimum or maximum count checks.
+`system.process.count.check` gates process cardinality with exact, minimum or maximum count checks.
 
 `security.sshd.config` installs server-side SSH hardening drop-ins and validates them with `sshd -t` before reload.
 `os.login.defs.set` manages account-aging defaults in `/etc/login.defs` with backup.

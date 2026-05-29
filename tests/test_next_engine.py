@@ -626,7 +626,7 @@ tasks:
       - id: services
         substeps:
           - id: daemon_reload
-            use: system.systemd.daemon_reload
+            use: system.systemd.daemon.reload
             with:
               sudo: true
           - id: start
@@ -762,8 +762,8 @@ def test_extended_systemctl_plugins_are_registered():
         "system.service.enable",
         "system.service.disable",
         "system.service.status",
-        "system.service.active_check",
-        "system.service.enabled_check",
+        "system.service.active.check",
+        "system.service.enabled.check",
         "system.service.mask",
         "system.service.unmask",
         "data.transfer.download",
@@ -3804,7 +3804,7 @@ def test_health_namespace_is_not_public_plugin_surface():
     assert "network.http.request" in names
     assert "network.connectivity.port.check" in names
     assert "system.process.check" in names
-    assert "system.process.count_check" in names
+    assert "system.process.count.check" in names
 
 
 def test_pki_plugins_install_permissions_and_expiry_preview():
@@ -4246,7 +4246,7 @@ def test_process_assert_absent_plugin_renders_pgrep_assertion():
 def test_process_assert_count_plugin_renders_count_assertion():
     from automax.plugins.user_group_process import ProcessAssertCountPlugin
 
-    assert "system.process.count_check" in AutomaxEngine().plugin_registry.names()
+    assert "system.process.count.check" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = ProcessAssertCountPlugin().manual_commands({"pattern": "worker", "min_count": 1, "max_count": 3}, context)[0]
     assert "pgrep -fc worker" in command
@@ -5825,7 +5825,7 @@ def test_storage_and_process_checks_return_predicates_on_condition_false():
         ("storage.fs.check", {"device": "/dev/sdb1"}, "matches"),
         ("storage.lvm.lv.check", {"vg": "vg0", "name": "lv0"}, "matches"),
         ("system.process.check", {"pattern": "missing-process"}, "matches"),
-        ("system.process.count_check", {"pattern": "missing-process", "count": 1}, "matches"),
+        ("system.process.count.check", {"pattern": "missing-process", "count": 1}, "matches"),
     ):
         result = registry.get(plugin_name).execute(params, _remote_context_for_result(1, stderr="not found"))
         assert result.ok is True

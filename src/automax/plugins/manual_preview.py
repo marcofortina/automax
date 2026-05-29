@@ -119,7 +119,7 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
     path = str(params.get("path", "/tmp/automax-demo"))
     name = str(params.get("name", "demo"))
 
-    if plugin_name == "system.systemd.daemon_reload":
+    if plugin_name == "system.systemd.daemon.reload":
         return [_systemctl(params, "daemon-reload")]
     if plugin_name.startswith("system.service."):
         action = plugin_name.rsplit(".", 1)[1]
