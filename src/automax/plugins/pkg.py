@@ -108,7 +108,7 @@ class _PackagePlugin(BasePlugin):
 
     def validate(self, params: Dict[str, Any]) -> None:
         _manager(params)
-        if self.name in {"pkg.install", "pkg.remove", "pkg.query"}:
+        if self.name in {"os.package.install", "os.package.remove", "os.package.query", "os.package.check"}:
             _as_packages(params)
 
     def dry_run(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -118,7 +118,7 @@ class _PackagePlugin(BasePlugin):
 class PackageInstallPlugin(_PackagePlugin):
     """Install packages only when missing."""
 
-    name = "pkg.install"
+    name = "os.package.install"
     description = "Install packages on a remote target."
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -136,13 +136,13 @@ if [ -n "$missing" ]; then
 fi
 """
         rc, out, err = exec_remote(context, command, get_pty=bool(params.get("sudo", True)))
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.install failed", data={"packages": packages})
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.install failed", data={"packages": packages})
 
 
 class PackageRemovePlugin(_PackagePlugin):
     """Remove packages only when installed."""
 
-    name = "pkg.remove"
+    name = "os.package.remove"
     description = "Remove packages from a remote target."
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -160,13 +160,13 @@ if [ -n "$present" ]; then
 fi
 """
         rc, out, err = exec_remote(context, command, get_pty=bool(params.get("sudo", True)))
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.remove failed", data={"packages": packages})
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.remove failed", data={"packages": packages})
 
 
 class PackageUpdateCachePlugin(_PackagePlugin):
     """Refresh the package manager cache."""
 
-    name = "pkg.update_cache"
+    name = "os.package.update_cache"
     description = "Refresh package manager metadata."
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -176,13 +176,13 @@ class PackageUpdateCachePlugin(_PackagePlugin):
             _shell_header(params) + f"run_update_cache && echo {CHANGE_MARKER}\n",
             get_pty=bool(params.get("sudo", True)),
         )
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.update_cache failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.update_cache failed")
 
 
 class PackageUpgradePlugin(_PackagePlugin):
     """Upgrade installed packages through the selected package manager."""
 
-    name = "pkg.upgrade"
+    name = "os.package.upgrade"
     description = "Upgrade remote packages."
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -192,13 +192,13 @@ class PackageUpgradePlugin(_PackagePlugin):
             _shell_header(params) + f"run_upgrade && echo {CHANGE_MARKER}\n",
             get_pty=bool(params.get("sudo", True)),
         )
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.upgrade failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.upgrade failed")
 
 
 class PackageQueryPlugin(_PackagePlugin):
     """Query package installation state without changing the target."""
 
-    name = "pkg.query"
+    name = "os.package.query"
     description = "Query package installation state."
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
@@ -217,7 +217,7 @@ done
             if len(parts) == 2:
                 states[parts[0]] = parts[1]
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="pkg.query failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="os.package.query failed")
         return PluginResult.success(changed=False, stdout=out, data={"packages": states})
 
 
@@ -237,7 +237,7 @@ fi
 
 
 class PackageVersionAssertPlugin(_PackagePlugin):
-    name = "pkg.version_assert"
+    name = "os.package.version.check"
     description = "Assert that an installed package version matches the expected version."
     required_params = ("name", "version")
     optional_params = ("manager", "sudo")
@@ -261,12 +261,12 @@ test "$installed" = {version}
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="pkg.version_assert failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="os.package.version.check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"name": params["name"], "version": params["version"]})
 
 
 class PackageOwnerPlugin(_PackagePlugin):
-    name = "pkg.owner"
+    name = "os.package.owner"
     description = "Report which package owns a file path."
     required_params = ("path",)
     optional_params = ("manager", "sudo")
@@ -288,12 +288,12 @@ esac
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="pkg.owner failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="os.package.owner failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"owner": out.strip()})
 
 
 class PackageFilesPlugin(_PackagePlugin):
-    name = "pkg.files"
+    name = "os.package.files"
     description = "List files installed by a package."
     required_params = ("name",)
     optional_params = ("manager", "sudo")
@@ -315,12 +315,12 @@ esac
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="pkg.files failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="os.package.files failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"files": out.splitlines()})
 
 
 class PackageVerifyPlugin(_PackagePlugin):
-    name = "pkg.verify"
+    name = "os.package.verify"
     description = "Verify installed package file integrity when the package manager supports it."
     optional_params = ("name", "packages", "manager", "sudo")
     supports_check_mode = True
@@ -341,12 +341,12 @@ esac
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="pkg.verify failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="os.package.verify failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
 class PackageCleanPlugin(_PackagePlugin):
-    name = "pkg.clean"
+    name = "os.package.clean"
     description = "Clean package-manager caches."
     optional_params = ("manager", "sudo")
 
@@ -367,7 +367,7 @@ esac
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}", get_pty=bool(params.get("sudo", True)))
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.clean failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.clean failed")
 
 # Extended package operation renderers expose safer enterprise controls.
 
@@ -385,7 +385,7 @@ def _pkg_install_manual(self: PackageInstallPlugin, params: Dict[str, Any], cont
     self.validate(params)
     packages = _as_packages(params)
     if params.get("version") and len(packages) != 1:
-        raise PluginValidationError("pkg.install version requires exactly one package")
+        raise PluginValidationError("os.package.install version requires exactly one package")
     package_exprs = [f"{packages[0]}={params['version']}" if params.get("version") else package for package in packages]
     pkg_args = _package_args(package_exprs)
     sudo = sudo_prefix(params, default=True)
@@ -415,7 +415,7 @@ fi
 
 def _pkg_install_execute(self: PackageInstallPlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
     rc, out, err = exec_remote(context, self.manual_commands(params, context)[0], get_pty=bool(params.get("sudo", True)))
-    return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.install failed", data={"packages": _as_packages(params)})
+    return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.install failed", data={"packages": _as_packages(params)})
 
 
 def _pkg_remove_manual(self: PackageRemovePlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
@@ -424,7 +424,7 @@ def _pkg_remove_manual(self: PackageRemovePlugin, params: Dict[str, Any], contex
     protected = set(_as_list(params.get("protect_packages"))) | {"sudo", "systemd", "openssh-server", "ssh", "python3"}
     dangerous = bool(params.get("purge", False)) or bool(params.get("autoremove", False)) or bool(set(packages) & protected)
     if dangerous and not bool(params.get("confirm", False)):
-        raise PluginValidationError("pkg.remove purge/autoremove/protected package removal requires confirm=true")
+        raise PluginValidationError("os.package.remove purge/autoremove/protected package removal requires confirm=true")
     pkg_args = _package_args(packages)
     sudo = sudo_prefix(params, default=True)
     purge = " purge" if bool(params.get("purge", False)) else " remove"
@@ -450,7 +450,7 @@ fi
 
 def _pkg_remove_execute(self: PackageRemovePlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
     rc, out, err = exec_remote(context, self.manual_commands(params, context)[0], get_pty=bool(params.get("sudo", True)))
-    return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.remove failed", data={"packages": _as_packages(params)})
+    return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.remove failed", data={"packages": _as_packages(params)})
 
 
 def _pkg_upgrade_manual(self: PackageUpgradePlugin, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
@@ -476,12 +476,12 @@ echo {CHANGE_MARKER}
 
 def _pkg_upgrade_execute(self: PackageUpgradePlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
     rc, out, err = exec_remote(context, self.manual_commands(params, context)[0], get_pty=bool(params.get("sudo", True)))
-    return result_from_remote(rc=rc, stdout=out, stderr=err, message="pkg.upgrade failed")
+    return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.upgrade failed")
 
 
 
 class ExtendedPackageInstallPlugin(PackageInstallPlugin):
-    """pkg.install with version, repository and package-lock controls."""
+    """os.package.install with version, repository and package-lock controls."""
 
     optional_params = ("name", "packages", "manager", "version", "enablerepo", "disablerepo", "no_recommends", "lock_after_install", "allow_downgrade", "sudo")
 
@@ -493,7 +493,7 @@ class ExtendedPackageInstallPlugin(PackageInstallPlugin):
 
 
 class ExtendedPackageRemovePlugin(PackageRemovePlugin):
-    """pkg.remove with purge, autoremove and protected-package controls."""
+    """os.package.remove with purge, autoremove and protected-package controls."""
 
     optional_params = ("name", "packages", "manager", "purge", "autoremove", "confirm", "protect_packages", "sudo")
 
@@ -505,7 +505,7 @@ class ExtendedPackageRemovePlugin(PackageRemovePlugin):
 
 
 class ExtendedPackageUpgradePlugin(PackageUpgradePlugin):
-    """pkg.upgrade with security, download-only and reboot-check controls."""
+    """os.package.upgrade with security, download-only and reboot-check controls."""
 
     optional_params = ("manager", "security_only", "exclude", "download_only", "reboot_required_check", "sudo")
 
@@ -522,3 +522,38 @@ def _as_list(value: Any) -> list[str]:
     if isinstance(value, (list, tuple)):
         return [str(item) for item in value]
     return [str(value)]
+
+
+class PackageCheckPlugin(_PackagePlugin):
+    name = "os.package.check"
+    description = "Assert package installation state and optionally version."
+    required_params = ("name",)
+    optional_params = ("packages", "manager", "state", "version", "sudo")
+    supports_check_mode = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        packages = _as_packages(params)
+        state = str(params.get("state", "installed"))
+        if state not in {"installed", "absent"}:
+            raise PluginValidationError("os.package.check state must be installed or absent")
+        package_args = _package_args(packages)
+        version_check = ""
+        if params.get("version") and len(packages) == 1:
+            version = quote(params["version"])
+            version_check = f"\ncase \"$manager\" in\n  apt|apt-get) installed=$(dpkg-query -W -f='${{Version}}' {quote(packages[0])} 2>/dev/null) ;;\n  dnf|yum|zypper) installed=$(rpm -q --qf '%{{VERSION}}-%{{RELEASE}}' {quote(packages[0])}) ;;\n  pacman) installed=$(pacman -Q {quote(packages[0])} | awk '{{print $2}}') ;;\n  *) echo \"unsupported package manager: $manager\" >&2; exit 2 ;;\nesac\ntest \"$installed\" = {version}\n"
+        command = _inspection_header(params) + f"""
+for package in {package_args}; do
+  if [ {quote(state)} = installed ]; then
+    is_installed "$package"
+  else
+    ! is_installed "$package"
+  fi
+done
+{version_check}
+"""
+        return [command]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.check failed")

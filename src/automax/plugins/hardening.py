@@ -57,7 +57,7 @@ class SshdConfigPlugin(RenderedFileInstallMixin, BasePlugin):
         return commands
 
 class LoginDefsPlugin(BasePlugin):
-    name = "login.defs"
+    name = "os.login.defs.set"
     description = "Manage /etc/login.defs settings with backup."
     required_params = ("settings",)
     optional_params = ("path", "backup", "backup_suffix", "sudo")
@@ -71,7 +71,7 @@ class LoginDefsPlugin(BasePlugin):
     def _content(self, params: Dict[str, Any]) -> str:
         settings = params.get("settings")
         if not isinstance(settings, dict) or not settings:
-            raise PluginValidationError("login.defs settings must be a non-empty mapping")
+            raise PluginValidationError("os.login.defs.set settings must be a non-empty mapping")
         return _settings_content(settings)
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
@@ -92,7 +92,7 @@ class LoginDefsPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="login.defs failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.login.defs.set failed")
 
 class PasswordPolicyPlugin(RenderedFileInstallMixin, BasePlugin):
     name = "security.password.policy"
@@ -187,3 +187,54 @@ class ExtendedSshdConfigPlugin(SshdConfigPlugin):
             sudo = self.rendered_file_sudo(params)
             commands.append(f"{sudo}systemctl reload sshd || {sudo}systemctl reload ssh")
         return commands
+
+
+class LoginDefsGetPlugin(BasePlugin):
+    name = "os.login.defs.get"
+    description = "Read /etc/login.defs settings."
+    optional_params = ("path", "key", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def _path(self, params: Dict[str, Any]) -> str:
+        return str(params.get("path", "/etc/login.defs"))
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        path = quote(self._path(params))
+        if params.get("key"):
+            return [f"awk '$1 == {quote(params['key'])} {{print $0}}' {path}"]
+        return [f"grep -Ev '^[[:space:]]*(#|$)' {path}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        settings = {}
+        for line in out.splitlines():
+            parts = line.split(None, 1)
+            if len(parts) == 2:
+                settings[parts[0]] = parts[1]
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.login.defs.get failed", data={"settings": settings})
+
+
+class LoginDefsCheckPlugin(LoginDefsGetPlugin):
+    name = "os.login.defs.check"
+    description = "Assert /etc/login.defs settings."
+    required_params = ("settings",)
+    optional_params = ("path", "sudo")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        settings = params.get("settings")
+        if not isinstance(settings, dict) or not settings:
+            raise PluginValidationError("os.login.defs.check settings must be a non-empty mapping")
+        path = quote(self._path(params))
+        commands = []
+        for key, value in sorted(settings.items()):
+            commands.append(
+                f"awk '$1 == {quote(key)} {{found=1; if ($2 == {quote(value)}) ok=1}} "
+                f"END {{exit !(found && ok)}}' {path}"
+            )
+        return [" && ".join(commands)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.login.defs.check failed")

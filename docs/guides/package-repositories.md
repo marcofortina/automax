@@ -9,7 +9,7 @@ Automax manages package repository keys and repository definitions for Debian/Ub
 
 ```yaml
 - id: install_vendor_key
-  use: pkg.key.add
+  use: os.package.key.add
   with:
     name: vendor
     manager: apt
@@ -19,7 +19,7 @@ Automax manages package repository keys and repository definitions for Debian/Ub
 
 ```yaml
 - id: add_vendor_apt_repo
-  use: pkg.repo.add
+  use: os.package.repo.add
   with:
     name: vendor
     manager: apt
@@ -32,7 +32,7 @@ For RHEL-like systems, provide a `.repo` file body with `content` or `src` and `
 
 ```yaml
 - id: add_vendor_dnf_repo
-  use: pkg.repo.add
+  use: os.package.repo.add
   with:
     name: vendor
     manager: dnf

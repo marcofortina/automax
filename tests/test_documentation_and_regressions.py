@@ -784,8 +784,8 @@ def test_rendered_file_install_mixin_covers_managed_file_plugins():
     registry = build_builtin_registry()
     expected = {
         "security.audit.rule",
-        "chrony.servers",
-        "limits.dropin",
+        "os.time.chrony.servers.set",
+        "os.limits.dropin",
         "network.dns.config",
         "security.password.policy",
         "security.ssh.config",
@@ -1114,6 +1114,126 @@ def test_storage_namespace_replaces_legacy_storage_plugin_names():
                 offenders.append(f"{path}:{old_name}")
     assert offenders == []
 
+
+
+def test_os_namespace_replaces_legacy_operating_system_plugin_names():
+    from automax.plugins.registry import build_builtin_registry
+
+    old_names = [
+        "alternatives.get",
+        "alternatives.list",
+        "alternatives.set",
+        "capability.assert",
+        "chrony.servers",
+        "chrony.sources_assert",
+        "chrony.tracking_assert",
+        "env.set",
+        "facts.os",
+        "facts.packages",
+        "hostname.set",
+        "hosts.entry",
+        "limits.dropin",
+        "login.defs",
+        "pkg.clean",
+        "pkg.files",
+        "pkg.hold",
+        "pkg.install",
+        "pkg.key.add",
+        "pkg.key.remove",
+        "pkg.owner",
+        "pkg.query",
+        "pkg.remove",
+        "pkg.repo.add",
+        "pkg.repo.remove",
+        "pkg.repo_priority",
+        "pkg.unhold",
+        "pkg.update_cache",
+        "pkg.upgrade",
+        "pkg.verify",
+        "pkg.version_assert",
+        "pkg.version_pin",
+        "platform.facts",
+        "timedatectl.ntp",
+        "timedatectl.status",
+        "timedatectl.timezone",
+        "tool.exists",
+        "tool.version_assert",
+    ]
+    names = set(build_builtin_registry().names())
+    assert not (names & set(old_names))
+    assert {
+        "os.alternatives.check",
+        "os.alternatives.get",
+        "os.alternatives.list",
+        "os.alternatives.set",
+        "os.arch.check",
+        "os.capability.check",
+        "os.env.check",
+        "os.env.facts",
+        "os.env.get",
+        "os.env.remove",
+        "os.env.set",
+        "os.facts",
+        "os.hostname.check",
+        "os.hostname.get",
+        "os.hostname.set",
+        "os.hosts.entry.add",
+        "os.hosts.entry.check",
+        "os.hosts.entry.remove",
+        "os.hosts.facts",
+        "os.limits.dropin",
+        "os.login.defs.check",
+        "os.login.defs.get",
+        "os.login.defs.set",
+        "os.package.check",
+        "os.package.facts",
+        "os.package.hold.add",
+        "os.package.hold.check",
+        "os.package.hold.list",
+        "os.package.hold.remove",
+        "os.package.key.check",
+        "os.package.key.list",
+        "os.package.repo.check",
+        "os.package.repo.list",
+        "os.package.repo.priority.check",
+        "os.package.repo.priority.set",
+        "os.package.version.check",
+        "os.package.version.pin",
+        "os.platform.facts",
+        "os.time.chrony.servers.check",
+        "os.time.chrony.servers.get",
+        "os.time.chrony.servers.set",
+        "os.time.ntp.check",
+        "os.time.ntp.get",
+        "os.time.ntp.set",
+        "os.time.status",
+        "os.time.timezone.check",
+        "os.time.timezone.get",
+        "os.time.timezone.set",
+        "os.tool.exists",
+        "os.tool.version_check",
+    } <= names
+
+    searched = [
+        Path("docs/plugins/index.md"),
+        Path("docs/plugins/linux-operations.md"),
+        Path("docs/plugins/generated.md"),
+        Path("docs/plugins/alternatives.md"),
+        Path("docs/plugins/package-manager.md"),
+        Path("docs/plugins/security.md"),
+        Path("docs/plugins/users-groups-processes.md"),
+        Path("examples/runbooks/RUNBOOK_INDEX.md"),
+        *Path("examples/runbooks/runbooks").glob("*.check.yaml"),
+    ]
+    doc_old_names = [name for name in old_names if name != "login.defs"]
+    offenders = []
+    for path in searched:
+        text = path.read_text(encoding="utf-8")
+        for old_name in doc_old_names:
+            pattern = re.compile(r"(?<![A-Za-z0-9_.])" + re.escape(old_name) + r"(?![A-Za-z0-9_.])")
+            if pattern.search(text):
+                offenders.append(f"{path}:{old_name}")
+    assert offenders == []
 
 def test_health_namespace_is_removed_from_public_documentation_and_runbooks():
     from automax.plugins.registry import build_builtin_registry

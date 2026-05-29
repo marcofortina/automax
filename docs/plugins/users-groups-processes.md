@@ -76,7 +76,7 @@ These plugins run on the remote target through SSH.
 `system.process.count_check` gates process cardinality with exact, minimum or maximum count checks.
 
 `security.sshd.config` installs server-side SSH hardening drop-ins and validates them with `sshd -t` before reload.
-`login.defs` manages account-aging defaults in `/etc/login.defs` with backup.
+`os.login.defs.set` manages account-aging defaults in `/etc/login.defs` with backup.
 `security.password.policy` installs pwquality drop-ins for password complexity policy.
 `security.authselect.profile` selects RHEL-style authentication profiles with explicit backup by default.
 

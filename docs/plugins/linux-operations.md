@@ -57,14 +57,14 @@ where they modify system files:
 
 ```text
 storage.swap.add / storage.swap.remove
-limits.dropin
+os.limits.dropin
 security.pam.limits
 security.pam.access / security.pam.faillock / security.pam.pwhistory / security.pam.succeed_if
 security.pam.service_line / security.pam.validate / security.pam.stack.facts / security.authselect.check
-hosts.entry
-hostname.set
+os.hosts.entry.add
+os.hostname.set
 network.dns.config
-chrony.servers / chrony.sources_assert
+os.time.chrony.servers.set / os.time.chrony.sources.check
 ```
 
 `network.dns.config` is deliberately careful: with `backend: auto`, it refuses to
@@ -74,11 +74,11 @@ NetworkManager, resolvconf or cloud-init.
 
 ## Environment, reboot and downloads
 
-`env.set` can set step-scoped variables for later remote commands, or persistent
+`os.env.set` can set step-scoped variables for later remote commands, or persistent
 variables in a global/profile file:
 
 ```yaml
-use: env.set
+use: os.env.set
 with:
   scope: global
   variables:
@@ -128,7 +128,7 @@ applicable.
 
 ## Package locks and pinning
 
-Use `pkg.hold`, `pkg.unhold`, `pkg.version_pin` and `pkg.repo_priority` to lock
+Use `os.package.hold.add`, `os.package.hold.remove`, `os.package.version.pin` and `os.package.repo.priority.set` to lock
 packages, pin versions and manage repository priorities across supported package
 managers. File-backed pinning and priority files are previewable and backed up by
 default.
@@ -182,16 +182,16 @@ configuration.
 Useful families include:
 
 ```text
-platform.facts
+os.platform.facts
 network.dns.facts
 network.link.facts / network.route.facts
-pkg.version_pin / pkg.repo_priority
+os.package.version.pin / os.package.repo.priority.set
 network.link.interface / network.link.bond / network.link.vlan / network.route.add / network.route.remove with persist/backend
 security.pki.trust.install_ca with trust_store=system
 storage.lvm.lv.snapshot / storage.lvm.lv.thin_pool / storage.lvm.lv.remove / storage.lvm.vg.remove / storage.lvm.pv.remove
 fs.acl.set / fs.attr.set / storage.quota.set / storage.quota.get / storage.quota.check / storage.quota.facts
 system.systemd.unit / system.systemd.timer / system.systemd.tmpfiles / system.systemd.sysusers
-alternatives.set
+os.alternatives.set
 security.audit.rule / security.audit.status / security.audit.reload
 security.ssh.config / security.ssh.known_hosts / security.ssh.authorized_key.add
 security.selinux.port / security.selinux.fcontext
@@ -230,8 +230,8 @@ readback without treating mismatched state as a failed assertion.
 Udev validation/readback plugins are `udev.validate`, `udev.test` and
 `udev.facts`. Use them before and after installing udev rules.
 
-Time synchronization helpers include `timedatectl.status`,
-`timedatectl.timezone`, `timedatectl.ntp` and `chrony.tracking_assert`.
+Time synchronization helpers include `os.time.status`,
+`os.time.timezone.set`, `os.time.ntp.set` and `os.time.chrony.tracking.check`.
 
 User and group readback/assertion plugins include `identity.user.facts`,
 `identity.user.shell_check`, `identity.user.home_check`, `identity.user.groups_check`, `identity.group.members`

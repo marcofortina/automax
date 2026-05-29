@@ -21,9 +21,9 @@ Automax gathers remote Linux facts for conditional workflows, reports and run di
 
 Individual plugins are also available:
 
-- `facts.os`
+- `os.facts`
 - `facts.network`
-- `facts.packages`
+- `os.package.facts`
 - `facts.services`
 
 Package facts support Debian/Ubuntu through `dpkg-query` and Red Hat-like systems through `rpm`.

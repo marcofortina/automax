@@ -25,12 +25,16 @@ tasks:
       use: facts.network
       with:
         sudo: true
+    - id: os_arch_check
+      use: os.arch.check
+      with:
+        any_of: [x86_64, arm64, x86, arm]
     - id: facts_os
-      use: facts.os
+      use: os.facts
       with:
         sudo: true
     - id: facts_packages
-      use: facts.packages
+      use: os.package.facts
       with:
         manager: auto
         sudo: true

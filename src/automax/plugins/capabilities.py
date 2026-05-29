@@ -22,7 +22,7 @@ def _as_list(value: Any) -> list[str]:
 
 
 class ToolExistsPlugin(BasePlugin):
-    name = "tool.exists"
+    name = "os.tool.exists"
     description = "Assert that one executable exists on the remote PATH."
     required_params = ("name",)
     optional_params = ("path",)
@@ -30,7 +30,7 @@ class ToolExistsPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "tool.exists is a read-only remote dependency check"
+        return "os.tool.exists is a read-only remote dependency check"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -45,7 +45,7 @@ class ToolExistsPlugin(BasePlugin):
 
 
 class ToolVersionAssertPlugin(BasePlugin):
-    name = "tool.version_assert"
+    name = "os.tool.version_check"
     description = "Assert that a remote tool version output contains or matches the expected value."
     required_params = ("name",)
     optional_params = ("version_arg", "contains", "regex")
@@ -55,10 +55,10 @@ class ToolVersionAssertPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if not params.get("contains") and not params.get("regex"):
-            raise PluginValidationError("tool.version_assert requires contains or regex")
+            raise PluginValidationError("os.tool.version_check requires contains or regex")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "tool.version_assert is a read-only remote dependency check"
+        return "os.tool.version_check is a read-only remote dependency check"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -76,7 +76,7 @@ class ToolVersionAssertPlugin(BasePlugin):
 
 
 class CapabilityAssertPlugin(BasePlugin):
-    name = "capability.assert"
+    name = "os.capability.check"
     description = "Assert remote tools, paths and optional shell checks required by a job preflight."
     optional_params = ("tools", "paths", "commands", "path")
     opens_remote_session = True
@@ -85,10 +85,10 @@ class CapabilityAssertPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if not (_as_list(params.get("tools")) or _as_list(params.get("paths")) or _as_list(params.get("commands"))):
-            raise PluginValidationError("capability.assert requires tools, paths or commands")
+            raise PluginValidationError("os.capability.check requires tools, paths or commands")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "capability.assert is a read-only remote dependency preflight"
+        return "os.capability.check is a read-only remote dependency preflight"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)

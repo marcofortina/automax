@@ -111,7 +111,7 @@ Current builtins are grouped into these categories:
 commands:      local.command, remote.command
 filesystem:    fs.*
 archive:       archive.*
-packages:      pkg.*
+packages:      os.package.*
 system:       system.service.*, system.systemd.*, system.kernel.*, system.process.*, system.cron.*, system.journal.*, system.log.*
 identity:      identity.user.*, identity.group.*
 transfer:      transfer.*

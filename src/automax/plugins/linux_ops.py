@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from difflib import unified_diff
+import json
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
@@ -124,7 +125,7 @@ class SwapAbsentPlugin(BasePlugin):
 
 
 class LimitsDropinPlugin(RenderedFileInstallMixin, BasePlugin):
-    name = "limits.dropin"
+    name = "os.limits.dropin"
     description = "Install an /etc/security/limits.d drop-in from structured entries."
     required_params = ("name", "entries")
     optional_params = ("backup", "backup_suffix", "sudo")
@@ -134,11 +135,11 @@ class LimitsDropinPlugin(RenderedFileInstallMixin, BasePlugin):
     def _content(self, params: Dict[str, Any]) -> str:
         entries = params.get("entries")
         if not isinstance(entries, list) or not entries:
-            raise PluginValidationError("limits.dropin entries must be a non-empty list")
+            raise PluginValidationError("os.limits.dropin entries must be a non-empty list")
         lines = ["# Managed by automax\n"]
         for entry in entries:
             if not isinstance(entry, dict):
-                raise PluginValidationError("limits.dropin entries must be mappings")
+                raise PluginValidationError("os.limits.dropin entries must be mappings")
             lines.append("{domain} {type} {item} {value}\n".format(domain=entry["domain"], type=entry["type"], item=entry["item"], value=entry["value"]))
         return "".join(lines)
 
@@ -183,7 +184,7 @@ class PamLimitsPlugin(BasePlugin):
 
 
 class HostsEntryPlugin(BasePlugin):
-    name = "hosts.entry"
+    name = "os.hosts.entry.add"
     description = "Ensure or remove an /etc/hosts entry with automatic pre-change backup."
     required_params = ("ip", "names")
     optional_params = ("state", "backup", "backup_suffix", "sudo")
@@ -204,7 +205,7 @@ class HostsEntryPlugin(BasePlugin):
         self.validate(params)
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
-            raise PluginValidationError("hosts.entry state must be present or absent")
+            raise PluginValidationError("os.hosts.entry.add state must be present or absent")
         sudo = sudo_prefix(params, default=True)
         line = self._line(params)
         commands = []
@@ -218,11 +219,11 @@ class HostsEntryPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="hosts.entry failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="os.hosts.entry.add failed")
 
 
 class HostnameSetPlugin(BasePlugin):
-    name = "hostname.set"
+    name = "os.hostname.set"
     description = "Set the system hostname with hostnamectl."
     required_params = ("name",)
     optional_params = ("sudo",)
@@ -238,7 +239,7 @@ class HostnameSetPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="hostname.set failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="os.hostname.set failed")
 
 
 class NetworkDnsFactsPlugin(BasePlugin):
@@ -395,7 +396,7 @@ class NetworkDnsConfigBase(RenderedFileInstallMixin, BasePlugin):
 
 
 class ChronyServersPlugin(RenderedFileInstallMixin, BasePlugin):
-    name = "chrony.servers"
+    name = "os.time.chrony.servers.set"
     description = "Install a chrony server drop-in and optionally restart chronyd."
     required_params = ("servers",)
     optional_params = ("path", "backup", "backup_suffix", "reload", "sudo")
@@ -407,7 +408,7 @@ class ChronyServersPlugin(RenderedFileInstallMixin, BasePlugin):
         if isinstance(servers, str):
             servers = [servers]
         if not isinstance(servers, list) or not servers:
-            raise PluginValidationError("chrony.servers requires a non-empty servers list")
+            raise PluginValidationError("os.time.chrony.servers.set requires a non-empty servers list")
         return "# Managed by automax\n" + "".join(f"server {server} iburst\n" for server in servers)
 
     def rendered_file_path(self, params: Dict[str, Any]) -> str:
@@ -424,14 +425,14 @@ class ChronyServersPlugin(RenderedFileInstallMixin, BasePlugin):
 
 
 class ChronySourcesAssertPlugin(BasePlugin):
-    name = "chrony.sources_assert"
+    name = "os.time.chrony.sources.check"
     description = "Assert chrony has usable sources and print tracking/source status."
     required_params: tuple[str, ...] = ()
     optional_params = ("sudo",)
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "chrony.sources_assert is a read-only assertion and does not change files"
+        return "os.time.chrony.sources.check is a read-only assertion and does not change files"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return ["chronyc tracking && chronyc sources -v"]
@@ -439,12 +440,12 @@ class ChronySourcesAssertPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="chrony.sources_assert failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="os.time.chrony.sources.check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
 class EnvSetPlugin(BasePlugin):
-    name = "env.set"
+    name = "os.env.set"
     description = "Set step-scoped or persistent shell environment variables."
     required_params = ("variables",)
     optional_params = ("scope", "path", "user", "backup", "backup_suffix", "sudo")
@@ -458,7 +459,7 @@ class EnvSetPlugin(BasePlugin):
     def dry_run(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         if str(params.get("scope", "step")) == "step":
             context.step_state.setdefault("env", {}).update(_mapping(params, "variables"))
-        return PluginResult.success(changed=False, message="dry-run: env.set", data={"scope": params.get("scope", "step")})
+        return PluginResult.success(changed=False, message="dry-run: os.env.set", data={"scope": params.get("scope", "step")})
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         scope = str(params.get("scope", "step"))
@@ -478,7 +479,7 @@ class EnvSetPlugin(BasePlugin):
         if scope == "user":
             user = str(params.get("user", "$USER"))
             return f"~{user}/.automax_env" if user != "$USER" else "$HOME/.automax_env"
-        raise PluginValidationError("env.set persistent scopes require scope=global, scope=user or path")
+        raise PluginValidationError("os.env.set persistent scopes require scope=global, scope=user or path")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -505,7 +506,7 @@ class EnvSetPlugin(BasePlugin):
             context.step_state.setdefault("env", {}).update(_mapping(params, "variables"))
             return PluginResult.success(changed=False, data={"scope": scope, "variables": sorted(_mapping(params, "variables"))})
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="env.set failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="os.env.set failed")
 
 
 class SystemRebootPlugin(BasePlugin):
@@ -579,3 +580,229 @@ class DownloadFilePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
         return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="download.file failed")
+
+
+class HostsEntryRemovePlugin(HostsEntryPlugin):
+    name = "os.hosts.entry.remove"
+    description = "Remove an exact /etc/hosts entry with automatic pre-change backup."
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        copied = dict(params)
+        copied["state"] = "absent"
+        return super().manual_commands(copied, context)
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="os.hosts.entry.remove failed")
+
+
+class HostsEntryCheckPlugin(HostsEntryPlugin):
+    name = "os.hosts.entry.check"
+    description = "Assert that an exact /etc/hosts entry is present."
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "os.hosts.entry.check is a read-only /etc/hosts assertion"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [f"grep -Fqx -- {quote(self._line(params))} /etc/hosts"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.hosts.entry.check failed", data={"entry": self._line(params)})
+
+
+class HostsFactsPlugin(BasePlugin):
+    name = "os.hosts.facts"
+    description = "Read /etc/hosts entries as structured facts."
+    optional_params = ("path", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "os.hosts.facts is a read-only /etc/hosts inventory query"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        path = quote(params.get("path", "/etc/hosts"))
+        script = r'''
+import json, sys
+entries = []
+with open(sys.argv[1], encoding='utf-8', errors='replace') as fh:
+    for raw in fh:
+        line = raw.split('#', 1)[0].strip()
+        if not line:
+            continue
+        parts = line.split()
+        if len(parts) >= 2:
+            entries.append({'ip': parts[0], 'names': parts[1:]})
+print(json.dumps({'hosts': entries}, sort_keys=True))
+'''
+        return [heredoc_to_stdin(f"python3 - {path}", script, prefix="AUTOMAX_PY")]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="os.hosts.facts failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data=json.loads(out or "{}"))
+
+
+class HostnameGetPlugin(BasePlugin):
+    name = "os.hostname.get"
+    description = "Read the current static hostname."
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "os.hostname.get is a read-only hostname query"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return ["hostnamectl --static 2>/dev/null || hostname"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.hostname.get failed", data={"hostname": out.strip()})
+
+
+class HostnameCheckPlugin(HostnameGetPlugin):
+    name = "os.hostname.check"
+    description = "Assert the current static hostname."
+    required_params = ("name",)
+    optional_params = ("sudo",)
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [f"test \"$(hostnamectl --static 2>/dev/null || hostname)\" = {quote(params['name'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.hostname.check failed", data={"expected": str(params["name"])})
+
+
+class EnvGetPlugin(BasePlugin):
+    name = "os.env.get"
+    description = "Read one environment variable from the remote shell context."
+    required_params = ("name",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [f"printenv {quote(params['name'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="os.env.get failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"name": str(params["name"]), "value": out.rstrip("\n")})
+
+
+class EnvCheckPlugin(EnvGetPlugin):
+    name = "os.env.check"
+    description = "Assert one environment variable value in the remote shell context."
+    required_params = ("name", "value")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [f"test \"$(printenv {quote(params['name'])})\" = {quote(params['value'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.env.check failed", data={"name": str(params["name"])})
+
+
+class EnvFactsPlugin(BasePlugin):
+    name = "os.env.facts"
+    description = "Read the remote shell environment as key/value facts."
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return ["env"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, "env")
+        values = {}
+        for line in out.splitlines():
+            if "=" in line:
+                key, value = line.split("=", 1)
+                values[key] = value
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.env.facts failed", data={"env": values})
+
+
+class EnvRemovePlugin(BasePlugin):
+    name = "os.env.remove"
+    description = "Remove a managed persistent shell environment file or unset step-scoped variables."
+    optional_params = ("name", "names", "scope", "path", "user", "sudo")
+    opens_remote_session = True
+
+    def _names(self, params: Dict[str, Any]) -> list[str]:
+        raw = params.get("names", params.get("name"))
+        if raw is None:
+            raise PluginValidationError("os.env.remove requires name or names")
+        return [str(item) for item in (raw if isinstance(raw, list) else [raw])]
+
+    def dry_run(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        if str(params.get("scope", "step")) == "step":
+            for name in self._names(params):
+                context.step_state.setdefault("env", {}).pop(name, None)
+        return PluginResult.success(changed=False, message="dry-run: os.env.remove", data={"scope": params.get("scope", "step")})
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        scope = str(params.get("scope", "step"))
+        names = self._names(params)
+        if scope == "step":
+            return ["unset " + " ".join(quote(name) for name in names)]
+        copied = dict(params)
+        path = EnvSetPlugin()._path(copied)
+        sudo = sudo_prefix(params, default=scope == "global")
+        pattern = "\\|".join(names)
+        return [f"if test -e {quote(path)}; then {sudo}sed -i -E '/^export[[:space:]]+({pattern})=/d' {quote(path)} && echo {CHANGE_MARKER}; fi"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        scope = str(params.get("scope", "step"))
+        if scope == "step":
+            for name in self._names(params):
+                context.step_state.setdefault("env", {}).pop(name, None)
+            return PluginResult.success(changed=False, data={"scope": scope, "removed": self._names(params)})
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.env.remove failed")
+
+
+class ChronyServersGetPlugin(BasePlugin):
+    name = "os.time.chrony.servers.get"
+    description = "Read configured chrony server lines from chrony configuration."
+    optional_params = ("path", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        path = quote(params.get("path", "/etc/chrony.d/99-automax.conf"))
+        return [f"test -e {path} && awk '/^[[:space:]]*server[[:space:]]+/ {{print $2}}' {path} || true"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        servers = [line.strip() for line in out.splitlines() if line.strip()]
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.time.chrony.servers.get failed", data={"servers": servers})
+
+
+class ChronyServersCheckPlugin(ChronyServersGetPlugin):
+    name = "os.time.chrony.servers.check"
+    description = "Assert configured chrony server lines in the managed chrony drop-in."
+    required_params = ("servers",)
+    optional_params = ("path", "sudo")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        servers = params["servers"] if isinstance(params["servers"], list) else [params["servers"]]
+        path = quote(params.get("path", "/etc/chrony.d/99-automax.conf"))
+        checks = [f"grep -Eq '^[[:space:]]*server[[:space:]]+{quote(server)}([[:space:]]|$)' {path}" for server in servers]
+        return [" && ".join(checks)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.time.chrony.servers.check failed")

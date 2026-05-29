@@ -584,11 +584,11 @@ def test_symlink_plugins_are_conservative_and_canonical(monkeypatch):
 def test_package_manager_plugins_are_registered():
     names = AutomaxEngine().plugin_registry.names()
 
-    assert "pkg.install" in names
-    assert "pkg.remove" in names
-    assert "pkg.update_cache" in names
-    assert "pkg.upgrade" in names
-    assert "pkg.query" in names
+    assert "os.package.install" in names
+    assert "os.package.remove" in names
+    assert "os.package.update_cache" in names
+    assert "os.package.upgrade" in names
+    assert "os.package.query" in names
     assert "apt.install" not in names
 
 
@@ -1573,7 +1573,7 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "storage.usage.disk_check",
         "network.connectivity.port_check",
         "system.service.status",
-        "pkg.query",
+        "os.package.query",
         "identity.user.create",
         "identity.group.create",
         "system.process.kill",
@@ -3369,15 +3369,15 @@ def test_storage_and_linux_ops_plugins_are_registered():
         "storage.multipath.remove",
         "storage.swap.add",
         "storage.swap.remove",
-        "limits.dropin",
+        "os.limits.dropin",
         "security.pam.limits",
-        "hosts.entry",
-        "hostname.set",
+        "os.hosts.entry.add",
+        "os.hostname.set",
         "network.dns.config",
         "network.dns.facts",
-        "chrony.servers",
-        "chrony.sources_assert",
-        "env.set",
+        "os.time.chrony.servers.set",
+        "os.time.chrony.sources.check",
+        "os.env.set",
         "system.reboot",
         "download.file",
     ):
@@ -3669,7 +3669,7 @@ def test_package_pinning_plugins_render_locks_and_priorities():
     from automax.plugins.pkg_pinning import PkgHoldPlugin, PkgRepoPriorityPlugin, PkgUnholdPlugin, PkgVersionPinPlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("pkg.hold", "pkg.unhold", "pkg.version_pin", "pkg.repo_priority"):
+    for name in ("os.package.hold.add", "os.package.hold.remove", "os.package.version.pin", "os.package.repo.priority.set"):
         assert name in names
 
     context = _sysops_preview_context()
@@ -3743,7 +3743,7 @@ def test_mail_send_is_controller_side_and_masks_password_in_renderers():
 def test_platform_facts_plugin_renders_backend_detection():
     from automax.plugins.platform import PlatformFactsPlugin
 
-    assert "platform.facts" in AutomaxEngine().plugin_registry.names()
+    assert "os.platform.facts" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = PlatformFactsPlugin().manual_commands({}, context)[0]
     assert "package_manager" in command
@@ -3842,7 +3842,7 @@ def test_systemd_resource_plugins_render_units_and_dropins():
 def test_alternatives_set_plugin_renders_cross_distro_commands():
     from automax.plugins.alternatives import AlternativesSetPlugin
 
-    assert "alternatives.set" in AutomaxEngine().plugin_registry.names()
+    assert "os.alternatives.set" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = AlternativesSetPlugin().manual_commands({"name": "java", "path": "/usr/bin/java-21"}, context)[0]
     assert "update-alternatives --set java /usr/bin/java-21" in command
@@ -3853,7 +3853,7 @@ def test_alternatives_set_plugin_renders_cross_distro_commands():
 def test_alternatives_get_plugin_renders_read_only_query():
     from automax.plugins.alternatives import AlternativesGetPlugin
 
-    assert "alternatives.get" in AutomaxEngine().plugin_registry.names()
+    assert "os.alternatives.get" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     plugin = AlternativesGetPlugin()
     command = plugin.manual_commands({"name": "java"}, context)[0]
@@ -3866,7 +3866,7 @@ def test_alternatives_get_plugin_renders_read_only_query():
 def test_alternatives_list_plugin_renders_read_only_inventory():
     from automax.plugins.alternatives import AlternativesListPlugin
 
-    assert "alternatives.list" in AutomaxEngine().plugin_registry.names()
+    assert "os.alternatives.list" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     plugin = AlternativesListPlugin()
     command = plugin.manual_commands({}, context)[0]
@@ -4139,7 +4139,7 @@ def test_sshd_config_plugin_renders_validated_dropin():
 def test_login_defs_plugin_renders_key_updates():
     from automax.plugins.hardening import LoginDefsPlugin
 
-    assert "login.defs" in AutomaxEngine().plugin_registry.names()
+    assert "os.login.defs.set" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     commands = " && ".join(LoginDefsPlugin().manual_commands({"settings": {"PASS_MAX_DAYS": 90}}, context))
     assert "/etc/login.defs" in commands
@@ -4422,9 +4422,11 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "security.audit.backlog_check":
         params["max_lost"] = 0
         params["max_backlog"] = 8192
-    if plugin.name == "chrony.tracking_assert":
+    if plugin.name == "os.time.chrony.tracking.check":
         params["max_offset"] = 1.0
         params["max_stratum"] = 16
+    if plugin.name == "os.package.check":
+        params["state"] = "installed"
     if plugin.name == "network.firewall.iptables.counter_assert":
         params["min_packets"] = 1
     if plugin.name == "fs.file.replace":
@@ -4501,11 +4503,11 @@ def test_package_inspection_plugins_render_manual_commands():
     context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
     registry = build_builtin_registry()
 
-    assert "dpkg-query -W" in registry.get("pkg.version_assert").manual_commands({"name": "curl", "version": "1.0", "manager": "apt", "sudo": False}, context)[0]
-    assert "dpkg-query -S /usr/bin/curl" in registry.get("pkg.owner").manual_commands({"path": "/usr/bin/curl", "manager": "apt", "sudo": False}, context)[0]
-    assert "dpkg -L curl" in registry.get("pkg.files").manual_commands({"name": "curl", "manager": "apt", "sudo": False}, context)[0]
-    assert "dpkg -V curl" in registry.get("pkg.verify").manual_commands({"name": "curl", "manager": "apt", "sudo": False}, context)[0]
-    assert "apt-get clean" in registry.get("pkg.clean").manual_commands({"manager": "apt", "sudo": False}, context)[0]
+    assert "dpkg-query -W" in registry.get("os.package.version.check").manual_commands({"name": "curl", "version": "1.0", "manager": "apt", "sudo": False}, context)[0]
+    assert "dpkg-query -S /usr/bin/curl" in registry.get("os.package.owner").manual_commands({"path": "/usr/bin/curl", "manager": "apt", "sudo": False}, context)[0]
+    assert "dpkg -L curl" in registry.get("os.package.files").manual_commands({"name": "curl", "manager": "apt", "sudo": False}, context)[0]
+    assert "dpkg -V curl" in registry.get("os.package.verify").manual_commands({"name": "curl", "manager": "apt", "sudo": False}, context)[0]
+    assert "apt-get clean" in registry.get("os.package.clean").manual_commands({"manager": "apt", "sudo": False}, context)[0]
 
 
 def test_network_advanced_plugins_render_manual_commands():
@@ -5058,9 +5060,9 @@ def test_capability_and_redaction_plugins_render_safe_previews():
     )
     registry = AutomaxEngine().plugin_registry
 
-    assert registry.get("tool.exists").manual_commands({"name": "rsync"}, context) == ["command -v rsync"]
-    assert "grep -F" in registry.get("tool.version_assert").manual_commands({"name": "rsync", "contains": "rsync"}, context)[0]
-    assert "command -v setfacl" in registry.get("capability.assert").manual_commands({"tools": ["setfacl"]}, context)[0]
+    assert registry.get("os.tool.exists").manual_commands({"name": "rsync"}, context) == ["command -v rsync"]
+    assert "grep -F" in registry.get("os.tool.version_check").manual_commands({"name": "rsync", "contains": "rsync"}, context)[0]
+    assert "command -v setfacl" in registry.get("os.capability.check").manual_commands({"tools": ["setfacl"]}, context)[0]
     assert registry.get("plugin.requirements").execute({"plugin": "transfer.rsync"}, context).data["requirements"]["transfer.rsync"] == ["rsync"]
 
     redacted = registry.get("security.secret.scan_output").execute({"text": "token=super-secret-token password=abc"}, context)
@@ -5090,7 +5092,7 @@ tasks:
       - id: packages
         substeps:
           - id: install
-            use: pkg.install
+            use: os.package.install
             with:
               packages: [curl]
               manager: auto
@@ -5151,7 +5153,7 @@ tasks:
               port: 8443
               protocol: tcp
           - id: pkg
-            use: pkg.install
+            use: os.package.install
             with:
               packages: [curl]
               manager: auto

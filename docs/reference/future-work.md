@@ -42,7 +42,7 @@ A future policy layer may validate jobs before execution against local operating
 rules. Example use cases:
 
 ```text
-require approval for pkg.upgrade
+require approval for os.package.upgrade
 forbid recursive fs.dir.remove on production
 forbid shell execution for selected targets
 require --lock on production deploy jobs
@@ -58,7 +58,7 @@ different guardrails to the same job definition in lab and production.
 ```text
 low: fs.dir.exists, fs.file.exists, fs.symlink.exists
 medium: system.service.restart, fs.file.template, transfer.upload
-high: pkg.upgrade, identity.user.remove, fs.dir.remove recursive=true
+high: os.package.upgrade, identity.user.remove, fs.dir.remove recursive=true
 ```
 
 This would give operators a quick review surface before running jobs on real
@@ -192,7 +192,7 @@ These should be used for postcheck evidence after service and security changes.
 
 ### Package install enhancements
 
-`pkg.install` is intentionally left unchanged in the current series. Future
+`os.package.install` is intentionally left unchanged in the current series. Future
 install hardening may add:
 
 ```text

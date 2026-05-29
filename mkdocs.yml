@@ -92,14 +92,14 @@ nav:
     - Commands: plugins/commands.md
     - Filesystem: plugins/filesystem.md
     - Archive: plugins/archive.md
-    - Package Manager: plugins/package-manager.md
+    - OS Package Manager: plugins/package-manager.md
     - Linux Operations: plugins/linux-operations.md
     - System: plugins/system.md
     - Users, Groups and Processes: plugins/users-groups-processes.md
     - Transfer: plugins/transfer.md
     - HTTP/API: plugins/http-api.md
     - Database: plugins/database.md
-    - Alternatives: plugins/alternatives.md
+    - OS Alternatives: plugins/alternatives.md
     - Firewall: plugins/firewall.md
     - Facts and System Cron: plugins/facts-cron.md
     - Kernel, Mount and Storage: plugins/kernel-storage.md

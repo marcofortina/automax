@@ -42,7 +42,7 @@ Good examples:
 
 ```text
 fs.file.template
-pkg.install
+os.package.install
 system.service.enable
 transfer.upload
 ```

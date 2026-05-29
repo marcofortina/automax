@@ -33,7 +33,7 @@ tasks:
         tags: [packages]
         substeps:
           - id: install_nginx
-            use: pkg.install
+            use: os.package.install
             with:
               name: nginx
               sudo: true

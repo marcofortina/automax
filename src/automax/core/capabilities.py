@@ -21,9 +21,10 @@ class CapabilityRequirement:
 
 
 EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
-    "alternatives.get": ("update-alternatives",),
-    "alternatives.list": ("update-alternatives",),
-    "alternatives.set": ("update-alternatives",),
+    "os.alternatives.get": ("update-alternatives",),
+    "os.alternatives.list": ("update-alternatives",),
+    "os.alternatives.set": ("update-alternatives",),
+    "os.alternatives.check": ("update-alternatives",),
     "security.apparmor.complain": ("aa-complain",),
     "security.apparmor.disable": ("aa-disable",),
     "security.apparmor.enforce": ("aa-enforce",),
@@ -58,8 +59,10 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "security.pki.cert.self_signed": ("openssl",),
     "security.pki.cert.subject_check": ("openssl",),
     "security.pki.cert.chain_check": ("openssl",),
-    "chrony.sources_assert": ("chronyc",),
-    "chrony.tracking_assert": ("chronyc",),
+    "os.time.chrony.servers.check": ("grep",),
+    "os.time.chrony.servers.get": ("awk",),
+    "os.time.chrony.sources.check": ("chronyc",),
+    "os.time.chrony.tracking.check": ("chronyc",),
     "system.cron.entry.list": ("crontab",),
     "storage.fstab.validate": ("findmnt",),
     "fs.acl.set": ("getfacl", "setfacl"),
@@ -125,8 +128,8 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "network.firewall.nftables.ruleset_assert": ("nft",),
     "network.firewall.nftables.validate": ("nft",),
     "security.pam.validate": ("awk",),
-    "pkg.pin": ("install",),
-    "pkg.repo_priority": ("install",),
+    "os.package.repo.priority.set": ("install",),
+    "os.package.repo.priority.check": ("diff",),
     "security.ssh.fingerprint": ("ssh-keygen",),
     "security.ssh.host_keygen": ("ssh-keygen",),
     "security.ssh.keygen": ("ssh-keygen",),
@@ -144,9 +147,13 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "system.kernel.sysctl.get": ("sysctl",),
     "system.kernel.sysctl.reload": ("sysctl",),
     "system.kernel.sysctl.set": ("sysctl",),
-    "timedatectl.ntp": ("timedatectl",),
-    "timedatectl.status": ("timedatectl",),
-    "timedatectl.timezone": ("timedatectl",),
+    "os.time.ntp.check": ("timedatectl",),
+    "os.time.ntp.get": ("timedatectl",),
+    "os.time.ntp.set": ("timedatectl",),
+    "os.time.status": ("timedatectl",),
+    "os.time.timezone.check": ("timedatectl",),
+    "os.time.timezone.get": ("timedatectl",),
+    "os.time.timezone.set": ("timedatectl",),
     "transfer.rsync": ("rsync",),
     "udev.facts": ("udevadm",),
     "udev.reload": ("udevadm",),
@@ -157,17 +164,19 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
 }
 
 DEBIAN_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
-    "pkg.clean": ("apt-get",),
-    "pkg.hold": ("apt-mark",),
-    "pkg.owner": ("dpkg-query",),
-    "pkg.query": ("dpkg-query",),
-    "pkg.unhold": ("apt-mark",),
-    "pkg.verify": ("dpkg",),
-    "pkg.version_assert": ("dpkg-query",),
-    "pkg.update_cache": ("apt-get",),
-    "pkg.install": ("apt-get", "dpkg-query"),
-    "pkg.remove": ("apt-get", "dpkg-query"),
-    "pkg.upgrade": ("apt-get",),
+    "os.package.clean": ("apt-get",),
+    "os.package.hold.add": ("apt-mark",),
+    "os.package.hold.check": ("apt-mark",),
+    "os.package.hold.list": ("apt-mark",),
+    "os.package.owner": ("dpkg-query",),
+    "os.package.query": ("dpkg-query",),
+    "os.package.hold.remove": ("apt-mark",),
+    "os.package.verify": ("dpkg",),
+    "os.package.version.check": ("dpkg-query",),
+    "os.package.update_cache": ("apt-get",),
+    "os.package.install": ("apt-get", "dpkg-query"),
+    "os.package.remove": ("apt-get", "dpkg-query"),
+    "os.package.upgrade": ("apt-get",),
     "network.firewall.ufw.delete": ("ufw",),
     "network.firewall.ufw.disable": ("ufw",),
     "network.firewall.ufw.enable": ("ufw",),
@@ -181,17 +190,19 @@ RHEL_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "system.kernel.boot_param.add": ("grubby",),
     "system.kernel.boot_param.remove": ("grubby",),
     "security.authselect.check": ("authselect",),
-    "pkg.clean": ("rpm",),
-    "pkg.hold": ("rpm",),
-    "pkg.owner": ("rpm",),
-    "pkg.query": ("rpm",),
-    "pkg.unhold": ("rpm",),
-    "pkg.verify": ("rpm",),
-    "pkg.version_assert": ("rpm",),
-    "pkg.update_cache": ("rpm",),
-    "pkg.install": ("rpm",),
-    "pkg.remove": ("rpm",),
-    "pkg.upgrade": ("rpm",),
+    "os.package.clean": ("rpm",),
+    "os.package.hold.add": ("rpm",),
+    "os.package.hold.check": ("rpm",),
+    "os.package.hold.list": ("rpm",),
+    "os.package.owner": ("rpm",),
+    "os.package.query": ("rpm",),
+    "os.package.hold.remove": ("rpm",),
+    "os.package.verify": ("rpm",),
+    "os.package.version.check": ("rpm",),
+    "os.package.update_cache": ("rpm",),
+    "os.package.install": ("rpm",),
+    "os.package.remove": ("rpm",),
+    "os.package.upgrade": ("rpm",),
 }
 
 PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
@@ -370,7 +381,7 @@ def plugin_os_mismatch(plugin_name: str, os_family: str | None, params: Dict[str
     if not os_family or os_family == "unknown":
         return None
     manager = str(params.get("manager", "auto"))
-    if plugin_name.startswith("pkg."):
+    if plugin_name.startswith("os.package."):
         if os_family == "debian" and manager in {"dnf", "yum", "zypper", "pacman"}:
             return f"{plugin_name} manager={manager} does not match DEBIAN-like target"
         if os_family == "rhel" and manager in {"apt", "apt-get", "zypper", "pacman"}:
@@ -411,7 +422,7 @@ def plugin_tools(plugin_name: str, params: Dict[str, Any] | None = None, os_fami
         if plugin_name == name and params.get(param):
             tools.update(param_tools)
     manager = str(params.get("manager", "auto"))
-    if plugin_name.startswith("pkg.") and os_family in {"debian", "rhel"}:
+    if plugin_name.startswith("os.package.") and os_family in {"debian", "rhel"}:
         if os_family == "debian" and manager in {"dnf", "yum"}:
             return ()
         if os_family == "rhel" and manager in {"apt", "apt-get"}:

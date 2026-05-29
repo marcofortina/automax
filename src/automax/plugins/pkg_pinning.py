@@ -50,7 +50,7 @@ def _auto_manager_script(commands: Dict[str, str]) -> str:
 
 
 class PkgHoldPlugin(BasePlugin):
-    name = "pkg.hold"
+    name = "os.package.hold.add"
     description = "Hold or lock package versions with the native package manager."
     required_params: tuple[str, ...] = ()
     optional_params = ("name", "packages", "manager", "sudo")
@@ -75,11 +75,11 @@ class PkgHoldPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="pkg.hold failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="os.package.hold.add failed")
 
 
 class PkgUnholdPlugin(PkgHoldPlugin):
-    name = "pkg.unhold"
+    name = "os.package.hold.remove"
     description = "Remove package holds or version locks."
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
@@ -98,7 +98,7 @@ class PkgUnholdPlugin(PkgHoldPlugin):
 
 
 class PkgVersionPinPlugin(BasePlugin):
-    name = "pkg.version_pin"
+    name = "os.package.version.pin"
     description = "Pin a package version using the native package-manager mechanism."
     required_params = ("name", "version")
     optional_params = ("manager", "priority", "file", "backup", "backup_suffix", "sudo")
@@ -148,11 +148,11 @@ class PkgVersionPinPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="pkg.version_pin failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="os.package.version.pin failed")
 
 
 class PkgRepoPriorityPlugin(BasePlugin):
-    name = "pkg.repo_priority"
+    name = "os.package.repo.priority.set"
     description = "Install package repository priority or pinning configuration for apt, dnf/yum or zypper."
     required_params = ("name", "priority")
     optional_params = ("manager", "file", "content", "baseurl", "enabled", "gpgcheck", "gpgkey", "backup", "backup_suffix", "sudo")
@@ -176,7 +176,7 @@ class PkgRepoPriorityPlugin(BasePlugin):
             return f"Package: *\nPin: release o={params['name']}\nPin-Priority: {params['priority']}\n"
         if manager in {"dnf", "yum", "zypper"}:
             if not params.get("baseurl"):
-                raise PluginValidationError(f"pkg.repo_priority with manager={manager} requires content or baseurl")
+                raise PluginValidationError(f"os.package.repo.priority.set with manager={manager} requires content or baseurl")
             enabled = int(bool(params.get("enabled", True)))
             gpgcheck = int(bool(params.get("gpgcheck", True)))
             lines = [
@@ -212,4 +212,61 @@ class PkgRepoPriorityPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="pkg.repo_priority failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="os.package.repo.priority.set failed")
+
+
+class PkgHoldListPlugin(BasePlugin):
+    name = "os.package.hold.list"
+    description = "List packages currently held by the package manager."
+    optional_params = ("manager", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        manager = _manager(params)
+        if manager in {"auto", "apt", "apt-get"}:
+            return ["apt-mark showhold"]
+        return ["echo 'hold listing is only supported for apt-based systems' >&2; exit 2"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        packages = [line.strip() for line in out.splitlines() if line.strip()] if rc == 0 else []
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.hold.list failed", data={"packages": packages})
+
+
+class PkgHoldCheckPlugin(PkgHoldListPlugin):
+    name = "os.package.hold.check"
+    description = "Assert package hold state."
+    required_params = ("name",)
+    optional_params = ("manager", "state", "sudo")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        manager = _manager(params)
+        if manager not in {"auto", "apt", "apt-get"}:
+            return ["echo 'hold checks are only supported for apt-based systems' >&2; exit 2"]
+        state = str(params.get("state", "present"))
+        if state not in {"present", "absent"}:
+            raise PluginValidationError("os.package.hold.check state must be present or absent")
+        grep = f"apt-mark showhold | grep -Fx -- {quote(params['name'])} >/dev/null"
+        return [grep if state == "present" else f"! {grep}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.hold.check failed")
+
+
+class PkgRepoPriorityCheckPlugin(PkgRepoPriorityPlugin):
+    name = "os.package.repo.priority.check"
+    description = "Assert a package repository priority drop-in exists with expected content."
+    supports_check_mode = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        path = self._path(params)
+        content = self._content(params)
+        escaped = content.replace("'", "'\\''")
+        return [f"test -e {quote(path)} && diff -u {quote(path)} - <<'EOF'\n{escaped}EOF"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.repo.priority.check failed")

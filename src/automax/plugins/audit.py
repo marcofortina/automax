@@ -176,9 +176,11 @@ def sample_params(plugin: Any) -> dict[str, Any]:
     if plugin.name == "security.audit.backlog_check":
         params["max_lost"] = 0
         params["max_backlog"] = 8192
-    if plugin.name == "chrony.tracking_assert":
+    if plugin.name == "os.time.chrony.tracking.check":
         params["max_offset"] = 1.0
         params["max_stratum"] = 16
+    if plugin.name == "os.package.check":
+        params["state"] = "installed"
     if plugin.name == "network.firewall.iptables.counter_assert":
         params["min_packets"] = 1
     if plugin.name == "fs.file.replace":

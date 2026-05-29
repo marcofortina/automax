@@ -331,12 +331,12 @@ if [[ "${AUTOMAX_SSH_SMOKE_PKG:-0}" == "1" ]]; then
       - id: packages
         substeps:
           - id: update_cache
-            use: pkg.update_cache
+            use: os.package.update_cache
             with:
               manager: auto
               sudo: true
           - id: query_package
-            use: pkg.query
+            use: os.package.query
             with:
               name: ${SMOKE_PACKAGE}
               manager: auto

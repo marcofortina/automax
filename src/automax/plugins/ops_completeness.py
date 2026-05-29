@@ -364,25 +364,25 @@ class SysctlDropinPlugin(RenderedFileInstallMixin, BasePlugin):
 
 
 class TimedatectlStatusPlugin(ReadOnlyCommandPlugin):
-    name = "timedatectl.status"
+    name = "os.time.status"
     description = "Read timedatectl time, timezone and NTP state."
     optional_params = ("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]: return [f"{sudo_prefix(params, default=True)}timedatectl status"]
 
 class TimedatectlTimezonePlugin(BasePlugin):
-    name="timedatectl.timezone"; description="Set system timezone with timedatectl."; required_params=("timezone",); optional_params=("sudo",); opens_remote_session=True
+    name="os.time.timezone.set"; description="Set system timezone with timedatectl."; required_params=("timezone",); optional_params=("sudo",); opens_remote_session=True
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]: return [f"test \"$({sudo_prefix(params, default=True)}timedatectl show -p Timezone --value)\" = {quote(params['timezone'])} || {sudo_prefix(params, default=True)}timedatectl set-timezone {quote(params['timezone'])}"]
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="timedatectl.timezone failed")
+        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.time.timezone.set failed")
 
 class TimedatectlNtpPlugin(TimedatectlTimezonePlugin):
-    name="timedatectl.ntp"; description="Enable or disable NTP through timedatectl."; required_params=("enabled",); optional_params=("sudo",)
+    name="os.time.ntp.set"; description="Enable or disable NTP through timedatectl."; required_params=("enabled",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         want="yes" if bool(params["enabled"]) else "no"; value="true" if bool(params["enabled"]) else "false"
         return [f"test \"$({sudo_prefix(params, default=True)}timedatectl show -p NTP --value)\" = {quote(want)} || {sudo_prefix(params, default=True)}timedatectl set-ntp {value}"]
 
 class ChronyTrackingAssertPlugin(ReadOnlyCommandPlugin):
-    name="chrony.tracking_assert"; description="Assert chrony tracking health using chronyc tracking."; optional_params=("max_offset","max_stratum","sudo")
+    name="os.time.chrony.tracking.check"; description="Assert chrony tracking health using chronyc tracking."; optional_params=("max_offset","max_stratum","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         max_offset=float(params.get("max_offset",1.0)); max_stratum=int(params.get("max_stratum",16))
         return [f"chronyc tracking | awk -F: -v max_offset={max_offset} -v max_stratum={max_stratum} '/Stratum/ {{gsub(/ /,\"\",$2); if ($2>max_stratum) bad=1}} /System time/ {{gsub(/ /,\"\",$2); split($2,a,\"seconds\"); if (a[1]+0>max_offset || a[1]+0<-max_offset) bad=1}} {{print}} END {{exit bad}}'"]
@@ -602,3 +602,42 @@ for _cls in (UserFactsPlugin, UserShellAssertPlugin, UserHomeAssertPlugin, UserG
 UserShellAssertPlugin.parameter_schema = {"user": {"type": "string", "description": "User account name."}, "shell": {"type": "string", "description": "Expected login shell."}}
 GroupMembersPlugin.parameter_schema = {"group": {"type": "string", "description": "Group name."}}
 GroupMemberAbsentPlugin.parameter_schema = {"user": {"type": "string", "description": "User account name."}, "group": {"type": "string", "description": "Group name."}}
+
+
+class TimedatectlTimezoneGetPlugin(ReadOnlyCommandPlugin):
+    name = "os.time.timezone.get"
+    description = "Read the current system timezone with timedatectl."
+    optional_params = ("sudo",)
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return [f"{sudo_prefix(params, default=True)}timedatectl show -p Timezone --value"]
+
+
+class TimedatectlTimezoneCheckPlugin(ReadOnlyCommandPlugin):
+    name = "os.time.timezone.check"
+    description = "Assert the current system timezone with timedatectl."
+    required_params = ("timezone",)
+    optional_params = ("sudo",)
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return [f"test \"$({sudo_prefix(params, default=True)}timedatectl show -p Timezone --value)\" = {quote(params['timezone'])}"]
+
+
+class TimedatectlNtpGetPlugin(ReadOnlyCommandPlugin):
+    name = "os.time.ntp.get"
+    description = "Read whether timedatectl NTP synchronization is enabled."
+    optional_params = ("sudo",)
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return [f"{sudo_prefix(params, default=True)}timedatectl show -p NTP --value"]
+
+
+class TimedatectlNtpCheckPlugin(ReadOnlyCommandPlugin):
+    name = "os.time.ntp.check"
+    description = "Assert whether timedatectl NTP synchronization is enabled."
+    required_params = ("enabled",)
+    optional_params = ("sudo",)
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        want = "yes" if bool(params["enabled"]) else "no"
+        return [f"test \"$({sudo_prefix(params, default=True)}timedatectl show -p NTP --value)\" = {quote(want)}"]

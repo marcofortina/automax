@@ -156,12 +156,12 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
         if plugin_name == "db.oracle.query":
             return [f"echo '{_db_query(params)};' | sqlplus -s {_q(conn.get('user', 'user'))}/***@{_q(conn.get('dsn', 'db'))}"]
 
-    if plugin_name.startswith("facts."):
-        if plugin_name == "facts.os":
+    if plugin_name.startswith("facts.") or plugin_name in {"os.facts", "os.package.facts"}:
+        if plugin_name == "os.facts":
             return ["cat /etc/os-release 2>/dev/null || uname -a"]
         if plugin_name == "facts.network":
             return ["ip -brief addr && ip route"]
-        if plugin_name == "facts.packages":
+        if plugin_name == "os.package.facts":
             return [_package_manager_command(params, "dpkg-query -W", "rpm -qa", "rpm -qa", "rpm -qa")]
         if plugin_name == "facts.services":
             return ["systemctl list-units --type=service --no-pager || service --status-all"]
@@ -201,21 +201,23 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
             src = params.get("src")
             return [f"{sudo}nft -f {_q(src)}" if src else heredoc_to_stdin(f"{sudo}nft -f -", params.get("content", ""))]
 
-    if plugin_name.startswith("pkg."):
+    if plugin_name.startswith("os.package."):
         packages = _packages(params)
-        if plugin_name == "pkg.install":
+        if plugin_name == "os.package.install":
             return [_package_manager_command(params, f"apt-get update && apt-get install -y {packages}", f"dnf install -y {packages}", f"yum install -y {packages}", f"zypper --non-interactive install {packages}")]
-        if plugin_name == "pkg.remove":
+        if plugin_name == "os.package.remove":
             return [_package_manager_command(params, f"apt-get remove -y {packages}", f"dnf remove -y {packages}", f"yum remove -y {packages}", f"zypper --non-interactive remove {packages}")]
-        if plugin_name == "pkg.upgrade":
+        if plugin_name == "os.package.upgrade":
             return [_package_manager_command(params, "apt-get upgrade -y", "dnf upgrade -y", "yum update -y", "zypper --non-interactive update")]
-        if plugin_name == "pkg.update_cache":
+        if plugin_name == "os.package.update_cache":
             return [_package_manager_command(params, "apt-get update", "dnf makecache", "yum makecache", "zypper --non-interactive refresh")]
-        if plugin_name == "pkg.query":
+        if plugin_name == "os.package.query":
             return [_package_manager_command(params, f"dpkg-query -W {packages}", f"rpm -q {packages}", f"rpm -q {packages}", f"rpm -q {packages}")]
-        if plugin_name == "pkg.key.remove":
+        if plugin_name == "os.package.key.remove":
             return [f"{sudo}rm -f {_q(params.get('dest', f'/etc/apt/keyrings/{name}.gpg'))}"]
-        if plugin_name in {"pkg.key.add", "pkg.repo.add", "pkg.repo.remove"}:
+        if plugin_name in {"os.package.key.check", "os.package.repo.check"}:
+            return [f"test -e {_q(params.get('dest', name))}"]
+        if plugin_name in {"os.package.key.add", "os.package.repo.add", "os.package.repo.remove", "os.package.repo.priority.set", "os.package.repo.priority.check"}:
             return [f"# render package repository/key change for {plugin_name}; inspect generated job preview before manual execution"]
 
     if plugin_name.startswith("identity.user."):

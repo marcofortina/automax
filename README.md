@@ -195,7 +195,7 @@ Current categories:
 commands:      local.command, remote.command
 filesystem:    fs.*
 archive:       archive.*
-packages:      pkg.*
+packages:      os.package.*
 systemd:       systemctl.*
 users/groups:  user.*, group.*
 processes:     process.*

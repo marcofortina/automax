@@ -14,7 +14,7 @@ from automax.plugins.remote_utils import exec_remote, heredoc_to_stdin, sudo_pre
 
 
 class PlatformFactsPlugin(BasePlugin):
-    name = "platform.facts"
+    name = "os.platform.facts"
     description = "Collect portable Linux backend facts for package, service, network, resolver and trust-store operations."
     required_params: tuple[str, ...] = ()
     optional_params = ("sudo",)
@@ -22,7 +22,7 @@ class PlatformFactsPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "platform.facts is a read-only backend detection plugin and does not change files"
+        return "os.platform.facts is a read-only backend detection plugin and does not change files"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         sudo = sudo_prefix(params, default=False)
@@ -55,7 +55,7 @@ printf 'package_manager=%s\nservice_manager=%s\nnetwork_backend=%s\nresolver_bac
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="platform.facts failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="os.platform.facts failed")
         data = {}
         for line in out.splitlines():
             if "=" in line:
