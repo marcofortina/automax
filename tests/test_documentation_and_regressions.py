@@ -1094,6 +1094,7 @@ def test_storage_namespace_replaces_legacy_storage_plugin_names():
         "swap.status",
         "storage.block.empty_check",
         "storage.block.mount_check",
+        "storage.block.mount.check",
         "storage.block.not_mounted_check",
         "storage.block.size_check",
         "storage.usage.disk_check",

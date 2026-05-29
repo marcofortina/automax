@@ -45,7 +45,6 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "data.backup.prune": ("find",),
     "data.restore.verify": ("sha256sum",),
     "storage.block.empty.check": ("blkid",),
-    "storage.block.mount.check": ("findmnt",),
     "storage.fs.check": ("blkid",),
     "storage.fs.create": ("mkfs",),
     "storage.fs.facts": ("blkid", "findmnt", "df"),

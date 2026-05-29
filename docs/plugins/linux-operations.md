@@ -137,8 +137,9 @@ default.
 ## Advanced mounts and filesystem resizing
 
 Use `storage.mount.remount`, `storage.fs.resize` and `storage.mount.check` to remount filesystems,
-grow supported filesystems and check current mount state with `findmnt`. Runtime
-operations provide state previews and manual recovery commands.
+grow supported filesystems and check current runtime mount state with `findmnt`.
+Runtime mount state lives under `storage.mount.*`; persistent boot-time mount and
+swap configuration lives under `storage.fstab.*`.
 
 
 ## Logs and journal collection

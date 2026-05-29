@@ -10155,38 +10155,6 @@ with:
   device: /dev/sdb
 ```
 
-### `storage.block.mount.check`
-
-Check block device mount state, optionally at a specific path.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `path` | no | `path` |  | Optional mountpoint path to match. |
-| `state` | no | `string` | `mounted` | Expected mount state. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: storage.block.mount.check
-with:
-  device: /dev/sdb
-```
-
 ### `storage.block.partition.apply`
 
 Conservatively create a partition table and missing partitions with parted.
@@ -11167,18 +11135,20 @@ with:
 
 ### `storage.mount.check`
 
-Check a mountpoint, source, fstype or options using findmnt.
+Check runtime mount state by mountpoint, source, fstype or options using findmnt.
 
 - Remote session: `true`
 - Dry-run support: `true`
-- Check mode support: `false`
+- Check mode support: `true`
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `src` | no | `path` |  | Source path. |
-| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
-| `opts` | no | `string` | `defaults` | Mount options. |
+| `path` | no | `path` |  | Optional mountpoint path to match. |
+| `src` | no | `path` |  | Optional mount source/device to match. |
+| `fstype` | no | `string` |  | Optional filesystem type to match. |
+| `opts` | no | `string` | `defaults` | Optional mount option to match. |
+| `state` | no | `string` | `mounted` | Expected runtime mount state. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
 
@@ -11195,6 +11165,7 @@ Example:
 use: storage.mount.check
 with:
   path: /tmp/automax-demo
+  src: /tmp/source
 ```
 
 ### `storage.mount.facts`

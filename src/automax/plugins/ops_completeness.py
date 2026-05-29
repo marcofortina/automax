@@ -751,37 +751,6 @@ class BlockFsAssertPlugin(ReadOnlyCommandPlugin):
     name="storage.fs.check"; description="Check block device filesystem type."; required_params=("device","fstype"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"test \"$({sudo_prefix(params, default=True)}blkid -o value -s TYPE {quote(params['device'])})\" = {quote(params['fstype'])}"]
 
-class BlockMountpointAssertPlugin(BasePlugin):
-    name="storage.block.mount.check"; description="Check block device mount state, optionally at a specific path."; required_params=("device",); optional_params=("path","state","sudo"); opens_remote_session=True; supports_check_mode=True
-    parameter_schema = {
-        "device": {"type": "path", "description": "Block device path."},
-        "path": {"type": "path", "description": "Optional mountpoint path to match."},
-        "state": {"type": "string", "enum": ["mounted", "unmounted"], "default": "mounted", "description": "Expected mount state."},
-    }
-    def validate(self, params: Dict[str, Any]) -> None:
-        super().validate(params)
-        state=str(params.get("state", "mounted"))
-        if state not in {"mounted", "unmounted"}:
-            raise PluginValidationError("storage.block.mount.check state must be mounted or unmounted")
-    def _command(self, params: Dict[str, Any]) -> str:
-        device=quote(params["device"]); path=params.get("path")
-        device_check=f"test -b {device}"
-        if path:
-            mount_check=f"findmnt -n -S {device} -T {quote(path)} >/dev/null"
-        else:
-            mount_check=f"findmnt -n -S {device} >/dev/null"
-        return f"{device_check} || exit 2; {mount_check}"
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        self.validate(params); state=str(params.get("state", "mounted")); check=self._command(params)
-        return [check if state == "mounted" else f"{check}; rc=$?; [ $rc -eq 1 ]"]
-    def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
-        self.validate(params); state=str(params.get("state", "mounted")); rc,out,err=exec_remote(context,self._command(params))
-        if rc == 2:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.block.mount.check failed: device does not exist", data={"device": params["device"], "path": params.get("path"), "state": state})
-        if rc not in {0,1}:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.block.mount.check failed", data={"device": params["device"], "path": params.get("path"), "state": state})
-        mounted=(rc == 0); matches=mounted if state == "mounted" else not mounted
-        return PluginResult.success(changed=False, rc=0, stdout=out, stderr=err if matches else "", data={"device": params["device"], "path": params.get("path"), "state": state, "mounted": mounted, "matches": matches})
 
 class BlockEmptyAssertPlugin(ReadOnlyCommandPlugin):
     name="storage.block.empty.check"; description="Check that a block device has no detectable signature before destructive use."; required_params=("device",); optional_params=("sudo",)

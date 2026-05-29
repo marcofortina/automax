@@ -315,7 +315,6 @@ security.sudo.validate
 storage.block.empty.check
 storage.block.facts
 storage.block.identity
-storage.block.mount.check
 storage.block.partition.apply
 storage.block.partition.scan
 storage.block.scan

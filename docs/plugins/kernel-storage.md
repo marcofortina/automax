@@ -34,11 +34,16 @@ Sysctl readback and drop-in management is covered by `system.kernel.sysctl.check
 `system.kernel.sysctl.facts` and `system.kernel.sysctl.dropin`.
 
 Block-device safety assertions should be placed before destructive storage steps:
-`storage.block.size.check`, `storage.fs.check`, `storage.block.mount.check` and
-`storage.block.empty.check`. Use `storage.block.mount.check state=unmounted` for
-not-mounted assertions.
+`storage.block.size.check`, `storage.fs.check` and `storage.block.empty.check`.
+Runtime mount-state assertions belong to `storage.mount.check`, including source-only
+or path-specific mounted/unmounted checks.
 
-Mount and fstab readback/removal helpers include `storage.mount.check`, `storage.mount.facts`, `storage.fstab.check` and `storage.fstab.remove`. Removing fstab entries requires `confirm: true`.
+Mount and fstab helpers are intentionally separate: `storage.mount.*` manages and checks
+runtime mount state, while `storage.fstab.*` manages persistent boot-time mount
+configuration. Removing fstab entries requires `confirm: true`.
+
+Swap follows the same split: `storage.swap.*` manages and checks runtime swap state,
+while persistent boot-time swap configuration belongs in `storage.fstab.*`.
 
 ## Quota and usage checks
 

@@ -5835,33 +5835,41 @@ def test_storage_and_process_checks_return_predicates_on_condition_false():
 
 
 
-def test_storage_block_mount_check_supports_unmounted_state_without_path():
+def test_storage_mount_check_supports_source_state_without_path():
     registry = AutomaxEngine().plugin_registry
 
-    assert "storage.block.mount.check" in registry.names()
+    assert "storage.block.mount.check" not in registry.names()
     assert "storage.block.not_mounted_check" not in registry.names()
 
-    unmounted = registry.get("storage.block.mount.check").execute(
-        {"device": "/dev/sdb1", "state": "unmounted"},
+    unmounted = registry.get("storage.mount.check").execute(
+        {"src": "/dev/sdb1", "state": "unmounted"},
         _remote_context_for_result(1, stdout="", stderr=""),
     )
     assert unmounted.ok is True
     assert unmounted.data["matches"] is True
     assert unmounted.data["mounted"] is False
 
-    mounted_elsewhere = registry.get("storage.block.mount.check").execute(
-        {"device": "/dev/sdb1", "state": "unmounted"},
+    mounted_elsewhere = registry.get("storage.mount.check").execute(
+        {"src": "/dev/sdb1", "state": "unmounted"},
         _remote_context_for_result(0, stdout="/data", stderr=""),
     )
     assert mounted_elsewhere.ok is True
     assert mounted_elsewhere.data["matches"] is False
     assert mounted_elsewhere.data["mounted"] is True
 
-    missing_device = registry.get("storage.block.mount.check").execute(
-        {"device": "/dev/missing", "state": "mounted"},
-        _remote_context_for_result(2, stdout="", stderr=""),
+    mounted_at_path = registry.get("storage.mount.check").execute(
+        {"src": "/dev/sdb1", "path": "/data", "state": "mounted"},
+        _remote_context_for_result(0, stdout="/data", stderr=""),
     )
-    assert missing_device.ok is False
+    assert mounted_at_path.ok is True
+    assert mounted_at_path.data["matches"] is True
+    assert mounted_at_path.data["mounted"] is True
+
+    technical_failure = registry.get("storage.mount.check").execute(
+        {"src": "/dev/sdb1", "state": "mounted"},
+        _remote_context_for_result(2, stdout="", stderr="findmnt failed"),
+    )
+    assert technical_failure.ok is False
 
 
 def test_usage_checks_fail_when_thresholds_are_not_met():
