@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
-from automax.plugins.base import BasePlugin, PluginValidationError
+from automax.plugins.base import BasePlugin
 from automax.plugins.remote_utils import exec_remote, heredoc_to_stdin, quote, result_from_remote, sudo_prefix
 
 
@@ -27,20 +27,15 @@ def _fstab_line(params: Dict[str, Any]) -> str:
 
 
 class FstabEntryPlugin(BasePlugin):
-    name = "fstab.entry"
-    description = "Ensure an /etc/fstab entry is present or absent."
+    name = "storage.fstab.add"
+    description = "Ensure an /etc/fstab entry is present."
     required_params = ("src", "path", "fstype")
-    optional_params = ("opts", "dump", "passno", "state", "sudo")
+    optional_params = ("opts", "dump", "passno", "sudo")
     opens_remote_session = True
-
-    def validate(self, params: Dict[str, Any]) -> None:
-        super().validate(params)
-        if str(params.get("state", "present")) not in {"present", "absent"}:
-            raise PluginValidationError("fstab.entry state must be present or absent")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
-        state = str(params.get("state", "present"))
+        state = "present"
         line = _fstab_line(params)
         script = r'''
 set -eu
@@ -69,11 +64,11 @@ fi
             prefix="AUTOMAX_SH",
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="fstab.entry failed", data={"line": line})
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="storage.fstab.add failed", data={"line": line})
 
 
 class MountPresentPlugin(BasePlugin):
-    name = "mount.present"
+    name = "storage.mount.add"
     description = "Ensure a filesystem is mounted and optionally persisted in fstab."
     required_params = ("src", "path", "fstype")
     optional_params = ("opts", "persist", "dump", "passno", "sudo")
@@ -118,11 +113,11 @@ if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
             prefix="AUTOMAX_SH",
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="mount.present failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="storage.mount.add failed")
 
 
 class MountAbsentPlugin(BasePlugin):
-    name = "mount.absent"
+    name = "storage.mount.remove"
     description = "Ensure a mount point is unmounted and optionally removed from fstab."
     required_params = ("path",)
     optional_params = ("persist", "sudo")
@@ -158,4 +153,4 @@ if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
             prefix="AUTOMAX_SH",
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="mount.absent failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="storage.mount.remove failed")

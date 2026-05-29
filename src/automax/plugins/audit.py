@@ -138,7 +138,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
     if plugin.name == "db.health":
         params["engine"] = "sqlite"
         params["connection"] = {"path": "/tmp/automax.sqlite"}
-    if plugin.name in {"backup.prune", "backup.restore", "backup.rotate", "network.firewall.iptables.restore", "lvm.lv_remove", "lvm.pv_remove", "lvm.vg_remove"}:
+    if plugin.name in {"backup.prune", "backup.restore", "backup.rotate", "network.firewall.iptables.restore", "storage.lvm.lv.remove", "storage.lvm.pv.remove", "storage.lvm.vg.remove"}:
         params["confirm"] = True
     if plugin.name == "plugin.requirements":
         params["plugin"] = "transfer.rsync"
@@ -150,7 +150,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["dest"] = "/tmp/automax-demo.gz"
     if plugin.name == "archive.decompress":
         params["archive"] = "/tmp/automax-demo.gz"
-    if plugin.name == "block.wipe_signatures":
+    if plugin.name == "storage.block.signatures.wipe":
         params["force"] = True
     if plugin.name == "fs.file.template":
         params["src"] = "README.md"
@@ -169,7 +169,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["content"] = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----\n"
     if plugin.name == "security.selinux.mode":
         params["state"] = "enforcing"
-    if plugin.name == "fs.quota":
+    if plugin.name == "storage.quota.set":
         params["type"] = "user"
     if plugin.name == "security.apparmor.profile_check":
         params["state"] = "enforce"

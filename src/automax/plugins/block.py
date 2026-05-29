@@ -31,14 +31,14 @@ def _as_list(value: Any) -> list[str]:
 class BlockFactsPlugin(BasePlugin):
     """Collect block-device facts from a remote target."""
 
-    name = "block.facts"
+    name = "storage.block.facts"
     description = "Collect remote block-device facts with lsblk, blkid, udevadm and optional multipath output."
     required_params: tuple[str, ...] = ()
     optional_params = ("devices", "multipath", "udev", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "block.facts is a read-only facts collector and does not change files"
+        return "storage.block.facts is a read-only facts collector and does not change files"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         devices = _as_list(params.get("devices"))
@@ -59,21 +59,21 @@ class BlockFactsPlugin(BasePlugin):
         self.validate(params)
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="block.facts failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.block.facts failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"raw": out})
 
 
 class BlockIdentityPlugin(BasePlugin):
     """Read stable SCSI identifiers for udev/multipath workflows."""
 
-    name = "block.identity"
+    name = "storage.block.identity"
     description = "Read a stable block-device identifier with scsi_id and udevadm."
     required_params = ("device",)
     optional_params = ("scsi_id_path", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "block.identity is a read-only identity query and does not change files"
+        return "storage.block.identity is a read-only identity query and does not change files"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -87,21 +87,21 @@ class BlockIdentityPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="block.identity failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.block.identity failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"device": params["device"], "raw": out})
 
 
 class BlockRescanPlugin(BasePlugin):
     """Rescan SCSI hosts or one block device."""
 
-    name = "block.rescan"
+    name = "storage.block.scan"
     description = "Rescan remote SCSI hosts or one block device and optionally refresh multipath."
     required_params: tuple[str, ...] = ()
     optional_params = ("device", "udev_settle", "multipath_reload", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "block.rescan changes kernel device discovery state and has no file diff preview"
+        return "storage.block.scan changes kernel device discovery state and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         sudo = sudo_prefix(params, default=False)
@@ -123,20 +123,20 @@ class BlockRescanPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="block.rescan failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.block.scan failed")
 
 
 class BlockPartitionRescanPlugin(BasePlugin):
     """Ask the kernel to reread one partition table."""
 
-    name = "block.partition_rescan"
+    name = "storage.block.partition.scan"
     description = "Reread one remote partition table with partprobe/blockdev and udev settle."
     required_params = ("device",)
     optional_params = ("udev_settle", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "block.partition_rescan asks the kernel to reread partition state and has no file diff preview"
+        return "storage.block.partition.scan asks the kernel to reread partition state and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -149,13 +149,13 @@ class BlockPartitionRescanPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="block.partition_rescan failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.block.partition.scan failed")
 
 
 class BlockPartitionPlugin(BasePlugin):
     """Create missing partitions with parted without recreating existing ones."""
 
-    name = "block.partition"
+    name = "storage.block.partition.apply"
     description = "Conservatively create a partition table and missing partitions with parted."
     required_params = ("device", "label", "partitions")
     optional_params = ("backup", "backup_path", "force", "udev_settle", "sudo")
@@ -165,13 +165,13 @@ class BlockPartitionPlugin(BasePlugin):
         super().validate(params)
         partitions = params.get("partitions")
         if not isinstance(partitions, list) or not partitions:
-            raise PluginValidationError("block.partition partitions must be a non-empty list")
+            raise PluginValidationError("storage.block.partition.apply partitions must be a non-empty list")
         for item in partitions:
             if not isinstance(item, dict):
-                raise PluginValidationError("block.partition partition entries must be mappings")
+                raise PluginValidationError("storage.block.partition.apply partition entries must be mappings")
             for key in ("number", "start", "end"):
                 if key not in item:
-                    raise PluginValidationError(f"block.partition partition missing {key}")
+                    raise PluginValidationError(f"storage.block.partition.apply partition missing {key}")
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         self.validate(params)
@@ -257,13 +257,13 @@ if [ "$udev_settle" = "true" ]; then udevadm settle; fi
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="block.partition failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="storage.block.partition.apply failed")
 
 
 class BlockWipeSignaturesPlugin(BasePlugin):
     """Wipe filesystem signatures only when explicitly forced."""
 
-    name = "block.wipe_signatures"
+    name = "storage.block.signatures.wipe"
     description = "Wipe block-device signatures with wipefs after an optional pre-change signature backup."
     required_params = ("device",)
     optional_params = ("backup", "backup_path", "force", "sudo")
@@ -272,7 +272,7 @@ class BlockWipeSignaturesPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if not bool(params.get("force", False)):
-            raise PluginValidationError("block.wipe_signatures requires force: true")
+            raise PluginValidationError("storage.block.signatures.wipe requires force: true")
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         self.validate(params)
@@ -292,13 +292,13 @@ class BlockWipeSignaturesPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="block.wipe_signatures failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.block.signatures.wipe failed")
 
 
 class BlockMkfsPlugin(BasePlugin):
     """Create a filesystem on a block device with conservative safeguards."""
 
-    name = "block.mkfs"
+    name = "storage.fs.create"
     description = "Create a filesystem on a block device, refusing existing signatures unless force is true."
     required_params = ("device", "fstype")
     optional_params = ("label", "force", "sudo")
@@ -322,4 +322,4 @@ class BlockMkfsPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="block.mkfs failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.fs.create failed")

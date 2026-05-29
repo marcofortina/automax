@@ -136,7 +136,8 @@ class FsAttrCheckPlugin(BasePlugin):
 
 
 class FsQuotaPlugin(BasePlugin):
-    name = "fs.quota"
+    parameter_schema = {"type": {"enum": ["user", "group"], "default": "user", "description": "Quota subject type."}}
+    name = "storage.quota.set"
     description = "Set user or group filesystem quotas with setquota."
     required_params = ("target", "mountpoint")
     optional_params = ("type", "block_soft", "block_hard", "inode_soft", "inode_hard", "sudo")
@@ -151,14 +152,14 @@ class FsQuotaPlugin(BasePlugin):
         self.validate(params)
         quota_type = str(params.get("type", "user"))
         if quota_type not in {"user", "group"}:
-            raise PluginValidationError("fs.quota type must be user or group")
+            raise PluginValidationError("storage.quota.set type must be user or group")
         flag = "-u" if quota_type == "user" else "-g"
         values = [params.get("block_soft", 0), params.get("block_hard", 0), params.get("inode_soft", 0), params.get("inode_hard", 0)]
         return [f"{sudo_prefix(params, default=True)}setquota {flag} {quote(params['target'])} {' '.join(quote(v) for v in values)} {quote(params['mountpoint'])}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="fs.quota failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.quota.set failed")
 
 
 def _acl_entries(value: Any) -> list[str]:
@@ -244,3 +245,95 @@ class FsAclRestorePlugin(BasePlugin):
         rc, out, err = exec_remote(context, command)
         stdout = out if bool(params.get("test_only", False)) else f"{out}\n{CHANGE_MARKER}\n"
         return result_from_remote(rc=rc, stdout=stdout if rc == 0 else out, stderr=err, message="fs.acl.restore failed", data={"file": params["file"]})
+
+
+def _quota_flag(params: Dict[str, Any]) -> str:
+    quota_type = str(params.get("type", "user"))
+    if quota_type not in {"user", "group"}:
+        raise PluginValidationError("storage.quota type must be user or group")
+    return "-u" if quota_type == "user" else "-g"
+
+
+class StorageQuotaGetPlugin(BasePlugin):
+    parameter_schema = {"type": {"enum": ["user", "group"], "default": "user", "description": "Quota subject type."}}
+    name = "storage.quota.get"
+    description = "Read one user or group quota entry from a mounted filesystem."
+    required_params = ("target", "mountpoint")
+    optional_params = ("type", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "storage.quota.get is a read-only quota query"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        flag = _quota_flag(params)
+        return [f"{sudo_prefix(params, default=True)}repquota -P {flag} {quote(params['mountpoint'])} | awk -v target={quote(params['target'])} '$1 == target {{print}}'"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.quota.get failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"quota": out.strip(), "target": params["target"], "mountpoint": params["mountpoint"]})
+
+
+class StorageQuotaCheckPlugin(BasePlugin):
+    parameter_schema = {"type": {"enum": ["user", "group"], "default": "user", "description": "Quota subject type."}}
+    name = "storage.quota.check"
+    description = "Check user or group quota limits on a mounted filesystem."
+    required_params = ("target", "mountpoint")
+    optional_params = ("type", "block_soft", "block_hard", "inode_soft", "inode_hard", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        if not any(key in params for key in ("block_soft", "block_hard", "inode_soft", "inode_hard")):
+            raise PluginValidationError("storage.quota.check requires at least one quota limit")
+        _quota_flag(params)
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "storage.quota.check is a read-only quota check"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        flag = _quota_flag(params)
+        target = quote(params["target"])
+        quota_line = f"{sudo_prefix(params, default=True)}repquota -P {flag} {quote(params['mountpoint'])} | awk -v target={target} '$1 == target {{print}}'"
+        checks = [f"line=$({quota_line}); test -n \"$line\""]
+        fields = {"block_soft": 4, "block_hard": 5, "inode_soft": 8, "inode_hard": 9}
+        for key, field in fields.items():
+            if key in params:
+                checks.append(f"printf '%s\n' \"$line\" | awk '{{print ${field}}}' | grep -Fx -- {quote(params[key])}")
+        return [" && ".join(checks)]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.quota.check failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+
+
+class StorageQuotaFactsPlugin(BasePlugin):
+    parameter_schema = {"type": {"enum": ["user", "group"], "default": "user", "description": "Quota subject type."}}
+    name = "storage.quota.facts"
+    description = "Collect user or group quota facts from a mounted filesystem."
+    required_params = ("mountpoint",)
+    optional_params = ("type", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "storage.quota.facts is a read-only quota facts query"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        flag = _quota_flag(params)
+        return [f"{sudo_prefix(params, default=True)}repquota -P {flag} {quote(params['mountpoint'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.quota.facts failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"quotas": out})

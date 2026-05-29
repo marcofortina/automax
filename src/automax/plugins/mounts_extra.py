@@ -19,7 +19,7 @@ def _diff(path: str, before: str, after: str, kind: str) -> list[Dict[str, Any]]
 
 
 class MountRemountPlugin(BasePlugin):
-    name = "mount.remount"
+    name = "storage.mount.remount"
     description = "Remount an already mounted filesystem with desired options."
     required_params = ("path",)
     optional_params = ("opts", "sudo")
@@ -36,11 +36,11 @@ class MountRemountPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="mount.remount failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.mount.remount failed")
 
 
 class FsResizePlugin(BasePlugin):
-    name = "fs.resize"
+    name = "storage.fs.resize"
     description = "Resize a filesystem using the appropriate platform tool."
     required_params = ("device", "fstype")
     optional_params = ("path", "sudo")
@@ -62,18 +62,18 @@ class FsResizePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="fs.resize failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.fs.resize failed")
 
 
 class FindmntAssertPlugin(BasePlugin):
-    name = "findmnt.assert"
-    description = "Assert a mountpoint, source, fstype or options using findmnt."
+    name = "storage.mount.check"
+    description = "Check a mountpoint, source, fstype or options using findmnt."
     required_params = ("path",)
     optional_params = ("src", "fstype", "opts")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "findmnt.assert is a read-only mount assertion with no file diff"
+        return "storage.mount.check is a read-only mount check with no file diff"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)

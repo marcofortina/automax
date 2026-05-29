@@ -14,19 +14,15 @@ persistent drop-ins and reload operations.
 
 ## Block and mount operations
 
-`block.mkfs` formats a block device. `block.partition_rescan` asks the kernel to
-re-read partition state after partitioning. Use destructive block operations only
-with explicit review and backup/restore planning.
+`storage.fs.create` formats a block device, `storage.fs.check` verifies filesystem identity, `storage.fs.facts` collects blkid/findmnt/df readback, and `storage.fs.resize` grows supported filesystems. `storage.block.partition.scan` asks the kernel to re-read partition state after partitioning. Use destructive block operations only with explicit review and backup/restore planning.
 
-`mount.present` and `mount.absent` manage active mounts. `fstab.entry` manages
+`storage.mount.add` and `storage.mount.remove` manage active mounts. `storage.fstab.add` manages
 persistent boot-time mount configuration. Keep runtime mount state and `/etc/fstab`
 state explicit in jobs so reboot behavior is visible during review.
 
 ## Storage readback and assertions
 
-Use `lvm.facts`, `lvm.lv_assert`, `mount.facts`, `fstab.validate`,
-`swap.status` and `blkid.assert` for storage prechecks and postchecks before and
-after LVM, mount, swap and block-device operations.
+Use `storage.lvm.facts`, `storage.lvm.*.scan`, `storage.lvm.lv.check`, `storage.mount.facts`, `storage.fstab.validate`, `storage.swap.facts`, `storage.swap.check`, `storage.fs.facts`, `storage.fs.check`, `storage.usage.disk_check` and `storage.usage.inode_check` for storage prechecks and postchecks before and after LVM, mount, swap and block-device operations.
 
 ## Kernel, sysctl and block safety assertions
 
@@ -38,9 +34,11 @@ Sysctl readback and drop-in management is covered by `sysctl.assert`,
 `sysctl.facts` and `sysctl.dropin`.
 
 Block-device safety assertions should be placed before destructive storage steps:
-`block.size_assert`, `block.fs_assert`, `block.mountpoint_assert`,
-`block.empty_assert` and `block.not_mounted_assert`.
+`storage.block.size_check`, `storage.fs.check`, `storage.block.mount_check`,
+`storage.block.empty_check` and `storage.block.not_mounted_check`.
 
-Mount and fstab readback/removal helpers include `mount.assert`,
-`mount.options_assert`, `fstab.assert` and `fstab.absent`. Removing fstab entries
-requires `confirm: true`.
+Mount and fstab readback/removal helpers include `storage.mount.check`, `storage.mount.facts`, `storage.fstab.check` and `storage.fstab.remove`. Removing fstab entries requires `confirm: true`.
+
+## Quota and usage checks
+
+`storage.quota.set`, `storage.quota.get`, `storage.quota.check` and `storage.quota.facts` cover quota write, point lookup, assertion and mountpoint inventory flows. `storage.usage.disk_check` merges free-space and used-percent checks; `storage.usage.inode_check` covers inode exhaustion gates.

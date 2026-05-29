@@ -834,7 +834,7 @@ def test_read_only_command_plugin_is_shared_base_class():
     readonly_plugins = [
         name for name in registry.names() if isinstance(registry.get(name), ReadOnlyCommandPlugin)
     ]
-    assert len(readonly_plugins) >= 40
+    assert len(readonly_plugins) >= 37
 
 
 
@@ -1018,6 +1018,102 @@ def test_identity_namespace_replaces_legacy_user_group_plugin_names():
             if pattern.search(text):
                 offenders.append(f"{path}:{old_name}")
     assert offenders == []
+
+def test_storage_namespace_replaces_legacy_storage_plugin_names():
+    from automax.plugins.registry import build_builtin_registry
+
+    old_names = [
+        "assert.disk",
+        "blkid.assert",
+        "block.empty_assert",
+        "block.facts",
+        "block.fs_assert",
+        "block.identity",
+        "block.mkfs",
+        "block.mountpoint_assert",
+        "block.not_mounted_assert",
+        "block.partition",
+        "block.partition_rescan",
+        "block.rescan",
+        "block.size_assert",
+        "block.wipe_signatures",
+        "findmnt.assert",
+        "fs.bind_mount",
+        "fs.disk_usage_assert",
+        "fs.inode_usage_assert",
+        "fs.quota",
+        "fs.resize",
+        "fstab.absent",
+        "fstab.assert",
+        "fstab.entry",
+        "fstab.validate",
+        "lvm.facts",
+        "lvm.lv_assert",
+        "lvm.lv_extend",
+        "lvm.lv_present",
+        "lvm.lv_remove",
+        "lvm.pv_present",
+        "lvm.pv_remove",
+        "lvm.resizefs",
+        "lvm.snapshot",
+        "lvm.thin_pool",
+        "lvm.vg_present",
+        "lvm.vg_remove",
+        "mount.absent",
+        "mount.assert",
+        "mount.facts",
+        "mount.options_assert",
+        "mount.present",
+        "mount.remount",
+        "multipath.flush",
+        "multipath.reload",
+        "multipath.status",
+        "swap.absent",
+        "swap.present",
+        "swap.status",
+    ]
+    names = set(build_builtin_registry().names())
+    assert not (names & set(old_names))
+    assert {
+        "storage.block.facts",
+        "storage.block.partition.apply",
+        "storage.fs.check",
+        "storage.fs.facts",
+        "storage.fs.resize",
+        "storage.mount.check",
+        "storage.mount.bind",
+        "storage.fstab.add",
+        "storage.swap.check",
+        "storage.lvm.pv.scan",
+        "storage.lvm.vg.scan",
+        "storage.lvm.lv.scan",
+        "storage.multipath.add",
+        "storage.multipath.remove",
+        "storage.quota.get",
+        "storage.quota.check",
+        "storage.quota.facts",
+        "storage.usage.disk_check",
+        "storage.usage.inode_check",
+    } <= names
+
+    searched = [
+        Path("docs/plugins/index.md"),
+        Path("docs/plugins/linux-operations.md"),
+        Path("docs/plugins/generated.md"),
+        Path("docs/plugins/kernel-storage.md"),
+        Path("docs/plugins/filesystem.md"),
+        Path("examples/runbooks/RUNBOOK_INDEX.md"),
+        *Path("examples/runbooks/runbooks").glob("*.check.yaml"),
+    ]
+    offenders = []
+    for path in searched:
+        text = path.read_text(encoding="utf-8")
+        for old_name in old_names:
+            pattern = re.compile(r"(?<![A-Za-z0-9_.])" + re.escape(old_name) + r"(?![A-Za-z0-9_.])")
+            if pattern.search(text):
+                offenders.append(f"{path}:{old_name}")
+    assert offenders == []
+
 
 def test_health_namespace_is_removed_from_public_documentation_and_runbooks():
     from automax.plugins.registry import build_builtin_registry

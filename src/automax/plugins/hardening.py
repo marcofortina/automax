@@ -102,6 +102,11 @@ class PasswordPolicyPlugin(RenderedFileInstallMixin, BasePlugin):
     opens_remote_session = True
     rendered_file_temp_prefix = "pwquality"
     rendered_file_diff_kind = "password-policy-plan"
+    parameter_schema = {
+        "name": {"description": "pwquality drop-in filename, with .conf appended when omitted."},
+        "settings": {"description": "pwquality.conf key/value settings such as minlen, dcredit, ucredit or retry."},
+        "path": {"description": "Explicit pwquality drop-in path; defaults to /etc/security/pwquality.conf.d/<name>.conf."},
+    }
 
     def _path(self, params: Dict[str, Any]) -> str:
         name = str(params["name"])

@@ -441,7 +441,7 @@ class SudoCanRunPlugin(ReadOnlyCommandPlugin):
 
 # Mount/fstab/block safety
 class MountAssertPlugin(ReadOnlyCommandPlugin):
-    name="mount.assert"; description="Assert a mountpoint is mounted, optionally from source and fstype."; required_params=("path",); optional_params=("source","fstype","sudo")
+    name="storage.mount.check"; description="Assert a mountpoint is mounted, optionally from source and fstype."; required_params=("path",); optional_params=("source","fstype","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         cmd=f"findmnt -n {quote(params['path'])}"; filters=[]
         if params.get("source"): filters.append(f"grep -F -- {quote(params['source'])}")
@@ -449,25 +449,25 @@ class MountAssertPlugin(ReadOnlyCommandPlugin):
         return [" | ".join([cmd,*filters])]
 
 class MountOptionsAssertPlugin(ReadOnlyCommandPlugin):
-    name="mount.options_assert"; description="Assert required mount options are active."; required_params=("path","options"); optional_params=("sudo",)
+    name="storage.mount.check"; description="Assert required mount options are active."; required_params=("path","options"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         cmd=f"findmnt -n -o OPTIONS {quote(params['path'])}"; return [" && ".join(f"{cmd} | tr ',' '\\n' | grep -Fx -- {quote(o)}" for o in _as_list(params['options']))]
 
 class FstabAbsentPlugin(BasePlugin):
-    name="fstab.absent"; description="Remove fstab entries matching a mountpoint or source after confirmation."; required_params=(); optional_params=("path","source","file","confirm","backup","backup_suffix","sudo"); opens_remote_session=True
+    name="storage.fstab.remove"; description="Remove fstab entries matching a mountpoint or source after confirmation."; required_params=(); optional_params=("path","source","file","confirm","backup","backup_suffix","sudo"); opens_remote_session=True
     def validate(self, params: Dict[str, Any])->None:
-        if not (params.get("path") or params.get("source")): raise PluginValidationError("fstab.absent requires path or source")
-        if not bool(params.get("confirm", False)): raise PluginValidationError("fstab.absent requires confirm=true")
+        if not (params.get("path") or params.get("source")): raise PluginValidationError("storage.fstab.remove requires path or source")
+        if not bool(params.get("confirm", False)): raise PluginValidationError("storage.fstab.remove requires confirm=true")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         self.validate(params); file=str(params.get("file","/etc/fstab")); pattern=params.get("path") or params.get("source"); cmds=[]
         if bool(params.get("backup", True)): cmds.append(f"{sudo_prefix(params, default=True)}cp -p {quote(file)} {quote(file + str(params.get('backup_suffix','.bak')))}")
         cmds.append(f"{sudo_prefix(params, default=True)}awk '$0 ~ /^#/ || $0 !~ {quote(pattern)}' {quote(file)} | {sudo_prefix(params, default=True)}tee {quote(file)} >/dev/null")
         return cmds
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
-        rc,out,err=exec_remote(context," && ".join(self.manual_commands(params,context))+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="fstab.absent failed")
+        rc,out,err=exec_remote(context," && ".join(self.manual_commands(params,context))+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="storage.fstab.remove failed")
 
 class FstabAssertPlugin(ReadOnlyCommandPlugin):
-    name="fstab.assert"; description="Assert an fstab entry exists for source, path or fstype."; optional_params=("path","source","fstype","file","sudo")
+    name="storage.fstab.check"; description="Assert an fstab entry exists for source, path or fstype."; optional_params=("path","source","fstype","file","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         file=quote(params.get("file","/etc/fstab")); cmds=[f"grep -Ev '^[[:space:]]*(#|$)' {file}"]
         for key in ("source","path","fstype"):
@@ -475,23 +475,23 @@ class FstabAssertPlugin(ReadOnlyCommandPlugin):
         return [" | ".join(cmds)]
 
 class BlockSizeAssertPlugin(ReadOnlyCommandPlugin):
-    name="block.size_assert"; description="Assert block device size in bytes."; required_params=("device","size"); optional_params=("sudo",)
+    name="storage.block.size_check"; description="Check block device size in bytes."; required_params=("device","size"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"test \"$({sudo_prefix(params, default=True)}blockdev --getsize64 {quote(params['device'])})\" = {quote(params['size'])}"]
 
 class BlockFsAssertPlugin(ReadOnlyCommandPlugin):
-    name="block.fs_assert"; description="Assert block device filesystem type."; required_params=("device","fstype"); optional_params=("sudo",)
+    name="storage.fs.check"; description="Check block device filesystem type."; required_params=("device","fstype"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"test \"$({sudo_prefix(params, default=True)}blkid -o value -s TYPE {quote(params['device'])})\" = {quote(params['fstype'])}"]
 
 class BlockMountpointAssertPlugin(ReadOnlyCommandPlugin):
-    name="block.mountpoint_assert"; description="Assert a block device is mounted at a path."; required_params=("device","path"); optional_params=("sudo",)
+    name="storage.block.mount_check"; description="Check that a block device is mounted at a path."; required_params=("device","path"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"findmnt -n -S {quote(params['device'])} -T {quote(params['path'])}"]
 
 class BlockEmptyAssertPlugin(ReadOnlyCommandPlugin):
-    name="block.empty_assert"; description="Assert a block device has no detectable signature before destructive use."; required_params=("device",); optional_params=("sudo",)
+    name="storage.block.empty_check"; description="Check that a block device has no detectable signature before destructive use."; required_params=("device",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"! {sudo_prefix(params, default=True)}blkid {quote(params['device'])}"]
 
 class BlockNotMountedAssertPlugin(ReadOnlyCommandPlugin):
-    name="block.not_mounted_assert"; description="Assert a block device is not mounted."; required_params=("device",); optional_params=("sudo",)
+    name="storage.block.not_mounted_check"; description="Check that a block device is not mounted."; required_params=("device",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"! findmnt -n -S {quote(params['device'])}"]
 
 

@@ -28,7 +28,7 @@ def _plan(path: str, before: str, after: str, kind: str) -> list[Dict[str, Any]]
 
 
 class LvmPvPresentPlugin(BasePlugin):
-    name = "lvm.pv_present"
+    name = "storage.lvm.pv.add"
     description = "Ensure a block device is initialized as an LVM physical volume."
     required_params = ("device",)
     optional_params = ("force", "sudo")
@@ -46,11 +46,11 @@ class LvmPvPresentPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="lvm.pv_present failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.lvm.pv.add failed")
 
 
 class LvmVgPresentPlugin(BasePlugin):
-    name = "lvm.vg_present"
+    name = "storage.lvm.vg.add"
     description = "Ensure an LVM volume group exists and contains the requested PV devices."
     required_params = ("name", "devices")
     optional_params = ("force", "sudo")
@@ -79,11 +79,11 @@ class LvmVgPresentPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="lvm.vg_present failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.lvm.vg.add failed")
 
 
 class LvmLvPresentPlugin(BasePlugin):
-    name = "lvm.lv_present"
+    name = "storage.lvm.lv.add"
     description = "Ensure an LVM logical volume exists, optionally formatting it when newly created."
     required_params = ("vg", "name", "size")
     optional_params = ("fstype", "resizefs", "force", "sudo")
@@ -117,11 +117,11 @@ class LvmLvPresentPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="lvm.lv_present failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.lvm.lv.add failed")
 
 
 class LvmLvExtendPlugin(BasePlugin):
-    name = "lvm.lv_extend"
+    name = "storage.lvm.lv.extend"
     description = "Extend an LVM logical volume, optionally resizing the filesystem."
     required_params = ("vg", "name", "size")
     optional_params = ("resizefs", "sudo")
@@ -141,11 +141,11 @@ class LvmLvExtendPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="lvm.lv_extend failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.lvm.lv.extend failed")
 
 
 class LvmResizeFsPlugin(BasePlugin):
-    name = "lvm.resizefs"
+    name = "storage.fs.resize"
     description = "Resize a filesystem after a block or LVM volume change."
     required_params = ("device", "fstype")
     optional_params = ("path", "sudo")
@@ -163,7 +163,7 @@ class LvmResizeFsPlugin(BasePlugin):
         if fstype in {"xfs"}:
             mountpoint = params.get("path")
             if not mountpoint:
-                raise PluginValidationError("lvm.resizefs requires path for xfs")
+                raise PluginValidationError("storage.fs.resize requires path for xfs")
             return [f"{sudo}xfs_growfs {quote(mountpoint)}"]
         if fstype in {"ext2", "ext3", "ext4"}:
             return [f"{sudo}resize2fs {device}"]
@@ -171,10 +171,10 @@ class LvmResizeFsPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="lvm.resizefs failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.fs.resize failed")
 
 class LvmSnapshotPlugin(BasePlugin):
-    name = "lvm.snapshot"
+    name = "storage.lvm.lv.snapshot"
     description = "Create an idempotent LVM snapshot logical volume."
     required_params = ("vg", "source", "name", "size")
     optional_params = ("sudo",)
@@ -193,11 +193,11 @@ class LvmSnapshotPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="lvm.snapshot failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.lvm.lv.snapshot failed")
 
 
 class LvmLvRemovePlugin(BasePlugin):
-    name = "lvm.lv_remove"
+    name = "storage.lvm.lv.remove"
     description = "Remove an LVM logical volume with an explicit confirm flag."
     required_params = ("path", "confirm")
     optional_params = ("sudo",)
@@ -206,7 +206,7 @@ class LvmLvRemovePlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if params.get("confirm") is not True:
-            raise PluginValidationError("lvm.lv_remove requires confirm: true")
+            raise PluginValidationError("storage.lvm.lv.remove requires confirm: true")
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         self.validate(params)
@@ -218,11 +218,11 @@ class LvmLvRemovePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="lvm.lv_remove failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.lvm.lv.remove failed")
 
 
 class LvmVgRemovePlugin(BasePlugin):
-    name = "lvm.vg_remove"
+    name = "storage.lvm.vg.remove"
     description = "Remove an LVM volume group with an explicit confirm flag."
     required_params = ("name", "confirm")
     optional_params = ("sudo",)
@@ -231,7 +231,7 @@ class LvmVgRemovePlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if params.get("confirm") is not True:
-            raise PluginValidationError("lvm.vg_remove requires confirm: true")
+            raise PluginValidationError("storage.lvm.vg.remove requires confirm: true")
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         return _plan(f"vg:{params['name']}", "volume group present", "volume group absent", "lvm-remove-plan")
@@ -242,11 +242,11 @@ class LvmVgRemovePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="lvm.vg_remove failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.lvm.vg.remove failed")
 
 
 class LvmPvRemovePlugin(BasePlugin):
-    name = "lvm.pv_remove"
+    name = "storage.lvm.pv.remove"
     description = "Remove LVM physical-volume metadata with an explicit confirm flag."
     required_params = ("device", "confirm")
     optional_params = ("force", "sudo")
@@ -255,7 +255,7 @@ class LvmPvRemovePlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if params.get("confirm") is not True:
-            raise PluginValidationError("lvm.pv_remove requires confirm: true")
+            raise PluginValidationError("storage.lvm.pv.remove requires confirm: true")
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         return _plan(str(params["device"]), "LVM PV metadata present", "LVM PV metadata absent", "lvm-remove-plan")
@@ -266,11 +266,11 @@ class LvmPvRemovePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="lvm.pv_remove failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.lvm.pv.remove failed")
 
 
 class LvmThinPoolPlugin(BasePlugin):
-    name = "lvm.thin_pool"
+    name = "storage.lvm.lv.thin_pool"
     description = "Ensure an LVM thin pool exists."
     required_params = ("vg", "name", "size")
     optional_params = ("metadata_size", "chunksize", "sudo")
@@ -293,4 +293,59 @@ class LvmThinPoolPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="lvm.thin_pool failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.lvm.lv.thin_pool failed")
+
+
+class LvmPvScanPlugin(BasePlugin):
+    name = "storage.lvm.pv.scan"
+    description = "Refresh LVM physical-volume metadata cache."
+    required_params: tuple[str, ...] = ()
+    optional_params = ("device", "sudo")
+    opens_remote_session = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "storage.lvm.pv.scan refreshes runtime LVM metadata and has no file diff preview"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        device = f" {quote(params['device'])}" if params.get("device") else ""
+        return [f"{sudo_prefix(params, default=True)}pvscan --cache{device}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.lvm.pv.scan failed")
+
+
+class LvmVgScanPlugin(BasePlugin):
+    name = "storage.lvm.vg.scan"
+    description = "Scan LVM volume groups and recreate missing device nodes."
+    required_params: tuple[str, ...] = ()
+    optional_params = ("sudo",)
+    opens_remote_session = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "storage.lvm.vg.scan refreshes runtime LVM metadata and has no file diff preview"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return [f"{sudo_prefix(params, default=True)}vgscan --mknodes"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.lvm.vg.scan failed")
+
+
+class LvmLvScanPlugin(BasePlugin):
+    name = "storage.lvm.lv.scan"
+    description = "Scan LVM logical volumes."
+    required_params: tuple[str, ...] = ()
+    optional_params = ("sudo",)
+    opens_remote_session = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "storage.lvm.lv.scan refreshes runtime LVM metadata and has no file diff preview"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return [f"{sudo_prefix(params, default=True)}lvscan"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.lvm.lv.scan failed")

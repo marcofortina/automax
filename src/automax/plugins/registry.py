@@ -168,7 +168,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         UfwStatusPlugin,
     )
     from automax.plugins.fs_cd import FsCdPlugin
-    from automax.plugins.fs_advanced import FsBindMountPlugin, FsDiskUsageAssertPlugin, FsInodeUsageAssertPlugin
+    from automax.plugins.fs_advanced import FsBindMountPlugin, FsInodeUsageAssertPlugin
     from automax.plugins.fs_chmod import FsChmodPlugin
     from automax.plugins.fs_chown import FsChownPlugin
     from automax.plugins.fs_copy import FsCopyPlugin
@@ -181,6 +181,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsAttrGetPlugin,
         FsAttrPlugin,
         FsQuotaPlugin,
+        StorageQuotaCheckPlugin,
+        StorageQuotaFactsPlugin,
+        StorageQuotaGetPlugin,
     )
     from automax.plugins.fs_extra import (
         FsFindPlugin,
@@ -244,13 +247,15 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         LvmLvExtendPlugin,
         LvmLvPresentPlugin,
         LvmLvRemovePlugin,
+        LvmLvScanPlugin,
         LvmPvPresentPlugin,
         LvmPvRemovePlugin,
-        LvmResizeFsPlugin,
+        LvmPvScanPlugin,
         LvmSnapshotPlugin,
         LvmThinPoolPlugin,
         LvmVgPresentPlugin,
         LvmVgRemovePlugin,
+        LvmVgScanPlugin,
     )
     from automax.plugins.network import (
         NetworkBondPlugin,
@@ -281,7 +286,6 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         AuditdSyscallPlugin,
         AuditdWatchPlugin,
         BlockEmptyAssertPlugin,
-        BlockFsAssertPlugin,
         BlockMountpointAssertPlugin,
         BlockNotMountedAssertPlugin,
         BlockSizeAssertPlugin,
@@ -301,8 +305,6 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         KernelCmdlineAssertPlugin,
         KernelModuleBlacklistPlugin,
         KernelModuleStatusPlugin,
-        MountAssertPlugin,
-        MountOptionsAssertPlugin,
         NftablesRollbackFilePlugin,
         NftablesRulesetAssertPlugin,
         PamBackupPlugin,
@@ -365,6 +367,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     from automax.plugins.mail import MailSendPlugin
     from automax.plugins.local_command import LocalCommandPlugin
     from automax.plugins.multipath import (
+        MultipathAddPlugin,
         MultipathFlushPlugin,
         MultipathReloadPlugin,
         MultipathStatusPlugin,
@@ -456,6 +459,8 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         LvmFactsPlugin,
         LvmLvAssertPlugin,
         MountFactsPlugin,
+        StorageFsFactsPlugin,
+        StorageSwapCheckPlugin,
         SwapStatusPlugin,
     )
     from automax.plugins.systemctl import (
@@ -572,8 +577,6 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         KernelModulePersistPlugin(),
         MountPresentPlugin(),
         MountAbsentPlugin(),
-        MountAssertPlugin(),
-        MountOptionsAssertPlugin(),
         FstabEntryPlugin(),
         FstabAbsentPlugin(),
         FstabAssertPlugin(),
@@ -690,17 +693,18 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsAclAssertPlugin(),
         FsAclRestorePlugin(),
         FsBindMountPlugin(),
-        FsDiskUsageAssertPlugin(),
         FsInodeUsageAssertPlugin(),
         FsAttrPlugin(),
         FsAttrGetPlugin(),
         FsAttrCheckPlugin(),
         FsQuotaPlugin(),
+        StorageQuotaGetPlugin(),
+        StorageQuotaCheckPlugin(),
+        StorageQuotaFactsPlugin(),
         BlockFactsPlugin(),
         BlockIdentityPlugin(),
         BlockRescanPlugin(),
         BlockSizeAssertPlugin(),
-        BlockFsAssertPlugin(),
         BlockMountpointAssertPlugin(),
         BlockEmptyAssertPlugin(),
         BlockNotMountedAssertPlugin(),
@@ -717,6 +721,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         UdevFactsPlugin(),
         MultipathStatusPlugin(),
         MultipathReloadPlugin(),
+        MultipathAddPlugin(),
         MultipathFlushPlugin(),
         SwapPresentPlugin(),
         SwapAbsentPlugin(),
@@ -753,12 +758,14 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         LvmFactsPlugin(),
         LvmLvAssertPlugin(),
         LvmLvExtendPlugin(),
+        LvmLvScanPlugin(),
         LvmSnapshotPlugin(),
         LvmThinPoolPlugin(),
         LvmLvRemovePlugin(),
-        LvmResizeFsPlugin(),
         LvmVgRemovePlugin(),
+        LvmVgScanPlugin(),
         LvmPvRemovePlugin(),
+        LvmPvScanPlugin(),
         NetworkInterfacePlugin(),
         NetworkRouteAddPlugin(),
         NetworkRouteRemovePlugin(),
@@ -784,7 +791,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         MountFactsPlugin(),
         FstabValidatePlugin(),
         SwapStatusPlugin(),
+        StorageSwapCheckPlugin(),
         BlkidAssertPlugin(),
+        StorageFsFactsPlugin(),
         FsResizePlugin(),
         FindmntAssertPlugin(),
         LogGrepPlugin(),

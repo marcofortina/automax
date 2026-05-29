@@ -11,7 +11,7 @@ preflight checks and safe backups.
 
 ## Block storage
 
-Use `block.facts` and `block.identity` before touching storage. `block.identity`
+Use `storage.block.facts` and `storage.block.identity` before touching storage. `storage.block.identity`
 wraps the stable SCSI identity workflow, including commands such as:
 
 ```bash
@@ -21,7 +21,7 @@ wraps the stable SCSI identity workflow, including commands such as:
 Partition operations are intentionally conservative:
 
 ```yaml
-use: block.partition
+use: storage.block.partition.apply
 with:
   device: /dev/sdb
   label: gpt
@@ -34,11 +34,11 @@ with:
   sudo: true
 ```
 
-`block.partition` creates an `sfdisk --dump` backup when `backup: true`, refuses
+`storage.block.partition.apply` creates an `sfdisk --dump` backup when `backup: true`, refuses
 mounted devices, calls `partprobe` with `blockdev --rereadpt` fallback, and waits
 for `udevadm settle` by default.
 
-For destructive signature cleanup use `block.wipe_signatures`; it requires
+For destructive signature cleanup use `storage.block.signatures.wipe`; it requires
 `force: true` and stores `wipefs -n` output before applying `wipefs -a` unless
 backup is disabled explicitly.
 
@@ -48,9 +48,7 @@ Use `udev.rule`, `udev.reload`, `udev.trigger`, and `udev.settle` to make stable
 device names explicit and repeatable. `udev.rule` supports structured rules and
 backs up the previous rules file by default.
 
-Use `multipath.status` before storage-dependent operations to verify expected path
-counts, then `multipath.reload` or `multipath.flush` when the job explicitly owns
-that action.
+Use `storage.multipath.status` before storage-dependent operations to verify expected path counts, `storage.multipath.add` when the job owns a new WWID binding, and `storage.multipath.reload` or `storage.multipath.remove` when the job explicitly owns that action.
 
 ## Swap, limits, hosts, resolver and chrony
 
@@ -58,7 +56,7 @@ The following macros manage common database/cluster prerequisites with backups
 where they modify system files:
 
 ```text
-swap.present / swap.absent
+storage.swap.add / storage.swap.remove
 limits.dropin
 security.pam.limits
 security.pam.access / security.pam.faillock / security.pam.pwhistory / security.pam.succeed_if
@@ -90,7 +88,7 @@ with:
 ```
 
 `system.reboot` requests a reboot. Use the rendered manual command and follow-up
-wait/assert substeps to validate that SSH and services are back.
+connectivity, process and service check substeps to validate that SSH and services are back.
 
 `download.file` is the remote wget/curl-like macro. It downloads with curl or
 wget, supports SHA256 verification, backs up an existing destination by default,
@@ -99,9 +97,7 @@ and can install mode/owner/group metadata.
 
 ## LVM storage
 
-Use `lvm.pv_present`, `lvm.vg_present`, `lvm.lv_present`, `lvm.lv_extend`
-and `lvm.resizefs` for physical volumes, volume groups, logical volumes and
-filesystem growth. These macros expose deterministic manual commands and
+Use `storage.lvm.pv.add`, `storage.lvm.vg.add`, `storage.lvm.lv.add`, `storage.lvm.lv.extend`, `storage.lvm.pv.scan`, `storage.lvm.vg.scan`, `storage.lvm.lv.scan` and `storage.fs.resize` for physical volumes, volume groups, logical volumes, metadata scan and filesystem growth. These macros expose deterministic manual commands and
 structured `plan --diff` previews before applying storage changes.
 
 
@@ -140,8 +136,8 @@ default.
 
 ## Advanced mounts and filesystem resizing
 
-Use `mount.remount`, `fs.resize` and `findmnt.assert` to remount filesystems,
-grow supported filesystems and assert current mount state with `findmnt`. Runtime
+Use `storage.mount.remount`, `storage.fs.resize` and `storage.mount.check` to remount filesystems,
+grow supported filesystems and check current mount state with `findmnt`. Runtime
 operations provide state previews and manual recovery commands.
 
 
@@ -171,9 +167,9 @@ automax commands render --job jobs/linux-preflight.yaml --inventory inventory/pr
 `plan --diff` now represents the whole selected job shape for these macros:
 file-backed operations emit deterministic unified diffs or structured state
 plans, while runtime-only/read-only operations emit explicit reasons. Examples
-include fstab plans for `swap.present` / `swap.absent`, PAM append plans for
+include fstab plans for `storage.swap.add` / `storage.swap.remove`, PAM append plans for
 `security.pam.limits`, hostname and download plans, and runtime explanations for
-`block.rescan`, `udev.reload`, `multipath.reload` and `system.reboot`.
+`storage.block.scan`, `udev.reload`, `storage.multipath.reload` and `system.reboot`.
 
 ## Enterprise system operations
 
@@ -192,8 +188,8 @@ network.link.facts / network.route.facts
 pkg.version_pin / pkg.repo_priority
 network.link.interface / network.link.bond / network.link.vlan / network.route.add / network.route.remove with persist/backend
 security.pki.trust.install_ca with trust_store=system
-lvm.snapshot / lvm.thin_pool / lvm.lv_remove / lvm.vg_remove / lvm.pv_remove
-fs.acl.set / fs.attr.set / fs.quota
+storage.lvm.lv.snapshot / storage.lvm.lv.thin_pool / storage.lvm.lv.remove / storage.lvm.vg.remove / storage.lvm.pv.remove
+fs.acl.set / fs.attr.set / storage.quota.set / storage.quota.get / storage.quota.check / storage.quota.facts
 systemd.unit / systemd.timer / systemd.tmpfiles / systemd.sysusers
 alternatives.set
 security.audit.rule / security.audit.status / security.audit.reload

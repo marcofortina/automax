@@ -9,7 +9,7 @@ Automax can manage mounted filesystems and `/etc/fstab` entries.
 
 ```yaml
 - id: mount_data
-  use: mount.present
+  use: storage.mount.add
   with:
     src: /dev/vdb1
     path: /data
@@ -21,11 +21,11 @@ Automax can manage mounted filesystems and `/etc/fstab` entries.
 
 ```yaml
 - id: remove_data_mount
-  use: mount.absent
+  use: storage.mount.remove
   with:
     path: /data
     persist: true
     sudo: true
 ```
 
-Use `fstab.entry` when you only want to manage persistence without mounting or unmounting immediately.
+Use `storage.fstab.add` when you only want to manage persistence without mounting or unmounting immediately.

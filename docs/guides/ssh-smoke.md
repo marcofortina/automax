@@ -50,7 +50,7 @@ remote user. It covers:
 - `archive.tar`, `archive.untar`, `archive.zip`, `archive.unzip`
 - `transfer.upload`, `transfer.download`, `transfer.sync`
 - `process.wait`
-- `assert.disk`, `network.connectivity.port_check`
+- `storage.usage.disk_check`, `network.connectivity.port_check`
 - artifact capture for stdout/stderr/data
 - resume helpers through the normal run state store
 

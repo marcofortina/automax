@@ -19,7 +19,7 @@ def _diff(path: str, before: str, after: str, kind: str) -> list[Dict[str, Any]]
 
 
 class FsBindMountPlugin(BasePlugin):
-    name = "fs.bind_mount"
+    name = "storage.mount.bind"
     description = "Ensure a runtime and optional persistent bind mount."
     required_params = ("src", "dest")
     optional_params = ("state", "opts", "persist", "runtime", "sudo")
@@ -39,7 +39,7 @@ class FsBindMountPlugin(BasePlugin):
         self.validate(params)
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
-            raise PluginValidationError("fs.bind_mount state must be present or absent")
+            raise PluginValidationError("storage.mount.bind state must be present or absent")
         sudo = sudo_prefix(params, default=True)
         src = str(params["src"])
         dest = str(params["dest"])
@@ -59,46 +59,61 @@ class FsBindMountPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="fs.bind_mount failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="storage.mount.bind failed")
 
-class FsDiskUsageAssertPlugin(BasePlugin):
-    name = "fs.disk_usage_assert"
-    description = "Assert that filesystem block usage is below a maximum percentage."
-    required_params = ("path", "max_percent")
-    optional_params = ("sudo",)
-    opens_remote_session = True
-    supports_check_mode = True
-
-    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "fs.disk_usage_assert is a read-only df assertion"
-
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        self.validate(params)
-        return [f"usage=$({sudo_prefix(params, default=True)}df -P {quote(params['path'])} | awk 'NR==2 {{gsub(/%/, \"\", $5); print $5}}'); test \"$usage\" -le {quote(params['max_percent'])}"]
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.disk_usage_assert failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 class FsInodeUsageAssertPlugin(BasePlugin):
-    name = "fs.inode_usage_assert"
-    description = "Assert that filesystem inode usage is below a maximum percentage."
-    required_params = ("path", "max_percent")
-    optional_params = ("sudo",)
+    name = "storage.usage.inode_check"
+    description = "Check remote filesystem inode free and used percentage thresholds."
+    required_params = ("path",)
+    optional_params = ("max_used_percent", "min_free_percent", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        if "max_used_percent" not in params and "min_free_percent" not in params:
+            raise PluginValidationError("storage.usage.inode_check requires max_used_percent or min_free_percent")
+
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "fs.inode_usage_assert is a read-only df -i assertion"
+        return "storage.usage.inode_check is a read-only inode usage check"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"usage=$({sudo_prefix(params, default=True)}df -Pi {quote(params['path'])} | awk 'NR==2 {{gsub(/%/, \"\", $5); print $5}}'); test \"$usage\" -le {quote(params['max_percent'])}"]
+        awk_vars = {
+            "max_used_percent": params.get("max_used_percent", ""),
+            "min_free_percent": params.get("min_free_percent", ""),
+        }
+        var_args = " ".join(f"-v {name}={quote(value)}" for name, value in awk_vars.items())
+        program = (
+            'NR==2 {'
+            'gsub(/%/, "", $5); '
+            'free_percent=($2>0 ? ($4/$2)*100 : 0); '
+            'used_percent=$5+0; '
+            'ok=1; '
+            'if (max_used_percent != "" && used_percent > max_used_percent) ok=0; '
+            'if (min_free_percent != "" && free_percent < min_free_percent) ok=0; '
+            'printf "free_percent=%.2f used_percent=%.2f\n", free_percent, used_percent; '
+            'exit(ok ? 0 : 1)'
+            '}'
+        )
+        return [f"{sudo_prefix(params, default=True)}df -Pi {quote(params['path'])} | awk {var_args} {quote(program)}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        self.validate(params)
+        command = f"{sudo_prefix(params, default=True)}df -Pi {quote(params['path'])} | awk 'NR==2 {{gsub(/%/, \"\", $5); print $2, $3, $4, $5}}'"
+        rc, out, err = exec_remote(context, command)
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.inode_usage_assert failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.usage.inode_check failed")
+        try:
+            total, used, free, used_percent_raw = [int(item) for item in out.strip().split()[:4]]
+        except (ValueError, IndexError) as exc:
+            return PluginResult.failure(rc=1, stdout=out, stderr=str(exc), message="storage.usage.inode_check could not parse df output")
+        free_percent = (free / total * 100.0) if total else 0.0
+        used_percent = float(used_percent_raw)
+        data = {"total_inodes": total, "used_inodes": used, "free_inodes": free, "free_percent": free_percent, "used_percent": used_percent}
+        if "max_used_percent" in params and used_percent > float(params["max_used_percent"]):
+            return PluginResult.failure(message="storage.usage.inode_check used percent threshold failed", data=data)
+        if "min_free_percent" in params and free_percent < float(params["min_free_percent"]):
+            return PluginResult.failure(message="storage.usage.inode_check free percent threshold failed", data=data)
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data=data)

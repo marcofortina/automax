@@ -330,40 +330,6 @@ with:
   dest: /tmp/dest
 ```
 
-## assert
-
-### `assert.disk`
-
-Assert remote disk capacity thresholds.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `min_free_mb` | no | `integer` |  | Minimum free disk space in MiB. |
-| `min_free_percent` | no | `number` |  | Minimum free disk percentage. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: assert.disk
-with:
-  path: /tmp/automax-demo
-```
-
 ## backup
 
 ### `backup.directory`
@@ -671,434 +637,6 @@ Example:
 use: backup.verify
 with:
   path: /tmp/automax-demo
-```
-
-## blkid
-
-### `blkid.assert`
-
-Assert block-device identity fields reported by blkid.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
-| `label` | no | `string` |  | Disk label, filesystem label or partition label. |
-| `uuid` | no | `string` |  | Filesystem or block-device UUID. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: blkid.assert
-with:
-  device: /dev/sdb
-```
-
-## block
-
-### `block.empty_assert`
-
-Assert a block device has no detectable signature before destructive use.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: block.empty_assert
-with:
-  device: /dev/sdb
-```
-
-### `block.facts`
-
-Collect remote block-device facts with lsblk, blkid, udevadm and optional multipath output.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `devices` | no | `list` |  | Block devices to inspect. |
-| `multipath` | no | `boolean` | `False` | Include multipath output when collecting block-device facts. |
-| `udev` | no | `boolean` | `True` | Include udev properties when collecting facts. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: block.facts
-with:
-  devices:
-    - /dev/sdb
-  multipath: false
-```
-
-### `block.fs_assert`
-
-Assert block device filesystem type.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: block.fs_assert
-with:
-  device: /dev/sdb
-  fstype: xfs
-```
-
-### `block.identity`
-
-Read a stable block-device identifier with scsi_id and udevadm.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `scsi_id_path` | no | `path` | `/usr/lib/udev/scsi_id` | Path to the scsi_id helper. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: block.identity
-with:
-  device: /dev/sdb
-```
-
-### `block.mkfs`
-
-Create a filesystem on a block device, refusing existing signatures unless force is true.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
-| `label` | no | `string` |  | Disk label, filesystem label or partition label. |
-| `force` | no | `boolean` | `False` | Force the operation when supported. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: block.mkfs
-with:
-  device: /dev/sdb
-  fstype: xfs
-```
-
-### `block.mountpoint_assert`
-
-Assert a block device is mounted at a path.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: block.mountpoint_assert
-with:
-  device: /dev/sdb
-  path: /tmp/automax-demo
-```
-
-### `block.not_mounted_assert`
-
-Assert a block device is not mounted.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: block.not_mounted_assert
-with:
-  device: /dev/sdb
-```
-
-### `block.partition`
-
-Conservatively create a partition table and missing partitions with parted.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `label` | yes | `string` |  | Disk label, filesystem label or partition label. |
-| `partitions` | yes | `list` |  | Desired partition entries for a block.partition operation. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_path` | no | `path` |  | Explicit backup path for pre-change file content. |
-| `force` | no | `boolean` | `False` | Force the operation when supported. |
-| `udev_settle` | no | `boolean` | `True` | Wait for udev events to settle after the operation. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: block.partition
-with:
-  device: /dev/sdb
-  label: gpt
-  partitions:
-    - {'number': 1, 'name': 'DATA01', 'start': '1MiB', 'end': '100%'}
-```
-
-### `block.partition_rescan`
-
-Reread one remote partition table with partprobe/blockdev and udev settle.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `udev_settle` | no | `boolean` | `True` | Wait for udev events to settle after the operation. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: block.partition_rescan
-with:
-  device: /dev/sdb
-```
-
-### `block.rescan`
-
-Rescan remote SCSI hosts or one block device and optionally refresh multipath.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | no | `path` |  | Block device path. |
-| `udev_settle` | no | `boolean` | `True` | Wait for udev events to settle after the operation. |
-| `multipath_reload` | no | `boolean` | `False` | Refresh multipath maps after the operation. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: block.rescan
-with:
-  device: /dev/sdb
-  udev_settle: true
-```
-
-### `block.size_assert`
-
-Assert block device size in bytes.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: block.size_assert
-with:
-  device: /dev/sdb
-  size: 16G
-```
-
-### `block.wipe_signatures`
-
-Wipe block-device signatures with wipefs after an optional pre-change signature backup.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_path` | no | `path` |  | Explicit backup path for pre-change file content. |
-| `force` | no | `boolean` | `False` | Force the operation when supported. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: block.wipe_signatures
-with:
-  device: /dev/sdb
 ```
 
 ## capability
@@ -1837,40 +1375,6 @@ with:
   sudo: true
 ```
 
-## findmnt
-
-### `findmnt.assert`
-
-Assert a mountpoint, source, fstype or options using findmnt.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `src` | no | `path` |  | Source path. |
-| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
-| `opts` | no | `string` | `defaults` | Mount options. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: findmnt.assert
-with:
-  path: /tmp/automax-demo
-```
-
 ## fs
 
 ### `fs.acl.check`
@@ -2101,43 +1605,6 @@ with:
   attrs: value
 ```
 
-### `fs.bind_mount`
-
-Ensure a runtime and optional persistent bind mount.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `dest` | yes | `path` |  | Destination path. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `opts` | no | `string` | `defaults` | Mount options. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
-| `runtime` | no | `boolean` | `True` | Apply the change to the running system. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.path`: Bind mount target path when returned by the implementation.
-
-Example:
-
-```yaml
-use: fs.bind_mount
-with:
-  src: /tmp/source
-  dest: /tmp/dest
-```
-
 ### `fs.cd`
 
 Set current remote working directory for the active step.
@@ -2301,38 +1768,6 @@ Example:
 use: fs.dir.wait
 with:
   path: /tmp/automax-demo
-```
-
-### `fs.disk_usage_assert`
-
-Assert that filesystem block usage is below a maximum percentage.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `max_percent` | yes | `integer` |  | Maximum allowed percentage. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: df assertion output.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fs.disk_usage_assert
-with:
-  path: /tmp/automax-demo
-  max_percent: value
 ```
 
 ### `fs.file.create`
@@ -2667,38 +2102,6 @@ with:
 
 ```
 
-### `fs.inode_usage_assert`
-
-Assert that filesystem inode usage is below a maximum percentage.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `max_percent` | yes | `integer` |  | Maximum allowed percentage. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: df -i assertion output.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fs.inode_usage_assert
-with:
-  path: /tmp/automax-demo
-  max_percent: value
-```
-
 ### `fs.object.copy`
 
 Copy a remote file or directory to another remote path.
@@ -2904,76 +2307,6 @@ with:
   path: /tmp/automax-demo
 ```
 
-### `fs.quota`
-
-Set user or group filesystem quotas with setquota.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `target` | yes | `string` |  | Quota target user or group. |
-| `mountpoint` | yes | `path` |  | Mounted filesystem path. |
-| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
-| `block_soft` | no | `integer` | `0` | Soft block quota. |
-| `block_hard` | no | `integer` | `0` | Hard block quota. |
-| `inode_soft` | no | `integer` | `0` | Soft inode quota. |
-| `inode_hard` | no | `integer` | `0` | Hard inode quota. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fs.quota
-with:
-  target: value
-  mountpoint: value
-```
-
-### `fs.resize`
-
-Resize a filesystem using the appropriate platform tool.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fs.resize
-with:
-  device: /dev/sdb
-  fstype: xfs
-```
-
 ### `fs.symlink.create`
 
 Create or update a remote symbolic link.
@@ -3106,150 +2439,6 @@ Example:
 use: fs.symlink.wait
 with:
   path: /tmp/automax-demo
-```
-
-## fstab
-
-### `fstab.absent`
-
-Remove fstab entries matching a mountpoint or source after confirmation.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `source` | no | `path` |  | Remote source path to archive. |
-| `file` | no | `path` |  | Remote configuration file path. |
-| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fstab.absent
-with:
-  path: /tmp/automax-demo
-  source: /var/log/app
-```
-
-### `fstab.assert`
-
-Assert an fstab entry exists for source, path or fstype.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `source` | no | `path` |  | Remote source path to archive. |
-| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
-| `file` | no | `path` |  | Remote configuration file path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fstab.assert
-with:
-  path: /tmp/automax-demo
-  source: /var/log/app
-```
-
-### `fstab.entry`
-
-Ensure an /etc/fstab entry is present or absent.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
-| `opts` | no | `string` | `defaults` | Mount options. |
-| `dump` | no | `integer` | `0` | fstab dump field. |
-| `passno` | no | `integer` | `0` | fstab fsck pass number. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fstab.entry
-with:
-  src: /dev/vdb1
-  path: /data
-  fstype: xfs
-  opts: defaults,noatime
-  state: present
-  sudo: true
-```
-
-### `fstab.validate`
-
-Validate fstab syntax and optionally dry-run mount resolution.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `file` | no | `path` |  | Remote configuration file path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: fstab.validate
-with:
-  file: /etc/sysctl.d/99-automax.conf
-  sudo: true
 ```
 
 ## hostname
@@ -4486,412 +3675,6 @@ with:
   settings: value
 ```
 
-## lvm
-
-### `lvm.facts`
-
-Collect LVM PV, VG and LV facts from a target.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `vg` | no | `string` |  | LVM volume group name. |
-| `name` | no | `string` |  | Package, user or group name. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: lvm.facts
-with:
-  vg: vg_app
-  name: nginx
-```
-
-### `lvm.lv_assert`
-
-Assert that an LVM logical volume exists and optionally matches a requested size.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `vg` | yes | `string` |  | LVM volume group name. |
-| `name` | yes | `string` |  | Package, user or group name. |
-| `size` | no | `string` |  | Size such as 16G for file-backed swap. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: lvm.lv_assert
-with:
-  vg: vg_app
-  name: nginx
-```
-
-### `lvm.lv_extend`
-
-Extend an LVM logical volume, optionally resizing the filesystem.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `vg` | yes | `string` |  | LVM volume group name. |
-| `name` | yes | `string` |  | Package, user or group name. |
-| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
-| `resizefs` | no | `boolean` | `True` | Resize the filesystem along with the block/LVM operation. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: lvm.lv_extend
-with:
-  vg: vg_app
-  name: nginx
-  size: 16G
-```
-
-### `lvm.lv_present`
-
-Ensure an LVM logical volume exists, optionally formatting it when newly created.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `vg` | yes | `string` |  | LVM volume group name. |
-| `name` | yes | `string` |  | Package, user or group name. |
-| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
-| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
-| `resizefs` | no | `boolean` | `True` | Resize the filesystem along with the block/LVM operation. |
-| `force` | no | `boolean` | `False` | Force the operation when supported. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: lvm.lv_present
-with:
-  vg: vg_app
-  name: nginx
-  size: 16G
-```
-
-### `lvm.lv_remove`
-
-Remove an LVM logical volume with an explicit confirm flag.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `confirm` | yes | `boolean` |  | Explicit destructive-operation confirmation flag. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: lvm.lv_remove
-with:
-  path: /tmp/automax-demo
-  confirm: value
-```
-
-### `lvm.pv_present`
-
-Ensure a block device is initialized as an LVM physical volume.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `force` | no | `boolean` | `False` | Force the operation when supported. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: lvm.pv_present
-with:
-  device: /dev/sdb
-```
-
-### `lvm.pv_remove`
-
-Remove LVM physical-volume metadata with an explicit confirm flag.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `confirm` | yes | `boolean` |  | Explicit destructive-operation confirmation flag. |
-| `force` | no | `boolean` | `False` | Force the operation when supported. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: lvm.pv_remove
-with:
-  device: /dev/sdb
-  confirm: value
-```
-
-### `lvm.resizefs`
-
-Resize a filesystem after a block or LVM volume change.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: lvm.resizefs
-with:
-  device: /dev/sdb
-  fstype: xfs
-```
-
-### `lvm.snapshot`
-
-Create an idempotent LVM snapshot logical volume.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `vg` | yes | `string` |  | LVM volume group name. |
-| `source` | yes | `path` |  | Remote source path to archive. |
-| `name` | yes | `string` |  | Package, user or group name. |
-| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: lvm.snapshot
-with:
-  vg: vg_app
-  source: /var/log/app
-  name: nginx
-  size: 16G
-```
-
-### `lvm.thin_pool`
-
-Ensure an LVM thin pool exists.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `vg` | yes | `string` |  | LVM volume group name. |
-| `name` | yes | `string` |  | Package, user or group name. |
-| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
-| `metadata_size` | no | `string` |  | LVM thin-pool metadata size. |
-| `chunksize` | no | `string` |  | LVM thin-pool chunk size. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: lvm.thin_pool
-with:
-  vg: vg_app
-  name: nginx
-  size: 16G
-```
-
-### `lvm.vg_present`
-
-Ensure an LVM volume group exists and contains the requested PV devices.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `devices` | yes | `list` |  | Block devices to inspect. |
-| `force` | no | `boolean` | `False` | Force the operation when supported. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: lvm.vg_present
-with:
-  name: nginx
-  devices:
-    - /dev/sdb
-```
-
-### `lvm.vg_remove`
-
-Remove an LVM volume group with an explicit confirm flag.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `confirm` | yes | `boolean` |  | Explicit destructive-operation confirmation flag. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: lvm.vg_remove
-with:
-  name: nginx
-  confirm: value
-```
-
 ## mail
 
 ### `mail.send`
@@ -4938,300 +3721,6 @@ with:
   from: 10.0.0.0/8
   to: any
   subject: Automax notification
-```
-
-## mount
-
-### `mount.absent`
-
-Ensure a mount point is unmounted and optionally removed from fstab.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: mount.absent
-with:
-  path: /tmp/automax-demo
-```
-
-### `mount.assert`
-
-Assert a mountpoint is mounted, optionally from source and fstype.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `source` | no | `path` |  | Remote source path to archive. |
-| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: mount.assert
-with:
-  path: /tmp/automax-demo
-```
-
-### `mount.facts`
-
-Collect mounted filesystem facts with findmnt.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: mount.facts
-with:
-  path: /tmp/automax-demo
-  sudo: true
-```
-
-### `mount.options_assert`
-
-Assert required mount options are active.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `options` | yes | `list` |  | Resolver options. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: mount.options_assert
-with:
-  path: /tmp/automax-demo
-  options:
-    - timeout:2
-```
-
-### `mount.present`
-
-Ensure a filesystem is mounted and optionally persisted in fstab.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
-| `opts` | no | `string` | `defaults` | Mount options. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
-| `dump` | no | `integer` | `0` | fstab dump field. |
-| `passno` | no | `integer` | `0` | fstab fsck pass number. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: mount.present
-with:
-  src: /dev/vdb1
-  path: /data
-  fstype: xfs
-  opts: defaults,noatime
-  persist: true
-  sudo: true
-```
-
-### `mount.remount`
-
-Remount an already mounted filesystem with desired options.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `opts` | no | `string` | `defaults` | Mount options. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: mount.remount
-with:
-  path: /tmp/automax-demo
-```
-
-## multipath
-
-### `multipath.flush`
-
-Flush one multipath map.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: multipath.flush
-with:
-  name: nginx
-```
-
-### `multipath.reload`
-
-Reload multipath maps.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: multipath.reload
-with:
-  sudo: true
-```
-
-### `multipath.status`
-
-Read multipath status and optionally assert a minimum path count.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | no | `string` |  | Package, user or group name. |
-| `expect_paths` | no | `integer` |  | Minimum expected multipath path count. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: multipath.status
-with:
-  name: nginx
-  expect_paths: 4
 ```
 
 ## network
@@ -8787,9 +7276,9 @@ Install a pwquality password policy drop-in.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `settings` | yes | `mapping` |  | SSH client or server settings. |
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `name` | yes | `string` |  | pwquality drop-in filename, with .conf appended when omitted. |
+| `settings` | yes | `mapping` |  | pwquality.conf key/value settings such as minlen, dcredit, ucredit or retry. |
+| `path` | no | `path` |  | Explicit pwquality drop-in path; defaults to /etc/security/pwquality.conf.d/<name>.conf. |
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
@@ -8808,8 +7297,13 @@ Example:
 ```yaml
 use: security.password.policy
 with:
-  name: nginx
-  settings: value
+  name: hardening
+  settings:
+    minlen: 14
+    dcredit: -1
+    ucredit: -1
+    retry: 3
+  sudo: true
 ```
 
 ### `security.pki.cert.chain_check`
@@ -10141,11 +8635,41 @@ with:
   sudo: true
 ```
 
-## swap
+## storage
 
-### `swap.absent`
+### `storage.block.empty_check`
 
-Disable a swap file or swap device and optionally remove its fstab entry.
+Check that a block device has no detectable signature before destructive use.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.block.empty_check
+with:
+  device: /dev/sdb
+```
+
+### `storage.block.facts`
+
+Collect remote block-device facts with lsblk, blkid, udevadm and optional multipath output.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -10153,8 +8677,510 @@ Disable a swap file or swap device and optionally remove its fstab entry.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
+| `devices` | no | `list` |  | Block devices to inspect. |
+| `multipath` | no | `boolean` | `False` | Include multipath output when collecting block-device facts. |
+| `udev` | no | `boolean` | `True` | Include udev properties when collecting facts. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.block.facts
+with:
+  devices:
+    - /dev/sdb
+  multipath: false
+```
+
+### `storage.block.identity`
+
+Read a stable block-device identifier with scsi_id and udevadm.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `scsi_id_path` | no | `path` | `/usr/lib/udev/scsi_id` | Path to the scsi_id helper. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.block.identity
+with:
+  device: /dev/sdb
+```
+
+### `storage.block.mount_check`
+
+Check that a block device is mounted at a path.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
 | `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.block.mount_check
+with:
+  device: /dev/sdb
+  path: /tmp/automax-demo
+```
+
+### `storage.block.not_mounted_check`
+
+Check that a block device is not mounted.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.block.not_mounted_check
+with:
+  device: /dev/sdb
+```
+
+### `storage.block.partition.apply`
+
+Conservatively create a partition table and missing partitions with parted.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `label` | yes | `string` |  | Disk label, filesystem label or partition label. |
+| `partitions` | yes | `list` |  | Desired partition entries for a storage.block.partition.apply operation. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_path` | no | `path` |  | Explicit backup path for pre-change file content. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `udev_settle` | no | `boolean` | `True` | Wait for udev events to settle after the operation. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.block.partition.apply
+with:
+  device: /dev/sdb
+  label: gpt
+  partitions:
+    - {'number': 1, 'name': 'DATA01', 'start': '1MiB', 'end': '100%'}
+```
+
+### `storage.block.partition.scan`
+
+Reread one remote partition table with partprobe/blockdev and udev settle.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `udev_settle` | no | `boolean` | `True` | Wait for udev events to settle after the operation. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.block.partition.scan
+with:
+  device: /dev/sdb
+```
+
+### `storage.block.scan`
+
+Rescan remote SCSI hosts or one block device and optionally refresh multipath.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | no | `path` |  | Block device path. |
+| `udev_settle` | no | `boolean` | `True` | Wait for udev events to settle after the operation. |
+| `multipath_reload` | no | `boolean` | `False` | Refresh multipath maps after the operation. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.block.scan
+with:
+  device: /dev/sdb
+  udev_settle: true
+```
+
+### `storage.block.signatures.wipe`
+
+Wipe block-device signatures with wipefs after an optional pre-change signature backup.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_path` | no | `path` |  | Explicit backup path for pre-change file content. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.block.signatures.wipe
+with:
+  device: /dev/sdb
+```
+
+### `storage.block.size_check`
+
+Check block device size in bytes.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.block.size_check
+with:
+  device: /dev/sdb
+  size: 16G
+```
+
+### `storage.fs.check`
+
+Check block-device identity fields reported by blkid.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `label` | no | `string` |  | Disk label, filesystem label or partition label. |
+| `uuid` | no | `string` |  | Filesystem or block-device UUID. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.fs.check
+with:
+  device: /dev/sdb
+```
+
+### `storage.fs.create`
+
+Create a filesystem on a block device, refusing existing signatures unless force is true.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `label` | no | `string` |  | Disk label, filesystem label or partition label. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.fs.create
+with:
+  device: /dev/sdb
+  fstype: xfs
+```
+
+### `storage.fs.facts`
+
+Collect filesystem identity, mount and usage facts for a device or path.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | no | `path` |  | Block device path. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.fs.facts
+with:
+  device: /dev/sdb
+  path: /tmp/automax-demo
+```
+
+### `storage.fs.resize`
+
+Resize a filesystem using the appropriate platform tool.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.fs.resize
+with:
+  device: /dev/sdb
+  fstype: xfs
+```
+
+### `storage.fstab.add`
+
+Ensure an /etc/fstab entry is present.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `opts` | no | `string` | `defaults` | Mount options. |
+| `dump` | no | `integer` | `0` | fstab dump field. |
+| `passno` | no | `integer` | `0` | fstab fsck pass number. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.fstab.add
+with:
+  src: /dev/vdb1
+  path: /data
+  fstype: xfs
+  opts: defaults,noatime
+  sudo: true
+```
+
+### `storage.fstab.check`
+
+Assert an fstab entry exists for source, path or fstype.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `source` | no | `path` |  | Remote source path to archive. |
+| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.fstab.check
+with:
+  path: /tmp/automax-demo
+  source: /var/log/app
+```
+
+### `storage.fstab.remove`
+
+Remove fstab entries matching a mountpoint or source after confirmation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `source` | no | `path` |  | Remote source path to archive. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
@@ -10171,12 +9197,977 @@ Result fields:
 Example:
 
 ```yaml
-use: swap.absent
+use: storage.fstab.remove
+with:
+  path: /tmp/automax-demo
+  source: /var/log/app
+```
+
+### `storage.fstab.validate`
+
+Validate fstab syntax and optionally dry-run mount resolution.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `file` | no | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.fstab.validate
+with:
+  file: /etc/sysctl.d/99-automax.conf
+  sudo: true
+```
+
+### `storage.lvm.facts`
+
+Collect LVM PV, VG and LV facts from a target.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `vg` | no | `string` |  | LVM volume group name. |
+| `name` | no | `string` |  | Package, user or group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.facts
+with:
+  vg: vg_app
+  name: nginx
+```
+
+### `storage.lvm.lv.add`
+
+Ensure an LVM logical volume exists, optionally formatting it when newly created.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `vg` | yes | `string` |  | LVM volume group name. |
+| `name` | yes | `string` |  | Package, user or group name. |
+| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
+| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `resizefs` | no | `boolean` | `True` | Resize the filesystem along with the block/LVM operation. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.lv.add
+with:
+  vg: vg_app
+  name: nginx
+  size: 16G
+```
+
+### `storage.lvm.lv.check`
+
+Assert that an LVM logical volume exists and optionally matches a requested size.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `vg` | yes | `string` |  | LVM volume group name. |
+| `name` | yes | `string` |  | Package, user or group name. |
+| `size` | no | `string` |  | Size such as 16G for file-backed swap. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.lv.check
+with:
+  vg: vg_app
+  name: nginx
+```
+
+### `storage.lvm.lv.extend`
+
+Extend an LVM logical volume, optionally resizing the filesystem.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `vg` | yes | `string` |  | LVM volume group name. |
+| `name` | yes | `string` |  | Package, user or group name. |
+| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
+| `resizefs` | no | `boolean` | `True` | Resize the filesystem along with the block/LVM operation. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.lv.extend
+with:
+  vg: vg_app
+  name: nginx
+  size: 16G
+```
+
+### `storage.lvm.lv.remove`
+
+Remove an LVM logical volume with an explicit confirm flag.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `confirm` | yes | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.lv.remove
+with:
+  path: /tmp/automax-demo
+  confirm: value
+```
+
+### `storage.lvm.lv.scan`
+
+Scan LVM logical volumes.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.lv.scan
+with:
+  sudo: true
+```
+
+### `storage.lvm.lv.snapshot`
+
+Create an idempotent LVM snapshot logical volume.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `vg` | yes | `string` |  | LVM volume group name. |
+| `source` | yes | `path` |  | Remote source path to archive. |
+| `name` | yes | `string` |  | Package, user or group name. |
+| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.lv.snapshot
+with:
+  vg: vg_app
+  source: /var/log/app
+  name: nginx
+  size: 16G
+```
+
+### `storage.lvm.lv.thin_pool`
+
+Ensure an LVM thin pool exists.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `vg` | yes | `string` |  | LVM volume group name. |
+| `name` | yes | `string` |  | Package, user or group name. |
+| `size` | yes | `string` |  | Size such as 16G for file-backed swap. |
+| `metadata_size` | no | `string` |  | LVM thin-pool metadata size. |
+| `chunksize` | no | `string` |  | LVM thin-pool chunk size. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.lv.thin_pool
+with:
+  vg: vg_app
+  name: nginx
+  size: 16G
+```
+
+### `storage.lvm.pv.add`
+
+Ensure a block device is initialized as an LVM physical volume.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.pv.add
+with:
+  device: /dev/sdb
+```
+
+### `storage.lvm.pv.remove`
+
+Remove LVM physical-volume metadata with an explicit confirm flag.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `confirm` | yes | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.pv.remove
+with:
+  device: /dev/sdb
+  confirm: value
+```
+
+### `storage.lvm.pv.scan`
+
+Refresh LVM physical-volume metadata cache.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | no | `path` |  | Block device path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.pv.scan
+with:
+  device: /dev/sdb
+  sudo: true
+```
+
+### `storage.lvm.vg.add`
+
+Ensure an LVM volume group exists and contains the requested PV devices.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `devices` | yes | `list` |  | Block devices to inspect. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.vg.add
+with:
+  name: nginx
+  devices:
+    - /dev/sdb
+```
+
+### `storage.lvm.vg.remove`
+
+Remove an LVM volume group with an explicit confirm flag.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `confirm` | yes | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.vg.remove
+with:
+  name: nginx
+  confirm: value
+```
+
+### `storage.lvm.vg.scan`
+
+Scan LVM volume groups and recreate missing device nodes.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.lvm.vg.scan
+with:
+  sudo: true
+```
+
+### `storage.mount.add`
+
+Ensure a filesystem is mounted and optionally persisted in fstab.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `fstype` | yes | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `opts` | no | `string` | `defaults` | Mount options. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `dump` | no | `integer` | `0` | fstab dump field. |
+| `passno` | no | `integer` | `0` | fstab fsck pass number. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.mount.add
+with:
+  src: /dev/vdb1
+  path: /data
+  fstype: xfs
+  opts: defaults,noatime
+  persist: true
+  sudo: true
+```
+
+### `storage.mount.bind`
+
+Ensure a runtime and optional persistent bind mount.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `opts` | no | `string` | `defaults` | Mount options. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `runtime` | no | `boolean` | `True` | Apply the change to the running system. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.path`: Bind mount target path when returned by the implementation.
+
+Example:
+
+```yaml
+use: storage.mount.bind
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+```
+
+### `storage.mount.check`
+
+Check a mountpoint, source, fstype or options using findmnt.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `src` | no | `path` |  | Source path. |
+| `fstype` | no | `string` |  | Filesystem type such as xfs, ext4 or nfs. |
+| `opts` | no | `string` | `defaults` | Mount options. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.mount.check
 with:
   path: /tmp/automax-demo
 ```
 
-### `swap.present`
+### `storage.mount.facts`
+
+Collect mounted filesystem facts with findmnt.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.mount.facts
+with:
+  path: /tmp/automax-demo
+  sudo: true
+```
+
+### `storage.mount.remount`
+
+Remount an already mounted filesystem with desired options.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `opts` | no | `string` | `defaults` | Mount options. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.mount.remount
+with:
+  path: /tmp/automax-demo
+```
+
+### `storage.mount.remove`
+
+Ensure a mount point is unmounted and optionally removed from fstab.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.mount.remove
+with:
+  path: /tmp/automax-demo
+```
+
+### `storage.multipath.add`
+
+Add one WWID to multipath and optionally reload maps.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `wwid` | yes | `string` |  | Multipath WWID. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.multipath.add
+with:
+  wwid: '3600508b400105e210000900000490000'
+  reload: true
+  sudo: true
+```
+
+### `storage.multipath.reload`
+
+Reload multipath maps.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.multipath.reload
+with:
+  sudo: true
+```
+
+### `storage.multipath.remove`
+
+Remove one multipath map by name or one WWID from multipath bindings.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | no | `string` |  | Package, user or group name. |
+| `wwid` | no | `string` |  | Multipath WWID. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.multipath.remove
+with:
+  name: nginx
+```
+
+### `storage.multipath.status`
+
+Read multipath status and optionally assert a minimum path count.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | no | `string` |  | Package, user or group name. |
+| `expect_paths` | no | `integer` |  | Minimum expected multipath path count. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.multipath.status
+with:
+  name: nginx
+  expect_paths: 4
+```
+
+### `storage.quota.check`
+
+Check user or group quota limits on a mounted filesystem.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `target` | yes | `string` |  | Quota target user or group. |
+| `mountpoint` | yes | `path` |  | Mounted filesystem path. |
+| `type` | no | `string` | `user` | Quota subject type. |
+| `block_soft` | no | `integer` | `0` | Soft block quota. |
+| `block_hard` | no | `integer` | `0` | Hard block quota. |
+| `inode_soft` | no | `integer` | `0` | Soft inode quota. |
+| `inode_hard` | no | `integer` | `0` | Hard inode quota. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.quota.check
+with:
+  target: value
+  mountpoint: value
+```
+
+### `storage.quota.facts`
+
+Collect user or group quota facts from a mounted filesystem.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `mountpoint` | yes | `path` |  | Mounted filesystem path. |
+| `type` | no | `string` | `user` | Quota subject type. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.quota.facts
+with:
+  mountpoint: value
+```
+
+### `storage.quota.get`
+
+Read one user or group quota entry from a mounted filesystem.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `target` | yes | `string` |  | Quota target user or group. |
+| `mountpoint` | yes | `path` |  | Mounted filesystem path. |
+| `type` | no | `string` | `user` | Quota subject type. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.quota.get
+with:
+  target: value
+  mountpoint: value
+```
+
+### `storage.quota.set`
+
+Set user or group filesystem quotas with setquota.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `target` | yes | `string` |  | Quota target user or group. |
+| `mountpoint` | yes | `path` |  | Mounted filesystem path. |
+| `type` | no | `string` | `user` | Quota subject type. |
+| `block_soft` | no | `integer` | `0` | Soft block quota. |
+| `block_hard` | no | `integer` | `0` | Hard block quota. |
+| `inode_soft` | no | `integer` | `0` | Soft inode quota. |
+| `inode_hard` | no | `integer` | `0` | Hard inode quota. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.quota.set
+with:
+  type: user
+  target: app
+  mountpoint: /data
+  block_soft: 1000000
+  block_hard: 1200000
+  inode_soft: 10000
+  inode_hard: 12000
+  sudo: true
+```
+
+### `storage.swap.add`
 
 Ensure a swap file or swap device is active and optionally persisted in fstab.
 
@@ -10206,14 +10197,14 @@ Result fields:
 Example:
 
 ```yaml
-use: swap.present
+use: storage.swap.add
 with:
   path: /tmp/automax-demo
 ```
 
-### `swap.status`
+### `storage.swap.check`
 
-Report active swap devices and optionally assert one path is active.
+Check that a swap file or device is active.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -10221,7 +10212,7 @@ Report active swap devices and optionally assert one path is active.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -10236,9 +10227,140 @@ Result fields:
 Example:
 
 ```yaml
-use: swap.status
+use: storage.swap.check
 with:
   path: /tmp/automax-demo
+```
+
+### `storage.swap.facts`
+
+Report active swap files and devices.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.swap.facts
+with:
+  sudo: true
+```
+
+### `storage.swap.remove`
+
+Disable a swap file or swap device and optionally remove its fstab entry.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.swap.remove
+with:
+  path: /tmp/automax-demo
+```
+
+### `storage.usage.disk_check`
+
+Check remote filesystem free space and used percentage thresholds.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `min_free_mb` | no | `integer` |  | Minimum free disk space in MiB. |
+| `min_free_percent` | no | `number` |  | Minimum free disk percentage. |
+| `max_used_percent` | no | `number` |  | Maximum allowed used percentage. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: df output used for the disk usage check.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.usage.disk_check
+with:
+  path: /var
+  min_free_mb: 1024
+  max_used_percent: 85
+  sudo: true
+```
+
+### `storage.usage.inode_check`
+
+Check remote filesystem inode free and used percentage thresholds.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `max_used_percent` | no | `number` |  | Maximum allowed used percentage. |
+| `min_free_percent` | no | `number` |  | Minimum free disk percentage. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: df -i output used for the inode usage check.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: storage.usage.inode_check
+with:
+  path: /var
+  max_used_percent: 85
   sudo: true
 ```
 

@@ -133,7 +133,7 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
         return [f"{sudo}aa-status"]
 
     if plugin_name.startswith("assert."):
-        if plugin_name == "assert.disk":
+        if plugin_name == "storage.usage.disk_check":
             return [f"df -Pm {_q(path)}"]
 
     if plugin_name == "network.connectivity.port_check":
@@ -287,9 +287,9 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
         if plugin_name == "fs.file.write":
             return [heredoc_to_file(path, params.get("content", ""))]
 
-    if plugin_name in {"fstab.entry", "mount.present"}:
+    if plugin_name in {"storage.fstab.add", "storage.mount.add"}:
         return [f"{sudo}mount {_q(params.get('path', path))}"]
-    if plugin_name == "mount.absent":
+    if plugin_name == "storage.mount.remove":
         return [f"{sudo}umount {_q(path)}"]
 
     if plugin_name.startswith("process."):

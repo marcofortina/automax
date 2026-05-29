@@ -662,7 +662,7 @@ def test_wait_and_assert_plugins_are_registered():
         "network.connectivity.port_wait",
         "process.wait",
         "network.connectivity.port_check",
-        "assert.disk",
+        "storage.usage.disk_check",
     ):
         assert name in names
 
@@ -674,14 +674,14 @@ def test_wait_and_assert_plugins_are_registered():
     assert "assert.path" not in names
 
 
-def test_wait_assert_plugins_validate_in_job_yaml(tmp_path: Path):
+def test_check_plugins_validate_in_job_yaml(tmp_path: Path):
     job = write(
         tmp_path / "job.yaml",
         """
 apiVersion: automax.io/v1
 kind: Job
 metadata:
-  name: wait-assert-validate
+  name: check-plugins-validate
 tasks:
   - id: checks
     targets: all
@@ -700,7 +700,7 @@ tasks:
             with:
               path: /tmp
           - id: assert_disk
-            use: assert.disk
+            use: storage.usage.disk_check
             with:
               path: /
               min_free_mb: 1
@@ -1570,7 +1570,7 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "process.wait",
         "fs.file.exists",
         "fs.dir.exists",
-        "assert.disk",
+        "storage.usage.disk_check",
         "network.connectivity.port_check",
         "systemctl.status",
         "pkg.query",
@@ -3353,22 +3353,22 @@ tasks:
 def test_storage_and_linux_ops_plugins_are_registered():
     names = AutomaxEngine().plugin_registry.names()
     for name in (
-        "block.facts",
-        "block.identity",
-        "block.rescan",
-        "block.partition_rescan",
-        "block.partition",
-        "block.wipe_signatures",
-        "block.mkfs",
+        "storage.block.facts",
+        "storage.block.identity",
+        "storage.block.scan",
+        "storage.block.partition.scan",
+        "storage.block.partition.apply",
+        "storage.block.signatures.wipe",
+        "storage.fs.create",
         "udev.rule",
         "udev.reload",
         "udev.trigger",
         "udev.settle",
-        "multipath.status",
-        "multipath.reload",
-        "multipath.flush",
-        "swap.present",
-        "swap.absent",
+        "storage.multipath.status",
+        "storage.multipath.reload",
+        "storage.multipath.remove",
+        "storage.swap.add",
+        "storage.swap.remove",
         "limits.dropin",
         "security.pam.limits",
         "hosts.entry",
@@ -3579,11 +3579,11 @@ def test_lvm_plugins_render_manual_commands_and_previews():
 
     names = AutomaxEngine().plugin_registry.names()
     for name in (
-        "lvm.pv_present",
-        "lvm.vg_present",
-        "lvm.lv_present",
-        "lvm.lv_extend",
-        "lvm.resizefs",
+        "storage.lvm.pv.add",
+        "storage.lvm.vg.add",
+        "storage.lvm.lv.add",
+        "storage.lvm.lv.extend",
+        "storage.fs.resize",
     ):
         assert name in names
 
@@ -3691,7 +3691,7 @@ def test_advanced_mount_plugins_render_remount_resize_and_findmnt():
     from automax.plugins.mounts_extra import FindmntAssertPlugin, FsResizePlugin, MountRemountPlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("mount.remount", "fs.resize", "findmnt.assert"):
+    for name in ("storage.mount.remount", "storage.fs.resize", "storage.mount.check"):
         assert name in names
 
     context = _sysops_preview_context()
@@ -3776,7 +3776,7 @@ def test_lvm_extra_plugins_render_destructive_and_snapshot_operations():
     from automax.plugins.lvm import LvmLvRemovePlugin, LvmPvRemovePlugin, LvmSnapshotPlugin, LvmThinPoolPlugin, LvmVgRemovePlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("lvm.snapshot", "lvm.lv_remove", "lvm.vg_remove", "lvm.pv_remove", "lvm.thin_pool"):
+    for name in ("storage.lvm.lv.snapshot", "storage.lvm.lv.remove", "storage.lvm.vg.remove", "storage.lvm.pv.remove", "storage.lvm.lv.thin_pool"):
         assert name in names
     context = _sysops_preview_context()
     assert "lvcreate -s" in LvmSnapshotPlugin().manual_commands({"vg": "vg0", "source": "/dev/vg0/data", "name": "snap", "size": "1G"}, context)[0]
@@ -3810,7 +3810,7 @@ def test_filesystem_acl_attr_quota_plugins_render_safe_commands():
         "fs.attr.set",
         "fs.attr.get",
         "fs.attr.check",
-        "fs.quota",
+        "storage.quota.set",
     ):
         assert name in names
     context = _sysops_preview_context()
@@ -4029,7 +4029,7 @@ def test_backup_verify_plugin_renders_read_only_checksum():
 def test_fs_bind_mount_plugin_renders_runtime_and_persistent_commands():
     from automax.plugins.fs_advanced import FsBindMountPlugin
 
-    assert "fs.bind_mount" in AutomaxEngine().plugin_registry.names()
+    assert "storage.mount.bind" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     commands = FsBindMountPlugin().manual_commands({"src": "/srv/data", "dest": "/mnt/data", "persist": True}, context)
     rendered = " && ".join(commands)
@@ -4038,25 +4038,27 @@ def test_fs_bind_mount_plugin_renders_runtime_and_persistent_commands():
     assert FsBindMountPlugin().diff_preview({"src": "/srv/data", "dest": "/mnt/data"}, context)[0]["kind"] == "bind-mount-plan"
 
 
-def test_fs_disk_usage_assert_plugin_renders_df_check():
-    from automax.plugins.fs_advanced import FsDiskUsageAssertPlugin
+def test_storage_usage_disk_check_plugin_renders_df_check():
+    from automax.plugins.wait_assert import AssertDiskPlugin
 
-    assert "fs.disk_usage_assert" in AutomaxEngine().plugin_registry.names()
+    assert "storage.usage.disk_check" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
-    command = FsDiskUsageAssertPlugin().manual_commands({"path": "/", "max_percent": 90}, context)[0]
-    assert "df -P /" in command
-    assert 'test "$usage" -le 90' in command
-    assert FsDiskUsageAssertPlugin().supports_check_mode is True
+    command = AssertDiskPlugin().manual_commands({"path": "/", "max_used_percent": 90}, context)[0]
+    assert "df -Pk /" in command
+    assert "max_used_percent=90" in command
+    assert "used_percent > max_used_percent" in command
+    assert AssertDiskPlugin().supports_check_mode is True
 
 
-def test_fs_inode_usage_assert_plugin_renders_df_inode_check():
+def test_storage_usage_inode_check_plugin_renders_df_inode_check():
     from automax.plugins.fs_advanced import FsInodeUsageAssertPlugin
 
-    assert "fs.inode_usage_assert" in AutomaxEngine().plugin_registry.names()
+    assert "storage.usage.inode_check" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
-    command = FsInodeUsageAssertPlugin().manual_commands({"path": "/", "max_percent": 85}, context)[0]
+    command = FsInodeUsageAssertPlugin().manual_commands({"path": "/", "max_used_percent": 85}, context)[0]
     assert "df -Pi /" in command
-    assert 'test "$usage" -le 85' in command
+    assert "max_used_percent=85" in command
+    assert "used_percent > max_used_percent" in command
     assert FsInodeUsageAssertPlugin().supports_check_mode is True
 
 
@@ -4249,7 +4251,7 @@ def _audit_sample_value(name: str):
         "keep": 7,
         "label": "gpt",
         "line": "managed=yes",
-        "max_percent": 90,
+        "max_used_percent": 90,
         "mode": "0644",
         "mountpoint": "/tmp",
         "name": "demo",
@@ -4314,7 +4316,7 @@ def _audit_sample_value_for_schema(name: str, schema: dict[str, object]) -> obje
             return 22
         if name in {"expected_status", "status"}:
             return 200
-        if name == "max_percent":
+        if name in {"max_percent", "max_used_percent"}:
             return 90
         if name == "vlan_id":
             return 100
@@ -4371,7 +4373,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "db.health":
         params["engine"] = "sqlite"
         params["connection"] = {"path": "/tmp/automax.sqlite"}
-    if plugin.name in {"lvm.lv_remove", "lvm.vg_remove", "lvm.pv_remove", "backup.restore", "backup.prune", "backup.rotate", "network.firewall.iptables.restore"}:
+    if plugin.name in {"storage.lvm.lv.remove", "storage.lvm.vg.remove", "storage.lvm.pv.remove", "backup.restore", "backup.prune", "backup.rotate", "network.firewall.iptables.restore"}:
         params["confirm"] = True
     if plugin.name == "plugin.requirements":
         params["plugin"] = "transfer.rsync"
@@ -4406,7 +4408,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["attrs"] = "i"
     if plugin.name == "fs.permission.owner":
         params["owner"] = "demo"
-    if plugin.name == "fs.quota":
+    if plugin.name == "storage.quota.set":
         params["type"] = "user"
     if plugin.name == "network.firewall.ufw.rule":
         params["rule"] = "allow"
@@ -4526,15 +4528,15 @@ def test_storage_readback_plugins_render_manual_commands():
     context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
     registry = build_builtin_registry()
 
-    assert "pvs --reportformat json" in registry.get("lvm.facts").manual_commands({"sudo": False}, context)[0]
-    assert "/dev/vg0/lv0" in registry.get("lvm.lv_assert").manual_commands({"vg": "vg0", "name": "lv0", "sudo": False}, context)[0]
-    lv_assert = registry.get("lvm.lv_assert").manual_commands({"vg": "vg0", "name": "lv0", "size": "512M"}, context)[0]
+    assert "pvs --reportformat json" in registry.get("storage.lvm.facts").manual_commands({"sudo": False}, context)[0]
+    assert "/dev/vg0/lv0" in registry.get("storage.lvm.lv.check").manual_commands({"vg": "vg0", "name": "lv0", "sudo": False}, context)[0]
+    lv_assert = registry.get("storage.lvm.lv.check").manual_commands({"vg": "vg0", "name": "lv0", "size": "512M"}, context)[0]
     assert "grep -Ei" in lv_assert
     assert "512" in lv_assert
-    assert "findmnt --json" in registry.get("mount.facts").manual_commands({}, context)[0]
-    assert "findmnt --verify" in registry.get("fstab.validate").manual_commands({"sudo": False}, context)[0]
-    assert "swapon --show" in registry.get("swap.status").manual_commands({}, context)[0]
-    assert "blkid /dev/sda1" in registry.get("blkid.assert").manual_commands({"device": "/dev/sda1", "sudo": False}, context)[0]
+    assert "findmnt --json" in registry.get("storage.mount.facts").manual_commands({}, context)[0]
+    assert "findmnt --verify" in registry.get("storage.fstab.validate").manual_commands({"sudo": False}, context)[0]
+    assert "swapon --show" in registry.get("storage.swap.facts").manual_commands({}, context)[0]
+    assert "blkid /dev/sda1" in registry.get("storage.fs.check").manual_commands({"device": "/dev/sda1", "sudo": False}, context)[0]
 
 
 def test_ssh_security_plugins_render_manual_commands():

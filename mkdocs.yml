@@ -98,7 +98,6 @@ nav:
     - Users, Groups and Processes: plugins/users-groups-processes.md
     - Transfer: plugins/transfer.md
     - HTTP/API: plugins/http-api.md
-    - Wait and Assert: plugins/wait-assert.md
     - Database: plugins/database.md
     - Alternatives: plugins/alternatives.md
     - Firewall: plugins/firewall.md

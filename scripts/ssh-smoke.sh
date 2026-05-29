@@ -266,7 +266,7 @@ tasks:
             with:
               path: ${WORK_DIR}/untar
           - id: assert_disk
-            use: assert.disk
+            use: storage.usage.disk_check
             with:
               path: ${WORK_DIR}
               min_free_mb: 1

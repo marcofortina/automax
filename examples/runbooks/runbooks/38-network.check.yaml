@@ -55,6 +55,13 @@ tasks:
       with:
         host: 127.0.0.1
         port: 22
+    - id: network_port_wait
+      use: network.connectivity.port_wait
+      with:
+        host: 127.0.0.1
+        port: 22
+        retries: 1
+        interval: 1
     - id: network_route_add
       use: network.route.add
       with:

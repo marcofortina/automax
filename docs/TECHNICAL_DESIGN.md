@@ -117,7 +117,8 @@ identity:      identity.user.*, identity.group.*
 processes:     process.*
 transfer:      transfer.*
 http/api:      http.*
-wait/assert:   wait.*, assert.*
+connectivity:   network.connectivity.*
+storage:        storage.*
 database:      db.*.query
 ```
 

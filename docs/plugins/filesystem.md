@@ -298,9 +298,9 @@ and `backup.restore_verify` after restore to verify restored content against the
 backup artifact. `backup.verify` validates checksum sidecars as a read-only
 post-backup or pre-restore gate.
 
-`fs.bind_mount` manages runtime bind mounts and optional `/etc/fstab` persistence.
-`fs.disk_usage_assert` is a read-only disk usage gate for preflight checks.
-`fs.inode_usage_assert` is a read-only inode exhaustion gate for preflight checks.
+`storage.mount.bind` manages runtime bind mounts and optional `/etc/fstab` persistence.
+`storage.usage.disk_check` is a read-only disk usage gate for preflight checks.
+`storage.usage.inode_check` is a read-only inode exhaustion gate for preflight checks.
 
 ## File ACL operations
 

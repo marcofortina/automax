@@ -25,14 +25,14 @@ def _lv_size_filter(size: Any) -> str:
 
 
 class LvmFactsPlugin(BasePlugin):
-    name = "lvm.facts"
+    name = "storage.lvm.facts"
     description = "Collect LVM PV, VG and LV facts from a target."
     optional_params = ("vg", "name", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "lvm.facts is a read-only LVM fact query"
+        return "storage.lvm.facts is a read-only LVM fact query"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         vg_filter = f" {quote(params['vg'])}" if params.get("vg") else ""
@@ -43,12 +43,12 @@ class LvmFactsPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="lvm.facts failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.lvm.facts failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"facts": out})
 
 
 class LvmLvAssertPlugin(BasePlugin):
-    name = "lvm.lv_assert"
+    name = "storage.lvm.lv.check"
     description = "Assert that an LVM logical volume exists and optionally matches a requested size."
     required_params = ("vg", "name")
     optional_params = ("size", "sudo")
@@ -56,7 +56,7 @@ class LvmLvAssertPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "lvm.lv_assert is a read-only LVM logical-volume assertion"
+        return "storage.lvm.lv.check is a read-only LVM logical-volume assertion"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         lv_path = f"/dev/{params['vg']}/{params['name']}"
@@ -68,19 +68,19 @@ class LvmLvAssertPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="lvm.lv_assert failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.lvm.lv.check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
 class MountFactsPlugin(BasePlugin):
-    name = "mount.facts"
+    name = "storage.mount.facts"
     description = "Collect mounted filesystem facts with findmnt."
     optional_params = ("path", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "mount.facts is a read-only mount fact query"
+        return "storage.mount.facts is a read-only mount fact query"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         path = f" {quote(params['path'])}" if params.get("path") else ""
@@ -89,19 +89,19 @@ class MountFactsPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="mount.facts failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.mount.facts failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"mounts": out})
 
 
 class FstabValidatePlugin(BasePlugin):
-    name = "fstab.validate"
+    name = "storage.fstab.validate"
     description = "Validate fstab syntax and optionally dry-run mount resolution."
     optional_params = ("file", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "fstab.validate is a read-only fstab validation"
+        return "storage.fstab.validate is a read-only fstab validation"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         file_path = str(params.get("file", "/etc/fstab"))
@@ -110,42 +110,41 @@ class FstabValidatePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fstab.validate failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.fstab.validate failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
 class SwapStatusPlugin(BasePlugin):
-    name = "swap.status"
-    description = "Report active swap devices and optionally assert one path is active."
-    optional_params = ("path", "sudo")
+    name = "storage.swap.facts"
+    description = "Report active swap files and devices."
+    required_params: tuple[str, ...] = ()
+    optional_params = ("sudo",)
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "swap.status is a read-only swap query"
+        return "storage.swap.facts is a read-only swap query"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        if params.get("path"):
-            return [f"swapon --show=NAME --noheadings | grep -Fx -- {quote(params['path'])}"]
         return ["swapon --show"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="swap.status failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.swap.facts failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"swap": out})
 
 
 class BlkidAssertPlugin(BasePlugin):
-    name = "blkid.assert"
-    description = "Assert block-device identity fields reported by blkid."
+    name = "storage.fs.check"
+    description = "Check block-device identity fields reported by blkid."
     required_params = ("device",)
     optional_params = ("fstype", "label", "uuid", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "blkid.assert is a read-only block-device identity assertion"
+        return "storage.fs.check is a read-only block-device identity check"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         device = quote(params["device"])
@@ -161,5 +160,57 @@ class BlkidAssertPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="blkid.assert failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.fs.check failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+
+
+class StorageFsFactsPlugin(BasePlugin):
+    name = "storage.fs.facts"
+    description = "Collect filesystem identity, mount and usage facts for a device or path."
+    optional_params = ("device", "path", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "storage.fs.facts is a read-only filesystem fact query"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        sudo = sudo_prefix(params, default=True)
+        commands = []
+        if params.get("device"):
+            commands.append(f"{sudo}blkid {quote(params['device'])} || true")
+        if params.get("path"):
+            path = quote(params["path"])
+            commands.extend([f"findmnt --json {path} || true", f"df -P {path} || true", f"df -Pi {path} || true"])
+        if not commands:
+            commands.extend([f"{sudo}blkid || true", "findmnt --json", "df -P", "df -Pi"])
+        return commands
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.fs.facts failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"facts": out})
+
+
+class StorageSwapCheckPlugin(BasePlugin):
+    name = "storage.swap.check"
+    description = "Check that a swap file or device is active."
+    required_params = ("path",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "storage.swap.check is a read-only swap assertion"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [f"swapon --show=NAME --noheadings | grep -Fx -- {quote(params['path'])}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.swap.check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)

@@ -43,7 +43,7 @@ def _mapping(params: Dict[str, Any], key: str) -> dict[str, str]:
 
 
 class SwapPresentPlugin(BasePlugin):
-    name = "swap.present"
+    name = "storage.swap.add"
     description = "Ensure a swap file or swap device is active and optionally persisted in fstab."
     required_params = ("path",)
     optional_params = ("size", "persist", "opts", "backup", "backup_suffix", "sudo")
@@ -59,7 +59,7 @@ class SwapPresentPlugin(BasePlugin):
         return _lines_diff("/etc/fstab", [self._fstab_line(params) + "\n"], "fstab-plan")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "swap.present only changes runtime swap state unless persist=true"
+        return "storage.swap.add only changes runtime swap state unless persist=true"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -83,11 +83,11 @@ class SwapPresentPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="swap.present failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.swap.add failed")
 
 
 class SwapAbsentPlugin(BasePlugin):
-    name = "swap.absent"
+    name = "storage.swap.remove"
     description = "Disable a swap file or swap device and optionally remove its fstab entry."
     required_params = ("path",)
     optional_params = ("persist", "backup", "backup_suffix", "sudo")
@@ -105,7 +105,7 @@ class SwapAbsentPlugin(BasePlugin):
         )
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "swap.absent only changes runtime swap state unless persist=true"
+        return "storage.swap.remove only changes runtime swap state unless persist=true"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -120,7 +120,7 @@ class SwapAbsentPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="swap.absent failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="storage.swap.remove failed")
 
 
 class LimitsDropinPlugin(RenderedFileInstallMixin, BasePlugin):

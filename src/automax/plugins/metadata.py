@@ -100,7 +100,7 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "udev_settle": {"type": "boolean", "default": True, "description": "Wait for udev events to settle after the operation."},
     "multipath_reload": {"type": "boolean", "default": False, "description": "Refresh multipath maps after the operation."},
     "label": {"type": "string", "description": "Disk label, filesystem label or partition label."},
-    "partitions": {"type": "list", "description": "Desired partition entries for a block.partition operation."},
+    "partitions": {"type": "list", "description": "Desired partition entries for a storage.block.partition.apply operation."},
     "backup": {"type": "boolean", "default": False, "description": "Create a backup before modifying an existing file."},
     "backup_path": {"type": "path", "description": "Explicit backup path for pre-change file content."},
     "backup_suffix": {"type": "string", "default": ".bak", "description": "Suffix appended to the original path when backup is enabled."},
@@ -330,6 +330,8 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "max_count": {"type": "integer", "description": "Maximum number of matching log or process entries."},
     "min_count": {"type": "integer", "description": "Minimum number of matching process entries."},
     "max_percent": {"type": "integer", "description": "Maximum allowed percentage."},
+    "max_used_percent": {"type": "number", "description": "Maximum allowed used percentage."},
+    "wwid": {"type": "string", "description": "Multipath WWID."},
     "since": {"type": "string", "description": "Start time for journalctl queries."},
     "until": {"type": "string", "description": "End time for journalctl queries."},
     "lines": {"type": "integer", "default": 200, "description": "Number of log or journal lines to collect."},
@@ -369,9 +371,9 @@ DEFAULT_RESULT_FIELDS = {
 }
 
 RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
-    "fs.bind_mount": {"data.path": "Bind mount target path when returned by the implementation."},
-    "fs.disk_usage_assert": {"stdout": "df assertion output."},
-    "fs.inode_usage_assert": {"stdout": "df -i assertion output."},
+    "storage.mount.bind": {"data.path": "Bind mount target path when returned by the implementation."},
+    "storage.usage.disk_check": {"stdout": "df output used for the disk usage check."},
+    "storage.usage.inode_check": {"stdout": "df -i output used for the inode usage check."},
     "fs.dir.exists": {"data.exists": "Boolean directory existence result.", "data.path": "Checked remote path.", "data.type": "Expected filesystem type."},
     "fs.file.exists": {"data.exists": "Boolean regular-file existence result.", "data.path": "Checked remote path.", "data.type": "Expected filesystem type."},
     "fs.symlink.exists": {"data.exists": "Boolean symlink existence result.", "data.path": "Checked remote path.", "data.type": "Expected filesystem type."},
@@ -633,8 +635,13 @@ PLUGIN_EXAMPLES: dict[str, str] = {
     "security.apparmor.profile": "use: security.apparmor.profile\nwith:\n  profile: /etc/apparmor.d/usr.sbin.nginx\n  state: enforce\n  sudo: true",
     "cron.entry": "use: cron.entry\nwith:\n  name: myapp-health\n  schedule: '*/5 * * * *'\n  user: root\n  command: /usr/local/bin/myapp-healthcheck\n  sudo: true",
     "facts.gather": "use: facts.gather\nwith:\n  subset:\n    - os\n    - network\n    - services",
-    "mount.present": "use: mount.present\nwith:\n  src: /dev/vdb1\n  path: /data\n  fstype: xfs\n  opts: defaults,noatime\n  persist: true\n  sudo: true",
-    "fstab.entry": "use: fstab.entry\nwith:\n  src: /dev/vdb1\n  path: /data\n  fstype: xfs\n  opts: defaults,noatime\n  state: present\n  sudo: true",
+    "security.password.policy": "use: security.password.policy\nwith:\n  name: hardening\n  settings:\n    minlen: 14\n    dcredit: -1\n    ucredit: -1\n    retry: 3\n  sudo: true",
+    "storage.mount.add": "use: storage.mount.add\nwith:\n  src: /dev/vdb1\n  path: /data\n  fstype: xfs\n  opts: defaults,noatime\n  persist: true\n  sudo: true",
+    "storage.fstab.add": "use: storage.fstab.add\nwith:\n  src: /dev/vdb1\n  path: /data\n  fstype: xfs\n  opts: defaults,noatime\n  sudo: true",
+    "storage.usage.disk_check": "use: storage.usage.disk_check\nwith:\n  path: /var\n  min_free_mb: 1024\n  max_used_percent: 85\n  sudo: true",
+    "storage.usage.inode_check": "use: storage.usage.inode_check\nwith:\n  path: /var\n  max_used_percent: 85\n  sudo: true",
+    "storage.quota.set": "use: storage.quota.set\nwith:\n  type: user\n  target: app\n  mountpoint: /data\n  block_soft: 1000000\n  block_hard: 1200000\n  inode_soft: 10000\n  inode_hard: 12000\n  sudo: true",
+    "storage.multipath.add": "use: storage.multipath.add\nwith:\n  wwid: '3600508b400105e210000900000490000'\n  reload: true\n  sudo: true",
     "local.command": "use: local.command\nwith:\n  command: echo automax\n  changed: false",
 }
 
