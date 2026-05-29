@@ -111,7 +111,7 @@ tasks:
             artifacts:
               stdout: core/read-marker.txt
           - id: exists_marker
-            use: fs.file.exists
+            use: fs.file.check
             with:
               path: result.txt
             register:
@@ -258,11 +258,11 @@ tasks:
               timeout: 10
               interval: 1
           - id: file_exists
-            use: fs.file.exists
+            use: fs.file.check
             with:
               path: ${WORK_DIR}/uploaded.txt
           - id: dir_exists
-            use: fs.dir.exists
+            use: fs.dir.check
             with:
               path: ${WORK_DIR}/untar
           - id: assert_disk

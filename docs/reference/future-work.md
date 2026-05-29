@@ -56,7 +56,7 @@ different guardrails to the same job definition in lab and production.
 `plan` or `explain` may eventually classify potentially dangerous operations:
 
 ```text
-low: fs.dir.exists, fs.file.exists, fs.symlink.exists
+low: fs.dir.check, fs.file.check, fs.symlink.check
 medium: system.service.restart, fs.file.template, data.transfer.upload
 high: os.package.upgrade, identity.user.remove, fs.dir.remove recursive=true
 ```

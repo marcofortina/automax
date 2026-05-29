@@ -19,7 +19,7 @@ tasks:
       with:
         name: nginx
     - id: user_exists
-      use: identity.user.exists
+      use: identity.user.check
       with:
         name: nginx
     - id: user_facts

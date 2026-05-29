@@ -2195,6 +2195,40 @@ with:
   path: /tmp/automax-demo
 ```
 
+### `fs.dir.check`
+
+Check whether a real directory exists, failing if another path type exists there.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.exists`: Boolean directory existence result.
+- `data.path`: Checked remote path.
+- `data.type`: Expected filesystem type.
+
+Example:
+
+```yaml
+use: fs.dir.check
+with:
+  path: /tmp/automax-demo
+```
+
 ### `fs.dir.create`
 
 Create a real directory, refusing files and symlinks at the destination.
@@ -2225,40 +2259,6 @@ Example:
 
 ```yaml
 use: fs.dir.create
-with:
-  path: /tmp/automax-demo
-```
-
-### `fs.dir.exists`
-
-Check whether a real directory exists, failing if another path type exists there.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.exists`: Boolean directory existence result.
-- `data.path`: Checked remote path.
-- `data.type`: Expected filesystem type.
-
-Example:
-
-```yaml
-use: fs.dir.exists
 with:
   path: /tmp/automax-demo
 ```
@@ -2331,6 +2331,40 @@ with:
   path: /tmp/automax-demo
 ```
 
+### `fs.file.check`
+
+Check whether a real regular file exists, failing if another path type exists there.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.exists`: Boolean regular-file existence result.
+- `data.path`: Checked remote path.
+- `data.type`: Expected filesystem type.
+
+Example:
+
+```yaml
+use: fs.file.check
+with:
+  path: /tmp/automax-demo
+```
+
 ### `fs.file.create`
 
 Create a real regular file, refusing directories and symlinks at the destination.
@@ -2361,40 +2395,6 @@ Example:
 
 ```yaml
 use: fs.file.create
-with:
-  path: /tmp/automax-demo
-```
-
-### `fs.file.exists`
-
-Check whether a real regular file exists, failing if another path type exists there.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.exists`: Boolean regular-file existence result.
-- `data.path`: Checked remote path.
-- `data.type`: Expected filesystem type.
-
-Example:
-
-```yaml
-use: fs.file.exists
 with:
   path: /tmp/automax-demo
 ```
@@ -2868,6 +2868,40 @@ with:
   path: /tmp/automax-demo
 ```
 
+### `fs.symlink.check`
+
+Check whether a symbolic link exists, failing if another path type exists there.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.exists`: Boolean symlink existence result.
+- `data.path`: Checked remote path.
+- `data.type`: Expected filesystem type.
+
+Example:
+
+```yaml
+use: fs.symlink.check
+with:
+  path: /tmp/automax-demo
+```
+
 ### `fs.symlink.create`
 
 Create or update a remote symbolic link.
@@ -2900,40 +2934,6 @@ use: fs.symlink.create
 with:
   src: /tmp/source
   dest: /tmp/dest
-```
-
-### `fs.symlink.exists`
-
-Check whether a symbolic link exists, failing if another path type exists there.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.exists`: Boolean symlink existence result.
-- `data.path`: Checked remote path.
-- `data.type`: Expected filesystem type.
-
-Example:
-
-```yaml
-use: fs.symlink.exists
-with:
-  path: /tmp/automax-demo
 ```
 
 ### `fs.symlink.remove`
@@ -3004,6 +3004,38 @@ with:
 
 ## identity
 
+### `identity.group.check`
+
+Check whether a remote group exists.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.exists`: Whether the remote group exists.
+- `data.name`: Checked group name.
+
+Example:
+
+```yaml
+use: identity.group.check
+with:
+  name: nginx
+```
+
 ### `identity.group.create`
 
 Create a remote group.
@@ -3032,38 +3064,6 @@ Example:
 
 ```yaml
 use: identity.group.create
-with:
-  name: nginx
-```
-
-### `identity.group.exists`
-
-Check whether a remote group exists.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.exists`: Whether the remote group exists.
-- `data.name`: Checked group name.
-
-Example:
-
-```yaml
-use: identity.group.exists
 with:
   name: nginx
 ```
@@ -3161,6 +3161,38 @@ with:
   name: nginx
 ```
 
+### `identity.user.check`
+
+Check whether a remote user exists.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.exists`: Whether the remote user exists.
+- `data.name`: Checked username.
+
+Example:
+
+```yaml
+use: identity.user.check
+with:
+  name: nginx
+```
+
 ### `identity.user.create`
 
 Create a remote user.
@@ -3195,38 +3227,6 @@ Example:
 
 ```yaml
 use: identity.user.create
-with:
-  name: nginx
-```
-
-### `identity.user.exists`
-
-Check whether a remote user exists.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.exists`: Whether the remote user exists.
-- `data.name`: Checked username.
-
-Example:
-
-```yaml
-use: identity.user.exists
 with:
   name: nginx
 ```
@@ -7376,7 +7376,7 @@ with:
   timezone: value
 ```
 
-### `os.tool.exists`
+### `os.tool.check`
 
 Assert that one executable exists on the remote PATH.
 
@@ -7401,7 +7401,7 @@ Result fields:
 Example:
 
 ```yaml
-use: os.tool.exists
+use: os.tool.check
 with:
   name: nginx
 ```

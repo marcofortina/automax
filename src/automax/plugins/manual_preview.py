@@ -227,7 +227,7 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
             return [f"id -u {_q(name)} >/dev/null 2>&1 || {sudo}useradd{flag_text} {_q(name)}"]
         if plugin_name == "identity.user.remove":
             return [f"{sudo}userdel {'-r ' if params.get('remove_home') else ''}{_q(name)}"]
-        if plugin_name == "identity.user.exists":
+        if plugin_name == "identity.user.check":
             return [f"id {_q(name)}"]
         if plugin_name == "identity.user.lock":
             return [f"{sudo}usermod -L {_q(name)}"]
@@ -245,7 +245,7 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
             return [f"getent group {_q(name)} >/dev/null || {sudo}groupadd{flag_text} {_q(name)}"]
         if plugin_name == "identity.group.remove":
             return [f"{sudo}groupdel {_q(name)}"]
-        if plugin_name == "identity.group.exists":
+        if plugin_name == "identity.group.check":
             return [f"getent group {_q(name)}"]
 
     if plugin_name.startswith("fs."):
@@ -257,7 +257,7 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
             return [f"test -d {_q(path)} && ! test -L {_q(path)} || mkdir -p -- {_q(path)}"]
         if plugin_name == "fs.dir.remove":
             return [f"test ! -e {_q(path)} || rmdir -- {_q(path)}"]
-        if plugin_name == "fs.dir.exists":
+        if plugin_name == "fs.dir.check":
             return [f"test -d {_q(path)} && ! test -L {_q(path)}"]
         if plugin_name == "fs.dir.wait":
             return [f"for i in $(seq 1 {_q(params.get('retries', 12))}); do test -d {_q(path)} && ! test -L {_q(path)} && exit 0; sleep {_q(params.get('interval', 5))}; done; exit 1"]
@@ -265,11 +265,11 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
             return [f"test -f {_q(path)} && ! test -L {_q(path)} || touch -- {_q(path)}"]
         if plugin_name == "fs.file.remove":
             return [f"test ! -e {_q(path)} || rm -f -- {_q(path)}"]
-        if plugin_name == "fs.file.exists":
+        if plugin_name == "fs.file.check":
             return [f"test -f {_q(path)} && ! test -L {_q(path)}"]
         if plugin_name == "fs.file.wait":
             return [f"for i in $(seq 1 {_q(params.get('retries', 12))}); do test -f {_q(path)} && ! test -L {_q(path)} && exit 0; sleep {_q(params.get('interval', 5))}; done; exit 1"]
-        if plugin_name == "fs.symlink.exists":
+        if plugin_name == "fs.symlink.check":
             return [f"test -L {_q(path)}"]
         if plugin_name == "fs.symlink.wait":
             return [f"for i in $(seq 1 {_q(params.get('retries', 12))}); do test -L {_q(path)} && exit 0; sleep {_q(params.get('interval', 5))}; done; exit 1"]

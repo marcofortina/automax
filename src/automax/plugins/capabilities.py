@@ -21,8 +21,8 @@ def _as_list(value: Any) -> list[str]:
     return [str(value)]
 
 
-class ToolExistsPlugin(BasePlugin):
-    name = "os.tool.exists"
+class ToolCheckPlugin(BasePlugin):
+    name = "os.tool.check"
     description = "Assert that one executable exists on the remote PATH."
     required_params = ("name",)
     optional_params = ("path",)
@@ -30,7 +30,7 @@ class ToolExistsPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "os.tool.exists is a read-only remote dependency check"
+        return "os.tool.check is a read-only remote dependency check"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)

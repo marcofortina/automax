@@ -70,7 +70,7 @@ tasks:
       with:
         path: /tmp/automax-demo
     - id: fs_dir_exists
-      use: fs.dir.exists
+      use: fs.dir.check
       with:
         path: /tmp/automax-demo
     - id: fs_dir_wait
@@ -85,7 +85,7 @@ tasks:
       with:
         path: /tmp/automax-demo-file
     - id: fs_file_exists
-      use: fs.file.exists
+      use: fs.file.check
       with:
         path: /tmp/automax-demo-file
     - id: fs_file_wait
@@ -138,7 +138,7 @@ tasks:
         src: /tmp/source
         dest: /tmp/dest
     - id: fs_symlink_exists
-      use: fs.symlink.exists
+      use: fs.symlink.check
       with:
         path: /tmp/automax-demo
     - id: fs_symlink_wait

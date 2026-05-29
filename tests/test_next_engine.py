@@ -383,7 +383,7 @@ def test_typed_filesystem_plugins_are_strict_about_wrong_path_types(monkeypatch)
 
     monkeypatch.setattr(fs_typed, "exec_remote", fake_exec_remote)
 
-    result = fs_typed.FsFileExistsPlugin().execute({"path": "/tmp/demo"}, context)
+    result = fs_typed.FsFileCheckPlugin().execute({"path": "/tmp/demo"}, context)
 
     assert not result.ok
     assert "wrong-type" in result.stderr
@@ -510,11 +510,11 @@ def test_filesystem_plugin_names_are_canonical():
     for name in (
         "fs.dir.create",
         "fs.dir.remove",
-        "fs.dir.exists",
+        "fs.dir.check",
         "fs.dir.wait",
         "fs.file.create",
         "fs.file.remove",
-        "fs.file.exists",
+        "fs.file.check",
         "fs.file.wait",
         "fs.object.stat",
         "fs.file.read",
@@ -525,7 +525,7 @@ def test_filesystem_plugin_names_are_canonical():
         "fs.object.move",
         "fs.symlink.create",
         "fs.symlink.remove",
-        "fs.symlink.exists",
+        "fs.symlink.check",
         "fs.symlink.wait",
         "fs.object.find",
     ):
@@ -696,7 +696,7 @@ tasks:
               retries: 1
               interval: 1
           - id: dir_exists
-            use: fs.dir.exists
+            use: fs.dir.check
             with:
               path: /tmp
           - id: assert_disk
@@ -1549,7 +1549,7 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
     required_snippets = [
         "fs.file.write",
         "fs.file.read",
-        "fs.file.exists",
+        "fs.file.check",
         "fs.object.stat",
         "fs.file.line",
         "fs.file.replace",
@@ -1568,8 +1568,8 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "fs.file.wait",
         "fs.dir.wait",
         "system.process.wait",
-        "fs.file.exists",
-        "fs.dir.exists",
+        "fs.file.check",
+        "fs.dir.check",
         "storage.usage.disk_check",
         "network.connectivity.port_check",
         "system.service.status",
@@ -5060,7 +5060,7 @@ def test_capability_and_redaction_plugins_render_safe_previews():
     )
     registry = AutomaxEngine().plugin_registry
 
-    assert registry.get("os.tool.exists").manual_commands({"name": "rsync"}, context) == ["command -v rsync"]
+    assert registry.get("os.tool.check").manual_commands({"name": "rsync"}, context) == ["command -v rsync"]
     assert "grep -F" in registry.get("os.tool.version_check").manual_commands({"name": "rsync", "contains": "rsync"}, context)[0]
     assert "command -v setfacl" in registry.get("os.capability.check").manual_commands({"tools": ["setfacl"]}, context)[0]
     assert registry.get("automax.plugin.requirements").execute({"plugin": "data.transfer.rsync"}, context).data["requirements"]["data.transfer.rsync"] == ["rsync"]

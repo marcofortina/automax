@@ -16,10 +16,10 @@ from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_
 
 
 
-class UserExistsPlugin(BasePlugin):
+class UserCheckPlugin(BasePlugin):
     """Check whether a remote user exists."""
 
-    name = "identity.user.exists"
+    name = "identity.user.check"
     description = "Check whether a remote user exists."
     required_params = ("name",)
     optional_params = ("sudo",)
@@ -37,10 +37,10 @@ class UserExistsPlugin(BasePlugin):
         )
 
 
-class GroupExistsPlugin(BasePlugin):
+class GroupCheckPlugin(BasePlugin):
     """Check whether a remote group exists."""
 
-    name = "identity.group.exists"
+    name = "identity.group.check"
     description = "Check whether a remote group exists."
     required_params = ("name",)
     optional_params = ("sudo",)

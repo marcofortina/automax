@@ -18,17 +18,17 @@ only, including broken symlinks.
 ```text
 fs.dir.create      # create a real directory
 fs.dir.remove      # remove a real directory; recursive=true removes non-empty trees
-fs.dir.exists      # report whether a real directory exists; fail on wrong type
+fs.dir.check      # report whether a real directory exists; fail on wrong type
 fs.dir.wait        # wait for a real directory to be present or absent
 
 fs.file.create     # create a real regular file
 fs.file.remove     # remove a real regular file; fail on directories/symlinks
-fs.file.exists     # report whether a real regular file exists; fail on wrong type
+fs.file.check     # report whether a real regular file exists; fail on wrong type
 fs.file.wait       # wait for a real regular file to be present or absent
 
 fs.symlink.create  # create or update a symlink
 fs.symlink.remove  # remove a symlink; fail on files/directories
-fs.symlink.exists  # report whether a symlink exists; fail on wrong type
+fs.symlink.check  # report whether a symlink exists; fail on wrong type
 fs.symlink.wait    # wait for a symlink to be present or absent
 ```
 

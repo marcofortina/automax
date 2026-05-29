@@ -108,7 +108,7 @@ Use `capabilities requirements` to derive remote tool requirements from the sele
 The explicit capability plugins are:
 
 ```text
-os.tool.exists
+os.tool.check
 os.tool.version_check
 os.capability.check
 automax.plugin.requirements

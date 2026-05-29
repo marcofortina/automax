@@ -7,8 +7,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 Automax includes account access plugins for common Linux operator tasks:
 
-- `identity.user.exists`, `identity.user.lock`, `identity.user.unlock`, `identity.user.set_password`
-- `identity.group.exists`
+- `identity.user.check`, `identity.user.lock`, `identity.user.unlock`, `identity.user.set_password`
+- `identity.group.check`
 - `security.ssh.authorized_key.add`
 - `security.sudo.dropin`
 

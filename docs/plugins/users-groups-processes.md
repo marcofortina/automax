@@ -82,4 +82,4 @@ These plugins run on the remote target through SSH.
 
 ## Account assertions and access changes
 
-`identity.user.exists` and `identity.group.exists` are read-only assertions for account prerequisites. `identity.user.lock`, `identity.user.unlock` and `identity.user.set_password` are explicit account state changes and should be reviewed separately from user creation/removal.
+`identity.user.check` and `identity.group.check` are read-only assertions for account prerequisites. `identity.user.lock`, `identity.user.unlock` and `identity.user.set_password` are explicit account state changes and should be reviewed separately from user creation/removal.

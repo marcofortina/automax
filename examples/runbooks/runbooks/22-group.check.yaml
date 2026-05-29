@@ -19,7 +19,7 @@ tasks:
       with:
         name: nginx
     - id: group_exists
-      use: identity.group.exists
+      use: identity.group.check
       with:
         name: nginx
     - id: group_member_absent

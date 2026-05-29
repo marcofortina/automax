@@ -487,28 +487,28 @@ class FsFileRemovePlugin(_TypedRemovePlugin):
     kind_label = "file"
 
 
-class FsDirExistsPlugin(_TypedExistsPlugin):
+class FsDirCheckPlugin(_TypedExistsPlugin):
     """Check whether a real directory exists."""
 
-    name = "fs.dir.exists"
+    name = "fs.dir.check"
     description = "Check whether a real directory exists, failing if another path type exists there."
     kind = "dir"
     kind_label = "directory"
 
 
-class FsFileExistsPlugin(_TypedExistsPlugin):
+class FsFileCheckPlugin(_TypedExistsPlugin):
     """Check whether a real regular file exists."""
 
-    name = "fs.file.exists"
+    name = "fs.file.check"
     description = "Check whether a real regular file exists, failing if another path type exists there."
     kind = "file"
     kind_label = "file"
 
 
-class FsSymlinkExistsPlugin(_TypedExistsPlugin):
+class FsSymlinkCheckPlugin(_TypedExistsPlugin):
     """Check whether a symbolic link exists."""
 
-    name = "fs.symlink.exists"
+    name = "fs.symlink.check"
     description = "Check whether a symbolic link exists, failing if another path type exists there."
     kind = "symlink"
     kind_label = "symlink"

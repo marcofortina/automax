@@ -93,7 +93,7 @@ class PluginRegistry:
 
 def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegistry:
     """Create a registry with builtin plugins and optional external plugins."""
-    from automax.plugins.capabilities import CapabilityAssertPlugin, PluginRequirementsPlugin, ToolExistsPlugin, ToolVersionAssertPlugin
+    from automax.plugins.capabilities import CapabilityAssertPlugin, PluginRequirementsPlugin, ToolCheckPlugin, ToolVersionAssertPlugin
     from automax.plugins.block import (
         BlockFactsPlugin,
         BlockIdentityPlugin,
@@ -224,14 +224,14 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     )
     from automax.plugins.fs_typed import (
         FsDirCreatePlugin,
-        FsDirExistsPlugin,
+        FsDirCheckPlugin,
         FsDirRemovePlugin,
         FsDirWaitPlugin,
         FsFileCreatePlugin,
-        FsFileExistsPlugin,
+        FsFileCheckPlugin,
         FsFileRemovePlugin,
         FsFileWaitPlugin,
-        FsSymlinkExistsPlugin,
+        FsSymlinkCheckPlugin,
         FsSymlinkWaitPlugin,
     )
     from automax.plugins.http import HttpAssertPlugin, HttpRequestPlugin, HttpWaitPlugin
@@ -452,10 +452,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         TransferUploadPlugin,
     )
     from automax.plugins.users_extra import (
-        GroupExistsPlugin,
+        GroupCheckPlugin,
         ExtendedSshAuthorizedKeyPlugin,
         SudoersDropinPlugin,
-        UserExistsPlugin,
+        UserCheckPlugin,
         UserLockPlugin,
         UserSetPasswordPlugin,
         UserUnlockPlugin,
@@ -526,7 +526,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         AlternativesGetPlugin(),
         AlternativesListPlugin(),
         AlternativesCheckPlugin(),
-        ToolExistsPlugin(),
+        ToolCheckPlugin(),
         ToolVersionAssertPlugin(),
         CapabilityAssertPlugin(),
         PluginRequirementsPlugin(),
@@ -678,13 +678,13 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         UserHomeAssertPlugin(),
         UserGroupsAssertPlugin(),
         UserRemovePlugin(),
-        UserExistsPlugin(),
+        UserCheckPlugin(),
         UserLockPlugin(),
         UserUnlockPlugin(),
         UserSetPasswordPlugin(),
         GroupCreatePlugin(),
         GroupRemovePlugin(),
-        GroupExistsPlugin(),
+        GroupCheckPlugin(),
         GroupMembersPlugin(),
         GroupMemberAbsentPlugin(),
         ExtendedSshAuthorizedKeyPlugin(),
@@ -720,11 +720,11 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsCdPlugin(),
         FsDirCreatePlugin(),
         FsDirRemovePlugin(),
-        FsDirExistsPlugin(),
+        FsDirCheckPlugin(),
         FsDirWaitPlugin(),
         FsFileCreatePlugin(),
         FsFileRemovePlugin(),
-        FsFileExistsPlugin(),
+        FsFileCheckPlugin(),
         FsFileWaitPlugin(),
         FsCopyPlugin(),
         FsStatPlugin(),
@@ -736,7 +736,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         FsMovePlugin(),
         FsSymlinkCreatePlugin(),
         FsSymlinkRemovePlugin(),
-        FsSymlinkExistsPlugin(),
+        FsSymlinkCheckPlugin(),
         FsSymlinkWaitPlugin(),
         FsFindPlugin(),
         FsChownPlugin(),

@@ -984,7 +984,7 @@ def test_identity_namespace_replaces_legacy_user_group_plugin_names():
     assert not (names & set(old_names))
     assert {
         "identity.user.create",
-        "identity.user.exists",
+        "identity.user.check",
         "identity.user.facts",
         "identity.user.groups_check",
         "identity.user.home_check",
@@ -995,7 +995,7 @@ def test_identity_namespace_replaces_legacy_user_group_plugin_names():
         "identity.user.shell_check",
         "identity.user.unlock",
         "identity.group.create",
-        "identity.group.exists",
+        "identity.group.check",
         "identity.group.member.remove",
         "identity.group.members",
         "identity.group.remove",
@@ -1210,7 +1210,7 @@ def test_os_namespace_replaces_legacy_operating_system_plugin_names():
         "os.time.timezone.check",
         "os.time.timezone.get",
         "os.time.timezone.set",
-        "os.tool.exists",
+        "os.tool.check",
         "os.tool.version_check",
     } <= names
 
