@@ -323,9 +323,25 @@ class ReadOnlyCommandPlugin(BasePlugin):
         """Return optional structured data for a successful command result."""
         return {"output": stdout}
 
+    def predicate_data_key(self) -> str:
+        """Return the boolean data key used by command-backed check plugins."""
+        if self.name.endswith(".check") or self.name.endswith("_check"):
+            return "matches"
+        return "ok"
+
+    def is_predicate_check(self) -> bool:
+        """Return whether this read-only command is a non-failing check predicate."""
+        return self.name.endswith(".check") or self.name.endswith("_check")
+
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         commands = self.manual_commands(params, context)
         rc, out, err = self._execute_read_only_commands(commands, context)
+        if self.is_predicate_check() and rc in {0, 1}:
+            data = self.command_result_data(params, out, err, rc)
+            data[self.predicate_data_key()] = rc == 0
+            if rc != 0:
+                data["condition_rc"] = rc
+            return PluginResult.success(changed=False, rc=0, stdout=out, stderr=err, data=data)
         if rc != 0:
             return PluginResult.failure(
                 rc=rc,

@@ -5610,6 +5610,30 @@ def test_presence_check_plugins_return_predicates_without_failing_on_absence():
         assert result.data["exists"] is False
 
 
+
+
+def test_command_backed_check_plugins_return_predicates_on_condition_false():
+    result = AutomaxEngine().plugin_registry.get("network.firewall.iptables.rule_check").execute(
+        {"chain": "INPUT", "rule": "-p tcp --dport 8443 -j ACCEPT", "sudo": False},
+        _remote_context_for_result(1, stderr="rule missing"),
+    )
+
+    assert result.ok is True
+    assert result.changed is False
+    assert result.rc == 0
+    assert result.data["matches"] is False
+    assert result.data["condition_rc"] == 1
+
+
+def test_command_backed_check_plugins_still_fail_on_technical_errors():
+    result = AutomaxEngine().plugin_registry.get("network.firewall.iptables.rule_check").execute(
+        {"chain": "INPUT", "rule": "-p tcp --dport 8443 -j ACCEPT", "sudo": False},
+        _remote_context_for_result(2, stderr="iptables error"),
+    )
+
+    assert result.ok is False
+    assert result.rc == 2
+
 def test_filesystem_check_plugins_fail_only_on_wrong_existing_type():
     registry = AutomaxEngine().plugin_registry
 
