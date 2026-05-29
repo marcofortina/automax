@@ -3954,17 +3954,6 @@ def test_lvm_extra_plugins_render_destructive_and_snapshot_operations():
 
 
 def test_filesystem_acl_attr_quota_plugins_render_safe_commands():
-    from automax.plugins.fs_system import (
-        FsAclAssertPlugin,
-        FsAclGetPlugin,
-        FsAclPlugin,
-        FsAclRestorePlugin,
-        FsAttrCheckPlugin,
-        FsAttrGetPlugin,
-        FsAttrPlugin,
-        FsQuotaPlugin,
-    )
-
     names = AutomaxEngine().plugin_registry.names()
     for name in (
         "fs.acl.set",
@@ -3978,16 +3967,19 @@ def test_filesystem_acl_attr_quota_plugins_render_safe_commands():
     ):
         assert name in names
     context = _sysops_preview_context()
-    assert "getfacl" in " && ".join(FsAclPlugin().manual_commands({"path": "/data", "acl": "u:app:rwx"}, context))
-    assert "setfacl" in " && ".join(FsAclPlugin().manual_commands({"path": "/data", "acl": "u:app:rwx"}, context))
-    assert "getfacl -p /data" in FsAclGetPlugin().manual_commands({"path": "/data"}, context)[0]
-    assert "grep -Fx -- u:app:rwx" in FsAclAssertPlugin().manual_commands({"path": "/data", "acl": "u:app:rwx"}, context)[0]
-    assert "setfacl --restore=/tmp/data.acl" in FsAclRestorePlugin().manual_commands({"file": "/tmp/data.acl"}, context)[0]
-    assert "setfacl --test --restore=/tmp/data.acl" in FsAclRestorePlugin().manual_commands({"file": "/tmp/data.acl", "test_only": True}, context)[0]
-    assert "chattr +i" in FsAttrPlugin().manual_commands({"path": "/data/file", "attrs": "i"}, context)[0]
-    assert "lsattr -d /data/file" in FsAttrGetPlugin().manual_commands({"path": "/data/file"}, context)[0]
-    assert "grep -F -- i" in FsAttrCheckPlugin().manual_commands({"path": "/data/file", "attrs": "i"}, context)[0]
-    assert "setquota -u app" in FsQuotaPlugin().manual_commands({"target": "app", "mountpoint": "/data"}, context)[0]
+    acl_commands = fs_system.FsAclPlugin().manual_commands({"path": "/data", "acl": "u:app:rwx"}, context)
+    assert "getfacl" in " && ".join(acl_commands)
+    assert "setfacl" in " && ".join(acl_commands)
+    assert "getfacl -p /data" in fs_system.FsAclGetPlugin().manual_commands({"path": "/data"}, context)[0]
+    assert "grep -Fx -- u:app:rwx" in fs_system.FsAclAssertPlugin().manual_commands({"path": "/data", "acl": "u:app:rwx"}, context)[0]
+    assert "setfacl --restore=/tmp/data.acl" in fs_system.FsAclRestorePlugin().manual_commands({"file": "/tmp/data.acl"}, context)[0]
+    assert "setfacl --test --restore=/tmp/data.acl" in fs_system.FsAclRestorePlugin().manual_commands(
+        {"file": "/tmp/data.acl", "test_only": True}, context
+    )[0]
+    assert "chattr +i" in fs_system.FsAttrPlugin().manual_commands({"path": "/data/file", "attrs": "i"}, context)[0]
+    assert "lsattr -d /data/file" in fs_system.FsAttrGetPlugin().manual_commands({"path": "/data/file"}, context)[0]
+    assert "grep -F -- i" in fs_system.FsAttrCheckPlugin().manual_commands({"path": "/data/file", "attrs": "i"}, context)[0]
+    assert "setquota -u app" in fs_system.FsQuotaPlugin().manual_commands({"target": "app", "mountpoint": "/data"}, context)[0]
 
 
 def test_systemd_resource_plugins_render_units_and_dropins():

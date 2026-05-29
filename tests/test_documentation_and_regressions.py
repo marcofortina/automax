@@ -1408,8 +1408,6 @@ def test_flat_network_resource_namespaces_are_not_public_plugin_surface():
     assert offenders == []
 
 def test_top_level_firewall_namespaces_are_not_public_plugin_surface():
-    import re
-
     from automax.plugins.registry import build_builtin_registry
 
     old_names = [
