@@ -367,6 +367,10 @@ system.cron.entry.list
 system.cron.entry.remove
 system.cron.file
 system.cron.validate
+system.host.check
+system.host.poweroff
+system.host.reboot
+system.host.wait
 system.journal.collect
 system.journal.grep
 system.kernel.boot_param.add
@@ -391,7 +395,6 @@ system.process.count.check
 system.process.kill
 system.process.signal
 system.process.wait
-system.reboot
 system.service.active.check
 system.service.disable
 system.service.enable

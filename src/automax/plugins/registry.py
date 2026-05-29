@@ -270,7 +270,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         PamLimitsPlugin,
         SwapAbsentPlugin,
         SwapPresentPlugin,
-        SystemRebootPlugin,
+        SystemHostCheckPlugin,
+        SystemHostPoweroffPlugin,
+        SystemHostRebootPlugin,
+        SystemHostWaitPlugin,
     )
     from automax.plugins.lvm import (
         LvmLvExtendPlugin,
@@ -826,7 +829,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         EnvCheckPlugin(),
         EnvFactsPlugin(),
         EnvRemovePlugin(),
-        SystemRebootPlugin(),
+        SystemHostRebootPlugin(),
+        SystemHostPoweroffPlugin(),
+        SystemHostCheckPlugin(),
+        SystemHostWaitPlugin(),
         DownloadFilePlugin(),
         LvmPvPresentPlugin(),
         LvmVgPresentPlugin(),

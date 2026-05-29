@@ -3539,7 +3539,10 @@ def test_storage_and_linux_ops_plugins_are_registered():
         "os.time.chrony.servers.set",
         "os.time.chrony.sources.check",
         "os.env.set",
-        "system.reboot",
+        "system.host.reboot",
+        "system.host.poweroff",
+        "system.host.check",
+        "system.host.wait",
         "data.download.url",
     ):
         assert name in names
@@ -5870,6 +5873,41 @@ def test_storage_mount_check_supports_source_state_without_path():
         _remote_context_for_result(2, stdout="", stderr="findmnt failed"),
     )
     assert technical_failure.ok is False
+
+
+def test_system_host_power_and_probe_plugins_are_registered_and_safe():
+    registry = AutomaxEngine().plugin_registry
+    assert "system.reboot" not in registry.names()
+    assert {"system.host.reboot", "system.host.poweroff", "system.host.check", "system.host.wait"} <= set(registry.names())
+
+    context = ExecutionContext(
+        run_id="test",
+        dry_run=True,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="node", host="host", user="ops", port=2222),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+
+    reboot_command = registry.get("system.host.reboot").manual_commands({"confirm": True, "sudo": True}, context)[0]
+    assert "shutdown -r +0" in reboot_command
+    poweroff_command = registry.get("system.host.poweroff").manual_commands({"confirm": True, "sudo": True}, context)[0]
+    assert "shutdown -h +0" in poweroff_command
+    check_command = registry.get("system.host.check").manual_commands({}, context)[0]
+    assert "ssh" in check_command
+    assert "ops@host" in check_command
+    assert "-p 2222" in check_command
+
+    try:
+        registry.get("system.host.poweroff").manual_commands({}, context)
+    except PluginValidationError as exc:
+        assert "confirm=true" in str(exc)
+    else:
+        raise AssertionError("system.host.poweroff must require confirm=true")
 
 
 def test_usage_checks_fail_when_thresholds_are_not_met():

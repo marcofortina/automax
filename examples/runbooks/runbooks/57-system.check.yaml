@@ -15,7 +15,14 @@ tasks:
   - id: catalog
     substeps:
     - id: system_reboot
-      use: system.reboot
+      use: system.host.reboot
       with:
-        wait: true
+        confirm: true
         delay: 3
+    - id: system_host_check
+      use: system.host.check
+    - id: system_host_wait
+      use: system.host.wait
+      with:
+        interval: 5
+        timeout: 300

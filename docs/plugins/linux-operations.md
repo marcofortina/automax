@@ -87,8 +87,9 @@ with:
   sudo: true
 ```
 
-`system.reboot` requests a reboot. Use the rendered manual command and follow-up
-connectivity, process and service check substeps to validate that SSH and services are back.
+`system.host.reboot` and `system.host.poweroff` request confirmed remote host power actions.
+Use `system.host.check` for one-shot SSH-authenticated host reachability and
+`system.host.wait` when an external reboot or power cycle should be followed by SSH recovery.
 
 `data.download.url` is the remote wget/curl-like macro. It downloads with curl or
 wget, supports SHA256 verification, backs up an existing destination by default,
@@ -170,7 +171,7 @@ file-backed operations emit deterministic unified diffs or structured state
 plans, while runtime-only/read-only operations emit explicit reasons. Examples
 include fstab plans for `storage.swap.add` / `storage.swap.remove`, PAM append plans for
 `security.pam.limits`, hostname and download plans, and runtime explanations for
-`storage.block.scan`, `device.udev.reload`, `storage.multipath.reload` and `system.reboot`.
+`storage.block.scan`, `device.udev.reload`, `storage.multipath.reload`, `system.host.reboot` and `system.host.poweroff`.
 
 ## Enterprise system operations
 

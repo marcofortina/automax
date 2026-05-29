@@ -145,6 +145,8 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "system.kernel.sysctl.get": ("sysctl",),
     "system.kernel.sysctl.reload": ("sysctl",),
     "system.kernel.sysctl.set": ("sysctl",),
+    "system.host.reboot": ("shutdown",),
+    "system.host.poweroff": ("shutdown",),
     "os.time.ntp.check": ("timedatectl",),
     "os.time.ntp.get": ("timedatectl",),
     "os.time.ntp.set": ("timedatectl",),

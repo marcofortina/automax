@@ -11895,6 +11895,129 @@ with:
   path: /tmp/automax-demo
 ```
 
+### `system.host.check`
+
+Check whether the target accepts an authenticated SSH command.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `connect_timeout` | no | `number` | `3` | Per-attempt TCP connect timeout in seconds. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.host.check
+with:
+  connect_timeout: 3
+```
+
+### `system.host.poweroff`
+
+Request a confirmed remote host poweroff.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `delay` | no | `integer` | `3` | Initial delay in seconds. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.host.poweroff
+with:
+  delay: 3
+```
+
+### `system.host.reboot`
+
+Request a confirmed remote host reboot.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `delay` | no | `integer` | `3` | Initial delay in seconds. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.host.reboot
+with:
+  delay: 3
+```
+
+### `system.host.wait`
+
+Wait until the target accepts an authenticated SSH command.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `interval` | no | `number` | `2` | Polling interval in seconds. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `connect_timeout` | no | `number` | `3` | Per-attempt TCP connect timeout in seconds. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.host.wait
+with:
+  interval: 2
+  timeout: 60
+```
+
 ### `system.journal.collect`
 
 Collect journalctl output for artifact capture through stdout.
@@ -12706,40 +12829,6 @@ use: system.process.wait
 with:
   pid: 1234
   pattern: KEY=.*
-```
-
-### `system.reboot`
-
-Reboot a remote server, optionally waiting until SSH comes back.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `wait` | no | `boolean` | `False` | Wait for the operation to become reachable again when supported. |
-| `delay` | no | `integer` | `3` | Initial delay in seconds. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `connect_timeout` | no | `number` | `3` | Per-attempt TCP connect timeout in seconds. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: system.reboot
-with:
-  wait: true
-  delay: 3
 ```
 
 ### `system.service.active.check`

@@ -7,9 +7,11 @@ from __future__ import annotations
 
 from difflib import unified_diff
 import json
+import time
 from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
+from automax.core.ssh import SshError, SshSessionManager
 from automax.plugins.base import BasePlugin, PluginValidationError, RenderedFileInstallMixin
 from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, predicate_result_from_remote, heredoc_to_file_expr, heredoc_to_stdin, shell_var_ref, tempfile_command, tempfile_path_command, normalize_env_mapping, quote, render_env_prefix, result_from_remote, sudo_prefix
 
@@ -513,26 +515,129 @@ class EnvSetPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="os.env.set failed")
 
 
-class SystemRebootPlugin(BasePlugin):
-    name = "system.reboot"
-    description = "Reboot a remote server, optionally waiting until SSH comes back."
+
+class _SystemHostPowerBasePlugin(BasePlugin):
     required_params: tuple[str, ...] = ()
-    optional_params = ("wait", "delay", "timeout", "connect_timeout", "sudo")
+    optional_params = ("confirm", "delay", "sudo")
     opens_remote_session = True
 
+    action = "power"
+    shutdown_flag = ""
+    success_message = "host power action requested"
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        if not bool(params.get("confirm", False)):
+            raise PluginValidationError(f"{self.name} requires confirm=true")
+
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "system.reboot changes remote runtime state and has no file diff preview"
+        return f"{self.name} changes remote host power state and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
         delay = int(params.get("delay", 3))
-        return [f"({sudo_prefix(params, default=True)}shutdown -r +0 'Automax requested reboot' >/dev/null 2>&1 &) && sleep {delay}"]
+        return [f"({sudo_prefix(params, default=True)}shutdown {self.shutdown_flag} +0 'Automax requested {self.action}' >/dev/null 2>&1 &) && sleep {delay}"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="system.reboot failed")
-        # The engine owns SSH connections; waiting for reconnect is intentionally reported as operator command here.
-        return PluginResult.success(changed=True, rc=rc, stdout=out, stderr=err, message="reboot requested")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message=f"{self.name} failed")
+        return PluginResult.success(changed=True, rc=rc, stdout=out, stderr=err, message=self.success_message)
+
+
+class SystemHostRebootPlugin(_SystemHostPowerBasePlugin):
+    name = "system.host.reboot"
+    description = "Request a confirmed remote host reboot."
+    action = "reboot"
+    shutdown_flag = "-r"
+    success_message = "reboot requested"
+
+
+class SystemHostPoweroffPlugin(_SystemHostPowerBasePlugin):
+    name = "system.host.poweroff"
+    description = "Request a confirmed remote host poweroff."
+    action = "poweroff"
+    shutdown_flag = "-h"
+    success_message = "poweroff requested"
+
+
+class SystemHostCheckPlugin(BasePlugin):
+    name = "system.host.check"
+    description = "Check whether the target accepts an authenticated SSH command."
+    required_params: tuple[str, ...] = ()
+    optional_params = ("connect_timeout",)
+    supports_check_mode = True
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "system.host.check opens a controller-side SSH probe and has no file diff"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        user_host = context.target.host
+        if context.target.user:
+            user_host = f"{context.target.user}@{user_host}"
+        timeout = int(params.get("connect_timeout", context.target.ssh.get("connect_timeout", 20)))
+        return [f"ssh -o BatchMode=yes -o ConnectTimeout={timeout} -p {int(context.target.port)} {quote(user_host)} true"]
+
+    def _probe(self, params: Dict[str, Any], context: ExecutionContext) -> tuple[bool, str]:
+        timeout = int(params.get("connect_timeout", context.target.ssh.get("connect_timeout", 20)))
+        manager = SshSessionManager(connect_timeout=timeout)
+        with manager.connect(context.target) as client:
+            stdin, stdout, stderr = client.exec_command("true", timeout=context.command_timeout or 10)
+            rc = stdout.channel.recv_exit_status()
+            out = stdout.read().decode("utf-8", errors="replace")
+            err = stderr.read().decode("utf-8", errors="replace")
+            if rc == 0:
+                return True, out
+            return False, err
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        try:
+            reachable, detail = self._probe(params, context)
+        except SshError as exc:
+            message = str(exc)
+            if "paramiko is required" in message:
+                return PluginResult.failure(message=message, data={"target": context.target.name, "host": context.target.host})
+            return PluginResult.success(changed=False, data={"target": context.target.name, "host": context.target.host, "reachable": False, "error": message})
+        return PluginResult.success(changed=False, data={"target": context.target.name, "host": context.target.host, "reachable": reachable, "detail": detail})
+
+
+class SystemHostWaitPlugin(SystemHostCheckPlugin):
+    name = "system.host.wait"
+    description = "Wait until the target accepts an authenticated SSH command."
+    optional_params = ("interval", "timeout", "connect_timeout")
+
+    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
+        return "system.host.wait polls controller-side SSH reachability and has no file diff"
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        interval = int(params.get("interval", 5))
+        timeout = int(params.get("timeout", 300))
+        probe = super().manual_commands(params, context)[0]
+        return [f"end=$((SECONDS + {timeout})); until {probe}; do [ $SECONDS -ge $end ] && exit 1; sleep {interval}; done"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        interval = int(params.get("interval", 5))
+        timeout = int(params.get("timeout", 300))
+        deadline = time.monotonic() + timeout
+        attempts = 0
+        last_error = ""
+        while True:
+            attempts += 1
+            result = SystemHostCheckPlugin.execute(self, params, context)
+            if not result.ok:
+                return result
+            if result.data.get("reachable"):
+                data = dict(result.data)
+                data["attempts"] = attempts
+                return PluginResult.success(changed=False, data=data)
+            last_error = str(result.data.get("error", ""))
+            if time.monotonic() >= deadline:
+                return PluginResult.failure(message="system.host.wait timed out", data={"target": context.target.name, "host": context.target.host, "reachable": False, "attempts": attempts, "timeout": timeout, "error": last_error})
+            time.sleep(interval)
 
 
 class DownloadFilePlugin(BasePlugin):
