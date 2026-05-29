@@ -92,3 +92,23 @@ variable and through `item`. It also exposes `loop.index`, `loop.index0`,
       with:
         command: "echo {{ loop.index }} {{ member }}"
 ```
+
+
+## Flow values and messages
+
+`set` and `let` evaluate native Jinja expressions and store values for later
+substeps on the same target execution path. Stored values are exposed directly,
+under `vars`, and under `outputs`:
+
+```yaml
+- id: compute
+  set:
+    base: 40
+    total: "{{ base + 2 }}"
+
+- id: show
+  echo: "total={{ total }} outputs={{ outputs.total }}"
+```
+
+`echo` renders one value and prints it in text output without starting a local or
+remote shell. Dictionaries and lists are rendered as JSON.

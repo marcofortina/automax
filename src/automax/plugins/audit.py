@@ -153,7 +153,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
     if plugin.name == "storage.block.signatures.wipe":
         params["force"] = True
     if plugin.name == "fs.file.template":
-        params["src"] = "README.md"
+        params["src"] = "pyproject.toml"
     if plugin.name == "network.link.interface":
         params["backend"] = "runtime"
     if plugin.name in {"system.process.check", "system.process.kill", "system.process.signal", "system.process.wait"}:

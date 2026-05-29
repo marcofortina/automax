@@ -438,6 +438,39 @@ class AutomaxEngine:
                         flow_vars=loop_vars,
                     )
             return
+        if self._is_try_substep(substep):
+            for branch in ("try", "rescue", "always"):
+                for child in substep.get(branch, []) or []:
+                    yield from self._iter_rendered_substep_items(
+                        resolved=resolved,
+                        item=self._child_item(item, child, branch),
+                        dry_run=dry_run,
+                        outputs=outputs,
+                        step_state=step_state,
+                        flow_vars=flow_vars,
+                    )
+            return
+        if self._is_assignment_substep(substep):
+            try:
+                assignments = substep.get("set", substep.get("let"))
+                values = {}
+                local_context = deepcopy(template_context)
+                for name, value in assignments.items():
+                    evaluated = evaluate_value(value, local_context)
+                    values[name] = evaluated
+                    local_context[name] = evaluated
+                    local_context.setdefault("vars", {})[name] = evaluated
+                    local_context.setdefault("outputs", {})[name] = evaluated
+            except Exception:
+                values = {}
+            step_state.setdefault("vars", {}).update(values)
+            flow_vars.update(values)
+            for name, value in values.items():
+                outputs[name] = value
+                outputs.setdefault("targets", {}).setdefault(target.name, {})[name] = value
+            return
+        if self._is_terminal_flow_substep(substep):
+            return
 
         rendered_substep = render_mapping(substep, template_context)
         plugin_name = rendered_substep.get("use") or rendered_substep.get("plugin")
@@ -1219,6 +1252,15 @@ class AutomaxEngine:
             if self._is_for_substep(substep):
                 self._validate_flow_for_substep(substep, substep_label, strict=strict)
                 continue
+            if self._is_try_substep(substep):
+                self._validate_flow_try_substep(substep, substep_label, strict=strict)
+                continue
+            if self._is_assignment_substep(substep):
+                self._validate_assignment_substep(substep, substep_label)
+                continue
+            if self._is_terminal_flow_substep(substep):
+                self._validate_terminal_flow_substep(substep, substep_label)
+                continue
             self._validate_plugin_substep(substep, substep_label)
 
     def _validate_substep_common(self, substep: Dict[str, Any], label: str, *, strict: bool) -> None:
@@ -1248,6 +1290,36 @@ class AutomaxEngine:
             raise AutomaxError(f"{label} for flow requires 'in'")
         self._validate_substep_list(substep.get("do"), label=f"{label}:do", strict=strict)
 
+    def _validate_flow_try_substep(self, substep: Dict[str, Any], label: str, *, strict: bool) -> None:
+        if "use" in substep or "plugin" in substep:
+            raise AutomaxError(f"{label} cannot combine 'try' flow control with 'use'")
+        if "try" not in substep:
+            raise AutomaxError(f"{label} try flow requires 'try'")
+        self._validate_substep_list(substep["try"], label=f"{label}:try", strict=strict)
+        if "rescue" in substep:
+            self._validate_substep_list(substep["rescue"], label=f"{label}:rescue", strict=strict)
+        if "always" in substep:
+            self._validate_substep_list(substep["always"], label=f"{label}:always", strict=strict)
+
+    def _validate_assignment_substep(self, substep: Dict[str, Any], label: str) -> None:
+        if "use" in substep or "plugin" in substep:
+            raise AutomaxError(f"{label} cannot combine set/let flow control with 'use'")
+        if "set" in substep and "let" in substep:
+            raise AutomaxError(f"{label} cannot define both 'set' and 'let'")
+        assignments = substep.get("set", substep.get("let"))
+        if not isinstance(assignments, dict) or not assignments:
+            raise AutomaxError(f"{label} set/let flow requires a non-empty mapping")
+        for name in assignments:
+            if not isinstance(name, str) or not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", name):
+                raise AutomaxError(f"{label} set/let variable names must be valid identifiers")
+
+    def _validate_terminal_flow_substep(self, substep: Dict[str, Any], label: str) -> None:
+        if "use" in substep or "plugin" in substep:
+            raise AutomaxError(f"{label} cannot combine flow control with 'use'")
+        terminal_keys = [key for key in ("fail", "break", "continue", "echo") if key in substep]
+        if len(terminal_keys) != 1:
+            raise AutomaxError(f"{label} must define exactly one terminal flow command")
+
     def _validate_plugin_substep(self, substep: Dict[str, Any], label: str) -> None:
         plugin_name = substep.get("use") or substep.get("plugin")
         if not plugin_name:
@@ -1267,6 +1339,13 @@ class AutomaxEngine:
         if self._is_for_substep(substep):
             for child in substep.get("do", []) or []:
                 self._validate_substep_strict(child, f"{node_id}:do.{child.get('id')}")
+            return
+        if self._is_try_substep(substep):
+            for branch in ("try", "rescue", "always"):
+                for child in substep.get(branch, []) or []:
+                    self._validate_substep_strict(child, f"{node_id}:{branch}.{child.get('id')}")
+            return
+        if self._is_assignment_substep(substep) or self._is_terminal_flow_substep(substep):
             return
         plugin_name = str(substep.get("use") or substep.get("plugin"))
         plugin = self.plugin_registry.get(plugin_name)
@@ -1299,6 +1378,15 @@ class AutomaxEngine:
             "for",
             "in",
             "do",
+            "set",
+            "let",
+            "echo",
+            "fail",
+            "try",
+            "rescue",
+            "always",
+            "break",
+            "continue",
             "use",
             "plugin",
             "with",
@@ -2112,7 +2200,7 @@ class AutomaxEngine:
                 flow_vars=flow_vars,
                 context=context,
             )
-        else:
+        elif self._is_for_substep(substep):
             result = self._execute_for_flow(
                 job=job,
                 item=item,
@@ -2129,6 +2217,34 @@ class AutomaxEngine:
                 flow_vars=flow_vars,
                 context=context,
             )
+        elif self._is_try_substep(substep):
+            result = self._execute_try_flow(
+                job=job,
+                item=item,
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+                sudo_password=sudo_password,
+                flow_vars=flow_vars,
+            )
+        elif self._is_assignment_substep(substep):
+            result = self._execute_assignment_flow(item=item, outputs=outputs, step_state=step_state, flow_vars=flow_vars, context=context)
+        elif self._is_echo_substep(substep):
+            result = self._execute_echo_flow(substep, context)
+        elif self._is_fail_substep(substep):
+            result = self._execute_fail_flow(substep, context)
+        elif self._is_break_substep(substep):
+            result = self._execute_loop_control_flow("break", flow_vars)
+        elif self._is_continue_substep(substep):
+            result = self._execute_loop_control_flow("continue", flow_vars)
+        else:
+            result = PluginResult.failure(message="unsupported flow control substep")
         with self._output_lock:
             self._register_outputs(outputs, node_id, target.name, substep, result)
         self._finish_item_node(store=store, item=item, result=result, secrets=secrets, output_format=output_format)
@@ -2173,6 +2289,8 @@ class AutomaxEngine:
                 flow_vars=flow_vars,
             )
             executed += 1
+            if self._flow_control_signal(child_result):
+                return child_result
             if not child_result.ok:
                 return PluginResult.failure(message=f"if {selected['segment']} branch failed", data={"flow": "if", "branch": selected["segment"], "executed": executed})
         return PluginResult.success(changed=False, message=f"if {selected['segment']} branch executed", data={"flow": "if", "branch": selected["segment"], "executed": executed})
@@ -2227,6 +2345,15 @@ class AutomaxEngine:
                     sudo_password=sudo_password,
                     flow_vars=loop_vars,
                 )
+                signal = self._flow_control_signal(child_result)
+                if signal == "continue":
+                    break
+                if signal == "break":
+                    return PluginResult.success(
+                        changed=False,
+                        message=f"for loop stopped at {loop_var}[{index}]",
+                        data={"flow": "for", "variable": loop_var, "index": index, "iterations": len(values), "break": True},
+                    )
                 if not child_result.ok:
                     return PluginResult.failure(
                         message=f"for loop failed at {loop_var}[{index}]",
@@ -2237,6 +2364,206 @@ class AutomaxEngine:
             message=f"for loop executed {len(values)} iteration(s)",
             data={"flow": "for", "variable": loop_var, "iterations": len(values)},
         )
+
+    def _execute_try_flow(
+        self,
+        *,
+        job: Dict[str, Any],
+        item: Dict[str, Any],
+        store: StateStore,
+        run_id: str,
+        dry_run: bool,
+        variables: Dict[str, Any],
+        secrets: Dict[str, Any],
+        outputs: Dict[str, Any],
+        ssh_client: Any,
+        step_state: Dict[str, Any],
+        output_format: str,
+        sudo_password: str | None,
+        flow_vars: Dict[str, Any],
+    ) -> PluginResult:
+        substep = item["substep"]
+        try_result = self._execute_child_block(
+            job=job,
+            item=item,
+            branch="try",
+            children=substep.get("try", []) or [],
+            store=store,
+            run_id=run_id,
+            dry_run=dry_run,
+            variables=variables,
+            secrets=secrets,
+            outputs=outputs,
+            ssh_client=ssh_client,
+            step_state=step_state,
+            output_format=output_format,
+            sudo_password=sudo_password,
+            flow_vars=flow_vars,
+        )
+        result = try_result
+        rescued = False
+        signal = self._flow_control_signal(try_result)
+        if not signal and not try_result.ok and substep.get("rescue"):
+            rescued = True
+            result = self._execute_child_block(
+                job=job,
+                item=item,
+                branch="rescue",
+                children=substep.get("rescue", []) or [],
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+                sudo_password=sudo_password,
+                flow_vars=flow_vars,
+            )
+        always_result = PluginResult.success(changed=False, data={"executed": 0})
+        if substep.get("always"):
+            always_result = self._execute_child_block(
+                job=job,
+                item=item,
+                branch="always",
+                children=substep.get("always", []) or [],
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+                sudo_password=sudo_password,
+                flow_vars=flow_vars,
+            )
+        if not always_result.ok:
+            return PluginResult.failure(
+                message="try always branch failed",
+                data={"flow": "try", "rescued": rescued, "try": self._result_to_mapping(try_result), "always": self._result_to_mapping(always_result)},
+            )
+        if self._flow_control_signal(result):
+            return result
+        if not result.ok:
+            return PluginResult.failure(
+                message="try branch failed",
+                data={"flow": "try", "rescued": False, "try": self._result_to_mapping(try_result)},
+            )
+        return PluginResult.success(
+            changed=False,
+            message="try flow executed",
+            data={
+                "flow": "try",
+                "rescued": rescued,
+                "try": self._result_to_mapping(try_result),
+                "always": self._result_to_mapping(always_result),
+            },
+        )
+
+    def _execute_child_block(
+        self,
+        *,
+        job: Dict[str, Any],
+        item: Dict[str, Any],
+        branch: str,
+        children: list[Dict[str, Any]],
+        store: StateStore,
+        run_id: str,
+        dry_run: bool,
+        variables: Dict[str, Any],
+        secrets: Dict[str, Any],
+        outputs: Dict[str, Any],
+        ssh_client: Any,
+        step_state: Dict[str, Any],
+        output_format: str,
+        sudo_password: str | None,
+        flow_vars: Dict[str, Any],
+    ) -> PluginResult:
+        executed = 0
+        for child in children:
+            child_result = self._execute_item(
+                job=job,
+                item=self._child_item(item, child, branch),
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+                sudo_password=sudo_password,
+                flow_vars=flow_vars,
+            )
+            executed += 1
+            if self._flow_control_signal(child_result):
+                return child_result
+            if not child_result.ok:
+                return PluginResult.failure(
+                    message=f"{branch} branch failed",
+                    data={"flow": branch, "executed": executed, "result": self._result_to_mapping(child_result)},
+                )
+        return PluginResult.success(changed=False, message=f"{branch} branch executed", data={"flow": branch, "executed": executed})
+
+    def _execute_assignment_flow(
+        self,
+        *,
+        item: Dict[str, Any],
+        outputs: Dict[str, Any],
+        step_state: Dict[str, Any],
+        flow_vars: Dict[str, Any],
+        context: Dict[str, Any],
+    ) -> PluginResult:
+        substep = item["substep"]
+        assignments = substep.get("set", substep.get("let"))
+        values: Dict[str, Any] = {}
+        local_context = deepcopy(context)
+        local_context.setdefault("vars", {}).update(step_state.get("vars", {}))
+        for name, value in assignments.items():
+            evaluated = evaluate_value(value, local_context)
+            values[name] = evaluated
+            local_context[name] = evaluated
+            local_context.setdefault("vars", {})[name] = evaluated
+            local_context.setdefault("outputs", {})[name] = evaluated
+        step_state.setdefault("vars", {}).update(values)
+        flow_vars.update(values)
+        target_name = item["target"].name
+        with self._output_lock:
+            for name, value in values.items():
+                outputs[name] = value
+                outputs.setdefault("targets", {}).setdefault(target_name, {})[name] = value
+        return PluginResult.success(changed=False, message="set variables", data={"values": values})
+
+    def _execute_echo_flow(self, substep: Dict[str, Any], context: Dict[str, Any]) -> PluginResult:
+        value = evaluate_value(substep.get("echo"), context)
+        if isinstance(value, (dict, list)):
+            text = json.dumps(value, ensure_ascii=False, sort_keys=True)
+        else:
+            text = str(value)
+        return PluginResult.success(stdout=f"{text}\n", message=text, data={"echo": text, "_print_stdout": True})
+
+    def _execute_fail_flow(self, substep: Dict[str, Any], context: Dict[str, Any]) -> PluginResult:
+        raw = substep.get("fail")
+        if isinstance(raw, dict):
+            raw = raw.get("message", "flow failed")
+        message = str(evaluate_value(raw if raw is not None else "flow failed", context))
+        return PluginResult.failure(message=message, data={"flow": "fail"})
+
+    @staticmethod
+    def _execute_loop_control_flow(control: str, flow_vars: Dict[str, Any]) -> PluginResult:
+        if "loop" not in flow_vars:
+            return PluginResult.failure(message=f"{control} requires an active for loop", data={"flow": control})
+        return PluginResult.success(changed=False, message=control, data={"_flow_control": control})
+
+    @staticmethod
+    def _flow_control_signal(result: PluginResult) -> str | None:
+        signal = result.data.get("_flow_control") if result.data else None
+        return str(signal) if signal in {"break", "continue"} else None
 
     @staticmethod
     def _loop_values(value: Any) -> list[Any]:
@@ -2346,6 +2673,8 @@ class AutomaxEngine:
                 print(
                     f"[{status}] {item['target'].name} {item['node_id']} rc={result.rc} {self._mask_text(result.message, secrets)}".rstrip()
                 )
+                if result.data.get("_print_stdout") and result.stdout:
+                    print(self._mask_text(result.stdout, secrets), end="" if result.stdout.endswith("\n") else "\n")
                 if not result.ok:
                     self._print_result_failure_details(result, secrets)
 
@@ -2447,6 +2776,7 @@ class AutomaxEngine:
     ) -> Dict[str, Any]:
         effective_vars = deepcopy(variables)
         effective_vars.update(target.vars)
+        effective_vars.update(step_state.get("vars", {}))
         effective_vars.update(flow_vars or {})
         context = {
             "job": job,
@@ -2460,6 +2790,7 @@ class AutomaxEngine:
             "secrets": secrets,
             "step_state": step_state,
         }
+        context.update(step_state.get("vars", {}))
         context.update(flow_vars or {})
         return context
 
@@ -2483,6 +2814,7 @@ class AutomaxEngine:
     ) -> PluginResult:
         effective_vars = deepcopy(variables)
         effective_vars.update(target.vars)
+        effective_vars.update(step_state.get("vars", {}))
         effective_vars.update(flow_vars or {})
         template_context = self._template_context(
             job=job,
@@ -3118,9 +3450,48 @@ class AutomaxEngine:
     def _is_for_substep(substep: Dict[str, Any]) -> bool:
         return "for" in substep or "do" in substep
 
+    @staticmethod
+    def _is_try_substep(substep: Dict[str, Any]) -> bool:
+        return "try" in substep
+
+    @staticmethod
+    def _is_assignment_substep(substep: Dict[str, Any]) -> bool:
+        return "set" in substep or "let" in substep
+
+    @staticmethod
+    def _is_echo_substep(substep: Dict[str, Any]) -> bool:
+        return "echo" in substep
+
+    @staticmethod
+    def _is_fail_substep(substep: Dict[str, Any]) -> bool:
+        return "fail" in substep
+
+    @staticmethod
+    def _is_break_substep(substep: Dict[str, Any]) -> bool:
+        return "break" in substep
+
+    @staticmethod
+    def _is_continue_substep(substep: Dict[str, Any]) -> bool:
+        return "continue" in substep
+
+    @classmethod
+    def _is_terminal_flow_substep(cls, substep: Dict[str, Any]) -> bool:
+        return (
+            cls._is_echo_substep(substep)
+            or cls._is_fail_substep(substep)
+            or cls._is_break_substep(substep)
+            or cls._is_continue_substep(substep)
+        )
+
     @classmethod
     def _is_flow_substep(cls, substep: Dict[str, Any]) -> bool:
-        return cls._is_if_substep(substep) or cls._is_for_substep(substep)
+        return (
+            cls._is_if_substep(substep)
+            or cls._is_for_substep(substep)
+            or cls._is_try_substep(substep)
+            or cls._is_assignment_substep(substep)
+            or cls._is_terminal_flow_substep(substep)
+        )
 
     def _substep_needs_ssh(self, substep: Dict[str, Any]) -> bool:
         if self._is_if_substep(substep):
@@ -3131,6 +3502,14 @@ class AutomaxEngine:
             )
         if self._is_for_substep(substep):
             return any(self._substep_needs_ssh(child) for child in substep.get("do", []) or [])
+        if self._is_try_substep(substep):
+            return any(
+                self._substep_needs_ssh(child)
+                for branch in ("try", "rescue", "always")
+                for child in substep.get(branch, []) or []
+            )
+        if self._is_assignment_substep(substep) or self._is_terminal_flow_substep(substep):
+            return False
         plugin_name = substep.get("use") or substep.get("plugin")
         plugin = self.plugin_registry.get(str(plugin_name))
         return bool(plugin.opens_remote_session)

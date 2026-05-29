@@ -307,6 +307,73 @@ under `loop` (`index`, `index0`, `first`, `last`, `length`):
         sudo: true
 ```
 
+
+Use `set` or `let` to store flow values without shell glue. Values are evaluated
+as native Jinja expressions, then become available as `{{ name }}`, `vars.name`
+and `outputs.name` for later substeps on the same target execution path:
+
+```yaml
+- id: compute_grade
+  set:
+    score: 65
+    grade: C
+
+- id: show_grade
+  echo: "grade={{ grade }} score={{ vars.score }}"
+```
+
+Use `echo` for operator-visible messages without invoking a shell command:
+
+```yaml
+- id: show_member
+  echo: "processing {{ item }}"
+```
+
+Use `fail` to stop the current flow explicitly with a rendered message:
+
+```yaml
+- id: reject_missing_service
+  fail: "service {{ vars.service }} is missing"
+  when: "{{ not outputs.service_check.data.exists }}"
+```
+
+Use `try` / `rescue` / `always` to keep recovery and cleanup in YAML instead of
+hiding it in a script:
+
+```yaml
+- id: guarded_change
+  try:
+    - id: apply
+      use: fs.file.write
+      with:
+        path: /tmp/demo
+        content: demo
+  rescue:
+    - id: rollback
+      echo: "rollback would run here"
+  always:
+    - id: cleanup
+      echo: "cleanup always runs"
+```
+
+Inside `for` loops, `break` stops the loop and `continue` skips the remaining
+substeps for the current item. Use `when` to make them conditional:
+
+```yaml
+- id: loop_items
+  for: item
+  in: "{{ outputs.items.data.values }}"
+  do:
+    - id: skip_disabled
+      continue: true
+      when: "{{ item.disabled }}"
+    - id: stop_at_marker
+      break: true
+      when: "{{ item.name == 'STOP' }}"
+    - id: process
+      echo: "{{ item.name }}"
+```
+
 Flow nodes execute on the same selected target as the parent substep. Nested
 substeps can register outputs normally; repeated loop registrations overwrite the
 same top-level name, while every execution is still stored under

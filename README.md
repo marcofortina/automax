@@ -45,6 +45,41 @@ A step opens one fresh SSH connection per target and reuses it for all its
 substeps. Runtime context is not kept in a shell session: values are passed
 through the Automax context, registered outputs and state store.
 
+
+## YAML flow control
+
+Job YAML supports engine-level flow-control substeps in addition to plugin
+substeps:
+
+- `if` / list-style `if` / `else` for branching;
+- `for` / `in` / `do` for loops over lists, including values returned by plugins;
+- `set` / `let` for flow values;
+- `echo` for operator-visible messages;
+- `fail` for deliberate failures;
+- `try` / `rescue` / `always` for recovery and cleanup;
+- `break` / `continue` inside loops.
+
+Example:
+
+```yaml
+- id: grade_branch
+  if:
+    - when: "{{ x < 50 }}"
+      then:
+        - id: grade_f
+          echo: F
+    - when: "{{ x < 80 }}"
+      then:
+        - id: grade_b
+          echo: B
+    - else:
+        - id: grade_a
+          echo: A
+```
+
+Use `register` or `set` / `let` values in later conditions through `outputs.*`,
+`vars.*` or direct variable names in the same target execution path.
+
 ## Install
 
 ```bash

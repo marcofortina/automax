@@ -27,6 +27,12 @@ shell. Plugins that need step-local state can use the `ExecutionContext.step_sta
 mapping internally. Job authors should pass explicit plugin parameters such as
 `cwd` instead of relying on implicit cross-substep shell state.
 
+
+Flow-control nodes are engine-level constructs, not plugins. They let job authors
+branch, loop, set values, echo messages, fail deliberately, recover with
+`try`/`rescue`/`always`, and use `break`/`continue` in loops while keeping nested
+plugin executions visible in the state store.
+
 Targets can be scoped at job, task, step or substep level. When substeps in the
 same step resolve to different target sets, Automax keeps one execution group per
 step/target and runs only the matching substeps for that target.

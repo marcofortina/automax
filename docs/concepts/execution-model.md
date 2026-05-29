@@ -45,6 +45,13 @@ A substep calls one plugin:
     sudo: true
 ```
 
+
+Flow-control substeps do not call plugins directly. `if`, list-style `if`, `for`,
+`set` / `let`, `echo`, `fail`, `try` / `rescue` / `always`, `break` and
+`continue` are interpreted by the engine and then execute normal nested substeps
+where needed. Registered plugin outputs and `set` / `let` values feed later
+conditions and loops through the normal Jinja context.
+
 Substeps can register outputs for later use:
 
 ```yaml

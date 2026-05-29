@@ -4597,6 +4597,8 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "fs.file.replace":
         params["count"] = 0
         params["required_match_count"] = 1
+    if plugin.name == "fs.file.template":
+        params["src"] = "pyproject.toml"
     if plugin.name == "security.sshd.config":
         params["match_blocks"] = [{"match": "User deploy", "settings": {"X11Forwarding": "no"}}]
     if plugin.name == "network.dns.config":
@@ -6273,3 +6275,157 @@ tasks:
 
     assert result.exit_code == 0, result.output
     assert output.read_text(encoding="utf-8").strip() == "C"
+
+
+def test_job_flow_set_let_and_echo_share_values(tmp_path: Path):
+    output = tmp_path / "set-let.txt"
+    job = write(
+        tmp_path / "job.yaml",
+        f'''
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: flow-set-let-echo
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: set_score
+            set:
+              x: 40
+              label: score
+          - id: let_total
+            let:
+              y: "{{{{ x + 2 }}}}"
+          - id: echo_total
+            echo: "{{{{ label }}}}: x={{{{ x }}}} y={{{{ vars.y }}}} outputs={{{{ outputs.y }}}}"
+          - id: persist_total
+            use: command.local.run
+            with:
+              command: "printf '{{{{ y }}}}\\n' >> {output}"
+''',
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  localhost:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--state-dir",
+            str(tmp_path / "runs"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "score: x=40 y=42 outputs=42" in result.output
+    assert output.read_text(encoding="utf-8").strip() == "42"
+
+
+def test_job_flow_try_rescue_always_handles_fail(tmp_path: Path):
+    output = tmp_path / "try.txt"
+    job = write(
+        tmp_path / "job.yaml",
+        f'''
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: flow-try-rescue
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: guarded
+            try:
+              - id: fail_inner
+                fail: "expected failure"
+            rescue:
+              - id: rescued
+                use: command.local.run
+                with:
+                  command: "printf 'rescue\\n' >> {output}"
+            always:
+              - id: cleanup
+                use: command.local.run
+                with:
+                  command: "printf 'always\\n' >> {output}"
+          - id: after_try
+            use: command.local.run
+            with:
+              command: "printf 'after\\n' >> {output}"
+''',
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  localhost:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--state-dir",
+            str(tmp_path / "runs"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert output.read_text(encoding="utf-8").splitlines() == ["rescue", "always", "after"]
+
+
+def test_job_flow_break_and_continue_control_for_loop(tmp_path: Path):
+    output = tmp_path / "loop.txt"
+    job = write(
+        tmp_path / "job.yaml",
+        f'''
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: flow-break-continue
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: loop_numbers
+            for: n
+            in: "{{{{ [1, 2, 3, 4, 5] }}}}"
+            do:
+              - id: skip_two
+                continue: true
+                when: "{{{{ n == 2 }}}}"
+              - id: stop_four
+                break: true
+                when: "{{{{ n == 4 }}}}"
+              - id: write_number
+                use: command.local.run
+                with:
+                  command: "printf '{{{{ n }}}}\\n' >> {output}"
+''',
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  localhost:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--state-dir",
+            str(tmp_path / "runs"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert output.read_text(encoding="utf-8").splitlines() == ["1", "3"]
