@@ -11,7 +11,7 @@ from typing import Any, Dict
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.file_utils import install_uploaded_file, upload_text_to_temp
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, predicate_result_from_remote, quote, result_from_remote, sudo_prefix
 
 
 
@@ -158,7 +158,7 @@ class PackageRepoListPlugin(BasePlugin):
 
 class PackageRepoCheckPlugin(BasePlugin):
     name = "os.package.repo.check"
-    description = "Assert a package repository definition file exists and optionally contains text."
+    description = "Check whether a package repository definition file exists and optionally contains text."
     required_params = ("name",)
     optional_params = ("manager", "dest", "contains", "sudo")
     opens_remote_session = True
@@ -182,7 +182,14 @@ class PackageRepoCheckPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.repo.check failed", data={"path": self._dest(params)})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.package.repo.check failed",
+            data_key="matches",
+            data={"path": self._dest(params)},
+        )
 
 
 class PackageKeyListPlugin(BasePlugin):
@@ -203,7 +210,7 @@ class PackageKeyListPlugin(BasePlugin):
 
 class PackageKeyCheckPlugin(BasePlugin):
     name = "os.package.key.check"
-    description = "Assert a package repository signing key file exists."
+    description = "Check whether a package repository signing key file exists."
     required_params = ("name",)
     optional_params = ("dest", "sudo")
     opens_remote_session = True
@@ -218,4 +225,11 @@ class PackageKeyCheckPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.key.check failed", data={"path": self._dest(params)})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.package.key.check failed",
+            data_key="exists",
+            data={"path": self._dest(params)},
+        )

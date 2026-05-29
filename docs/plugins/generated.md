@@ -5287,7 +5287,7 @@ with:
 
 ### `os.alternatives.check`
 
-Assert that one system alternative points to the expected path.
+Check whether one system alternative points to the expected path.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -5410,7 +5410,7 @@ with:
 
 ### `os.arch.check`
 
-Assert that the remote normalized architecture matches an allowed value.
+Check whether the remote normalized architecture matches an allowed value.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -5443,7 +5443,7 @@ with:
 
 ### `os.capability.check`
 
-Assert remote tools, paths and optional shell checks required by a job preflight.
+Check remote tools, paths and optional shell checks required by a job preflight.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -5473,7 +5473,7 @@ use: os.capability.check
 
 ### `os.env.check`
 
-Assert one environment variable value in the remote shell context.
+Check whether one environment variable has the expected value in the remote shell context.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -5670,7 +5670,7 @@ with:
 
 ### `os.hostname.check`
 
-Assert the current static hostname.
+Check whether the current static hostname matches.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -5796,7 +5796,7 @@ with:
 
 ### `os.hosts.entry.check`
 
-Assert that an exact /etc/hosts entry is present.
+Check whether an exact /etc/hosts entry is present.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -5936,7 +5936,7 @@ with:
 
 ### `os.login.defs.check`
 
-Assert /etc/login.defs settings.
+Check /etc/login.defs settings.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -6032,7 +6032,7 @@ with:
 
 ### `os.package.check`
 
-Assert package installation state and optionally version.
+Check package installation state and optionally version.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -6194,7 +6194,7 @@ with:
 
 ### `os.package.hold.check`
 
-Assert package hold state.
+Check package hold state.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -6369,7 +6369,7 @@ with:
 
 ### `os.package.key.check`
 
-Assert a package repository signing key file exists.
+Check whether a package repository signing key file exists.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -6605,7 +6605,7 @@ with:
 
 ### `os.package.repo.check`
 
-Assert a package repository definition file exists and optionally contains text.
+Check whether a package repository definition file exists and optionally contains text.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -6669,7 +6669,7 @@ with:
 
 ### `os.package.repo.priority.check`
 
-Assert a package repository priority drop-in exists with expected content.
+Check whether a package repository priority drop-in exists with expected content.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -6886,7 +6886,7 @@ with:
 
 ### `os.package.version.check`
 
-Assert that an installed package version matches the expected version.
+Check whether an installed package version matches the expected version.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -6985,7 +6985,7 @@ with:
 
 ### `os.time.chrony.servers.check`
 
-Assert configured chrony server lines in the managed chrony drop-in.
+Check whether configured chrony server lines exist in the managed chrony drop-in.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -7083,7 +7083,7 @@ with:
 
 ### `os.time.chrony.sources.check`
 
-Assert chrony has usable sources and print tracking/source status.
+Check whether chrony has usable sources and print tracking/source status.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -7381,7 +7381,7 @@ with:
 
 ### `os.tool.version_check`
 
-Assert that a remote tool version output contains or matches the expected value.
+Check whether a remote tool version output contains or matches the expected value.
 
 - Remote session: `true`
 - Dry-run support: `true`

@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError, RenderedFileInstallMixin
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, predicate_result_from_remote, quote, result_from_remote, sudo_prefix
 
 
 
@@ -217,7 +217,7 @@ class LoginDefsGetPlugin(BasePlugin):
 
 class LoginDefsCheckPlugin(LoginDefsGetPlugin):
     name = "os.login.defs.check"
-    description = "Assert /etc/login.defs settings."
+    description = "Check /etc/login.defs settings."
     required_params = ("settings",)
     optional_params = ("path", "sudo")
 
@@ -237,4 +237,10 @@ class LoginDefsCheckPlugin(LoginDefsGetPlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.login.defs.check failed")
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.login.defs.check failed",
+            data_key="matches",
+        )

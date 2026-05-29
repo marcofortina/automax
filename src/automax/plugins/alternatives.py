@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, predicate_result_from_remote, quote, result_from_remote, sudo_prefix
 
 
 
@@ -85,14 +85,14 @@ class AlternativesListPlugin(BasePlugin):
 
 class AlternativesCheckPlugin(BasePlugin):
     name = "os.alternatives.check"
-    description = "Assert that one system alternative points to the expected path."
+    description = "Check whether one system alternative points to the expected path."
     required_params = ("name", "path")
     optional_params = ("sudo",)
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "os.alternatives.check is a read-only alternatives assertion"
+        return "os.alternatives.check is a read-only alternatives predicate"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -109,4 +109,11 @@ class AlternativesCheckPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.alternatives.check failed", data={"name": str(params["name"]), "path": str(params["path"])})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.alternatives.check failed",
+            data_key="matches",
+            data={"name": str(params["name"]), "path": str(params["path"])},
+        )

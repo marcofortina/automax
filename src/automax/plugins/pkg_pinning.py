@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, predicate_result_from_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -236,7 +236,7 @@ class PkgHoldListPlugin(BasePlugin):
 
 class PkgHoldCheckPlugin(PkgHoldListPlugin):
     name = "os.package.hold.check"
-    description = "Assert package hold state."
+    description = "Check package hold state."
     required_params = ("name",)
     optional_params = ("manager", "state", "sudo")
 
@@ -252,12 +252,19 @@ class PkgHoldCheckPlugin(PkgHoldListPlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.hold.check failed")
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.package.hold.check failed",
+            data_key="matches",
+            data={"name": str(params["name"]), "state": str(params.get("state", "present"))},
+        )
 
 
 class PkgRepoPriorityCheckPlugin(PkgRepoPriorityPlugin):
     name = "os.package.repo.priority.check"
-    description = "Assert a package repository priority drop-in exists with expected content."
+    description = "Check whether a package repository priority drop-in exists with expected content."
     supports_check_mode = True
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
@@ -269,4 +276,11 @@ class PkgRepoPriorityCheckPlugin(PkgRepoPriorityPlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.repo.priority.check failed")
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.package.repo.priority.check failed",
+            data_key="matches",
+            data={"path": self._path(params)},
+        )

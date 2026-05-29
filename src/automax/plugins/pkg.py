@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, predicate_result_from_remote, quote, result_from_remote, sudo_prefix
 
 
 _ALLOWED_MANAGERS = {"auto", "apt", "apt-get", "dnf", "yum", "zypper", "pacman"}
@@ -238,7 +238,7 @@ fi
 
 class PackageVersionAssertPlugin(_PackagePlugin):
     name = "os.package.version.check"
-    description = "Assert that an installed package version matches the expected version."
+    description = "Check whether an installed package version matches the expected version."
     required_params = ("name", "version")
     optional_params = ("manager", "sudo")
     supports_check_mode = True
@@ -260,9 +260,14 @@ test "$installed" = {version}
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="os.package.version.check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"name": params["name"], "version": params["version"]})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.package.version.check failed",
+            data_key="matches",
+            data={"name": params["name"], "version": params["version"]},
+        )
 
 
 class PackageOwnerPlugin(_PackagePlugin):
@@ -526,7 +531,7 @@ def _as_list(value: Any) -> list[str]:
 
 class PackageCheckPlugin(_PackagePlugin):
     name = "os.package.check"
-    description = "Assert package installation state and optionally version."
+    description = "Check package installation state and optionally version."
     required_params = ("name",)
     optional_params = ("packages", "manager", "state", "version", "sudo")
     supports_check_mode = True
@@ -556,4 +561,11 @@ done
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.package.check failed")
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.package.check failed",
+            data_key="matches",
+            data={"packages": _as_packages(params), "state": str(params.get("state", "installed"))},
+        )

@@ -5616,6 +5616,25 @@ def test_presence_check_plugins_return_predicates_without_failing_on_absence():
 
 
 
+
+
+def test_os_check_plugins_return_predicates_on_condition_false():
+    registry = AutomaxEngine().plugin_registry
+
+    for plugin_name, params, key in (
+        ("os.hostname.check", {"name": "expected"}, "matches"),
+        ("os.env.check", {"name": "DEMO", "value": "1"}, "matches"),
+        ("os.package.key.check", {"name": "demo"}, "exists"),
+        ("os.package.check", {"name": "curl"}, "matches"),
+        ("os.tool.version_check", {"name": "rsync", "contains": "3."}, "matches"),
+        ("os.capability.check", {"tools": ["missing-tool"]}, "matches"),
+    ):
+        result = registry.get(plugin_name).execute(params, _remote_context_for_result(1, stderr="missing"))
+        assert result.ok is True
+        assert result.changed is False
+        assert result.rc == 0
+        assert result.data[key] is False
+
 def test_data_archive_and_compression_checks_return_predicates_on_condition_false():
     registry = AutomaxEngine().plugin_registry
 

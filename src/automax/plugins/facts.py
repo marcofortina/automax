@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import exec_remote, heredoc_to_stdin, quote, result_from_remote
+from automax.plugins.remote_utils import exec_remote, heredoc_to_stdin, predicate_result_from_remote, quote
 
 
 def _run_json(context: ExecutionContext, command: str, message: str) -> PluginResult:
@@ -74,7 +74,7 @@ print(json.dumps({'os': facts}, sort_keys=True))
 
 class OsArchCheckPlugin(BasePlugin):
     name = "os.arch.check"
-    description = "Assert that the remote normalized architecture matches an allowed value."
+    description = "Check whether the remote normalized architecture matches an allowed value."
     optional_params = ("arch", "any_of", "sudo")
     opens_remote_session = True
     supports_check_mode = True
@@ -113,7 +113,14 @@ exit 1
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.arch.check failed", data={"allowed": self._allowed(params)})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.arch.check failed",
+            data_key="matches",
+            data={"allowed": self._allowed(params)},
+        )
 
 
 class FactsNetworkPlugin(BasePlugin):

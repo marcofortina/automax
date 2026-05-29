@@ -51,7 +51,7 @@ class ToolCheckPlugin(BasePlugin):
 
 class ToolVersionAssertPlugin(BasePlugin):
     name = "os.tool.version_check"
-    description = "Assert that a remote tool version output contains or matches the expected value."
+    description = "Check whether a remote tool version output contains or matches the expected value."
     required_params = ("name",)
     optional_params = ("version_arg", "contains", "regex")
     opens_remote_session = True
@@ -75,14 +75,19 @@ class ToolVersionAssertPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message=f"version assertion failed for tool: {params['name']}")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"tool": params["name"], "version": out.strip()})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message=f"os.tool.version_check failed for tool: {params['name']}",
+            data_key="matches",
+            data={"tool": params["name"], "version": out.strip() if rc == 0 else ""},
+        )
 
 
 class CapabilityAssertPlugin(BasePlugin):
     name = "os.capability.check"
-    description = "Assert remote tools, paths and optional shell checks required by a job preflight."
+    description = "Check remote tools, paths and optional shell checks required by a job preflight."
     optional_params = ("tools", "paths", "commands", "path")
     opens_remote_session = True
     supports_check_mode = True
@@ -115,9 +120,14 @@ class CapabilityAssertPlugin(BasePlugin):
                 missing.append(command)
         stdout = "\n".join(part for part in stdout_parts if part)
         stderr = "\n".join(part for part in stderr_parts if part)
-        if missing:
-            return PluginResult.failure(rc=1, stdout=stdout, stderr=stderr, message="capability preflight failed", data={"failed": missing})
-        return PluginResult.success(changed=False, rc=0, stdout=stdout, stderr=stderr, data={"checked": self.manual_commands(params, context)})
+        checked = self.manual_commands(params, context)
+        return PluginResult.success(
+            changed=False,
+            rc=0,
+            stdout=stdout,
+            stderr=stderr,
+            data={"checked": checked, "failed": missing, "matches": not missing},
+        )
 
 
 class PluginRequirementsPlugin(BasePlugin):

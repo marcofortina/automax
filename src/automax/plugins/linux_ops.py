@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError, RenderedFileInstallMixin
-from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, heredoc_to_stdin, shell_var_ref, tempfile_command, tempfile_path_command, normalize_env_mapping, quote, render_env_prefix, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, predicate_result_from_remote, heredoc_to_file_expr, heredoc_to_stdin, shell_var_ref, tempfile_command, tempfile_path_command, normalize_env_mapping, quote, render_env_prefix, result_from_remote, sudo_prefix
 
 
 
@@ -426,22 +426,26 @@ class ChronyServersPlugin(RenderedFileInstallMixin, BasePlugin):
 
 class ChronySourcesAssertPlugin(BasePlugin):
     name = "os.time.chrony.sources.check"
-    description = "Assert chrony has usable sources and print tracking/source status."
+    description = "Check whether chrony has usable sources and print tracking/source status."
     required_params: tuple[str, ...] = ()
     optional_params = ("sudo",)
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "os.time.chrony.sources.check is a read-only assertion and does not change files"
+        return "os.time.chrony.sources.check is a read-only predicate and does not change files"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return ["chronyc tracking && chronyc sources -v"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="os.time.chrony.sources.check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.time.chrony.sources.check failed",
+            data_key="usable",
+        )
 
 
 class EnvSetPlugin(BasePlugin):
@@ -598,11 +602,11 @@ class HostsEntryRemovePlugin(HostsEntryPlugin):
 
 class HostsEntryCheckPlugin(HostsEntryPlugin):
     name = "os.hosts.entry.check"
-    description = "Assert that an exact /etc/hosts entry is present."
+    description = "Check whether an exact /etc/hosts entry is present."
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "os.hosts.entry.check is a read-only /etc/hosts assertion"
+        return "os.hosts.entry.check is a read-only /etc/hosts predicate"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -610,7 +614,14 @@ class HostsEntryCheckPlugin(HostsEntryPlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.hosts.entry.check failed", data={"entry": self._line(params)})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.hosts.entry.check failed",
+            data_key="exists",
+            data={"entry": self._line(params)},
+        )
 
 
 class HostsFactsPlugin(BasePlugin):
@@ -667,7 +678,7 @@ class HostnameGetPlugin(BasePlugin):
 
 class HostnameCheckPlugin(HostnameGetPlugin):
     name = "os.hostname.check"
-    description = "Assert the current static hostname."
+    description = "Check whether the current static hostname matches."
     required_params = ("name",)
     optional_params = ("sudo",)
 
@@ -677,7 +688,14 @@ class HostnameCheckPlugin(HostnameGetPlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.hostname.check failed", data={"expected": str(params["name"])})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.hostname.check failed",
+            data_key="matches",
+            data={"expected": str(params["name"])},
+        )
 
 
 class EnvGetPlugin(BasePlugin):
@@ -701,7 +719,7 @@ class EnvGetPlugin(BasePlugin):
 
 class EnvCheckPlugin(EnvGetPlugin):
     name = "os.env.check"
-    description = "Assert one environment variable value in the remote shell context."
+    description = "Check whether one environment variable has the expected value in the remote shell context."
     required_params = ("name", "value")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
@@ -710,7 +728,14 @@ class EnvCheckPlugin(EnvGetPlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.env.check failed", data={"name": str(params["name"])})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.env.check failed",
+            data_key="matches",
+            data={"name": str(params["name"])},
+        )
 
 
 class EnvFactsPlugin(BasePlugin):
@@ -792,7 +817,7 @@ class ChronyServersGetPlugin(BasePlugin):
 
 class ChronyServersCheckPlugin(ChronyServersGetPlugin):
     name = "os.time.chrony.servers.check"
-    description = "Assert configured chrony server lines in the managed chrony drop-in."
+    description = "Check whether configured chrony server lines exist in the managed chrony drop-in."
     required_params = ("servers",)
     optional_params = ("path", "sudo")
 
@@ -805,4 +830,10 @@ class ChronyServersCheckPlugin(ChronyServersGetPlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="os.time.chrony.servers.check failed")
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="os.time.chrony.servers.check failed",
+            data_key="matches",
+        )
