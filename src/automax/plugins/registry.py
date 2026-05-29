@@ -93,7 +93,7 @@ class PluginRegistry:
 
 def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegistry:
     """Create a registry with builtin plugins and optional external plugins."""
-    from automax.plugins.capabilities import CapabilityAssertPlugin, PluginRequirementsPlugin, ToolCheckPlugin, ToolVersionAssertPlugin
+    from automax.plugins.capabilities import CapabilityAssertPlugin, PluginRequirementsPlugin
     from automax.plugins.block import (
         BlockFactsPlugin,
         BlockIdentityPlugin,
@@ -530,8 +530,6 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         AlternativesGetPlugin(),
         AlternativesListPlugin(),
         AlternativesCheckPlugin(),
-        ToolCheckPlugin(),
-        ToolVersionAssertPlugin(),
         CapabilityAssertPlugin(),
         PluginRequirementsPlugin(),
         AlternativesSetPlugin(),

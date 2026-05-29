@@ -1216,8 +1216,6 @@ def test_os_namespace_replaces_legacy_operating_system_plugin_names():
         "os.time.timezone.check",
         "os.time.timezone.get",
         "os.time.timezone.set",
-        "os.tool.check",
-        "os.tool.version_check",
     } <= names
 
     searched = [

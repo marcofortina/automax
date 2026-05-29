@@ -10,7 +10,7 @@ from typing import Any, Dict
 from automax.core.capabilities import plugin_tools
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import exec_remote, predicate_result_from_remote, quote
+from automax.plugins.remote_utils import exec_remote, quote
 
 
 def _as_list(value: Any) -> list[str]:
@@ -19,70 +19,6 @@ def _as_list(value: Any) -> list[str]:
     if isinstance(value, (list, tuple, set)):
         return [str(item) for item in value]
     return [str(value)]
-
-
-class ToolCheckPlugin(BasePlugin):
-    name = "os.tool.check"
-    description = "Check whether one executable exists on the remote PATH."
-    required_params = ("name",)
-    optional_params = ("path",)
-    opens_remote_session = True
-    supports_check_mode = True
-
-    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "os.tool.check is a read-only remote dependency check"
-
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        self.validate(params)
-        path_prefix = f"PATH={quote(params['path'])}:$PATH " if params.get("path") else ""
-        return [f"{path_prefix}command -v {quote(params['name'])}"]
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return predicate_result_from_remote(
-            rc=rc,
-            stdout=out,
-            stderr=err,
-            message=f"os.tool.check failed for tool: {params['name']}",
-            data_key="exists",
-            data={"tool": params["name"], "path": out.strip() if rc == 0 else ""},
-        )
-
-
-class ToolVersionAssertPlugin(BasePlugin):
-    name = "os.tool.version_check"
-    description = "Check whether a remote tool version output contains or matches the expected value."
-    required_params = ("name",)
-    optional_params = ("version_arg", "contains", "regex")
-    opens_remote_session = True
-    supports_check_mode = True
-
-    def validate(self, params: Dict[str, Any]) -> None:
-        super().validate(params)
-        if not params.get("contains") and not params.get("regex"):
-            raise PluginValidationError("os.tool.version_check requires contains or regex")
-
-    def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "os.tool.version_check is a read-only remote dependency check"
-
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        self.validate(params)
-        arg = str(params.get("version_arg", "--version"))
-        command = f"{quote(params['name'])} {arg} 2>&1"
-        if params.get("contains"):
-            return [f"{command} | grep -F -- {quote(params['contains'])}"]
-        return [f"{command} | grep -E -- {quote(params['regex'])}"]
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return predicate_result_from_remote(
-            rc=rc,
-            stdout=out,
-            stderr=err,
-            message=f"os.tool.version_check failed for tool: {params['name']}",
-            data_key="matches",
-            data={"tool": params["name"], "version": out.strip() if rc == 0 else ""},
-        )
 
 
 class CapabilityAssertPlugin(BasePlugin):

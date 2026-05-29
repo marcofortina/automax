@@ -5221,8 +5221,6 @@ def test_capability_and_redaction_plugins_render_safe_previews():
     )
     registry = AutomaxEngine().plugin_registry
 
-    assert registry.get("os.tool.check").manual_commands({"name": "rsync"}, context) == ["command -v rsync"]
-    assert "grep -F" in registry.get("os.tool.version_check").manual_commands({"name": "rsync", "contains": "rsync"}, context)[0]
     assert "command -v setfacl" in registry.get("os.capability.check").manual_commands({"tools": ["setfacl"]}, context)[0]
     assert registry.get("automax.plugin.requirements").execute({"plugin": "data.transfer.rsync"}, context).data["requirements"]["data.transfer.rsync"] == ["rsync"]
 
@@ -5765,7 +5763,6 @@ def test_presence_check_plugins_return_predicates_without_failing_on_absence():
     for plugin_name, params in (
         ("identity.user.check", {"name": "missing-user"}),
         ("identity.group.check", {"name": "missing-group"}),
-        ("os.tool.check", {"name": "missing-tool"}),
     ):
         result = registry.get(plugin_name).execute(params, _remote_context_for_result(1, stderr="not found"))
         assert result.ok is True
@@ -5861,7 +5858,6 @@ def test_os_check_plugins_return_predicates_on_condition_false():
         ("os.env.check", {"name": "DEMO", "value": "1"}, "matches"),
         ("os.package.key.check", {"name": "demo"}, "exists"),
         ("os.package.check", {"name": "curl"}, "matches"),
-        ("os.tool.version_check", {"name": "rsync", "contains": "3."}, "matches"),
         ("os.capability.check", {"tools": ["missing-tool"]}, "matches"),
     ):
         result = registry.get(plugin_name).execute(params, _remote_context_for_result(1, stderr="missing"))

@@ -240,8 +240,6 @@ os.time.status
 os.time.timezone.check
 os.time.timezone.get
 os.time.timezone.set
-os.tool.check
-os.tool.version_check
 security.apparmor.complain
 security.apparmor.disable
 security.apparmor.enforce
