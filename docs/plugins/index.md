@@ -53,7 +53,6 @@ data.restore.preview
 data.restore.verify
 data.transfer.download
 data.transfer.rsync
-data.transfer.sync
 data.transfer.upload
 database.mysql.check
 database.mysql.query

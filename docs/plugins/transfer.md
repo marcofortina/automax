@@ -20,6 +20,8 @@ Uploads a local file or directory to the remote target. Directory upload require
     dest: /tmp/myapp.tar.gz
 ```
 
+For small local directory trees, use `data.transfer.upload` with `recursive: true`. This uses the active SSH/SFTP connection and does not delete remote files that are missing locally. For large or incremental directory trees, use `data.transfer.rsync`.
+
 ## `data.transfer.download`
 
 Downloads a remote file or directory to the controller. Directory download requires `recursive: true`.
@@ -31,21 +33,6 @@ Downloads a remote file or directory to the controller. Directory download requi
     src: /var/log/myapp/app.log
     dest: ./artifacts/{{ server.name }}/app.log
 ```
-
-## `data.transfer.sync`
-
-Synchronizes a local tree to a remote destination.
-
-```yaml
-- id: sync_templates
-  use: data.transfer.sync
-  with:
-    src: ./files/
-    dest: /opt/myapp/files/
-```
-
-Use `data.transfer.sync` for small operational trees. It uploads local content to the remote directory and does not currently delete remote files that are missing locally. For very large trees, prefer a specialized artifact or package distribution mechanism.
-
 
 ## Rsync transfers
 

@@ -1263,39 +1263,6 @@ with:
   dest: /tmp/dest
 ```
 
-### `data.transfer.sync`
-
-Sync a local directory tree to a remote directory.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `dest` | yes | `path` |  | Destination path. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.src`: Local source directory.
-- `data.dest`: Remote destination directory.
-
-Example:
-
-```yaml
-use: data.transfer.sync
-with:
-  src: /tmp/source
-  dest: /tmp/dest
-```
-
 ### `data.transfer.upload`
 
 Upload a local file or directory to a remote target.

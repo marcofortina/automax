@@ -17,9 +17,6 @@ tasks:
     - id: data_transfer_rsync
       use: data.transfer.rsync
       with: {src: docs, dest: /tmp/dest}
-    - id: data_transfer_sync
-      use: data.transfer.sync
-      with: {src: docs, dest: /tmp/dest}
     - id: data_transfer_upload
       use: data.transfer.upload
       with: {src: README.md, dest: /tmp/dest}

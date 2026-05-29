@@ -331,7 +331,6 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
             return [f"scp{_ssh_opts(params)} {_q(str(src))} {_q(str(dest))}"]
         if plugin_name == "data.transfer.upload":
             return [f"scp{_ssh_opts(params)} {_q(str(src))} {_q(str(dest))}"]
-        if plugin_name == "data.transfer.sync":
             return [f"rsync -a {_q(str(src))}/ {_q(str(dest))}/"]
 
     if plugin_name in {"system.cron.entry.add", "system.cron.file"}:

@@ -411,7 +411,6 @@ RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
     "os.package.facts": {"data.packages": "Installed package facts."},
     "system.service.facts": {"data.services": "systemd service facts."},
     "security.sudo.dropin": {"data.path": "Installed sudoers drop-in path."},
-    "data.transfer.sync": {"data.src": "Local source directory.", "data.dest": "Remote destination directory."},
 }
 
 SAMPLE_VALUES: dict[str, Any] = {

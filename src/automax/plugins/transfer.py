@@ -240,38 +240,6 @@ class TransferDownloadPlugin(BasePlugin):
         return PluginResult.success(changed=True, data={"src": src, "dest": str(dest)})
 
 
-class TransferSyncPlugin(BasePlugin):
-    """Upload a local directory tree to a remote directory."""
-
-    name = "data.transfer.sync"
-    description = "Sync a local directory tree to a remote directory."
-    required_params = ("src", "dest")
-    optional_params = ()
-    opens_remote_session = True
-
-    def validate(self, params: Dict[str, Any]) -> None:
-        super().validate(params)
-        src_value = str(params["src"])
-        if _is_templated_path(src_value):
-            return
-        src = Path(src_value).expanduser()
-        if not src.is_dir():
-            raise PluginValidationError("data.transfer.sync source must be a directory")
-
-    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        self.validate(params)
-        src = Path(str(params["src"])).expanduser()
-        dest = str(params["dest"])
-        sftp = _sftp(context)
-        try:
-            _upload_dir(context, sftp, src, dest)
-        finally:
-            sftp.close()
-        if params.get("checksum"):
-            exec_remote(context, f"sha256sum {quote(dest)} | awk '{{print $1}}' | grep -Fx -- {quote(params['checksum'])}")
-        _remote_apply_attrs(context, dest, params, recursive=src.is_dir())
-        return PluginResult.success(changed=True, data={"src": str(src), "dest": dest})
-
 
 class TransferRsyncPlugin(BasePlugin):
     """Synchronize files using the local rsync executable."""

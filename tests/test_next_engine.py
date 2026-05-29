@@ -605,7 +605,6 @@ def test_extended_systemctl_plugins_are_registered():
         "system.service.mask",
         "system.service.unmask",
         "data.transfer.download",
-        "data.transfer.sync",
         "data.transfer.upload",
         "identity.user.create",
         "identity.user.modify",
@@ -641,7 +640,7 @@ def test_transfer_plugins_are_registered():
 
     assert "data.transfer.upload" in names
     assert "data.transfer.download" in names
-    assert "data.transfer.sync" in names
+    assert "data.transfer.sync" not in names
     assert "upload" not in names
 
 
@@ -1564,7 +1563,6 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "data.archive.zip.extract",
         "data.transfer.upload",
         "data.transfer.download",
-        "data.transfer.sync",
         "fs.file.wait",
         "fs.dir.wait",
         "system.process.wait",
@@ -4589,10 +4587,10 @@ def test_cron_readback_plugins_render_manual_commands():
 
 
 def test_transfer_plugins_allow_templated_controller_sources_in_static_validation():
-    from automax.plugins.transfer import TransferSyncPlugin, TransferUploadPlugin
+    from automax.plugins.transfer import TransferUploadPlugin
 
-    TransferSyncPlugin().validate({"src": "{{ vars.fixture_root }}/source-dir", "dest": "/tmp/dest"})
     TransferUploadPlugin().validate({"src": "{{ vars.fixture_root }}/source.txt", "dest": "/tmp/dest"})
+    TransferUploadPlugin().validate({"src": "{{ vars.fixture_root }}/source-dir", "dest": "/tmp/dest", "recursive": True})
 
 
 

@@ -48,7 +48,7 @@ remote user. It covers:
 - `fs.file.line`, `fs.file.replace`, `fs.object.copy`, `fs.object.move`, `fs.symlink.create`, `fs.symlink.remove`
 - `fs.object.find`, `fs.permission.mode`
 - `data.archive.tar.create`, `data.archive.tar.extract`, `data.archive.zip.create`, `data.archive.zip.extract`
-- `data.transfer.upload`, `data.transfer.download`, `data.transfer.sync`
+- `data.transfer.upload`, `data.transfer.download`, `data.transfer.rsync`
 - `system.process.wait`
 - `storage.usage.disk_check`, `network.connectivity.port_check`
 - artifact capture for stdout/stderr/data

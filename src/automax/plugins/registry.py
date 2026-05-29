@@ -448,7 +448,6 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     from automax.plugins.transfer import (
         TransferDownloadPlugin,
         ExtendedTransferRsyncPlugin,
-        TransferSyncPlugin,
         TransferUploadPlugin,
     )
     from automax.plugins.users_extra import (
@@ -716,7 +715,6 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         TransferUploadPlugin(),
         TransferDownloadPlugin(),
         ExtendedTransferRsyncPlugin(),
-        TransferSyncPlugin(),
         FsCdPlugin(),
         FsDirCreatePlugin(),
         FsDirRemovePlugin(),

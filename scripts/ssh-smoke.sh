@@ -181,11 +181,12 @@ tasks:
               src: ${TMP_DIR}/payload/dir
               dest: ${WORK_DIR}/uploaded-dir
               recursive: true
-          - id: sync_dir
-            use: data.transfer.sync
+          - id: upload_tree
+            use: data.transfer.upload
             with:
               src: ${TMP_DIR}/payload
               dest: ${WORK_DIR}/synced
+              recursive: true
           - id: download_file
             use: data.transfer.download
             with:
