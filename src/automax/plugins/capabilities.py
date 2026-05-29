@@ -10,7 +10,7 @@ from typing import Any, Dict
 from automax.core.capabilities import plugin_tools
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import exec_remote, quote
+from automax.plugins.remote_utils import exec_remote, predicate_result_from_remote, quote
 
 
 def _as_list(value: Any) -> list[str]:
@@ -23,7 +23,7 @@ def _as_list(value: Any) -> list[str]:
 
 class ToolCheckPlugin(BasePlugin):
     name = "os.tool.check"
-    description = "Assert that one executable exists on the remote PATH."
+    description = "Check whether one executable exists on the remote PATH."
     required_params = ("name",)
     optional_params = ("path",)
     opens_remote_session = True
@@ -39,9 +39,14 @@ class ToolCheckPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message=f"missing required tool: {params['name']}")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"tool": params["name"], "path": out.strip()})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message=f"os.tool.check failed for tool: {params['name']}",
+            data_key="exists",
+            data={"tool": params["name"], "path": out.strip() if rc == 0 else ""},
+        )
 
 
 class ToolVersionAssertPlugin(BasePlugin):

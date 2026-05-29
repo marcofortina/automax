@@ -221,3 +221,30 @@ def result_from_remote(
         stderr=stderr,
         data=data or {},
     )
+
+def predicate_result_from_remote(
+    *,
+    rc: int,
+    stdout: str,
+    stderr: str,
+    message: str,
+    data_key: str,
+    data: dict[str, Any] | None = None,
+    true_rc: int = 0,
+    false_rcs: tuple[int, ...] = (1,),
+) -> PluginResult:
+    """Build a non-failing predicate PluginResult from a remote command.
+
+    ``*.check`` plugins use ``ok`` to report whether the check itself ran
+    cleanly. The checked condition is returned as a boolean in ``data`` so
+    jobs can branch on it. Only unexpected return codes are technical failures.
+    """
+    payload = dict(data or {})
+    if rc == true_rc:
+        payload[data_key] = True
+        return PluginResult.success(changed=False, rc=0, stdout=stdout, stderr=stderr, data=payload)
+    if rc in false_rcs:
+        payload[data_key] = False
+        payload["condition_rc"] = rc
+        return PluginResult.success(changed=False, rc=0, stdout=stdout, stderr=stderr, data=payload)
+    return PluginResult.failure(rc=rc, stdout=stdout, stderr=stderr, message=message, data=payload)

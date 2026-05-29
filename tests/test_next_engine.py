@@ -5557,3 +5557,65 @@ servers:
     assert "Target lab02 192.0.2.11:22" in result.output
     assert "Summary:" in result.output
     assert "  debian/apt: 2 targets" in result.output
+
+
+def _remote_context_for_result(rc: int, stdout: str = "", stderr: str = "") -> ExecutionContext:
+    class FakeChannel:
+        def recv_exit_status(self):
+            return rc
+
+    class FakeStdin:
+        def __init__(self):
+            self.channel = FakeChannel()
+
+    class FakeStream:
+        def __init__(self, data: str):
+            self.channel = FakeChannel()
+            self._data = data.encode("utf-8")
+
+        def read(self):
+            return self._data
+
+    class FakeClient:
+        def exec_command(self, command, **kwargs):
+            return FakeStdin(), FakeStream(stdout), FakeStream(stderr)
+
+    return ExecutionContext(
+        run_id="test",
+        dry_run=False,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="node", host="host"),
+        vars={},
+        outputs={},
+        secrets={},
+        ssh_client=FakeClient(),
+    )
+
+
+def test_presence_check_plugins_return_predicates_without_failing_on_absence():
+    registry = AutomaxEngine().plugin_registry
+
+    for plugin_name, params in (
+        ("identity.user.check", {"name": "missing-user"}),
+        ("identity.group.check", {"name": "missing-group"}),
+        ("os.tool.check", {"name": "missing-tool"}),
+    ):
+        result = registry.get(plugin_name).execute(params, _remote_context_for_result(1, stderr="not found"))
+        assert result.ok is True
+        assert result.changed is False
+        assert result.rc == 0
+        assert result.data["exists"] is False
+
+
+def test_filesystem_check_plugins_fail_only_on_wrong_existing_type():
+    registry = AutomaxEngine().plugin_registry
+
+    absent = registry.get("fs.file.check").execute({"path": "/tmp/missing"}, _remote_context_for_result(10, stdout="absent\n"))
+    assert absent.ok is True
+    assert absent.data["exists"] is False
+
+    wrong_type = registry.get("fs.file.check").execute({"path": "/tmp/demo"}, _remote_context_for_result(20, stderr="wrong-type"))
+    assert wrong_type.ok is False

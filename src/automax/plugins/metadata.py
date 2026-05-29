@@ -394,6 +394,7 @@ RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
     "network.http.wait": {"data.status": "HTTP response status code.", "data.body": "Decoded response body."},
     "network.connectivity.port_wait": {"data.host": "Checked host.", "data.port": "Checked TCP port."},
     "network.connectivity.port_check": {"data.host": "Checked host.", "data.port": "Checked TCP port."},
+    "os.tool.check": {"data.exists": "Whether the remote executable exists.", "data.tool": "Checked executable name.", "data.path": "Resolved executable path when present."},
     "data.transfer.upload": {"data.src": "Local source path.", "data.dest": "Remote destination path"},
     "data.transfer.download": {"data.src": "Remote source path.", "data.dest": "Local destination path."},
     "data.transfer.rsync": {"data.command": "Executed rsync argument vector."},

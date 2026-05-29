@@ -7345,7 +7345,7 @@ with:
 
 ### `os.tool.check`
 
-Assert that one executable exists on the remote PATH.
+Check whether one executable exists on the remote PATH.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -7364,6 +7364,9 @@ Result fields:
 - `stdout`: Captured standard output when applicable.
 - `stderr`: Captured standard error when applicable.
 - `data`: Plugin-specific structured result data.
+- `data.exists`: Whether the remote executable exists.
+- `data.tool`: Checked executable name.
+- `data.path`: Resolved executable path when present.
 
 Example:
 
