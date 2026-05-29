@@ -384,7 +384,7 @@ RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
     "fs.object.stat": {"data.exists": "Boolean path existence result.", "data.size": "Path size in bytes.", "data.mode": "POSIX mode.", "data.owner": "Owner name.", "data.group": "Group name."},
     "fs.file.read": {"stdout": "Remote file content.", "data.path": "Read remote path."},
     "fs.file.template": {"data.src": "Rendered template path.", "data.dest": "Remote destination path"},
-    "database.sqlite.check": {"data.engine": "Database engine checked.", "data.checks": "Boolean check results.", "data.latency_ms": "Measured health-check duration in milliseconds."},
+    "database.sqlite.check": {"data.engine": "Database engine checked.", "data.checks": "Boolean check results.", "data.healthy": "Whether all requested database checks passed.", "data.latency_ms": "Measured health-check duration in milliseconds."},
     "database.sqlite.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
     "database.postgres.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
     "database.mysql.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},

@@ -94,10 +94,19 @@ class DbHealthPlugin(BasePlugin):
         if output == "none":
             stdout = ""
         elif output == "summary":
-            stdout = f"{data['engine']} health ok in {data['latency_ms']} ms"
+            state = "ok" if data.get("healthy") else "not healthy"
+            stdout = f"{data['engine']} health {state} in {data['latency_ms']} ms"
         else:
             stdout = json.dumps(data, default=str, sort_keys=True)
         return PluginResult.success(changed=False, stdout=stdout, data=data)
+
+    def _health_predicate(self, data: Dict[str, Any]) -> bool:
+        checks = data.get("checks", {})
+        if checks and not all(bool(value) for value in checks.values()):
+            return False
+        if data.get("integrity") not in {None, "ok"}:
+            return False
+        return True
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -112,8 +121,13 @@ class DbHealthPlugin(BasePlugin):
                 data = self._mysql_health(params)
             else:
                 data = self._oracle_health(params)
+        except PluginValidationError:
+            raise
         except Exception as exc:
-            return PluginResult.failure(message="db.health failed", stderr=str(exc))
+            data = {"engine": engine, "checks": {}, "healthy": False, "error": str(exc)}
+            data["latency_ms"] = round((time.monotonic() - started) * 1000, 3)
+            return self._format(data, params)
+        data["healthy"] = self._health_predicate(data)
         data["latency_ms"] = round((time.monotonic() - started) * 1000, 3)
         return self._format(data, params)
 

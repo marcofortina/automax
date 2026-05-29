@@ -5614,6 +5614,37 @@ def test_presence_check_plugins_return_predicates_without_failing_on_absence():
 
 
 
+
+
+def test_data_archive_and_compression_checks_return_predicates_on_condition_false():
+    registry = AutomaxEngine().plugin_registry
+
+    archive = registry.get("data.archive.tar.check").execute(
+        {"archive": "/tmp/missing.tar"},
+        _remote_context_for_result(2, stderr="not found"),
+    )
+    assert archive.ok is True
+    assert archive.data["readable"] is False
+
+    compressed = registry.get("data.compression.gzip.check").execute(
+        {"path": "/tmp/not-gzip.gz"},
+        _remote_context_for_result(1, stderr="not in gzip format"),
+    )
+    assert compressed.ok is True
+    assert compressed.data["readable"] is False
+
+
+def test_database_check_reports_unhealthy_without_failing(tmp_path: Path):
+    missing = tmp_path / "missing.sqlite"
+    result = AutomaxEngine().plugin_registry.get("database.sqlite.check").execute(
+        {"path": str(missing), "output": "json"},
+        _remote_context_for_result(0),
+    )
+
+    assert result.ok is True
+    assert result.data["healthy"] is False
+    assert result.data["error"]
+
 def test_network_remote_check_plugins_return_predicates_on_condition_false():
     registry = AutomaxEngine().plugin_registry
 

@@ -12,7 +12,7 @@ from typing import Any, Dict, Iterable
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, quote, result_from_remote
+from automax.plugins.remote_utils import CHANGE_MARKER, apply_cwd, exec_remote, predicate_result_from_remote, quote, result_from_remote
 
 
 def _as_list(value: Any) -> list[Any]:
@@ -499,10 +499,10 @@ class ArchiveTarListPlugin(BasePlugin):
 
 
 class ArchiveTarCheckPlugin(ArchiveTarListPlugin):
-    """Assert a remote tar archive is readable and optionally contains entries."""
+    """Check whether a remote tar archive is readable and optionally contains entries."""
 
     name = "data.archive.tar.check"
-    description = "Assert a remote tar archive is readable and optionally contains entries."
+    description = "Check whether a remote tar archive is readable and optionally contains entries."
     optional_params = ("compression", "contains", "cwd")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
@@ -514,6 +514,18 @@ class ArchiveTarCheckPlugin(ArchiveTarListPlugin):
             checks = " && ".join(f"tar {flag} {archive} | grep -Fx -- {quote(item)} >/dev/null" for item in entries)
             commands = [checks]
         return commands
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="data.archive.tar.check failed",
+            data_key="matches" if params.get("contains") else "readable",
+            data={"archive": str(params["archive"])},
+            false_rcs=(1, 2),
+        )
 
 
 class ArchiveZipListPlugin(BasePlugin):
@@ -536,10 +548,10 @@ class ArchiveZipListPlugin(BasePlugin):
 
 
 class ArchiveZipCheckPlugin(ArchiveZipListPlugin):
-    """Assert a remote zip archive is readable and optionally contains entries."""
+    """Check whether a remote zip archive is readable and optionally contains entries."""
 
     name = "data.archive.zip.check"
-    description = "Assert a remote zip archive is readable and optionally contains entries."
+    description = "Check whether a remote zip archive is readable and optionally contains entries."
     optional_params = ("contains", "cwd")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
@@ -549,6 +561,18 @@ class ArchiveZipCheckPlugin(ArchiveZipListPlugin):
             checks = " && ".join(f"unzip -Z1 {archive} | grep -Fx -- {quote(item)} >/dev/null" for item in _as_list(params.get("contains")))
             return [apply_cwd(checks, context, params.get("cwd"))]
         return [apply_cwd(f"unzip -t {quote(params['archive'])}", context, params.get("cwd"))]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="data.archive.zip.check failed",
+            data_key="matches" if params.get("contains") else "readable",
+            data={"archive": str(params["archive"])},
+            false_rcs=(1, 2),
+        )
 
 
 class _FixedCompressionMixin:
@@ -634,28 +658,36 @@ class _CompressionCheckPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message=f"{self.name} failed", data={"path": str(params["path"])})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message=f"{self.name} failed",
+            data_key="readable",
+            data={"path": str(params["path"])},
+            false_rcs=(1, 2),
+        )
 
 
 class CompressionGzipCheckPlugin(_CompressionCheckPlugin):
     name = "data.compression.gzip.check"
-    description = "Assert a remote gzip file is readable."
+    description = "Check whether a remote gzip file is readable."
     tool = "gzip"
 
 
 class CompressionBzip2CheckPlugin(_CompressionCheckPlugin):
     name = "data.compression.bzip2.check"
-    description = "Assert a remote bzip2 file is readable."
+    description = "Check whether a remote bzip2 file is readable."
     tool = "bzip2"
 
 
 class CompressionXzCheckPlugin(_CompressionCheckPlugin):
     name = "data.compression.xz.check"
-    description = "Assert a remote xz file is readable."
+    description = "Check whether a remote xz file is readable."
     tool = "xz"
 
 
 class CompressionZstdCheckPlugin(_CompressionCheckPlugin):
     name = "data.compression.zstd.check"
-    description = "Assert a remote zstd file is readable."
+    description = "Check whether a remote zstd file is readable."
     tool = "zstd"

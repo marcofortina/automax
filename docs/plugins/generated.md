@@ -121,7 +121,7 @@ with:
 
 ### `data.archive.tar.check`
 
-Assert a remote tar archive is readable and optionally contains entries.
+Check whether a remote tar archive is readable and optionally contains entries.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -261,7 +261,7 @@ with:
 
 ### `data.archive.zip.check`
 
-Assert a remote zip archive is readable and optionally contains entries.
+Check whether a remote zip archive is readable and optionally contains entries.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -630,7 +630,7 @@ with:
 
 ### `data.compression.bzip2.check`
 
-Assert a remote bzip2 file is readable.
+Check whether a remote bzip2 file is readable.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -730,7 +730,7 @@ with:
 
 ### `data.compression.gzip.check`
 
-Assert a remote gzip file is readable.
+Check whether a remote gzip file is readable.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -830,7 +830,7 @@ with:
 
 ### `data.compression.xz.check`
 
-Assert a remote xz file is readable.
+Check whether a remote xz file is readable.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -930,7 +930,7 @@ with:
 
 ### `data.compression.zstd.check`
 
-Assert a remote zstd file is readable.
+Check whether a remote zstd file is readable.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -1563,6 +1563,7 @@ Result fields:
 - `data`: Plugin-specific structured result data.
 - `data.engine`: Database engine checked.
 - `data.checks`: Boolean check results.
+- `data.healthy`: Whether all requested database checks passed.
 - `data.latency_ms`: Measured health-check duration in milliseconds.
 
 Example:
