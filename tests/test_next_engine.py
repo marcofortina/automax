@@ -5875,6 +5875,42 @@ def test_storage_mount_check_supports_source_state_without_path():
     assert technical_failure.ok is False
 
 
+def test_security_sudo_check_replaces_can_run_semantics():
+    registry = AutomaxEngine().plugin_registry
+    assert "security.sudo.can_run" not in registry.names()
+
+    plugin = registry.get("security.sudo.check")
+    context = ExecutionContext(
+        run_id="test",
+        dry_run=True,
+        job={},
+        task={},
+        step={},
+        substep={},
+        target=Target(name="node", host="host"),
+        vars={},
+        outputs={},
+        secrets={},
+    )
+    command = plugin.manual_commands({"user": "deploy", "command": "/bin/systemctl restart myapp", "run_as": "root"}, context)[0]
+    assert "id -u deploy" in command
+    assert "sudo -n -l -U deploy -u root" in command
+    assert "/bin/systemctl restart myapp" in command
+
+    denied = plugin.execute(
+        {"user": "deploy", "command": "/bin/systemctl restart myapp"},
+        _remote_context_for_result(1, stdout="", stderr="not allowed"),
+    )
+    assert denied.ok is True
+    assert denied.data["allowed"] is False
+
+    missing_user = plugin.execute(
+        {"user": "missing", "command": "/bin/true"},
+        _remote_context_for_result(2, stdout="", stderr="missing user"),
+    )
+    assert missing_user.ok is False
+
+
 def test_system_host_power_and_probe_plugins_are_registered_and_safe():
     registry = AutomaxEngine().plugin_registry
     assert "system.reboot" not in registry.names()

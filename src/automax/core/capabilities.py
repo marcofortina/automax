@@ -133,7 +133,7 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "security.ssh.keygen": ("ssh-keygen",),
     "security.ssh.public_key": ("ssh-keygen",),
     "security.sshd.validate": ("sshd",),
-    "security.sudo.can_run": ("sudo",),
+    "security.sudo.check": ("sudo",),
     "security.sudo.list": ("sudo",),
     "security.sudo.validate": ("visudo",),
     "storage.swap.add": ("swapon",),

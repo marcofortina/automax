@@ -94,7 +94,8 @@ file watches, syscall rules, event search and backlog/lost-event assertions:
 `security.audit.backlog.check`.
 
 Sudo readback plugins verify effective privileges without changing sudoers:
-`security.sudo.list`, `security.sudo.check` and `security.sudo.can_run`.
+`security.sudo.list` lists privileges, while `security.sudo.check` checks whether a
+user can run a specific command through sudo without prompting.
 
 PAM stack assertion and backup plugins complement the mutating PAM plugins:
 `security.pam.include.check`, `security.pam.module.check`, `security.pam.order.check`, `security.pam.backup` and

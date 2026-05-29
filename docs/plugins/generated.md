@@ -9855,42 +9855,9 @@ with:
   sudo: true
 ```
 
-### `security.sudo.can_run`
-
-Assert that a user can run a command via sudo without prompting.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `user` | yes | `string` | `False` | User account name. |
-| `command` | yes | `string` |  | Command line to execute. |
-| `run_as` | no | `string` |  | sudo run-as target user. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: security.sudo.can_run
-with:
-  user: deploy
-  command: echo automax
-```
-
 ### `security.sudo.check`
 
-Assert sudo -l output contains a rule fragment.
+Check whether a user may run a command through sudo without prompting.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -9899,7 +9866,8 @@ Assert sudo -l output contains a rule fragment.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `user` | yes | `string` | `False` | User account name. |
-| `rule` | yes | `string` |  | Firewall action such as allow, deny, reject or limit. |
+| `command` | yes | `string` |  | Command to check with sudo -l. |
+| `run_as` | no | `string` |  | Optional run-as user for sudo authorization. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -9917,7 +9885,7 @@ Example:
 use: security.sudo.check
 with:
   user: deploy
-  rule: allow
+  command: echo automax
 ```
 
 ### `security.sudo.dropin`

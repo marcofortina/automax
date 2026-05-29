@@ -306,7 +306,6 @@ security.ssh.known_hosts
 security.ssh.public_key
 security.sshd.config
 security.sshd.validate
-security.sudo.can_run
 security.sudo.check
 security.sudo.dropin
 security.sudo.list

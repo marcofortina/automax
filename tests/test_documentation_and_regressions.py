@@ -834,7 +834,7 @@ def test_read_only_command_plugin_is_shared_base_class():
     readonly_plugins = [
         name for name in registry.names() if isinstance(registry.get(name), ReadOnlyCommandPlugin)
     ]
-    assert len(readonly_plugins) >= 37
+    assert len(readonly_plugins) >= 36
 
 
 
@@ -887,6 +887,7 @@ def test_security_namespace_replaces_legacy_security_plugin_names():
         "selinux.restorecon",
         "sudo.assert",
         "sudo.can_run",
+        "security.sudo.can_run",
         "sudo.list",
         "sudo.rule",
         "sudo.validate",
@@ -948,6 +949,7 @@ def test_security_namespace_replaces_legacy_security_plugin_names():
         "security.ssh.authorized_key.check",
         "security.ssh.authorized_key.remove",
         "security.sshd.validate",
+        "security.sudo.check",
         "security.sudo.dropin",
     } <= names
 

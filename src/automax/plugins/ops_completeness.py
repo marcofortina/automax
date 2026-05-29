@@ -699,13 +699,22 @@ class SudoListPlugin(ReadOnlyCommandPlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{sudo_prefix(params, default=True)}sudo -l -U {quote(params['user'])}"]
 
 class SudoAssertPlugin(ReadOnlyCommandPlugin):
-    name="security.sudo.check"; description="Assert sudo -l output contains a rule fragment."; required_params=("user","rule"); optional_params=("sudo",)
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{sudo_prefix(params, default=True)}sudo -l -U {quote(params['user'])} | grep -F -- {quote(params['rule'])}"]
+    name = "security.sudo.check"
+    description = "Check whether a user may run a command through sudo without prompting."
+    required_params = ("user", "command")
+    optional_params = ("run_as", "sudo")
 
-class SudoCanRunPlugin(ReadOnlyCommandPlugin):
-    name="security.sudo.can_run"; description="Assert that a user can run a command via sudo without prompting."; required_params=("user","command"); optional_params=("run_as","sudo")
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        run_as=f" -u {quote(params.get('run_as'))}" if params.get("run_as") else ""; return [f"{sudo_prefix(params, default=True)}{SUDO_NON_INTERACTIVE} -l -U {quote(params['user'])}{run_as} {quote(params['command'])}"]
+    def predicate_data_key(self) -> str:
+        return "allowed"
+
+    def command_result_data(self, params: Dict[str, Any], stdout: str, stderr: str, rc: int) -> Dict[str, Any]:
+        return {"user": str(params["user"]), "command": str(params["command"]), "run_as": params.get("run_as")}
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        user = quote(params["user"])
+        run_as = f" -u {quote(params.get('run_as'))}" if params.get("run_as") else ""
+        return [f"id -u {user} >/dev/null 2>&1 || exit 2; {sudo_prefix(params, default=True)}{SUDO_NON_INTERACTIVE} -l -U {user}{run_as} {quote(params['command'])}"]
 
 
 # Mount/fstab/block safety
@@ -859,9 +868,10 @@ class UfwResetPlugin(UfwDeletePlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: self.validate(params); return [f"{sudo_prefix(params, default=True)}ufw --force reset"]
 
 # Parameter schema disambiguation for names that have plugin-specific meaning.
-for _cls in (UserFactsPlugin, UserShellAssertPlugin, UserHomeAssertPlugin, UserGroupsAssertPlugin, SudoListPlugin, SudoAssertPlugin, SudoCanRunPlugin):
+for _cls in (UserFactsPlugin, UserShellAssertPlugin, UserHomeAssertPlugin, UserGroupsAssertPlugin, SudoListPlugin):
     _cls.parameter_schema = {"user": {"type": "string", "description": "User account name."}}
 UserShellAssertPlugin.parameter_schema = {"user": {"type": "string", "description": "User account name."}, "shell": {"type": "string", "description": "Expected login shell."}}
+SudoAssertPlugin.parameter_schema = {"user": {"type": "string", "description": "User account name."}, "command": {"type": "string", "description": "Command to check with sudo -l."}, "run_as": {"type": "string", "description": "Optional run-as user for sudo authorization."}}
 GroupMembersPlugin.parameter_schema = {"group": {"type": "string", "description": "Group name."}}
 GroupMemberAddPlugin.parameter_schema = {"user": {"type": "string", "description": "User account name."}, "group": {"type": "string", "description": "Group name."}}
 GroupMemberCheckPlugin.parameter_schema = {"user": {"type": "string", "description": "User account name."}, "group": {"type": "string", "description": "Group name."}}

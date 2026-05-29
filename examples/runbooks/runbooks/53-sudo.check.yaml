@@ -14,13 +14,8 @@ tasks:
   steps:
   - id: catalog
     substeps:
-    - id: sudo_assert
+    - id: sudo_check
       use: security.sudo.check
-      with:
-        user: deploy
-        rule: allow
-    - id: sudo_can_run
-      use: security.sudo.can_run
       with:
         user: deploy
         command: echo automax
