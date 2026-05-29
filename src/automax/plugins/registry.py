@@ -459,7 +459,8 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         SudoersDropinPlugin,
         UserCheckPlugin,
         UserLockPlugin,
-        UserSetPasswordPlugin,
+        UserPasswordSetPlugin,
+        UserPasswordExpirePlugin,
         UserUnlockPlugin,
     )
     from automax.plugins.user_group_process import (
@@ -683,7 +684,8 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         UserCheckPlugin(),
         UserLockPlugin(),
         UserUnlockPlugin(),
-        UserSetPasswordPlugin(),
+        UserPasswordSetPlugin(),
+        UserPasswordExpirePlugin(),
         GroupCreatePlugin(),
         GroupRemovePlugin(),
         GroupCheckPlugin(),

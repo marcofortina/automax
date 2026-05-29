@@ -233,7 +233,7 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
             return [f"{sudo}usermod -L {_q(name)}"]
         if plugin_name == "identity.user.unlock":
             return [f"{sudo}usermod -U {_q(name)}"]
-        if plugin_name == "identity.user.set_password":
+        if plugin_name == "identity.user.password.set":
             return [f"echo '{name}:***' | {sudo}chpasswd"]
         if plugin_name == "identity.user.modify":
             return [f"{sudo}usermod {_q(name)}"]

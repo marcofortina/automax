@@ -121,8 +121,9 @@ identity.user.groups_check
 identity.user.home_check
 identity.user.lock
 identity.user.modify
+identity.user.password.expire
+identity.user.password.set
 identity.user.remove
-identity.user.set_password
 identity.user.shell_check
 identity.user.unlock
 network.connectivity.port_check

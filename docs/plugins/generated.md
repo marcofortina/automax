@@ -3621,6 +3621,68 @@ with:
   name: nginx
 ```
 
+### `identity.user.password.expire`
+
+Expire a remote user's password so it must be changed at next login.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: identity.user.password.expire
+with:
+  name: nginx
+```
+
+### `identity.user.password.set`
+
+Set a remote user's password using a password hash or plaintext value.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `password_hash` | no | `string` |  | crypt(3) password hash passed to usermod --password. |
+| `password` | no | `string` |  | Plaintext password; prefer password_hash when possible. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: identity.user.password.set
+with:
+  name: nginx
+```
+
 ### `identity.user.remove`
 
 Remove a remote user.
@@ -3648,38 +3710,6 @@ Example:
 
 ```yaml
 use: identity.user.remove
-with:
-  name: nginx
-```
-
-### `identity.user.set_password`
-
-Set a remote user's password using a password hash or plaintext value.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `password_hash` | no | `string` |  | crypt(3) password hash passed to usermod --password. |
-| `password` | no | `string` |  | Plaintext password; prefer password_hash when possible. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: identity.user.set_password
 with:
   name: nginx
 ```

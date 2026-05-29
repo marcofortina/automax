@@ -49,10 +49,14 @@ tasks:
       with:
         name: nginx
     - id: user_set_password
-      use: identity.user.set_password
+      use: identity.user.password.set
       with:
         name: automax_smoke_user
         password: "{{ secrets.automax_smoke_user_password }}"
+    - id: user_password_expire
+      use: identity.user.password.expire
+      with:
+        name: automax_smoke_user
     - id: user_shell_assert
       use: identity.user.shell_check
       with:

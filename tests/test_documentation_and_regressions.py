@@ -980,6 +980,7 @@ def test_identity_namespace_replaces_legacy_user_group_plugin_names():
         "group.members",
         "group.remove",
         "identity.group.members",
+        "identity.user.set_password",
     ]
     names = set(build_builtin_registry().names())
     assert not (names & set(old_names))
@@ -992,7 +993,8 @@ def test_identity_namespace_replaces_legacy_user_group_plugin_names():
         "identity.user.lock",
         "identity.user.modify",
         "identity.user.remove",
-        "identity.user.set_password",
+        "identity.user.password.expire",
+        "identity.user.password.set",
         "identity.user.shell_check",
         "identity.user.unlock",
         "identity.group.create",

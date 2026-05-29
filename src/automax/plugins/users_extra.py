@@ -100,10 +100,10 @@ class UserUnlockPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="identity.user.unlock failed")
 
 
-class UserSetPasswordPlugin(BasePlugin):
+class UserPasswordSetPlugin(BasePlugin):
     """Set a remote user's password using either a password hash or plaintext value."""
 
-    name = "identity.user.set_password"
+    name = "identity.user.password.set"
     description = "Set a remote user's password using a password hash or plaintext value."
     required_params = ("name",)
     optional_params = ("password_hash", "password", "sudo")
@@ -112,7 +112,7 @@ class UserSetPasswordPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if bool(params.get("password_hash")) == bool(params.get("password")):
-            raise PluginValidationError("identity.user.set_password requires exactly one of password_hash or password")
+            raise PluginValidationError("identity.user.password.set requires exactly one of password_hash or password")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -125,7 +125,36 @@ class UserSetPasswordPlugin(BasePlugin):
             temp_path = upload_text_to_temp(context, f"{name}:{params['password']}\n")
             command = f"{sudo_prefix(params, default=True)}chpasswd < {quote(temp_path)} && rm -f {quote(temp_path)} && echo {CHANGE_MARKER}"
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="identity.user.set_password failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="identity.user.password.set failed")
+
+
+class UserPasswordExpirePlugin(BasePlugin):
+    """Expire a remote user's password to force a password change at next login."""
+
+    name = "identity.user.password.expire"
+    description = "Expire a remote user's password so it must be changed at next login."
+    required_params = ("name",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        name = str(params["name"])
+        prefix = sudo_prefix(params, default=True)
+        command = (
+            f"id -u {quote(name)} >/dev/null 2>&1 && "
+            f"last_change=$({prefix}getent shadow {quote(name)} | cut -d: -f3) && "
+            f'if [ "$last_change" = 0 ]; then true; '
+            f"else {prefix}chage -d 0 {quote(name)} && echo {CHANGE_MARKER}; fi"
+        )
+        rc, out, err = exec_remote(context, command)
+        return result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="identity.user.password.expire failed",
+            data={"name": name, "expired": rc == 0},
+        )
 
 
 class SshAuthorizedKeyPlugin(BasePlugin):
