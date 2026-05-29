@@ -238,7 +238,7 @@ PARAMETERS: dict[str, dict[str, Any]] = {
     "port": {"type": "integer", "min": 1, "max": 65535, "description": "TCP port number."},
     "preserve": {"type": "boolean", "default": False, "description": "Preserve mode, ownership and timestamps when copying."},
     "preserve_times": {"type": "boolean", "default": False, "description": "Preserve source access and modification timestamps when transferring files."},
-    "pty": {"type": "boolean", "default": False, "description": "Request a pseudo-terminal for remote.command."},
+    "pty": {"type": "boolean", "default": False, "description": "Request a pseudo-terminal for command.remote.run."},
     "query": {"type": "string", "description": "SQL query to execute."},
     "query_params": {"type": "sequence", "description": "SQL bind parameters passed to the database driver."},
     "rc": {"type": "integer", "default": 0, "min": 0, "description": "Expected process return code."},
@@ -358,8 +358,8 @@ PARAMETERS: dict[str, dict[str, Any]] = {
 }
 
 OPTIONAL_PARAM_OVERRIDES: dict[str, tuple[str, ...]] = {
-    "local.command": ("cwd", "env", "shell", "timeout", "success_rc", "changed"),
-    "remote.command": ("cwd", "timeout", "pty", "stdin", "encoding", "success_rc", "changed"),
+    "command.local.run": ("cwd", "env", "shell", "timeout", "success_rc", "changed"),
+    "command.remote.run": ("cwd", "timeout", "pty", "stdin", "encoding", "success_rc", "changed"),
 }
 
 DEFAULT_RESULT_FIELDS = {
@@ -384,14 +384,14 @@ RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
     "fs.object.stat": {"data.exists": "Boolean path existence result.", "data.size": "Path size in bytes.", "data.mode": "POSIX mode.", "data.owner": "Owner name.", "data.group": "Group name."},
     "fs.file.read": {"stdout": "Remote file content.", "data.path": "Read remote path."},
     "fs.file.template": {"data.src": "Rendered template path.", "data.dest": "Remote destination path"},
-    "db.health": {"data.engine": "Database engine checked.", "data.checks": "Boolean check results.", "data.latency_ms": "Measured health-check duration in milliseconds."},
-    "db.sqlite.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
-    "db.postgres.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
-    "db.mysql.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
-    "db.oracle.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
-    "http.request": {"data.status": "HTTP response status code.", "data.body": "Decoded response body.", "data.headers": "Response headers."},
-    "http.assert": {"data.status": "HTTP response status code.", "data.body": "Decoded response body."},
-    "http.wait": {"data.status": "HTTP response status code.", "data.body": "Decoded response body."},
+    "database.sqlite.check": {"data.engine": "Database engine checked.", "data.checks": "Boolean check results.", "data.latency_ms": "Measured health-check duration in milliseconds."},
+    "database.sqlite.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
+    "database.postgres.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
+    "database.mysql.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
+    "database.oracle.query": {"data.rows": "Fetched rows for SELECT-style statements.", "data.scalar": "First column of the first row when output=scalar.", "data.rowcount": "Driver rowcount when available."},
+    "network.http.request": {"data.status": "HTTP response status code.", "data.body": "Decoded response body.", "data.headers": "Response headers."},
+    "network.http.check": {"data.status": "HTTP response status code.", "data.body": "Decoded response body."},
+    "network.http.wait": {"data.status": "HTTP response status code.", "data.body": "Decoded response body."},
     "network.connectivity.port_wait": {"data.host": "Checked host.", "data.port": "Checked TCP port."},
     "network.connectivity.port_check": {"data.host": "Checked host.", "data.port": "Checked TCP port."},
     "data.transfer.upload": {"data.src": "Local source path.", "data.dest": "Remote destination path"},
@@ -407,11 +407,9 @@ RESULT_FIELD_OVERRIDES: dict[str, dict[str, str]] = {
     "security.apparmor.status": {"data.status": "Raw AppArmor status output."},
     "system.cron.entry.add": {"data.path": "Installed cron.d file path."},
     "system.cron.file": {"data.path": "Installed cron.d file path."},
-    "facts.gather": {"data.os": "Operating system facts.", "data.network": "Network facts.", "data.packages": "Package facts.", "data.services": "Service facts."},
     "os.facts": {"data.os": "Operating system facts."},
-    "facts.network": {"data.network": "Network facts."},
     "os.package.facts": {"data.packages": "Installed package facts."},
-    "facts.services": {"data.services": "systemd service facts."},
+    "system.service.facts": {"data.services": "systemd service facts."},
     "security.sudo.dropin": {"data.path": "Installed sudoers drop-in path."},
     "data.transfer.sync": {"data.src": "Local source directory.", "data.dest": "Remote destination directory."},
 }
@@ -621,8 +619,8 @@ SAMPLE_VALUES: dict[str, Any] = {
 
 PLUGIN_EXAMPLES: dict[str, str] = {
     "fs.file.template": "use: fs.file.template\nwith:\n  src: ./templates/app.conf.j2\n  dest: /etc/myapp/app.conf\n  mode: '0644'\n  sudo: true",
-    "db.sqlite.query": "use: db.sqlite.query\nwith:\n  connection:\n    path: /tmp/automax.sqlite\n  query: SELECT 1 AS value\n  output: rows",
-    "remote.command": "use: remote.command\nwith:\n  command: systemctl is-active sshd\n  success_rc: 0",
+    "database.sqlite.query": "use: database.sqlite.query\nwith:\n  connection:\n    path: /tmp/automax.sqlite\n  query: SELECT 1 AS value\n  output: rows",
+    "command.remote.run": "use: command.remote.run\nwith:\n  command: systemctl is-active sshd\n  success_rc: 0",
     "security.ssh.authorized_key.add": "use: security.ssh.authorized_key.add\nwith:\n  user: deploy\n  key: '{{ vars.deploy_public_key }}'\n  state: present\n  sudo: true",
     "security.sudo.dropin": "use: security.sudo.dropin\nwith:\n  name: deploy-myapp\n  content: 'deploy ALL=(root) /bin/systemctl restart myapp'\n  validate: true\n  sudo: true",
     "network.firewall.firewalld.port": "use: network.firewall.firewalld.port\nwith:\n  port: 443\n  protocol: tcp\n  zone: public\n  state: present\n  permanent: true\n  reload: true\n  sudo: true",
@@ -636,7 +634,7 @@ PLUGIN_EXAMPLES: dict[str, str] = {
     "security.selinux.boolean": "use: security.selinux.boolean\nwith:\n  name: httpd_can_network_connect\n  value: true\n  persist: true\n  sudo: true",
     "security.apparmor.profile": "use: security.apparmor.profile\nwith:\n  profile: /etc/apparmor.d/usr.sbin.nginx\n  state: enforce\n  sudo: true",
     "system.cron.entry.add": "use: system.cron.entry.add\nwith:\n  name: myapp-health\n  schedule: '*/5 * * * *'\n  user: root\n  command: /usr/local/bin/myapp-healthcheck\n  sudo: true",
-    "facts.gather": "use: facts.gather\nwith:\n  subset:\n    - os\n    - network\n    - services",
+    "os.facts": "use: os.facts\nwith:\n  subset:\n    - os\n    - network\n    - services",
     "security.password.policy": "use: security.password.policy\nwith:\n  name: hardening\n  settings:\n    minlen: 14\n    dcredit: -1\n    ucredit: -1\n    retry: 3\n  sudo: true",
     "storage.mount.add": "use: storage.mount.add\nwith:\n  src: /dev/vdb1\n  path: /data\n  fstype: xfs\n  opts: defaults,noatime\n  persist: true\n  sudo: true",
     "storage.fstab.add": "use: storage.fstab.add\nwith:\n  src: /dev/vdb1\n  path: /data\n  fstype: xfs\n  opts: defaults,noatime\n  sudo: true",
@@ -644,7 +642,7 @@ PLUGIN_EXAMPLES: dict[str, str] = {
     "storage.usage.inode_check": "use: storage.usage.inode_check\nwith:\n  path: /var\n  max_used_percent: 85\n  sudo: true",
     "storage.quota.set": "use: storage.quota.set\nwith:\n  type: user\n  target: app\n  mountpoint: /data\n  block_soft: 1000000\n  block_hard: 1200000\n  inode_soft: 10000\n  inode_hard: 12000\n  sudo: true",
     "storage.multipath.add": "use: storage.multipath.add\nwith:\n  wwid: '3600508b400105e210000900000490000'\n  reload: true\n  sudo: true",
-    "local.command": "use: local.command\nwith:\n  command: echo automax\n  changed: false",
+    "command.local.run": "use: command.local.run\nwith:\n  command: echo automax\n  changed: false",
 }
 
 

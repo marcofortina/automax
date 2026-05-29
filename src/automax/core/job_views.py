@@ -47,7 +47,7 @@ def build_job_view(job: Dict[str, Any], plan: List[Dict[str, Any]]) -> Dict[str,
         )
         step_entry["targets"][target.name] = target.host
         plugin_name = str(substep.get("use") or substep.get("plugin"))
-        if plugin_name != "local.command":
+        if plugin_name != "command.local.run":
             step_entry["opens_ssh"] = True
         substep_entry = step_entry["substeps"].setdefault(
             substep_id,

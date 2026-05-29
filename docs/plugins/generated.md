@@ -12,6 +12,111 @@ Do not edit plugin parameter lists here by hand; update plugin metadata and rege
 automax docs generate-plugins --output docs/plugins/generated.md
 ```
 
+## automax
+
+### `automax.plugin.requirements`
+
+Report remote tools required by one or more plugins without connecting to a target.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `plugin` | no | `string` |  | Plugin name selected for requirements inspection. |
+| `plugins` | no | `list` |  | Plugin names selected for requirements inspection. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: automax.plugin.requirements
+```
+
+## command
+
+### `command.local.run`
+
+Run a local command on the controller host.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `command` | yes | `string` |  | Command line to execute. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+| `env` | no | `mapping` |  | Environment variables for a local command. |
+| `shell` | no | `boolean` |  | Run a local command through the platform shell. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `success_rc` | no | `integer` | `0` | Return code considered successful. |
+| `changed` | no | `boolean` | `True` | Whether a successful command should be reported as changed. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: command.local.run
+with:
+  command: echo automax
+  changed: false
+```
+
+### `command.remote.run`
+
+Run a command on the current remote target via SSH.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `command` | yes | `string` |  | Command line to execute. |
+| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `pty` | no | `boolean` | `False` | Request a pseudo-terminal for command.remote.run. |
+| `stdin` | no | `string` |  | Text written to remote command standard input. |
+| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
+| `success_rc` | no | `integer` | `0` | Return code considered successful. |
+| `changed` | no | `boolean` | `True` | Whether a successful command should be reported as changed. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: command.remote.run
+with:
+  command: systemctl is-active sshd
+  success_rc: 0
+```
+
 ## data
 
 ### `data.archive.tar.check`
@@ -1234,11 +1339,11 @@ with:
   dest: /tmp/dest
 ```
 
-## db
+## database
 
-### `db.health`
+### `database.mysql.check`
 
-Run read-only controller-side database health checks.
+Run read-only controller-side MySQL health checks.
 
 - Remote session: `false`
 - Dry-run support: `true`
@@ -1246,12 +1351,12 @@ Run read-only controller-side database health checks.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `engine` | yes | `string` |  | Database engine such as sqlite, postgres, mysql or oracle. |
 | `connection` | no | `mapping` |  | Database connection mapping; values may be rendered from vars or secrets. |
 | `path` | no | `path` |  | Remote or local path, depending on the plugin. |
 | `checks` | no | `list` |  | Health checks to run. |
 | `timeout` | no | `number` |  | Operation timeout in seconds. |
 | `output` | no | `string` | `rows` | Database output format: rows, scalar, json or none. |
+| `engine` | no | `string` |  | Database engine such as sqlite, postgres, mysql or oracle. |
 
 Result fields:
 
@@ -1261,19 +1366,18 @@ Result fields:
 - `stdout`: Captured standard output when applicable.
 - `stderr`: Captured standard error when applicable.
 - `data`: Plugin-specific structured result data.
-- `data.engine`: Database engine checked.
-- `data.checks`: Boolean check results.
-- `data.latency_ms`: Measured health-check duration in milliseconds.
 
 Example:
 
 ```yaml
-use: db.health
+use: database.mysql.check
 with:
-  engine: value
+  connection:
+    path: /tmp/automax.sqlite
+  path: /tmp/automax-demo
 ```
 
-### `db.mysql.query`
+### `database.mysql.query`
 
 Run MySQL/MariaDB queries or statements from the controller.
 
@@ -1306,14 +1410,50 @@ Result fields:
 Example:
 
 ```yaml
-use: db.mysql.query
+use: database.mysql.query
 with:
   connection:
     path: /tmp/automax.sqlite
   query: SELECT 1 AS value
 ```
 
-### `db.oracle.query`
+### `database.oracle.check`
+
+Run read-only controller-side Oracle health checks.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `connection` | no | `mapping` |  | Database connection mapping; values may be rendered from vars or secrets. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `checks` | no | `list` |  | Health checks to run. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `output` | no | `string` | `rows` | Database output format: rows, scalar, json or none. |
+| `engine` | no | `string` |  | Database engine such as sqlite, postgres, mysql or oracle. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: database.oracle.check
+with:
+  connection:
+    path: /tmp/automax.sqlite
+  path: /tmp/automax-demo
+```
+
+### `database.oracle.query`
 
 Run Oracle queries or statements from the controller.
 
@@ -1346,14 +1486,50 @@ Result fields:
 Example:
 
 ```yaml
-use: db.oracle.query
+use: database.oracle.query
 with:
   connection:
     path: /tmp/automax.sqlite
   query: SELECT 1 AS value
 ```
 
-### `db.postgres.query`
+### `database.postgres.check`
+
+Run read-only controller-side PostgreSQL health checks.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `connection` | no | `mapping` |  | Database connection mapping; values may be rendered from vars or secrets. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `checks` | no | `list` |  | Health checks to run. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `output` | no | `string` | `rows` | Database output format: rows, scalar, json or none. |
+| `engine` | no | `string` |  | Database engine such as sqlite, postgres, mysql or oracle. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: database.postgres.check
+with:
+  connection:
+    path: /tmp/automax.sqlite
+  path: /tmp/automax-demo
+```
+
+### `database.postgres.query`
 
 Run PostgreSQL queries or statements from the controller.
 
@@ -1386,14 +1562,53 @@ Result fields:
 Example:
 
 ```yaml
-use: db.postgres.query
+use: database.postgres.query
 with:
   connection:
     path: /tmp/automax.sqlite
   query: SELECT 1 AS value
 ```
 
-### `db.sqlite.query`
+### `database.sqlite.check`
+
+Run read-only controller-side SQLite health checks.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `connection` | no | `mapping` |  | Database connection mapping; values may be rendered from vars or secrets. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `checks` | no | `list` |  | Health checks to run. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `output` | no | `string` | `rows` | Database output format: rows, scalar, json or none. |
+| `engine` | no | `string` |  | Database engine such as sqlite, postgres, mysql or oracle. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.engine`: Database engine checked.
+- `data.checks`: Boolean check results.
+- `data.latency_ms`: Measured health-check duration in milliseconds.
+
+Example:
+
+```yaml
+use: database.sqlite.check
+with:
+  connection:
+    path: /tmp/automax.sqlite
+  path: /tmp/automax-demo
+```
+
+### `database.sqlite.query`
 
 Run SQLite queries or statements from the controller.
 
@@ -1428,7 +1643,7 @@ Result fields:
 Example:
 
 ```yaml
-use: db.sqlite.query
+use: database.sqlite.query
 with:
   connection:
     path: /tmp/automax.sqlite
@@ -1436,20 +1651,19 @@ with:
   output: rows
 ```
 
-## facts
+## device
 
-### `facts.gather`
+### `device.udev.device.facts`
 
-Gather selected remote Linux facts.
+Read udev properties for a device path.
 
 - Remote session: `true`
 - Dry-run support: `true`
-- Check mode support: `false`
+- Check mode support: `true`
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `subset` | no | `list` | `['os', 'network']` | Fact subsets: os, network, packages, services. |
-| `manager` | no | `string` | `auto` | Package manager: auto, apt, dnf, yum, zypper or pacman. |
+| `device` | yes | `path` |  | Block device path. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -1460,25 +1674,48 @@ Result fields:
 - `stdout`: Captured standard output when applicable.
 - `stderr`: Captured standard error when applicable.
 - `data`: Plugin-specific structured result data.
-- `data.os`: Operating system facts.
-- `data.network`: Network facts.
-- `data.packages`: Package facts.
-- `data.services`: Service facts.
 
 Example:
 
 ```yaml
-use: facts.gather
+use: device.udev.device.facts
 with:
-  subset:
-    - os
-    - network
-    - services
+  device: /dev/sdb
 ```
 
-### `facts.network`
+### `device.udev.device.test`
 
-Gather remote network facts.
+Run udevadm test for a device sysfs path.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `device` | yes | `path` |  | Block device path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: device.udev.device.test
+with:
+  device: /dev/sdb
+```
+
+### `device.udev.reload`
+
+Reload udev rules.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -1496,26 +1733,28 @@ Result fields:
 - `stdout`: Captured standard output when applicable.
 - `stderr`: Captured standard error when applicable.
 - `data`: Plugin-specific structured result data.
-- `data.network`: Network facts.
 
 Example:
 
 ```yaml
-use: facts.network
+use: device.udev.reload
 with:
   sudo: true
 ```
 
-### `facts.services`
+### `device.udev.rule.check`
 
-Gather remote systemd service facts.
+Assert that a udev rules file exists and optionally matches rendered content.
 
 - Remote session: `true`
 - Dry-run support: `true`
-- Check mode support: `false`
+- Check mode support: `true`
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `content` | no | `string` |  | Text content to write. |
+| `rules` | no | `list` |  | Structured rule entries. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -1526,14 +1765,175 @@ Result fields:
 - `stdout`: Captured standard output when applicable.
 - `stderr`: Captured standard error when applicable.
 - `data`: Plugin-specific structured result data.
-- `data.services`: systemd service facts.
 
 Example:
 
 ```yaml
-use: facts.services
+use: device.udev.rule.check
 with:
-  sudo: true
+  path: /tmp/automax-demo
+```
+
+### `device.udev.rule.remove`
+
+Remove a udev rules file with optional backup.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: device.udev.rule.remove
+with:
+  path: /tmp/automax-demo
+```
+
+### `device.udev.rule.set`
+
+Install a udev rules file from content or structured rule entries.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `content` | no | `string` |  | Text content to write. |
+| `rules` | no | `list` |  | Structured rule entries. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: device.udev.rule.set
+with:
+  path: /tmp/automax-demo
+```
+
+### `device.udev.rule.validate`
+
+Validate udev rules file syntax with udevadm test where possible.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `file` | yes | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: device.udev.rule.validate
+with:
+  file: /etc/sysctl.d/99-automax.conf
+```
+
+### `device.udev.settle`
+
+Wait for the udev event queue to settle.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: device.udev.settle
+with:
+  timeout: 60
+```
+
+### `device.udev.trigger`
+
+Trigger udev events and optionally wait for settle.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `subsystem` | no | `string` |  | udev subsystem filter. |
+| `action` | no | `string` |  | udev action to trigger. |
+| `udev_settle` | no | `boolean` | `True` | Wait for udev events to settle after the operation. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: device.udev.trigger
+with:
+  subsystem: block
+  action: change
 ```
 
 ## fs
@@ -2602,132 +3002,6 @@ with:
   path: /tmp/automax-demo
 ```
 
-## http
-
-### `http.assert`
-
-Assert HTTP status and optional body content.
-
-- Remote session: `false`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `url` | yes | `string` |  | HTTP URL. |
-| `method` | no | `string` | `GET` | HTTP request method. |
-| `headers` | no | `mapping` |  | HTTP request headers. |
-| `body` | no | `string` |  | Raw HTTP request body. |
-| `json` | no | `mapping` |  | JSON HTTP request body. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
-| `validate_tls` | no | `boolean` | `True` | Validate TLS certificates for HTTPS requests. |
-| `expected_status` | no | `integer` | `200` | Expected HTTP status code. |
-| `status` | no | `integer` |  | Expected HTTP status code alias. |
-| `contains` | no | `string` |  | Required substring in stdout or HTTP response body. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.status`: HTTP response status code.
-- `data.body`: Decoded response body.
-
-Example:
-
-```yaml
-use: http.assert
-with:
-  url: https://example.invalid/health
-```
-
-### `http.request`
-
-Perform an HTTP request from the controller.
-
-- Remote session: `false`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `url` | yes | `string` |  | HTTP URL. |
-| `method` | no | `string` | `GET` | HTTP request method. |
-| `headers` | no | `mapping` |  | HTTP request headers. |
-| `body` | no | `string` |  | Raw HTTP request body. |
-| `json` | no | `mapping` |  | JSON HTTP request body. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
-| `validate_tls` | no | `boolean` | `True` | Validate TLS certificates for HTTPS requests. |
-| `expected_status` | no | `integer` | `200` | Expected HTTP status code. |
-| `status` | no | `integer` |  | Expected HTTP status code alias. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.status`: HTTP response status code.
-- `data.body`: Decoded response body.
-- `data.headers`: Response headers.
-
-Example:
-
-```yaml
-use: http.request
-with:
-  url: https://example.invalid/health
-```
-
-### `http.wait`
-
-Wait until an HTTP endpoint matches expected status and optional body content.
-
-- Remote session: `false`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `url` | yes | `string` |  | HTTP URL. |
-| `method` | no | `string` | `GET` | HTTP request method. |
-| `headers` | no | `mapping` |  | HTTP request headers. |
-| `body` | no | `string` |  | Raw HTTP request body. |
-| `json` | no | `mapping` |  | JSON HTTP request body. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
-| `validate_tls` | no | `boolean` | `True` | Validate TLS certificates for HTTPS requests. |
-| `expected_status` | no | `integer` | `200` | Expected HTTP status code. |
-| `status` | no | `integer` |  | Expected HTTP status code alias. |
-| `contains` | no | `string` |  | Required substring in stdout or HTTP response body. |
-| `interval` | no | `number` | `2` | Polling interval in seconds. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.status`: HTTP response status code.
-- `data.body`: Decoded response body.
-
-Example:
-
-```yaml
-use: http.wait
-with:
-  url: https://example.invalid/health
-```
-
 ## identity
 
 ### `identity.group.create`
@@ -3245,92 +3519,6 @@ Example:
 use: identity.user.unlock
 with:
   name: nginx
-```
-
-## local
-
-### `local.command`
-
-Run a local command on the controller host.
-
-- Remote session: `false`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `command` | yes | `string` |  | Command line to execute. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-| `env` | no | `mapping` |  | Environment variables for a local command. |
-| `shell` | no | `boolean` |  | Run a local command through the platform shell. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `success_rc` | no | `integer` | `0` | Return code considered successful. |
-| `changed` | no | `boolean` | `True` | Whether a successful command should be reported as changed. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: local.command
-with:
-  command: echo automax
-  changed: false
-```
-
-## mail
-
-### `mail.send`
-
-Send an email from the Automax controller through SMTP.
-
-- Remote session: `false`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `smtp_host` | yes | `string` |  | SMTP server host used by the Automax controller. |
-| `from` | yes | `string` |  | Source address for firewall rules. |
-| `to` | yes | `string` |  | Email recipient or non-empty recipient list. |
-| `subject` | yes | `string` |  | Email subject line. |
-| `smtp_port` | no | `integer` | `587` | SMTP server port. |
-| `starttls` | no | `boolean` | `True` | Use STARTTLS before SMTP authentication. |
-| `ssl` | no | `boolean` | `False` | Use implicit TLS for SMTP. |
-| `username` | no | `string` |  | SMTP username; prefer values rendered from secrets. |
-| `password` | no | `string` |  | Plaintext password; prefer password_hash when possible. |
-| `body` | no | `string` |  | Raw HTTP request body. |
-| `cc` | no | `list` |  | Email CC recipient or non-empty recipient list. |
-| `bcc` | no | `list` |  | Email BCC recipient or non-empty recipient list. |
-| `reply_to` | no | `string` |  | Email Reply-To address. |
-| `attachments` | no | `list` |  | Attachment path or attachment path list. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: mail.send
-with:
-  smtp_host: smtp.example.com
-  from: 10.0.0.0/8
-  to: any
-  subject: Automax notification
 ```
 
 ## network
@@ -4591,6 +4779,130 @@ with:
   sudo: true
 ```
 
+### `network.http.check`
+
+Assert HTTP status and optional body content.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `url` | yes | `string` |  | HTTP URL. |
+| `method` | no | `string` | `GET` | HTTP request method. |
+| `headers` | no | `mapping` |  | HTTP request headers. |
+| `body` | no | `string` |  | Raw HTTP request body. |
+| `json` | no | `mapping` |  | JSON HTTP request body. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
+| `validate_tls` | no | `boolean` | `True` | Validate TLS certificates for HTTPS requests. |
+| `expected_status` | no | `integer` | `200` | Expected HTTP status code. |
+| `status` | no | `integer` |  | Expected HTTP status code alias. |
+| `contains` | no | `string` |  | Required substring in stdout or HTTP response body. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.status`: HTTP response status code.
+- `data.body`: Decoded response body.
+
+Example:
+
+```yaml
+use: network.http.check
+with:
+  url: https://example.invalid/health
+```
+
+### `network.http.request`
+
+Perform an HTTP request from the controller.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `url` | yes | `string` |  | HTTP URL. |
+| `method` | no | `string` | `GET` | HTTP request method. |
+| `headers` | no | `mapping` |  | HTTP request headers. |
+| `body` | no | `string` |  | Raw HTTP request body. |
+| `json` | no | `mapping` |  | JSON HTTP request body. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
+| `validate_tls` | no | `boolean` | `True` | Validate TLS certificates for HTTPS requests. |
+| `expected_status` | no | `integer` | `200` | Expected HTTP status code. |
+| `status` | no | `integer` |  | Expected HTTP status code alias. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.status`: HTTP response status code.
+- `data.body`: Decoded response body.
+- `data.headers`: Response headers.
+
+Example:
+
+```yaml
+use: network.http.request
+with:
+  url: https://example.invalid/health
+```
+
+### `network.http.wait`
+
+Wait until an HTTP endpoint matches expected status and optional body content.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `url` | yes | `string` |  | HTTP URL. |
+| `method` | no | `string` | `GET` | HTTP request method. |
+| `headers` | no | `mapping` |  | HTTP request headers. |
+| `body` | no | `string` |  | Raw HTTP request body. |
+| `json` | no | `mapping` |  | JSON HTTP request body. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
+| `validate_tls` | no | `boolean` | `True` | Validate TLS certificates for HTTPS requests. |
+| `expected_status` | no | `integer` | `200` | Expected HTTP status code. |
+| `status` | no | `integer` |  | Expected HTTP status code alias. |
+| `contains` | no | `string` |  | Required substring in stdout or HTTP response body. |
+| `interval` | no | `number` | `2` | Polling interval in seconds. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.status`: HTTP response status code.
+- `data.body`: Decoded response body.
+
+Example:
+
+```yaml
+use: network.http.wait
+with:
+  url: https://example.invalid/health
+```
+
 ### `network.link.bond`
 
 Create or update a runtime and optional persistent Linux bonding interface.
@@ -4951,6 +5263,54 @@ Example:
 use: network.route.remove
 with:
   dest: /tmp/dest
+```
+
+## notify
+
+### `notify.mail.send`
+
+Send an email from the Automax controller through SMTP.
+
+- Remote session: `false`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `smtp_host` | yes | `string` |  | SMTP server host used by the Automax controller. |
+| `from` | yes | `string` |  | Source address for firewall rules. |
+| `to` | yes | `string` |  | Email recipient or non-empty recipient list. |
+| `subject` | yes | `string` |  | Email subject line. |
+| `smtp_port` | no | `integer` | `587` | SMTP server port. |
+| `starttls` | no | `boolean` | `True` | Use STARTTLS before SMTP authentication. |
+| `ssl` | no | `boolean` | `False` | Use implicit TLS for SMTP. |
+| `username` | no | `string` |  | SMTP username; prefer values rendered from secrets. |
+| `password` | no | `string` |  | Plaintext password; prefer password_hash when possible. |
+| `body` | no | `string` |  | Raw HTTP request body. |
+| `cc` | no | `list` |  | Email CC recipient or non-empty recipient list. |
+| `bcc` | no | `list` |  | Email BCC recipient or non-empty recipient list. |
+| `reply_to` | no | `string` |  | Email Reply-To address. |
+| `attachments` | no | `list` |  | Attachment path or attachment path list. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: notify.mail.send
+with:
+  smtp_host: smtp.example.com
+  from: 10.0.0.0/8
+  to: any
+  subject: Automax notification
 ```
 
 ## os
@@ -5332,7 +5692,10 @@ Example:
 ```yaml
 use: os.facts
 with:
-  sudo: true
+  subset:
+    - os
+    - network
+    - services
 ```
 
 ### `os.hostname.check`
@@ -7073,75 +7436,6 @@ Example:
 use: os.tool.version_check
 with:
   name: nginx
-```
-
-## plugin
-
-### `plugin.requirements`
-
-Report remote tools required by one or more plugins without connecting to a target.
-
-- Remote session: `false`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `plugin` | no | `string` |  | Plugin name selected for requirements inspection. |
-| `plugins` | no | `list` |  | Plugin names selected for requirements inspection. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: plugin.requirements
-```
-
-## remote
-
-### `remote.command`
-
-Run a command on the current remote target via SSH.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `command` | yes | `string` |  | Command line to execute. |
-| `cwd` | no | `path` |  | Remote or local working directory for this operation. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `pty` | no | `boolean` | `False` | Request a pseudo-terminal for remote.command. |
-| `stdin` | no | `string` |  | Text written to remote command standard input. |
-| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
-| `success_rc` | no | `integer` | `0` | Return code considered successful. |
-| `changed` | no | `boolean` | `True` | Whether a successful command should be reported as changed. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: remote.command
-with:
-  command: systemctl is-active sshd
-  success_rc: 0
 ```
 
 ## security
@@ -12402,6 +12696,36 @@ with:
   service: sshd
 ```
 
+### `system.service.facts`
+
+Gather remote systemd service facts.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.services`: systemd service facts.
+
+Example:
+
+```yaml
+use: system.service.facts
+with:
+  sudo: true
+```
+
 ### `system.service.mask`
 
 Mask a remote systemd service.
@@ -12798,224 +13122,4 @@ with:
   name: nginx
   content: managed by automax
 
-```
-
-## udev
-
-### `udev.facts`
-
-Read udev properties for a device path.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: udev.facts
-with:
-  device: /dev/sdb
-```
-
-### `udev.reload`
-
-Reload udev rules.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: udev.reload
-with:
-  sudo: true
-```
-
-### `udev.rule`
-
-Install a udev rules file from content or structured rule entries.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `content` | no | `string` |  | Text content to write. |
-| `rules` | no | `list` |  | Structured rule entries. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: udev.rule
-with:
-  path: /tmp/automax-demo
-```
-
-### `udev.settle`
-
-Wait for the udev event queue to settle.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: udev.settle
-with:
-  timeout: 60
-```
-
-### `udev.test`
-
-Run udevadm test for a device sysfs path.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: udev.test
-with:
-  device: /dev/sdb
-```
-
-### `udev.trigger`
-
-Trigger udev events and optionally wait for settle.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `subsystem` | no | `string` |  | udev subsystem filter. |
-| `action` | no | `string` |  | udev action to trigger. |
-| `udev_settle` | no | `boolean` | `True` | Wait for udev events to settle after the operation. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: udev.trigger
-with:
-  subsystem: block
-  action: change
-```
-
-### `udev.validate`
-
-Validate udev rules file syntax with udevadm test where possible.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `file` | yes | `path` |  | Remote configuration file path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: udev.validate
-with:
-  file: /etc/sysctl.d/99-automax.conf
 ```

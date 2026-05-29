@@ -8,13 +8,13 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 HTTP plugins run from the controller. They are useful for health checks, API
 calls and deployment gates.
 
-## `http.request`
+## `network.http.request`
 
 Runs an HTTP request and returns status, body and headers.
 
 ```yaml
 - id: call_api
-  use: http.request
+  use: network.http.request
   with:
     method: POST
     url: "https://api.example.com/deploy"
@@ -28,13 +28,13 @@ Runs an HTTP request and returns status, body and headers.
     api_status: data.status
 ```
 
-## `http.assert`
+## `network.http.check`
 
 Fails immediately unless the HTTP response matches the expected condition.
 
 ```yaml
 - id: assert_health
-  use: http.assert
+  use: network.http.check
   with:
     url: "http://{{ server.host }}:8080/health"
     status: 200
@@ -42,13 +42,13 @@ Fails immediately unless the HTTP response matches the expected condition.
     timeout: 10
 ```
 
-## `http.wait`
+## `network.http.wait`
 
 Polls until the HTTP endpoint matches or timeout expires.
 
 ```yaml
 - id: wait_health
-  use: http.wait
+  use: network.http.wait
   with:
     url: "http://{{ server.host }}:8080/health"
     status: 200

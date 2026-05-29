@@ -20,11 +20,11 @@ def _list(value: Any, name: str) -> list[str]:
         return [value]
     if isinstance(value, list) and value:
         return [str(item) for item in value]
-    raise PluginValidationError(f"mail.send {name} must be a string or non-empty list")
+    raise PluginValidationError(f"notify.mail.send {name} must be a string or non-empty list")
 
 
 class MailSendPlugin(BasePlugin):
-    name = "mail.send"
+    name = "notify.mail.send"
     description = "Send an email from the Automax controller through SMTP."
     required_params = ("smtp_host", "from", "to", "subject")
     optional_params = ("smtp_port", "starttls", "ssl", "username", "password", "body", "cc", "bcc", "reply_to", "attachments", "timeout")
@@ -42,7 +42,7 @@ class MailSendPlugin(BasePlugin):
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         self.validate(params)
-        return [{"path": "mail.send", "kind": "mail-plan", "diff": f"--- mail.send (current)\n+++ mail.send (desired)\n@@\n+ {self._summary(params)}\n"}]
+        return [{"path": "notify.mail.send", "kind": "mail-plan", "diff": f"--- notify.mail.send (current)\n+++ notify.mail.send (desired)\n@@\n+ {self._summary(params)}\n"}]
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)

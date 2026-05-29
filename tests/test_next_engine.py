@@ -46,7 +46,7 @@ tasks:
       - id: local
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "echo {{ vars.message }} {{ secrets.demo }}"
 """,
@@ -89,7 +89,7 @@ tasks:
       - id: local
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "printf ok"
             register:
@@ -141,7 +141,7 @@ tasks:
         substeps:
           - id: ss1
             tags: [safe]
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -197,12 +197,12 @@ tasks:
         substeps:
           - id: keep
             tags: [deploy]
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
           - id: skip
             tags: [dangerous]
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -247,7 +247,7 @@ tasks:
       - id: s1
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "printf {{ server.name }}"
 """,
@@ -291,13 +291,13 @@ tasks:
       - id: fail
         substeps:
           - id: bad
-            use: local.command
+            use: command.local.run
             with:
               command: "false"
       - id: after
         substeps:
           - id: write_marker
-            use: local.command
+            use: command.local.run
             with:
               command: "printf ok > {marker}"
 """,
@@ -648,9 +648,9 @@ def test_transfer_plugins_are_registered():
 def test_http_plugins_are_registered():
     names = AutomaxEngine().plugin_registry.names()
 
-    assert "http.request" in names
-    assert "http.assert" in names
-    assert "http.wait" in names
+    assert "network.http.request" in names
+    assert "network.http.check" in names
+    assert "network.http.wait" in names
     assert "run_http_request" not in names
 
 
@@ -740,7 +740,7 @@ def test_fs_template_supports_explicit_values():
 
 
 def test_database_health_plugin_runs_sqlite_read_only_checks(tmp_path: Path):
-    plugin = AutomaxEngine().plugin_registry.get("db.health")
+    plugin = AutomaxEngine().plugin_registry.get("database.sqlite.check")
     context = _sysops_preview_context()
     database = tmp_path / "health.sqlite"
     sqlite3 = pytest.importorskip("sqlite3")
@@ -767,11 +767,11 @@ def test_database_plugins_are_registered():
     names = AutomaxEngine().plugin_registry.names()
 
     for name in (
-        "db.health",
-        "db.sqlite.query",
-        "db.postgres.query",
-        "db.mysql.query",
-        "db.oracle.query",
+        "database.sqlite.check",
+        "database.sqlite.query",
+        "database.postgres.query",
+        "database.mysql.query",
+        "database.oracle.query",
     ):
         assert name in names
 
@@ -782,7 +782,7 @@ def test_database_plugins_are_registered():
 def test_sqlite_database_plugin_executes_transactional_statements(tmp_path: Path):
     from automax.core.models import ExecutionContext, Target
 
-    plugin = AutomaxEngine().plugin_registry.get("db.sqlite.query")
+    plugin = AutomaxEngine().plugin_registry.get("database.sqlite.query")
     context = ExecutionContext(
         run_id="test-run",
         dry_run=False,
@@ -842,7 +842,7 @@ tasks:
       - id: sqlite
         substeps:
           - id: sqlite_query
-            use: db.sqlite.query
+            use: database.sqlite.query
             with:
               connection:
                 path: /tmp/automax.sqlite
@@ -851,7 +851,7 @@ tasks:
       - id: optional_drivers
         substeps:
           - id: postgres_query
-            use: db.postgres.query
+            use: database.postgres.query
             with:
               connection:
                 database: app
@@ -860,7 +860,7 @@ tasks:
                 password: "{{ secrets.db_password | default('example') }}"
               query: "SELECT 1"
           - id: mysql_query
-            use: db.mysql.query
+            use: database.mysql.query
             with:
               connection:
                 database: app
@@ -869,7 +869,7 @@ tasks:
                 password: "{{ secrets.db_password | default('example') }}"
               query: "SELECT 1"
           - id: oracle_query
-            use: db.oracle.query
+            use: database.oracle.query
             with:
               connection:
                 dsn: localhost/FREEPDB1
@@ -910,15 +910,15 @@ tasks:
       - id: local
         substeps:
           - id: good
-            use: local.command
+            use: command.local.run
             with:
               command: "printf x >> {good_marker}"
           - id: flaky
-            use: local.command
+            use: command.local.run
             with:
               command: "test -f {trigger}"
           - id: after
-            use: local.command
+            use: command.local.run
             with:
               command: "printf x >> {after_marker}"
 """,
@@ -967,17 +967,17 @@ tasks:
       - id: local
         substeps:
           - id: good
-            use: local.command
+            use: command.local.run
             with:
               command: "printf x >> {good_marker}"
           - id: flaky
-            use: local.command
+            use: command.local.run
             with:
               command: "printf x >> {bad_marker}; test -f {trigger}"
       - id: after
         substeps:
           - id: after
-            use: local.command
+            use: command.local.run
             with:
               command: "printf x >> {after_marker}"
 """,
@@ -1037,7 +1037,7 @@ tasks:
       - id: s1
         substeps:
           - id: cmd
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -1083,7 +1083,7 @@ tasks:
       - id: s1
         substeps:
           - id: cmd
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
               timeout: 3
@@ -1133,7 +1133,7 @@ tasks:
       - id: s1
         substeps:
           - id: cmd
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -1176,7 +1176,7 @@ tasks:
       - id: s1
         substeps:
           - id: cmd
-            use: remote.command
+            use: command.remote.run
             with:
               command: "true"
 """,
@@ -1248,7 +1248,7 @@ tasks:
       - id: local
         substeps:
           - id: command
-            use: local.command
+            use: command.local.run
             with:
               command: "printf artifact-secret"
             artifacts:
@@ -1311,7 +1311,7 @@ tasks:
       - id: local
         substeps:
           - id: command
-            use: local.command
+            use: command.local.run
             with:
               command: "printf ok"
             artifacts:
@@ -1346,7 +1346,7 @@ tasks:
       - id: local
         substeps:
           - id: ok
-            use: local.command
+            use: command.local.run
             with:
               command: "printf ok"
 """,
@@ -1389,11 +1389,11 @@ tasks:
       - id: local
         substeps:
           - id: good
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
           - id: bad
-            use: local.command
+            use: command.local.run
             with:
               command: "false"
 """,
@@ -1440,7 +1440,7 @@ tasks:
       - id: local
         substeps:
           - id: bad
-            use: local.command
+            use: command.local.run
             with:
               command: "printf 'visible-out\n'; printf 'visible-err\n' >&2; exit 7"
 """,
@@ -1478,7 +1478,7 @@ tasks:
       - id: local
         substeps:
           - id: ok
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -1644,7 +1644,7 @@ tasks:
       - id: local
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
               typo: "bad"
@@ -1742,7 +1742,7 @@ tasks:
         substeps:
           - id: echo
             tags: [safe]
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -1757,7 +1757,7 @@ tasks:
     assert result.exit_code == 0, result.output
     payload = json.loads(result.output)
     assert payload["nodes"][0]["node_id"] == "task.smoke:step.local:substep.echo"
-    assert payload["nodes"][0]["plugin"] == "local.command"
+    assert payload["nodes"][0]["plugin"] == "command.local.run"
     assert payload["nodes"][0]["tags"] == ["safe"]
 
 
@@ -1777,7 +1777,7 @@ tasks:
       - id: local
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "printf ok > {marker}"
 """,
@@ -1850,7 +1850,7 @@ tasks:
       - id: s1
         substeps:
           - id: ss1
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -1898,7 +1898,7 @@ tasks:
       - id: s1
         substeps:
           - id: ss1
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -1944,7 +1944,7 @@ tasks:
       - id: s1
         substeps:
           - id: ss1
-            use: local.command
+            use: command.local.run
             with:
               command: "printf '{{ secrets.token }}'"
 """,
@@ -2002,7 +2002,7 @@ tasks:
       - id: prepare
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -2032,7 +2032,7 @@ tasks:
       - id: prepare
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -2042,7 +2042,7 @@ tasks:
     mermaid = CliRunner().invoke(cli, ["graph", "--job", str(job), "--inventory", str(inventory)])
     assert mermaid.exit_code == 0, mermaid.output
     assert "flowchart TD" in mermaid.output
-    assert "local.command" in mermaid.output
+    assert "command.local.run" in mermaid.output
 
     svg_path = tmp_path / "job.svg"
     svg = CliRunner().invoke(
@@ -2068,7 +2068,7 @@ tasks:
       - id: prepare
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -2104,7 +2104,7 @@ tasks:
       - id: local
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -2140,7 +2140,7 @@ tasks:
       - id: local
         substeps:
           - id: flaky
-            use: local.command
+            use: command.local.run
             retry:
               attempts: 3
               delay: 0
@@ -2182,7 +2182,7 @@ tasks:
       - id: local
         substeps:
           - id: no_retry
-            use: local.command
+            use: command.local.run
             retry:
               attempts: 3
               delay: 0
@@ -2218,7 +2218,7 @@ tasks:
       - id: cluvfy
         substeps:
           - id: runcluvfy
-            use: local.command
+            use: command.local.run
             with:
               command:
                 - {sys.executable!r}
@@ -2233,7 +2233,7 @@ tasks:
               unmatched: fail
               acceptedStatus: warning
           - id: after_warning
-            use: local.command
+            use: command.local.run
             with:
               command:
                 - {sys.executable!r}
@@ -2276,7 +2276,7 @@ tasks:
       - id: cluvfy
         substeps:
           - id: runcluvfy
-            use: local.command
+            use: command.local.run
             with:
               command:
                 - {sys.executable!r}
@@ -2288,7 +2288,7 @@ tasks:
                 - pattern: "PRVF-5436.*NTP"
               unmatched: fail
           - id: should_not_run
-            use: local.command
+            use: command.local.run
             with:
               command:
                 - {sys.executable!r}
@@ -2334,7 +2334,7 @@ tasks:
       - id: s1
         substeps:
           - id: ss1
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -2362,12 +2362,12 @@ tasks:
         substeps:
           - id: keep
             tags: [deploy]
-            use: local.command
+            use: command.local.run
             with:
               command: "printf {{ vars.message }}"
           - id: skip
             tags: [skipme]
-            use: local.command
+            use: command.local.run
             with:
               command: "false"
 """,
@@ -2387,7 +2387,7 @@ tasks:
 
     assert resolved.job["metadata"]["name"] == "operator-helpers"
     assert [item["node_id"] for item in resolved.plan] == ["task.t1:step.s1:substep.keep"]
-    assert rendered[0]["plugin_name"] == "local.command"
+    assert rendered[0]["plugin_name"] == "command.local.run"
     assert rendered[0]["params"]["command"] == "printf hello"
 
 
@@ -2407,12 +2407,12 @@ tasks:
         substeps:
           - id: keep
             tags: [deploy]
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
           - id: skip
             tags: [skipme]
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -2466,7 +2466,7 @@ tasks:
       - id: s1
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -2515,12 +2515,12 @@ tasks:
         substeps:
           - id: selected
             tags: [deploy]
-            use: local.command
+            use: command.local.run
             with:
               command: "printf {{ secrets.deploy_token }}"
           - id: skipped
             tags: [skipme]
-            use: local.command
+            use: command.local.run
             with:
               command: "printf {{ secrets.skipped_token }}"
 """,
@@ -2585,7 +2585,7 @@ tasks:
       - id: s1
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "printf {{ secrets.missing_token }}"
 """,
@@ -2630,7 +2630,7 @@ tasks:
       - id: s1
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "printf {{ secrets.token }}"
 """,
@@ -2657,7 +2657,7 @@ tasks:
 
     assert result.exit_code == 0, result.output
     assert "Job: check-preview" in result.output
-    assert "CHECK controller task.t1:step.s1:substep.echo local.command" in result.output
+    assert "CHECK controller task.t1:step.s1:substep.echo command.local.run" in result.output
     assert "super-secret" not in result.output
     assert "***" in result.output
 
@@ -2677,7 +2677,7 @@ tasks:
       - id: s1
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "printf ok"
 """,
@@ -2727,7 +2727,7 @@ tasks:
       - id: s1
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "printf ok"
 """,
@@ -2752,7 +2752,7 @@ tasks:
 
     assert result.exit_code == 0, result.output
     assert "Check mode preview" in result.output
-    assert "CHECK controller task.t1:step.s1:substep.echo local.command" in result.output
+    assert "CHECK controller task.t1:step.s1:substep.echo command.local.run" in result.output
 
 
 def test_plan_diff_prints_fs_write_preview_with_masked_secrets(tmp_path: Path):
@@ -2857,7 +2857,7 @@ tasks:
       - id: s1
         substeps:
           - id: local
-            use: local.command
+            use: command.local.run
             with:
               command: "printf {{ secrets.token }}"
           - id: cleanup
@@ -3006,7 +3006,7 @@ tasks:
       - id: render
         substeps:
           - id: command
-            use: local.command
+            use: command.local.run
             with:
               command: "printf {{ vars.app_port }} {{ vars.role }} {{ secrets.token }}"
 """,
@@ -3046,7 +3046,7 @@ servers:
     assert "app_port: \"9090\"" in result.output
     assert "role: \"frontend\"" in result.output
     assert "token: ***" in result.output
-    assert "task.deploy:step.render:substep.command local.command" in result.output
+    assert "task.deploy:step.render:substep.command command.local.run" in result.output
     assert "super-secret" not in result.output
 
 
@@ -3065,7 +3065,7 @@ tasks:
       - id: render
         substeps:
           - id: command
-            use: local.command
+            use: command.local.run
             with:
               command: "printf {{ secrets.token }}"
 """,
@@ -3360,10 +3360,10 @@ def test_storage_and_linux_ops_plugins_are_registered():
         "storage.block.partition.apply",
         "storage.block.signatures.wipe",
         "storage.fs.create",
-        "udev.rule",
-        "udev.reload",
-        "udev.trigger",
-        "udev.settle",
+        "device.udev.rule.set",
+        "device.udev.reload",
+        "device.udev.trigger",
+        "device.udev.settle",
         "storage.multipath.status",
         "storage.multipath.reload",
         "storage.multipath.remove",
@@ -3640,7 +3640,7 @@ def test_health_namespace_is_not_public_plugin_surface():
     names = AutomaxEngine().plugin_registry.names()
 
     assert not any(name.startswith("health.") for name in names)
-    assert "http.request" in names
+    assert "network.http.request" in names
     assert "network.connectivity.port_check" in names
     assert "system.process.check" in names
     assert "system.process.count_check" in names
@@ -3719,7 +3719,7 @@ def test_log_and_journal_plugins_render_queries_and_exports():
 def test_mail_send_is_controller_side_and_masks_password_in_renderers():
     from automax.plugins.mail import MailSendPlugin
 
-    assert "mail.send" in AutomaxEngine().plugin_registry.names()
+    assert "notify.mail.send" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     params = {
         "smtp_host": "smtp.example.com",
@@ -4368,14 +4368,14 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         if name not in params:
             params[name] = _audit_sample_value_for_schema(name, plugin.parameter_schema.get(name, {}))
     # Plugin-specific safe corrections.
-    if plugin.name.startswith("db."):
+    if plugin.name.startswith("database."):
         params.setdefault("connection", {"path": "/tmp/automax.sqlite"})
-    if plugin.name == "db.health":
+    if plugin.name == "database.sqlite.check":
         params["engine"] = "sqlite"
         params["connection"] = {"path": "/tmp/automax.sqlite"}
     if plugin.name in {"storage.lvm.lv.remove", "storage.lvm.vg.remove", "storage.lvm.pv.remove", "data.restore.apply", "data.backup.prune", "data.backup.rotate", "network.firewall.iptables.restore"}:
         params["confirm"] = True
-    if plugin.name == "plugin.requirements":
+    if plugin.name == "automax.plugin.requirements":
         params["plugin"] = "data.transfer.rsync"
     if plugin.name == "fs.dir.remove":
         params["path"] = "/tmp/automax-demo-dir"
@@ -4392,7 +4392,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "system.process.check":
         params.pop("pid", None)
         params["pattern"] = "automax-demo"
-    if plugin.name == "mail.send":
+    if plugin.name == "notify.mail.send":
         params["from"] = "automax@example.invalid"
         params["to"] = ["ops@example.invalid"]
     if plugin.name == "system.cron.entry.add":
@@ -4806,7 +4806,7 @@ def test_backup_completeness_plugins_render_manual_commands():
     except PluginValidationError as exc:
         assert "confirm: true" in str(exc)
     else:
-        raise AssertionError("backup.prune must require confirm=true")
+        raise AssertionError("data.backup.prune must require confirm=true")
 
     prune = registry.get("data.backup.prune").manual_commands({"path": "/var/backups", "keep": 7, "older_than_days": 30, "patterns": ["*.tar.gz"], "confirm": True, "sudo": False}, context)[0]
     assert "find /var/backups" in prune
@@ -4949,7 +4949,7 @@ tasks:
       - id: pipe
         substeps:
           - id: tee
-            use: remote.command
+            use: command.remote.run
             with:
               command: "printf data | sudo -n tee /tmp/automax-demo >/dev/null"
 """,
@@ -5063,7 +5063,7 @@ def test_capability_and_redaction_plugins_render_safe_previews():
     assert registry.get("os.tool.exists").manual_commands({"name": "rsync"}, context) == ["command -v rsync"]
     assert "grep -F" in registry.get("os.tool.version_check").manual_commands({"name": "rsync", "contains": "rsync"}, context)[0]
     assert "command -v setfacl" in registry.get("os.capability.check").manual_commands({"tools": ["setfacl"]}, context)[0]
-    assert registry.get("plugin.requirements").execute({"plugin": "data.transfer.rsync"}, context).data["requirements"]["data.transfer.rsync"] == ["rsync"]
+    assert registry.get("automax.plugin.requirements").execute({"plugin": "data.transfer.rsync"}, context).data["requirements"]["data.transfer.rsync"] == ["rsync"]
 
     redacted = registry.get("security.secret.scan_output").execute({"text": "token=super-secret-token password=abc"}, context)
     assert redacted.ok

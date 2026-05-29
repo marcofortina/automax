@@ -14,15 +14,8 @@ tasks:
   steps:
   - id: catalog
     substeps:
-    - id: facts_gather
-      use: facts.gather
-      with:
-        subset:
-        - os
-        - network
-        - services
     - id: facts_network
-      use: facts.network
+      use: network.link.facts
       with:
         sudo: true
     - id: os_arch_check
@@ -39,6 +32,6 @@ tasks:
         manager: auto
         sudo: true
     - id: facts_services
-      use: facts.services
+      use: system.service.facts
       with:
         sudo: true

@@ -15,14 +15,14 @@ from automax.plugins.db.base import DatabaseQueryPlugin, rows_from_cursor_descri
 class DbPostgresQueryPlugin(DatabaseQueryPlugin):
     """Run transactional PostgreSQL statements using optional psycopg."""
 
-    name = "db.postgres.query"
+    name = "database.postgres.query"
     description = "Run PostgreSQL queries or statements from the controller."
 
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         connection = params.get("connection", {}) or {}
         if not connection.get("dsn") and not connection.get("database"):
-            raise PluginValidationError("db.postgres.query requires connection.dsn or connection.database")
+            raise PluginValidationError("database.postgres.query requires connection.dsn or connection.database")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -64,4 +64,4 @@ class DbPostgresQueryPlugin(DatabaseQueryPlugin):
                     conn.rollback()
             return self._format_result(rows=rows, rowcount=rowcount, output=output, statements=statements)
         except Exception as exc:
-            return PluginResult.failure(message="db.postgres.query failed", stderr=str(exc))
+            return PluginResult.failure(message="database.postgres.query failed", stderr=str(exc))

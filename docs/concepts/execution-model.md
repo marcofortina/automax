@@ -49,7 +49,7 @@ Substeps can register outputs for later use:
 
 ```yaml
 - id: read_version
-  use: remote.command
+  use: command.remote.run
   with:
     command: cat /opt/app/VERSION
   register:

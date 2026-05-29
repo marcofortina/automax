@@ -44,8 +44,8 @@ backup is disabled explicitly.
 
 ## UDEV and multipath
 
-Use `udev.rule`, `udev.reload`, `udev.trigger`, and `udev.settle` to make stable
-device names explicit and repeatable. `udev.rule` supports structured rules and
+Use `device.udev.rule.set`, `device.udev.reload`, `device.udev.trigger`, and `device.udev.settle` to make stable
+device names explicit and repeatable. `device.udev.rule.set` supports structured rules and
 backs up the previous rules file by default.
 
 Use `storage.multipath.status` before storage-dependent operations to verify expected path counts, `storage.multipath.add` when the job owns a new WWID binding, and `storage.multipath.reload` or `storage.multipath.remove` when the job explicitly owns that action.
@@ -113,7 +113,7 @@ symlinked resolver files are not overwritten silently.
 ## Runtime service checks
 
 Use `network.connectivity.port_check` for target-side TCP/UDP connectivity checks,
-`http.request` for controller-side HTTP probes, and the `system.process.*` family for
+`network.http.request` for controller-side HTTP probes, and the `system.process.*` family for
 process lifecycle checks. The former service-health wrapper namespace is
 intentionally not part of the public plugin surface.
 
@@ -150,7 +150,7 @@ macros are read-oriented and document why no file diff is emitted.
 
 ## Controller-side mail notifications
 
-Use `mail.send` to send SMTP notifications from the Automax controller. It does
+Use `notify.mail.send` to send SMTP notifications from the Automax controller. It does
 not open a remote SSH session, it never renders SMTP passwords in manual command
 output, and attachments are read from local controller paths.
 
@@ -169,7 +169,7 @@ file-backed operations emit deterministic unified diffs or structured state
 plans, while runtime-only/read-only operations emit explicit reasons. Examples
 include fstab plans for `storage.swap.add` / `storage.swap.remove`, PAM append plans for
 `security.pam.limits`, hostname and download plans, and runtime explanations for
-`storage.block.scan`, `udev.reload`, `storage.multipath.reload` and `system.reboot`.
+`storage.block.scan`, `device.udev.reload`, `storage.multipath.reload` and `system.reboot`.
 
 ## Enterprise system operations
 
@@ -227,8 +227,8 @@ readback without treating mismatched state as a failed assertion.
 
 ## Udev, time and account readback
 
-Udev validation/readback plugins are `udev.validate`, `udev.test` and
-`udev.facts`. Use them before and after installing udev rules.
+Udev validation/readback plugins are `device.device.udev.rule.set.validate`, `device.udev.device.test` and
+`device.udev.device.facts`. Use them before and after installing udev rules.
 
 Time synchronization helpers include `os.time.status`,
 `os.time.timezone.set`, `os.time.ntp.set` and `os.time.chrony.tracking.check`.

@@ -173,7 +173,7 @@ print(json.dumps({'packages': packages, 'manager': manager}, sort_keys=True))
 
 
 class FactsServicesPlugin(BasePlugin):
-    name = "facts.services"
+    name = "system.service.facts"
     description = "Gather remote systemd service facts."
     optional_params = ("sudo",)
     opens_remote_session = True
@@ -190,7 +190,7 @@ for line in raw.splitlines():
         services.append({'unit': parts[0], 'load': parts[1], 'active': parts[2], 'sub': parts[3], 'description': parts[4] if len(parts) > 4 else ''})
 print(json.dumps({'services': services}, sort_keys=True))
 '''
-        return _run_json(context, heredoc_to_stdin("python3 -", script, prefix="AUTOMAX_PY"), "facts.services failed")
+        return _run_json(context, heredoc_to_stdin("python3 -", script, prefix="AUTOMAX_PY"), "system.service.facts failed")
 
 
 class FactsGatherPlugin(BasePlugin):

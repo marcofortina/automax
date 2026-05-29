@@ -17,7 +17,7 @@ from automax.plugins.db.base import DatabaseQueryPlugin
 class DbSqliteQueryPlugin(DatabaseQueryPlugin):
     """Run transactional SQLite statements from the controller."""
 
-    name = "db.sqlite.query"
+    name = "database.sqlite.query"
     description = "Run SQLite queries or statements from the controller."
     optional_params = DatabaseQueryPlugin.optional_params + ("path", "database")
 
@@ -26,7 +26,7 @@ class DbSqliteQueryPlugin(DatabaseQueryPlugin):
         connection = params.get("connection", {}) or {}
         database = params.get("path") or params.get("database") or connection.get("path") or connection.get("database")
         if not database:
-            raise PluginValidationError("db.sqlite.query requires path/database or connection.path")
+            raise PluginValidationError("database.sqlite.query requires path/database or connection.path")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -64,6 +64,6 @@ class DbSqliteQueryPlugin(DatabaseQueryPlugin):
             return self._format_result(rows=rows, rowcount=rowcount, output=output, statements=statements)
         except Exception as exc:
             conn.rollback()
-            return PluginResult.failure(message="db.sqlite.query failed", stderr=str(exc))
+            return PluginResult.failure(message="database.sqlite.query failed", stderr=str(exc))
         finally:
             conn.close()

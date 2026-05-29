@@ -192,7 +192,7 @@ class AuditdBacklogAssertPlugin(ReadOnlyCommandPlugin):
 
 # udev
 class UdevValidatePlugin(ReadOnlyCommandPlugin):
-    name = "udev.validate"
+    name = "device.udev.rule.validate"
     description = "Validate udev rules file syntax with udevadm test where possible."
     required_params = ("file",)
     optional_params = ("sudo",)
@@ -203,7 +203,7 @@ class UdevValidatePlugin(ReadOnlyCommandPlugin):
 
 
 class UdevTestPlugin(ReadOnlyCommandPlugin):
-    name = "udev.test"
+    name = "device.udev.device.test"
     description = "Run udevadm test for a device sysfs path."
     required_params = ("device",)
     optional_params = ("sudo",)
@@ -214,7 +214,7 @@ class UdevTestPlugin(ReadOnlyCommandPlugin):
 
 
 class UdevFactsPlugin(ReadOnlyCommandPlugin):
-    name = "udev.facts"
+    name = "device.udev.device.facts"
     description = "Read udev properties for a device path."
     required_params = ("device",)
     optional_params = ("sudo",)

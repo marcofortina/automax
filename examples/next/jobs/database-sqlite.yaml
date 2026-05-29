@@ -14,7 +14,7 @@ tasks:
       - id: query
         substeps:
           - id: create_table
-            use: db.sqlite.query
+            use: database.sqlite.query
             with:
               connection:
                 path: "{{ vars.sqlite_path }}"
@@ -23,7 +23,7 @@ tasks:
                 - "INSERT INTO demo(name) VALUES ('automax')"
               output: none
           - id: read_rows
-            use: db.sqlite.query
+            use: database.sqlite.query
             with:
               connection:
                 path: "{{ vars.sqlite_path }}"

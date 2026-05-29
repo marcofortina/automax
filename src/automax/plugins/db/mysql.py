@@ -15,14 +15,14 @@ from automax.plugins.db.base import DatabaseQueryPlugin
 class DbMysqlQueryPlugin(DatabaseQueryPlugin):
     """Run transactional MySQL/MariaDB statements using optional PyMySQL."""
 
-    name = "db.mysql.query"
+    name = "database.mysql.query"
     description = "Run MySQL/MariaDB queries or statements from the controller."
 
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         connection = params.get("connection", {}) or {}
         if not connection.get("database"):
-            raise PluginValidationError("db.mysql.query requires connection.database")
+            raise PluginValidationError("database.mysql.query requires connection.database")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -67,7 +67,7 @@ class DbMysqlQueryPlugin(DatabaseQueryPlugin):
         except Exception as exc:
             if conn is not None:
                 conn.rollback()
-            return PluginResult.failure(message="db.mysql.query failed", stderr=str(exc))
+            return PluginResult.failure(message="database.mysql.query failed", stderr=str(exc))
         finally:
             if conn is not None:
                 conn.close()

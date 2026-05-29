@@ -15,14 +15,14 @@ from automax.plugins.db.base import DatabaseQueryPlugin, rows_from_cursor_descri
 class DbOracleQueryPlugin(DatabaseQueryPlugin):
     """Run transactional Oracle statements using optional python-oracledb."""
 
-    name = "db.oracle.query"
+    name = "database.oracle.query"
     description = "Run Oracle queries or statements from the controller."
 
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         connection = params.get("connection", {}) or {}
         if not connection.get("dsn"):
-            raise PluginValidationError("db.oracle.query requires connection.dsn")
+            raise PluginValidationError("database.oracle.query requires connection.dsn")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -62,7 +62,7 @@ class DbOracleQueryPlugin(DatabaseQueryPlugin):
         except Exception as exc:
             if conn is not None:
                 conn.rollback()
-            return PluginResult.failure(message="db.oracle.query failed", stderr=str(exc))
+            return PluginResult.failure(message="database.oracle.query failed", stderr=str(exc))
         finally:
             if conn is not None:
                 conn.close()

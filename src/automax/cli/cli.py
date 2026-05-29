@@ -949,7 +949,7 @@ tasks:
       - id: local
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: \"printf 'hello from automax\\n'\"
 """,

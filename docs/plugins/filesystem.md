@@ -272,7 +272,7 @@ step.
     path: /opt/myapp/current
 
 - id: run_from_current
-  use: remote.command
+  use: command.remote.run
   with:
     command: "./bin/myapp --version"
 ```
@@ -283,19 +283,19 @@ remote commands are prefixed with `cd <path> &&` where supported.
 
 ## Operational backups
 
-`backup.file` creates an explicit remote backup copy and checksum before risky
-maintenance operations. `backup.directory` creates compressed tar archives with optional checksums. Backup operations are intentionally separate from file
+`data.backup.file.create` creates an explicit remote backup copy and checksum before risky
+maintenance operations. `data.backup.directory.create` creates compressed tar archives with optional checksums. Backup operations are intentionally separate from file
 mutation plugins so operators can preview and run them as dedicated steps.
 
-`backup.manifest` creates a deterministic inventory for backup artifacts, with
-optional per-file checksums. `backup.prune` removes old artifacts by age or
-retention count and requires `confirm: true`. `backup.rotate` rotates one backup
+`data.backup.manifest.create` creates a deterministic inventory for backup artifacts, with
+optional per-file checksums. `data.backup.prune` removes old artifacts by age or
+retention count and requires `confirm: true`. `data.backup.rotate` rotates one backup
 artifact through numbered generations and also requires `confirm: true`.
 
-`backup.restore` restores an explicit file or archive backup and requires `confirm: true`.
-Use `backup.restore_preview` before restore to inspect what would be restored,
-and `backup.restore_verify` after restore to verify restored content against the
-backup artifact. `backup.verify` validates checksum sidecars as a read-only
+`data.restore.apply` restores an explicit file or archive backup and requires `confirm: true`.
+Use `data.restore.preview` before restore to inspect what would be restored,
+and `data.restore.verify` after restore to verify restored content against the
+backup artifact. `data.backup.verify` validates checksum sidecars as a read-only
 post-backup or pre-restore gate.
 
 `storage.mount.bind` manages runtime bind mounts and optional `/etc/fstab` persistence.

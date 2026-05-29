@@ -42,7 +42,7 @@ AUTOMAX_SSH_COMMAND_TIMEOUT=60
 The default smoke is non-destructive and should be safe for an unprivileged
 remote user. It covers:
 
-- `remote.command`
+- `command.remote.run`
 - `fs.dir.create`, `fs.dir.remove`, `fs.dir.exists`, `fs.dir.wait`
 - `fs.file.exists`, `fs.file.wait`, `fs.cd`, `fs.file.write`, `fs.file.read`, `fs.object.stat`
 - `fs.file.line`, `fs.file.replace`, `fs.object.copy`, `fs.object.move`, `fs.symlink.create`, `fs.symlink.remove`

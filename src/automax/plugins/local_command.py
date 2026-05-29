@@ -19,7 +19,7 @@ from automax.plugins.remote_utils import normalize_env_mapping, render_env_prefi
 class LocalCommandPlugin(BasePlugin):
     """Execute a command on the controller host."""
 
-    name = "local.command"
+    name = "command.local.run"
     description = "Run a local command on the controller host."
     required_params = ("command",)
     parameter_schema = {"command": {"types": ("string", "list")}}
@@ -38,7 +38,7 @@ class LocalCommandPlugin(BasePlugin):
         if params.get("env"):
             env = params["env"]
             if not isinstance(env, dict):
-                raise PluginValidationError("local.command env must be a mapping")
+                raise PluginValidationError("command.local.run env must be a mapping")
             rendered = f"{render_env_prefix(env)} {rendered}"
         return [rendered]
 
@@ -52,7 +52,7 @@ class LocalCommandPlugin(BasePlugin):
         env = params.get("env")
         if env is not None:
             if not isinstance(env, dict):
-                raise PluginValidationError("local.command env must be a mapping")
+                raise PluginValidationError("command.local.run env must be a mapping")
             env = normalize_env_mapping(env)
         shell = bool(params.get("shell", isinstance(command, str)))
         timeout = params.get("timeout", context.command_timeout)

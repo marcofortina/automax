@@ -44,7 +44,7 @@ Registered outputs can be reused later in the same run:
 
 ```yaml
 - id: get_user
-  use: remote.command
+  use: command.remote.run
   with:
     command: whoami
   register:

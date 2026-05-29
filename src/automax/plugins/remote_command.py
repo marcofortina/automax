@@ -17,7 +17,7 @@ from automax.plugins.remote_utils import apply_cwd, prepare_sudo_password_comman
 class RemoteCommandPlugin(BasePlugin):
     """Execute a command through the step-scoped SSH connection."""
 
-    name = "remote.command"
+    name = "command.remote.run"
     description = "Run a command on the current remote target via SSH."
     required_params = ("command",)
     opens_remote_session = True
@@ -33,7 +33,7 @@ class RemoteCommandPlugin(BasePlugin):
         if context.dry_run:
             return self.dry_run(params, context)
         if context.ssh_client is None:
-            return PluginResult.failure(message="remote.command requires an SSH session")
+            return PluginResult.failure(message="command.remote.run requires an SSH session")
 
         command = apply_cwd(str(params["command"]), context, params.get("cwd"))
         command, sudo_stdin = prepare_sudo_password_command(command, context.sudo_password)

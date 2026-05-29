@@ -12,7 +12,7 @@ Only canonical names are public DSL names. For example:
 ```text
 fs.file.template
 system.service.restart
-db.sqlite.query
+database.sqlite.query
 ```
 
 Aliases are intentionally not exposed by `automax plugins list`.

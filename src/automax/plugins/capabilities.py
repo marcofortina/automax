@@ -116,7 +116,7 @@ class CapabilityAssertPlugin(BasePlugin):
 
 
 class PluginRequirementsPlugin(BasePlugin):
-    name = "plugin.requirements"
+    name = "automax.plugin.requirements"
     description = "Report remote tools required by one or more plugins without connecting to a target."
     optional_params = ("plugin", "plugins")
     supports_check_mode = True
@@ -124,10 +124,10 @@ class PluginRequirementsPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if not (params.get("plugin") or params.get("plugins")):
-            raise PluginValidationError("plugin.requirements requires plugin or plugins")
+            raise PluginValidationError("automax.plugin.requirements requires plugin or plugins")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "plugin.requirements is a local requirements report"
+        return "automax.plugin.requirements is a local requirements report"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         tools = sorted({tool for plugin in self._plugins(params) for tool in plugin_tools(plugin)})

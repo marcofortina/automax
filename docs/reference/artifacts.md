@@ -13,7 +13,7 @@ Declare artifacts on a substep:
 
 ```yaml
 - id: collect_version
-  use: remote.command
+  use: command.remote.run
   with:
     command: "myapp --version"
   artifacts:

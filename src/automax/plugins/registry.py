@@ -131,11 +131,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     )
     from automax.plugins.auditd import AuditdReloadPlugin, AuditdRulePlugin, AuditdStatusPlugin
     from automax.plugins.archive import (
-        ArchiveTarPlugin,
         ArchiveTarCheckPlugin,
         ArchiveTarListPlugin,
-        HardenedArchiveUntarPlugin,
-        HardenedArchiveUnzipPlugin,
+        ArchiveTarPlugin,
         ArchiveZipCheckPlugin,
         ArchiveZipListPlugin,
         ArchiveZipPlugin,
@@ -151,14 +149,14 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         CompressionZstdCheckPlugin,
         CompressionZstdCompressPlugin,
         CompressionZstdDecompressPlugin,
+        HardenedArchiveUntarPlugin,
+        HardenedArchiveUnzipPlugin,
     )
     from automax.plugins.facts import (
-        FactsGatherPlugin,
-        FactsNetworkPlugin,
         FactsOsPlugin,
         FactsPackagesPlugin,
-        OsArchCheckPlugin,
         FactsServicesPlugin,
+        OsArchCheckPlugin,
     )
     from automax.plugins.firewall import (
         FirewalldListPlugin,
@@ -215,7 +213,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     )
     from automax.plugins.cron import CronAbsentPlugin, CronEntryPlugin, CronFilePlugin, CronListPlugin, CronValidatePlugin
     from automax.plugins.db import (
-        DbHealthPlugin,
+        DatabaseMysqlCheckPlugin,
+        DatabaseOracleCheckPlugin,
+        DatabasePostgresCheckPlugin,
+        DatabaseSqliteCheckPlugin,
         DbMysqlQueryPlugin,
         DbOracleQueryPlugin,
         DbPostgresQueryPlugin,
@@ -408,7 +409,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     )
     from automax.plugins.udev import (
         UdevReloadPlugin,
+        UdevRuleCheckPlugin,
         UdevRulePlugin,
+        UdevRuleRemovePlugin,
         UdevSettlePlugin,
         UdevTriggerPlugin,
     )
@@ -530,9 +533,9 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         AlternativesSetPlugin(),
         BackupFilePlugin(),
         BackupDirectoryPlugin(),
-        BackupListPlugin(),
         BackupRestorePlugin(),
         BackupVerifyPlugin(),
+        BackupListPlugin(),
         BackupManifestPlugin(),
         BackupPrunePlugin(),
         BackupRotatePlugin(),
@@ -552,7 +555,10 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         HttpRequestPlugin(),
         HttpAssertPlugin(),
         HttpWaitPlugin(),
-        DbHealthPlugin(),
+        DatabaseSqliteCheckPlugin(),
+        DatabasePostgresCheckPlugin(),
+        DatabaseMysqlCheckPlugin(),
+        DatabaseOracleCheckPlugin(),
         DbSqliteQueryPlugin(),
         DbPostgresQueryPlugin(),
         DbMysqlQueryPlugin(),
@@ -562,10 +568,8 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         CronListPlugin(),
         CronAbsentPlugin(),
         CronValidatePlugin(),
-        FactsGatherPlugin(),
         FactsOsPlugin(),
         OsArchCheckPlugin(),
-        FactsNetworkPlugin(),
         FactsPackagesPlugin(),
         FactsServicesPlugin(),
         PlatformFactsPlugin(),
@@ -762,6 +766,8 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         BlockWipeSignaturesPlugin(),
         BlockMkfsPlugin(),
         UdevRulePlugin(),
+        UdevRuleRemovePlugin(),
+        UdevRuleCheckPlugin(),
         UdevReloadPlugin(),
         UdevTriggerPlugin(),
         UdevSettlePlugin(),

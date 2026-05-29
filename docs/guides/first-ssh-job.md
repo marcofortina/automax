@@ -64,7 +64,7 @@ tasks:
       - id: shell
         substeps:
           - id: hostname
-            use: remote.command
+            use: command.remote.run
             with:
               command: hostname
             register:

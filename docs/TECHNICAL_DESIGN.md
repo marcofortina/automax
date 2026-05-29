@@ -25,7 +25,7 @@ A step opens one fresh SSH connection per target and reuses it for all its
 substeps. The runtime context is kept by Automax, not by a long-lived remote
 shell. Plugins that need step-local state can use the `ExecutionContext.step_state`
 mapping. For example, `fs.cd` sets the current remote working directory and
-`remote.command` applies it to subsequent commands in the same step.
+`command.remote.run` applies it to subsequent commands in the same step.
 
 Targets can be scoped at job, task, step or substep level. When substeps in the
 same step resolve to different target sets, Automax keeps one execution group per
@@ -108,17 +108,17 @@ continue
 Current builtins are grouped into these categories:
 
 ```text
-commands:      local.command, remote.command
+commands:      command.local.run, command.remote.run
 filesystem:    fs.*
-archive:       archive.*
+data/archive:  data.archive.*, data.compression.*
 packages:      os.package.*
 system:       system.service.*, system.systemd.*, system.kernel.*, system.process.*, system.cron.*, system.journal.*, system.log.*
 identity:      identity.user.*, identity.group.*
-transfer:      data.transfer.*
-http/api:      http.*
+data:          data.download.*, data.transfer.*, data.backup.*, data.restore.*
+http/api:      network.http.*
 connectivity:   network.connectivity.*
 storage:        storage.*
-database:      db.*.query
+database:      database.<engine>.*
 ```
 
 Builtin plugin names are canonical only: no short or ambiguous compatibility aliases

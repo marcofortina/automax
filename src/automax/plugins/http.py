@@ -101,7 +101,7 @@ def _assert_response(params: Dict[str, Any], response: Dict[str, Any]) -> Plugin
 class HttpRequestPlugin(BasePlugin):
     """Perform an HTTP request from the controller."""
 
-    name = "http.request"
+    name = "network.http.request"
     description = "Perform an HTTP request from the controller."
     required_params = ("url",)
     optional_params = (
@@ -141,7 +141,7 @@ class HttpRequestPlugin(BasePlugin):
 class HttpAssertPlugin(HttpRequestPlugin):
     """Assert HTTP status/body from the controller."""
 
-    name = "http.assert"
+    name = "network.http.check"
     description = "Assert HTTP status and optional body content."
     optional_params = (*HttpRequestPlugin.optional_params, "contains")
 
@@ -153,7 +153,7 @@ class HttpAssertPlugin(HttpRequestPlugin):
 class HttpWaitPlugin(HttpAssertPlugin):
     """Wait until an HTTP endpoint matches expected status/body."""
 
-    name = "http.wait"
+    name = "network.http.wait"
     description = "Wait until an HTTP endpoint matches expected status and optional body content."
     optional_params = (*HttpAssertPlugin.optional_params, "interval")
 
@@ -172,7 +172,7 @@ class HttpWaitPlugin(HttpAssertPlugin):
                 last_result = PluginResult.failure(message=str(exc))
             if time.monotonic() >= deadline:
                 return PluginResult.failure(
-                    message="http.wait timed out",
+                    message="network.http.wait timed out",
                     stdout=last_result.stdout if last_result else "",
                     data=last_result.data if last_result else {},
                 )

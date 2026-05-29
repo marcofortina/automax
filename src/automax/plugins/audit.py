@@ -133,25 +133,23 @@ def sample_params(plugin: Any) -> dict[str, Any]:
             continue
         params.setdefault(name, _sample_value(name, plugin.parameter_schema.get(name, {})))
 
-    if plugin.name.startswith("db."):
+    if plugin.name.startswith("database."):
         params.setdefault("connection", {"path": "/tmp/automax.sqlite"})
-    if plugin.name == "db.health":
+    if plugin.name == "database.sqlite.check":
         params["engine"] = "sqlite"
         params["connection"] = {"path": "/tmp/automax.sqlite"}
     if plugin.name in {"data.backup.prune", "data.restore.apply", "data.backup.rotate", "network.firewall.iptables.restore", "storage.lvm.lv.remove", "storage.lvm.pv.remove", "storage.lvm.vg.remove"}:
         params["confirm"] = True
-    if plugin.name == "plugin.requirements":
+    if plugin.name == "automax.plugin.requirements":
         params["plugin"] = "data.transfer.rsync"
     if plugin.name == "data.backup.directory.create":
         params["compression"] = "none"
     if plugin.name == "data.backup.verify":
         params["checksum"] = "sha256"
-    if plugin.name.startswith("data.compression.") and plugin.name.endswith(".compress"):
+    if plugin.name == "data.compression.gzip.compress":
         params["dest"] = "/tmp/automax-demo.gz"
-    if plugin.name.startswith("data.compression.") and plugin.name.endswith(".decompress"):
+    if plugin.name == "data.compression.gzip.decompress":
         params["archive"] = "/tmp/automax-demo.gz"
-    if plugin.name.startswith("data.compression.") and plugin.name.endswith(".check"):
-        params["path"] = "/tmp/automax-demo.gz"
     if plugin.name == "storage.block.signatures.wipe":
         params["force"] = True
     if plugin.name == "fs.file.template":
@@ -161,7 +159,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
     if plugin.name in {"system.process.check", "system.process.kill", "system.process.signal", "system.process.wait"}:
         params.pop("pid", None)
         params["pattern"] = "automax-demo"
-    if plugin.name == "mail.send":
+    if plugin.name == "notify.mail.send":
         params["from"] = "automax@example.invalid"
         params["to"] = ["ops@example.invalid"]
     if plugin.name == "network.firewall.nftables.apply" or plugin.name == "network.firewall.nftables.validate":

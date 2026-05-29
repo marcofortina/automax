@@ -111,7 +111,7 @@ The explicit capability plugins are:
 os.tool.exists
 os.tool.version_check
 os.capability.check
-plugin.requirements
+automax.plugin.requirements
 ```
 
 Use `security.secret.redact_check`, `security.secret.scan_output` and `security.secret.scan_preview` to validate that previews, command output and registered payloads do not expose declared secret values or common secret-shaped assignments such as `password=...`, bearer tokens or private-key blocks.

@@ -29,7 +29,7 @@ tasks:
       - id: local
         substeps:
           - id: hello
-            use: local.command
+            use: command.local.run
             with:
               command: "printf hello"
 ```

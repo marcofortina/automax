@@ -144,26 +144,26 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
     if plugin_name == "network.connectivity.port_wait":
         return [f"i=0; until nc -z -w {_q(params.get('timeout', 5))} {_q(params.get('host', '127.0.0.1'))} {_q(params.get('port', 22))}; do i=$((i + 1)); [ $i -ge {_q(params.get('retries', 30))} ] && exit 1; sleep {_q(params.get('interval', 2))}; done"]
 
-    if plugin_name.startswith("db.") and plugin_name.endswith(".query"):
+    if plugin_name.startswith("database.") and plugin_name.endswith(".query"):
         conn = _db_connection(params)
-        if plugin_name == "db.sqlite.query":
+        if plugin_name == "database.sqlite.query":
             database = conn.get("path") or conn.get("database") or params.get("path") or params.get("database") or "database.sqlite"
             return [f"sqlite3 {_q(database)} '{_db_query(params)};'"]
-        if plugin_name == "db.postgres.query":
+        if plugin_name == "database.postgres.query":
             return [f"PGPASSWORD=*** psql -h {_q(conn.get('host', 'localhost'))} -U {_q(conn.get('user', 'postgres'))} -d {_q(conn.get('database', 'postgres'))} -c '{_db_query(params)};'"]
-        if plugin_name == "db.mysql.query":
+        if plugin_name == "database.mysql.query":
             return [f"MYSQL_PWD=*** mysql -h {_q(conn.get('host', 'localhost'))} -u {_q(conn.get('user', 'root'))} {_q(conn.get('database', 'mysql'))} -e '{_db_query(params)};'"]
-        if plugin_name == "db.oracle.query":
+        if plugin_name == "database.oracle.query":
             return [f"echo '{_db_query(params)};' | sqlplus -s {_q(conn.get('user', 'user'))}/***@{_q(conn.get('dsn', 'db'))}"]
 
-    if plugin_name.startswith("facts.") or plugin_name in {"os.facts", "os.package.facts"}:
+    if plugin_name in {"os.facts", "os.package.facts", "network.link.facts", "system.service.facts"}:
         if plugin_name == "os.facts":
             return ["cat /etc/os-release 2>/dev/null || uname -a"]
-        if plugin_name == "facts.network":
+        if plugin_name == "network.link.facts":
             return ["ip -brief addr && ip route"]
         if plugin_name == "os.package.facts":
             return [_package_manager_command(params, "dpkg-query -W", "rpm -qa", "rpm -qa", "rpm -qa")]
-        if plugin_name == "facts.services":
+        if plugin_name == "system.service.facts":
             return ["systemctl list-units --type=service --no-pager || service --status-all"]
         return ["uname -a && cat /etc/os-release 2>/dev/null || true"]
 

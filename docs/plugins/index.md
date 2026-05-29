@@ -17,6 +17,9 @@ automax plugins list
 Current builtin plugins:
 
 ```text
+automax.plugin.requirements
+command.local.run
+command.remote.run
 data.archive.tar.check
 data.archive.tar.create
 data.archive.tar.extract
@@ -52,14 +55,23 @@ data.transfer.download
 data.transfer.rsync
 data.transfer.sync
 data.transfer.upload
-db.health
-db.mysql.query
-db.oracle.query
-db.postgres.query
-db.sqlite.query
-facts.gather
-facts.network
-facts.services
+database.mysql.check
+database.mysql.query
+database.oracle.check
+database.oracle.query
+database.postgres.check
+database.postgres.query
+database.sqlite.check
+database.sqlite.query
+device.udev.device.facts
+device.udev.device.test
+device.udev.reload
+device.udev.rule.check
+device.udev.rule.remove
+device.udev.rule.set
+device.udev.rule.validate
+device.udev.settle
+device.udev.trigger
 fs.acl.check
 fs.acl.get
 fs.acl.restore
@@ -91,9 +103,6 @@ fs.symlink.create
 fs.symlink.exists
 fs.symlink.remove
 fs.symlink.wait
-http.assert
-http.request
-http.wait
 identity.group.create
 identity.group.exists
 identity.group.member.remove
@@ -110,8 +119,6 @@ identity.user.remove
 identity.user.set_password
 identity.user.shell_check
 identity.user.unlock
-local.command
-mail.send
 network.connectivity.port_check
 network.connectivity.port_wait
 network.dns.check
@@ -149,6 +156,9 @@ network.firewall.ufw.enable
 network.firewall.ufw.reset
 network.firewall.ufw.rule
 network.firewall.ufw.status
+network.http.check
+network.http.request
+network.http.wait
 network.link.bond
 network.link.bridge
 network.link.check
@@ -159,6 +169,7 @@ network.route.add
 network.route.check
 network.route.facts
 network.route.remove
+notify.mail.send
 os.alternatives.check
 os.alternatives.get
 os.alternatives.list
@@ -224,8 +235,6 @@ os.time.timezone.get
 os.time.timezone.set
 os.tool.exists
 os.tool.version_check
-plugin.requirements
-remote.command
 security.apparmor.complain
 security.apparmor.disable
 security.apparmor.enforce
@@ -383,6 +392,7 @@ system.service.active_check
 system.service.disable
 system.service.enable
 system.service.enabled_check
+system.service.facts
 system.service.mask
 system.service.reload
 system.service.restart
@@ -395,13 +405,6 @@ system.systemd.sysusers
 system.systemd.timer
 system.systemd.tmpfiles
 system.systemd.unit
-udev.facts
-udev.reload
-udev.rule
-udev.settle
-udev.test
-udev.trigger
-udev.validate
 
 ```
 

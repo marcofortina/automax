@@ -9,7 +9,7 @@ Automax gathers remote Linux facts for conditional workflows, reports and run di
 
 ```yaml
 - id: gather_core_facts
-  use: facts.gather
+  use: os.facts
   with:
     subset:
       - os
@@ -22,8 +22,8 @@ Automax gathers remote Linux facts for conditional workflows, reports and run di
 Individual plugins are also available:
 
 - `os.facts`
-- `facts.network`
+- `network.link.facts`
 - `os.package.facts`
-- `facts.services`
+- `system.service.facts`
 
 Package facts support Debian/Ubuntu through `dpkg-query` and Red Hat-like systems through `rpm`.

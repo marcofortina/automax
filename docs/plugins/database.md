@@ -39,11 +39,11 @@ rendering:
 password: "{{ secrets.db_password }}"
 ```
 
-## `db.sqlite.query`
+## `database.sqlite.query`
 
 ```yaml
 - id: create_table
-  use: db.sqlite.query
+  use: database.sqlite.query
   with:
     connection:
       path: /tmp/app.sqlite
@@ -53,7 +53,7 @@ password: "{{ secrets.db_password }}"
     output: none
 
 - id: read_version
-  use: db.sqlite.query
+  use: database.sqlite.query
   with:
     connection:
       path: /tmp/app.sqlite
@@ -65,13 +65,13 @@ password: "{{ secrets.db_password }}"
     database_version: data.scalar
 ```
 
-## `db.postgres.query`
+## `database.postgres.query`
 
 Requires `automax[postgres]`.
 
 ```yaml
 - id: postgres_query
-  use: db.postgres.query
+  use: database.postgres.query
   with:
     connection:
       host: db01.example.com
@@ -90,13 +90,13 @@ connection:
   dsn: "postgresql://app:{{ secrets.postgres_password }}@db01/appdb"
 ```
 
-## `db.mysql.query`
+## `database.mysql.query`
 
 Requires `automax[mysql]`.
 
 ```yaml
 - id: mysql_query
-  use: db.mysql.query
+  use: database.mysql.query
   with:
     connection:
       host: db01.example.com
@@ -108,13 +108,13 @@ Requires `automax[mysql]`.
     output: rows
 ```
 
-## `db.oracle.query`
+## `database.oracle.query`
 
 Requires `automax[oracle]`.
 
 ```yaml
 - id: oracle_query
-  use: db.oracle.query
+  use: database.oracle.query
   with:
     connection:
       dsn: db01.example.com/FREEPDB1
@@ -134,14 +134,14 @@ output shaping and common result metadata.
 
 ## Database health checks
 
-`db.health` is a read-only controller-side health check plugin for the existing
+`database.sqlite.check` is a read-only controller-side health check plugin for the existing
 SQLite, PostgreSQL, MySQL/MariaDB and Oracle database families. It is intended
 for precheck and postcheck gates, not for application queries.
 
 Example:
 
 ```yaml
-use: db.health
+use: database.sqlite.check
 with:
   engine: sqlite
   connection:

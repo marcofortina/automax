@@ -247,7 +247,7 @@ tasks:
               retries: 10
               interval: 1
           - id: start_background_process
-            use: remote.command
+            use: command.remote.run
             with:
               command: "sh -c 'sleep 30 >/dev/null 2>&1 &'"
           - id: wait_process

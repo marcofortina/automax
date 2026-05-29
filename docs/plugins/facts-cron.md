@@ -7,8 +7,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 ## Facts
 
-Use `facts.gather` for a combined host snapshot, or the narrower read-only
-plugins `os.facts`, `facts.network`, `os.package.facts` and `facts.services` when a
+Use `os.facts` for a combined host snapshot, or the narrower read-only
+plugins `os.facts`, `network.link.facts`, `os.package.facts` and `system.service.facts` when a
 job only needs one area. These plugins are precheck-friendly and do not change the
 target.
 

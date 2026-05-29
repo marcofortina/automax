@@ -67,7 +67,7 @@ use: fs.dir.create
 over:
 
 ```yaml
-use: remote.command
+use: command.remote.run
 with:
   command: mkdir -p /opt/myapp
 ```
@@ -79,7 +79,7 @@ document and test.
 
 ```yaml
 - id: app_version
-  use: remote.command
+  use: command.remote.run
   with:
     command: cat /opt/app/VERSION
   register:

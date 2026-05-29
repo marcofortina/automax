@@ -16,7 +16,7 @@ tasks:
         description: Run local substeps without SSH.
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "printf '{{ vars.greeting }} {{ server.name }}'"
             register:

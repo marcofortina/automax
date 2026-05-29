@@ -29,7 +29,7 @@ The JSON plan includes the generated run id and every planned node:
       "task_id": "smoke",
       "step_id": "local",
       "substep_id": "echo",
-      "plugin": "local.command",
+      "plugin": "command.local.run",
       "tags": []
     }
   ]

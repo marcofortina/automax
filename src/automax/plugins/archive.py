@@ -211,7 +211,7 @@ class ArchiveUntarPlugin(BasePlugin):
 class ArchiveCompressPlugin(BasePlugin):
     """Compress one remote file to gzip, bzip2 or xz stream output."""
 
-    name = "data.compression.gzip.compress"
+    name = "archive.compress"
     description = "Compress one remote file to gzip, bzip2 or xz."
     required_params = ("source", "dest")
     optional_params = ("compression", "force", "creates", "cwd")
@@ -250,13 +250,13 @@ class ArchiveCompressPlugin(BasePlugin):
         if context.dry_run:
             return self.dry_run(params, context)
         if context.ssh_client is None:
-            return PluginResult.failure(message="data.compression.gzip.compress requires an SSH session")
+            return PluginResult.failure(message="archive.compress requires an SSH session")
         rc, out, err = exec_remote(context, self._command(params, context))
         return result_from_remote(
             rc=rc,
             stdout=out,
             stderr=err,
-            message="data.compression.gzip.compress failed",
+            message="archive.compress failed",
             data={"source": params["source"], "dest": params["dest"]},
         )
 
@@ -264,7 +264,7 @@ class ArchiveCompressPlugin(BasePlugin):
 class ArchiveDecompressPlugin(BasePlugin):
     """Decompress one remote gzip, bzip2 or xz file to a destination file."""
 
-    name = "data.compression.gzip.decompress"
+    name = "archive.decompress"
     description = "Decompress one remote gzip, bzip2 or xz file."
     required_params = ("archive", "dest")
     optional_params = ("compression", "force", "creates", "cwd")
@@ -303,13 +303,13 @@ class ArchiveDecompressPlugin(BasePlugin):
         if context.dry_run:
             return self.dry_run(params, context)
         if context.ssh_client is None:
-            return PluginResult.failure(message="data.compression.gzip.decompress requires an SSH session")
+            return PluginResult.failure(message="archive.decompress requires an SSH session")
         rc, out, err = exec_remote(context, self._command(params, context))
         return result_from_remote(
             rc=rc,
             stdout=out,
             stderr=err,
-            message="data.compression.gzip.decompress failed",
+            message="archive.decompress failed",
             data={"archive": params["archive"], "dest": params["dest"]},
         )
 

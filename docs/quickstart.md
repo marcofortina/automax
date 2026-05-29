@@ -39,7 +39,7 @@ automax plan \
 Typical output:
 
 ```text
-controller task.smoke:step.local:substep.echo plugin=local.command tags=-
+controller task.smoke:step.local:substep.echo plugin=command.local.run tags=-
 ```
 
 ## 4. Run the job

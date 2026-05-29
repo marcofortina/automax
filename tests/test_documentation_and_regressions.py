@@ -165,12 +165,12 @@ tasks:
         substeps:
           - id: only_one
             targets: server:one
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
           - id: only_two
             targets: server:two
-            use: local.command
+            use: command.local.run
             with:
               command: "true"
 """,
@@ -212,7 +212,7 @@ tasks:
       - id: local
         substeps:
           - id: write_first
-            use: local.command
+            use: command.local.run
             with:
               command: "printf first > {first_marker}"
   - id: second
@@ -221,7 +221,7 @@ tasks:
       - id: local
         substeps:
           - id: write_second
-            use: local.command
+            use: command.local.run
             with:
               command: "printf second > {second_marker}"
 """,
@@ -249,7 +249,7 @@ tasks:
 
 
 def test_sqlite_commit_false_rolls_back(tmp_path: Path):
-    plugin = AutomaxEngine().plugin_registry.get("db.sqlite.query")
+    plugin = AutomaxEngine().plugin_registry.get("database.sqlite.query")
     context = ExecutionContext(
         run_id="test-run",
         dry_run=False,
@@ -309,7 +309,7 @@ tasks:
       - id: local
         substeps:
           - id: echo
-            use: local.command
+            use: command.local.run
             with:
               command: "printf '{{ vars.owner }}'"
 """,
@@ -376,13 +376,13 @@ tasks:
       - id: fail
         substeps:
           - id: bad
-            use: local.command
+            use: command.local.run
             with:
               command: "false"
       - id: must_skip
         substeps:
           - id: write_skipped
-            use: local.command
+            use: command.local.run
             with:
               command: "printf bad > {skipped_marker}"
   - id: next_task
@@ -391,7 +391,7 @@ tasks:
       - id: run
         substeps:
           - id: write_next
-            use: local.command
+            use: command.local.run
             with:
               command: "printf ok > {next_task_marker}"
 """,
@@ -690,13 +690,13 @@ def test_plugin_smoke_runbooks_match_archive_decompress_parameters():
     for task in data.get("tasks", []):
         for step in task.get("steps", []):
             for substep in step.get("substeps", []):
-                if not str(substep.get("use", "")).startswith("data.compression.") or not str(substep.get("use", "")).endswith(".decompress"):
+                if substep.get("use") != "data.compression.gzip.decompress":
                     continue
                 params = substep.get("with") or {}
                 if "source" in params:
                     offenders.append(
                         f"{runbook_path}:{substep.get('id')}: "
-                        "source is not valid for compression decompress plugins"
+                        "source is not valid for data.compression.gzip.decompress"
                     )
 
     assert offenders == []
@@ -796,7 +796,7 @@ def test_rendered_file_install_mixin_covers_managed_file_plugins():
         "system.systemd.timer",
         "system.systemd.tmpfiles",
         "system.systemd.unit",
-        "udev.rule",
+        "device.udev.rule.set",
     }
     for name in expected:
         assert isinstance(registry.get(name), RenderedFileInstallMixin)
@@ -826,7 +826,7 @@ def test_read_only_command_plugin_is_shared_base_class():
         "system.cron.entry.list",
         "security.sudo.validate",
         "system.kernel.sysctl.check",
-        "udev.validate",
+        "device.udev.rule.validate",
     }
     for name in expected:
         assert isinstance(registry.get(name), ReadOnlyCommandPlugin)

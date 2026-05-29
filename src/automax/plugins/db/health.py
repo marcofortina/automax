@@ -213,3 +213,50 @@ class DbHealthPlugin(BasePlugin):
                 if "version" in self._checks(params):
                     data["version"] = conn.version
         return data
+
+
+class _DatabaseEngineCheckPlugin(DbHealthPlugin):
+    engine = ""
+    required_params: tuple[str, ...] = ()
+    optional_params = (*DbHealthPlugin.optional_params, "engine")
+
+    def _params(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        copied = dict(params)
+        copied["engine"] = self.engine
+        return copied
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(self._params(params))
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        return super().manual_commands(self._params(params), context)
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        result = super().execute(self._params(params), context)
+        if not result.ok and result.message == "db.health failed":
+            result.message = f"{self.name} failed"
+        return result
+
+
+class DatabaseSqliteCheckPlugin(_DatabaseEngineCheckPlugin):
+    name = "database.sqlite.check"
+    description = "Run read-only controller-side SQLite health checks."
+    engine = "sqlite"
+
+
+class DatabasePostgresCheckPlugin(_DatabaseEngineCheckPlugin):
+    name = "database.postgres.check"
+    description = "Run read-only controller-side PostgreSQL health checks."
+    engine = "postgres"
+
+
+class DatabaseMysqlCheckPlugin(_DatabaseEngineCheckPlugin):
+    name = "database.mysql.check"
+    description = "Run read-only controller-side MySQL health checks."
+    engine = "mysql"
+
+
+class DatabaseOracleCheckPlugin(_DatabaseEngineCheckPlugin):
+    name = "database.oracle.check"
+    description = "Run read-only controller-side Oracle health checks."
+    engine = "oracle"

@@ -101,7 +101,7 @@ data.archive.tar.extract
 fs.symlink.create
 fs.symlink.remove
 system.service.restart
-http.assert
+network.http.check
 wait.http
 ```
 
@@ -147,15 +147,15 @@ readback, assertions and explicit Linux operation primitives.
 
 ### Backup completeness
 
-Future backup work should extend the current `backup.file`, `backup.directory`,
-`backup.restore` and `backup.verify` primitives with:
+Future backup work should extend the current `data.backup.file.create`, `data.backup.directory.create`,
+`data.restore.apply` and `data.backup.verify` primitives with:
 
 ```text
-backup.manifest
-backup.prune
-backup.rotate
-backup.restore_preview
-backup.restore_verify
+data.backup.manifest.create
+data.backup.prune
+data.backup.rotate
+data.restore.preview
+data.restore.verify
 ```
 
 These should preserve the existing safety model: explicit output paths, checksum

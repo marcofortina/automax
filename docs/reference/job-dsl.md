@@ -227,7 +227,7 @@ values:
 
 ```yaml
 - id: read_version
-  use: remote.command
+  use: command.remote.run
   with:
     command: cat /opt/myapp/VERSION
   register:

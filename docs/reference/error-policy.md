@@ -31,7 +31,7 @@ success. `failurePolicy` is only applied if the result remains failed.
 
 ```yaml
 - id: oracle_cluvfy
-  use: remote.command
+  use: command.remote.run
   with:
     command: "runcluvfy.sh stage -pre crsinst -n rac1,rac2 -verbose"
   errorPolicy:

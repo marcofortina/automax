@@ -192,17 +192,17 @@ automax plugins audit
 Current categories:
 
 ```text
-commands:      local.command, remote.command
+commands:      command.local.run, command.remote.run
 filesystem:    fs.*
-archive:       archive.*
+data/archive:  data.archive.*, data.compression.*
 packages:      os.package.*
 systemd:       systemctl.*
 users/groups:  user.*, group.*
 processes:     process.*
-transfer:      data.transfer.*
-http/api:      http.*
+data:          data.download.*, data.transfer.*, data.backup.*, data.restore.*
+http/api:      network.http.*
 wait/assert:   wait.*, assert.*
-database:      db.sqlite.query, db.postgres.query, db.mysql.query, db.oracle.query
+database:      database.sqlite.query, database.postgres.query, database.mysql.query, database.oracle.query
 ```
 
 See `docs/plugins/` for detailed examples of every builtin macro.

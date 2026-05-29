@@ -19,11 +19,11 @@ def _render_rules(params: Dict[str, Any]) -> str:
         return content if content.endswith("\n") else content + "\n"
     rules = params.get("rules")
     if not isinstance(rules, list) or not rules:
-        raise PluginValidationError("udev.rule requires content or a non-empty rules list")
+        raise PluginValidationError("device.udev.rule.set requires content or a non-empty rules list")
     lines = []
     for rule in rules:
         if not isinstance(rule, dict):
-            raise PluginValidationError("udev.rule rules entries must be mappings")
+            raise PluginValidationError("device.udev.rule.set rules entries must be mappings")
         match = rule.get("match", {}) or {}
         parts = []
         for key, value in sorted((match.get("env", {}) or {}).items()):
@@ -43,7 +43,7 @@ def _render_rules(params: Dict[str, Any]) -> str:
         if "mode" in rule:
             parts.append(f'MODE="{rule["mode"]}"')
         if not parts:
-            raise PluginValidationError("udev.rule generated an empty rule")
+            raise PluginValidationError("device.udev.rule.set generated an empty rule")
         lines.append(", ".join(parts))
     return "\n".join(lines) + "\n"
 
@@ -51,7 +51,7 @@ def _render_rules(params: Dict[str, Any]) -> str:
 class UdevRulePlugin(RenderedFileInstallMixin, BasePlugin):
     """Install a udev rules file with optional pre-change backup."""
 
-    name = "udev.rule"
+    name = "device.udev.rule.set"
     description = "Install a udev rules file from content or structured rule entries."
     required_params = ("path",)
     optional_params = ("content", "rules", "backup", "backup_suffix", "mode", "owner", "group", "sudo")
@@ -76,32 +76,32 @@ class UdevRulePlugin(RenderedFileInstallMixin, BasePlugin):
 
 
 class UdevReloadPlugin(BasePlugin):
-    name = "udev.reload"
+    name = "device.udev.reload"
     description = "Reload udev rules."
     required_params: tuple[str, ...] = ()
     optional_params = ("sudo",)
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "udev.reload reloads runtime udev rules and has no file diff preview"
+        return "device.udev.reload reloads runtime udev rules and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return [f"{sudo_prefix(params, default=False)}udevadm control --reload-rules"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="udev.reload failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="device.udev.reload failed")
 
 
 class UdevTriggerPlugin(BasePlugin):
-    name = "udev.trigger"
+    name = "device.udev.trigger"
     description = "Trigger udev events and optionally wait for settle."
     required_params: tuple[str, ...] = ()
     optional_params = ("subsystem", "action", "udev_settle", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "udev.trigger changes runtime udev device state and has no file diff preview"
+        return "device.udev.trigger changes runtime udev device state and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         command = f"{sudo_prefix(params, default=False)}udevadm trigger"
@@ -116,18 +116,18 @@ class UdevTriggerPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="udev.trigger failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="device.udev.trigger failed")
 
 
 class UdevSettlePlugin(BasePlugin):
-    name = "udev.settle"
+    name = "device.udev.settle"
     description = "Wait for the udev event queue to settle."
     required_params: tuple[str, ...] = ()
     optional_params = ("timeout",)
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "udev.settle waits for runtime udev state and has no file diff preview"
+        return "device.udev.settle waits for runtime udev state and has no file diff preview"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         command = "udevadm settle"
@@ -137,4 +137,54 @@ class UdevSettlePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err) if rc == 0 else PluginResult.failure(rc=rc, stdout=out, stderr=err, message="udev.settle failed")
+        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err) if rc == 0 else PluginResult.failure(rc=rc, stdout=out, stderr=err, message="device.udev.settle failed")
+
+
+class UdevRuleRemovePlugin(BasePlugin):
+    name = "device.udev.rule.remove"
+    description = "Remove a udev rules file with optional backup."
+    required_params = ("path",)
+    optional_params = ("backup", "backup_suffix", "confirm", "sudo")
+    opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
+        super().validate(params)
+        if not bool(params.get("confirm", False)):
+            raise PluginValidationError("device.udev.rule.remove requires confirm=true")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        sudo = sudo_prefix(params, default=False)
+        path = quote(params["path"])
+        commands = []
+        if bool(params.get("backup", True)):
+            suffix = str(params.get("backup_suffix", ".bak"))
+            commands.append(f"test ! -e {path} || {sudo}cp -a {path} {quote(str(params['path']) + suffix)}")
+        commands.append(f"test ! -e {path} || {sudo}rm -f {path}")
+        return commands
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="device.udev.rule.remove failed", data={"path": str(params["path"])})
+
+
+class UdevRuleCheckPlugin(BasePlugin):
+    name = "device.udev.rule.check"
+    description = "Assert that a udev rules file exists and optionally matches rendered content."
+    required_params = ("path",)
+    optional_params = ("content", "rules", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        sudo = sudo_prefix(params, default=False)
+        path = quote(params["path"])
+        if "content" in params or "rules" in params:
+            content = _render_rules(params)
+            return [f"{sudo}diff -u {path} - <<'EOF'\n{content}EOF"]
+        return [f"{sudo}test -f {path}"]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="device.udev.rule.check failed", data={"path": str(params["path"])})
