@@ -9,7 +9,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError, RenderedFileInstallMixin
-from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, predicate_result_from_remote, quote, result_from_remote, sudo_prefix
 
 
 
@@ -170,7 +170,7 @@ class UdevRuleRemovePlugin(BasePlugin):
 
 class UdevRuleCheckPlugin(BasePlugin):
     name = "device.udev.rule.check"
-    description = "Assert that a udev rules file exists and optionally matches rendered content."
+    description = "Check whether a udev rules file exists and optionally matches rendered content."
     required_params = ("path",)
     optional_params = ("content", "rules", "sudo")
     opens_remote_session = True
@@ -187,4 +187,11 @@ class UdevRuleCheckPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="device.udev.rule.check failed", data={"path": str(params["path"])})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="device.udev.rule.check failed",
+            data_key="matches" if ("content" in params or "rules" in params) else "exists",
+            data={"path": str(params["path"])},
+        )

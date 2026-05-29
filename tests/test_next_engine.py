@@ -5623,6 +5623,18 @@ def test_presence_check_plugins_return_predicates_without_failing_on_absence():
 
 
 
+
+
+def test_device_udev_rule_check_returns_predicate_on_condition_false():
+    result = AutomaxEngine().plugin_registry.get("device.udev.rule.check").execute(
+        {"path": "/etc/udev/rules.d/99-demo.rules"},
+        _remote_context_for_result(1, stderr="missing"),
+    )
+
+    assert result.ok is True
+    assert result.changed is False
+    assert result.data["exists"] is False
+
 def test_security_and_filesystem_content_checks_return_predicates_on_condition_false():
     registry = AutomaxEngine().plugin_registry
 

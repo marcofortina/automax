@@ -1712,7 +1712,7 @@ with:
 
 ### `device.udev.rule.check`
 
-Assert that a udev rules file exists and optionally matches rendered content.
+Check whether a udev rules file exists and optionally matches rendered content.
 
 - Remote session: `true`
 - Dry-run support: `true`
