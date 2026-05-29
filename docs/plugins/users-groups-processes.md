@@ -11,14 +11,14 @@ These plugins run on the remote target through SSH.
 
 ```yaml
 - id: create_group
-  use: group.create
+  use: identity.group.create
   with:
     name: myapp
     system: true
     sudo: true
 
 - id: remove_group
-  use: group.remove
+  use: identity.group.remove
   with:
     name: oldgroup
     sudo: true
@@ -28,7 +28,7 @@ These plugins run on the remote target through SSH.
 
 ```yaml
 - id: create_user
-  use: user.create
+  use: identity.user.create
   with:
     name: myapp
     group: myapp
@@ -38,14 +38,14 @@ These plugins run on the remote target through SSH.
     sudo: true
 
 - id: modify_user
-  use: user.modify
+  use: identity.user.modify
   with:
     name: myapp
     shell: /bin/bash
     sudo: true
 
 - id: remove_user
-  use: user.remove
+  use: identity.user.remove
   with:
     name: olduser
     remove_home: true
@@ -82,4 +82,4 @@ These plugins run on the remote target through SSH.
 
 ## Account assertions and access changes
 
-`user.exists` and `group.exists` are read-only assertions for account prerequisites. `user.lock`, `user.unlock` and `user.set_password` are explicit account state changes and should be reviewed separately from user creation/removal.
+`identity.user.exists` and `identity.group.exists` are read-only assertions for account prerequisites. `identity.user.lock`, `identity.user.unlock` and `identity.user.set_password` are explicit account state changes and should be reviewed separately from user creation/removal.

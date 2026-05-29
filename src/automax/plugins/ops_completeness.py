@@ -390,15 +390,15 @@ class ChronyTrackingAssertPlugin(ReadOnlyCommandPlugin):
 
 # User/group/sudo facts and assertions
 class UserFactsPlugin(ReadOnlyCommandPlugin):
-    name="user.facts"; description="Read passwd, shadow lock and group facts for a user."; required_params=("user",); optional_params=("sudo",)
+    name="identity.user.facts"; description="Read passwd, shadow lock and group facts for a user."; required_params=("user",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]: return [f"getent passwd {quote(params['user'])}; id {quote(params['user'])}; {sudo_prefix(params, default=True)}passwd -S {quote(params['user'])} 2>/dev/null || true"]
 
 class UserShellAssertPlugin(ReadOnlyCommandPlugin):
-    name="user.shell_assert"; description="Assert a user's login shell."; required_params=("user","shell"); optional_params=("sudo",)
+    name="identity.user.shell_check"; description="Assert a user's login shell."; required_params=("user","shell"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"test \"$(getent passwd {quote(params['user'])} | cut -d: -f7)\" = {quote(params['shell'])}"]
 
 class UserHomeAssertPlugin(ReadOnlyCommandPlugin):
-    name="user.home_assert"; description="Assert a user's home directory path, owner or mode."; required_params=("user",); optional_params=("path","mode","owner","sudo")
+    name="identity.user.home_check"; description="Assert a user's home directory path, owner or mode."; required_params=("user",); optional_params=("path","mode","owner","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         path=f"$(getent passwd {quote(params['user'])} | cut -d: -f6)"; cmds=[]
         if params.get("path"): cmds.append(f"test \"{path}\" = {quote(params['path'])}")
@@ -407,23 +407,23 @@ class UserHomeAssertPlugin(ReadOnlyCommandPlugin):
         return cmds or [f"test -d {path}"]
 
 class UserGroupsAssertPlugin(ReadOnlyCommandPlugin):
-    name="user.groups_assert"; description="Assert required group membership for a user."; required_params=("user","groups"); optional_params=("sudo",)
+    name="identity.user.groups_check"; description="Assert required group membership for a user."; required_params=("user","groups"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         user=quote(params['user']); return [" && ".join(f"id -nG {user} | tr ' ' '\\n' | grep -Fx -- {quote(g)}" for g in _as_list(params['groups']))]
 
 class GroupMembersPlugin(ReadOnlyCommandPlugin):
-    name="group.members"; description="List members of a group."; required_params=("group",); optional_params=("sudo",)
+    name="identity.group.members"; description="List members of a group."; required_params=("group",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"getent group {quote(params['group'])}"]
 
 class GroupMemberAbsentPlugin(BasePlugin):
-    name="group.member_absent"; description="Remove a user from a group after explicit confirmation."; required_params=("user","group"); optional_params=("confirm","sudo"); opens_remote_session=True
+    name="identity.group.member.remove"; description="Remove a user from a group after explicit confirmation."; required_params=("user","group"); optional_params=("confirm","sudo"); opens_remote_session=True
     def validate(self, params: Dict[str, Any])->None:
         super().validate(params)
-        if not bool(params.get("confirm", False)): raise PluginValidationError("group.member_absent requires confirm=true")
+        if not bool(params.get("confirm", False)): raise PluginValidationError("identity.group.member.remove requires confirm=true")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         self.validate(params); return [f"{sudo_prefix(params, default=True)}gpasswd -d {quote(params['user'])} {quote(params['group'])}"]
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
-        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="group.member_absent failed")
+        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="identity.group.member.remove failed")
 
 class SudoListPlugin(ReadOnlyCommandPlugin):
     name="security.sudo.list"; description="List sudo privileges for a user."; required_params=("user",); optional_params=("sudo",)

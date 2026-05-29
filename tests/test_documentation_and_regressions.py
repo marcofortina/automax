@@ -957,6 +957,68 @@ def test_security_namespace_replaces_legacy_security_plugin_names():
                 offenders.append(f"{path}:{old_name}")
     assert offenders == []
 
+
+
+def test_identity_namespace_replaces_legacy_user_group_plugin_names():
+    from automax.plugins.registry import build_builtin_registry
+
+    old_names = [
+        "user.create",
+        "user.exists",
+        "user.facts",
+        "user.groups_assert",
+        "user.home_assert",
+        "user.lock",
+        "user.modify",
+        "user.remove",
+        "user.set_password",
+        "user.shell_assert",
+        "user.unlock",
+        "group.create",
+        "group.exists",
+        "group.member_absent",
+        "group.members",
+        "group.remove",
+    ]
+    names = set(build_builtin_registry().names())
+    assert not (names & set(old_names))
+    assert {
+        "identity.user.create",
+        "identity.user.exists",
+        "identity.user.facts",
+        "identity.user.groups_check",
+        "identity.user.home_check",
+        "identity.user.lock",
+        "identity.user.modify",
+        "identity.user.remove",
+        "identity.user.set_password",
+        "identity.user.shell_check",
+        "identity.user.unlock",
+        "identity.group.create",
+        "identity.group.exists",
+        "identity.group.member.remove",
+        "identity.group.members",
+        "identity.group.remove",
+    } <= names
+
+    searched = [
+        Path("docs/plugins/index.md"),
+        Path("docs/plugins/linux-operations.md"),
+        Path("docs/plugins/generated.md"),
+        Path("docs/plugins/users-groups-processes.md"),
+        Path("docs/guides/account-access.md"),
+        Path("examples/runbooks/RUNBOOK_INDEX.md"),
+        *Path("examples/runbooks/runbooks").glob("*.check.yaml"),
+    ]
+    offenders = []
+    for path in searched:
+        text = path.read_text(encoding="utf-8")
+        for old_name in old_names:
+            pattern = re.compile(r"(?<![A-Za-z0-9_.])" + re.escape(old_name) + r"(?![A-Za-z0-9_.])")
+            if pattern.search(text):
+                offenders.append(f"{path}:{old_name}")
+    assert offenders == []
+
 def test_health_namespace_is_removed_from_public_documentation_and_runbooks():
     from automax.plugins.registry import build_builtin_registry
 

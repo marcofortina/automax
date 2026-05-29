@@ -354,13 +354,13 @@ if [[ "${AUTOMAX_SSH_SMOKE_PRIVILEGED:-0}" == "1" ]]; then
       - id: identity
         substeps:
           - id: create_group
-            use: group.create
+            use: identity.group.create
             with:
               name: ${SMOKE_GROUP}
               system: true
               sudo: true
           - id: create_user
-            use: user.create
+            use: identity.user.create
             with:
               name: ${SMOKE_USER}
               group: ${SMOKE_GROUP}
@@ -369,19 +369,19 @@ if [[ "${AUTOMAX_SSH_SMOKE_PRIVILEGED:-0}" == "1" ]]; then
               create_home: false
               sudo: true
           - id: modify_user
-            use: user.modify
+            use: identity.user.modify
             with:
               name: ${SMOKE_USER}
               comment: Automax smoke user
               sudo: true
           - id: remove_user
-            use: user.remove
+            use: identity.user.remove
             with:
               name: ${SMOKE_USER}
               remove_home: true
               sudo: true
           - id: remove_group
-            use: group.remove
+            use: identity.group.remove
             with:
               name: ${SMOKE_GROUP}
               sudo: true

@@ -25,7 +25,7 @@ Per-plugin runbooks only. No combined runbook, no reused runtime smoke flow, and
 | `runbooks/19-firewalld.check.yaml` | `network.firewall.firewalld` | 11 |
 | `runbooks/20-fs.check.yaml` | `fs` | 27 |
 | `runbooks/21-fstab.check.yaml` | `fstab` | 4 |
-| `runbooks/22-group.check.yaml` | `group` | 5 |
+| `runbooks/22-group.check.yaml` | `identity.group` | 5 |
 | `runbooks/24-hostname.check.yaml` | `hostname` | 1 |
 | `runbooks/25-hosts.check.yaml` | `hosts` | 1 |
 | `runbooks/26-http.check.yaml` | `http` | 3 |
@@ -66,5 +66,5 @@ Per-plugin runbooks only. No combined runbook, no reused runtime smoke flow, and
 | `runbooks/62-transfer.check.yaml` | `transfer` | 4 |
 | `runbooks/63-udev.check.yaml` | `udev` | 7 |
 | `runbooks/64-ufw.check.yaml` | `network.firewall.ufw` | 6 |
-| `runbooks/65-user.check.yaml` | `user` | 11 |
+| `runbooks/65-user.check.yaml` | `identity.user` | 11 |
 | `runbooks/66-wait.check.yaml` | `wait` | 4 |

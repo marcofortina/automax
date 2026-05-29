@@ -19,7 +19,7 @@ from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_
 class UserExistsPlugin(BasePlugin):
     """Check whether a remote user exists."""
 
-    name = "user.exists"
+    name = "identity.user.exists"
     description = "Check whether a remote user exists."
     required_params = ("name",)
     optional_params = ("sudo",)
@@ -40,7 +40,7 @@ class UserExistsPlugin(BasePlugin):
 class GroupExistsPlugin(BasePlugin):
     """Check whether a remote group exists."""
 
-    name = "group.exists"
+    name = "identity.group.exists"
     description = "Check whether a remote group exists."
     required_params = ("name",)
     optional_params = ("sudo",)
@@ -61,7 +61,7 @@ class GroupExistsPlugin(BasePlugin):
 class UserLockPlugin(BasePlugin):
     """Lock a remote user account."""
 
-    name = "user.lock"
+    name = "identity.user.lock"
     description = "Lock a remote user account."
     required_params = ("name",)
     optional_params = ("sudo",)
@@ -76,13 +76,13 @@ class UserLockPlugin(BasePlugin):
             f"true; else {sudo_prefix(params, default=True)}usermod --lock {name} && echo {CHANGE_MARKER}; fi"
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.lock failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="identity.user.lock failed")
 
 
 class UserUnlockPlugin(BasePlugin):
     """Unlock a remote user account."""
 
-    name = "user.unlock"
+    name = "identity.user.unlock"
     description = "Unlock a remote user account."
     required_params = ("name",)
     optional_params = ("sudo",)
@@ -97,13 +97,13 @@ class UserUnlockPlugin(BasePlugin):
             f"true; else {sudo_prefix(params, default=True)}usermod --unlock {name} && echo {CHANGE_MARKER}; fi"
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.unlock failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="identity.user.unlock failed")
 
 
 class UserSetPasswordPlugin(BasePlugin):
     """Set a remote user's password using either a password hash or plaintext value."""
 
-    name = "user.set_password"
+    name = "identity.user.set_password"
     description = "Set a remote user's password using a password hash or plaintext value."
     required_params = ("name",)
     optional_params = ("password_hash", "password", "sudo")
@@ -112,7 +112,7 @@ class UserSetPasswordPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if bool(params.get("password_hash")) == bool(params.get("password")):
-            raise PluginValidationError("user.set_password requires exactly one of password_hash or password")
+            raise PluginValidationError("identity.user.set_password requires exactly one of password_hash or password")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -125,7 +125,7 @@ class UserSetPasswordPlugin(BasePlugin):
             temp_path = upload_text_to_temp(context, f"{name}:{params['password']}\n")
             command = f"{sudo_prefix(params, default=True)}chpasswd < {quote(temp_path)} && rm -f {quote(temp_path)} && echo {CHANGE_MARKER}"
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.set_password failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="identity.user.set_password failed")
 
 
 class SshAuthorizedKeyPlugin(BasePlugin):

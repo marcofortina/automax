@@ -113,7 +113,7 @@ filesystem:    fs.*
 archive:       archive.*
 packages:      pkg.*
 systemd:       systemctl.*
-users/groups:  user.*, group.*
+identity:      identity.user.*, identity.group.*
 processes:     process.*
 transfer:      transfer.*
 http/api:      http.*

@@ -15,50 +15,50 @@ tasks:
   - id: catalog
     substeps:
     - id: user_create
-      use: user.create
+      use: identity.user.create
       with:
         name: nginx
     - id: user_exists
-      use: user.exists
+      use: identity.user.exists
       with:
         name: nginx
     - id: user_facts
-      use: user.facts
+      use: identity.user.facts
       with:
         user: deploy
     - id: user_groups_assert
-      use: user.groups_assert
+      use: identity.user.groups_check
       with:
         user: deploy
         groups:
         - app
     - id: user_home_assert
-      use: user.home_assert
+      use: identity.user.home_check
       with:
         user: deploy
     - id: user_lock
-      use: user.lock
+      use: identity.user.lock
       with:
         name: nginx
     - id: user_modify
-      use: user.modify
+      use: identity.user.modify
       with:
         name: nginx
     - id: user_remove
-      use: user.remove
+      use: identity.user.remove
       with:
         name: nginx
     - id: user_set_password
-      use: user.set_password
+      use: identity.user.set_password
       with:
         name: automax_smoke_user
         password: "{{ secrets.automax_smoke_user_password }}"
     - id: user_shell_assert
-      use: user.shell_assert
+      use: identity.user.shell_check
       with:
         user: deploy
         shell: /bin/bash
     - id: user_unlock
-      use: user.unlock
+      use: identity.user.unlock
       with:
         name: nginx

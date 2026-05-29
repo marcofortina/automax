@@ -215,32 +215,32 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
         if plugin_name in {"pkg.key.add", "pkg.repo.add", "pkg.repo.remove"}:
             return [f"# render package repository/key change for {plugin_name}; inspect generated job preview before manual execution"]
 
-    if plugin_name.startswith("user."):
-        if plugin_name == "user.create":
+    if plugin_name.startswith("identity.user."):
+        if plugin_name == "identity.user.create":
             flags = _useradd_flags(params)
             flag_text = f" {flags}" if flags else ""
             return [f"id -u {_q(name)} >/dev/null 2>&1 || {sudo}useradd{flag_text} {_q(name)}"]
-        if plugin_name == "user.remove":
+        if plugin_name == "identity.user.remove":
             return [f"{sudo}userdel {'-r ' if params.get('remove_home') else ''}{_q(name)}"]
-        if plugin_name == "user.exists":
+        if plugin_name == "identity.user.exists":
             return [f"id {_q(name)}"]
-        if plugin_name == "user.lock":
+        if plugin_name == "identity.user.lock":
             return [f"{sudo}usermod -L {_q(name)}"]
-        if plugin_name == "user.unlock":
+        if plugin_name == "identity.user.unlock":
             return [f"{sudo}usermod -U {_q(name)}"]
-        if plugin_name == "user.set_password":
+        if plugin_name == "identity.user.set_password":
             return [f"echo '{name}:***' | {sudo}chpasswd"]
-        if plugin_name == "user.modify":
+        if plugin_name == "identity.user.modify":
             return [f"{sudo}usermod {_q(name)}"]
 
-    if plugin_name.startswith("group."):
-        if plugin_name == "group.create":
+    if plugin_name.startswith("identity.group."):
+        if plugin_name == "identity.group.create":
             flags = _groupadd_flags(params)
             flag_text = f" {flags}" if flags else ""
             return [f"getent group {_q(name)} >/dev/null || {sudo}groupadd{flag_text} {_q(name)}"]
-        if plugin_name == "group.remove":
+        if plugin_name == "identity.group.remove":
             return [f"{sudo}groupdel {_q(name)}"]
-        if plugin_name == "group.exists":
+        if plugin_name == "identity.group.exists":
             return [f"getent group {_q(name)}"]
 
     if plugin_name.startswith("fs."):

@@ -26,7 +26,7 @@ def _list(value: Any) -> list[str]:
 class GroupCreatePlugin(BasePlugin):
     """Create a group if it does not already exist."""
 
-    name = "group.create"
+    name = "identity.group.create"
     description = "Create a remote group."
     required_params = ("name",)
     optional_params = ("gid", "system", "sudo")
@@ -45,13 +45,13 @@ class GroupCreatePlugin(BasePlugin):
             f"&& echo {CHANGE_MARKER}; }}"
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="group.create failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="identity.group.create failed")
 
 
 class GroupRemovePlugin(BasePlugin):
     """Remove a group if it exists."""
 
-    name = "group.remove"
+    name = "identity.group.remove"
     description = "Remove a remote group."
     required_params = ("name",)
     optional_params = ("sudo",)
@@ -64,13 +64,13 @@ class GroupRemovePlugin(BasePlugin):
             f"{sudo_prefix(params, default=True)}groupdel {quote(params['name'])} && echo {CHANGE_MARKER}; fi"
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="group.remove failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="identity.group.remove failed")
 
 
 class UserCreatePlugin(BasePlugin):
     """Create a user if it does not already exist."""
 
-    name = "user.create"
+    name = "identity.user.create"
     description = "Create a remote user."
     required_params = ("name",)
     optional_params = (
@@ -112,13 +112,13 @@ class UserCreatePlugin(BasePlugin):
             f"&& echo {CHANGE_MARKER}; }}"
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.create failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="identity.user.create failed")
 
 
 class UserModifyPlugin(BasePlugin):
     """Modify an existing user."""
 
-    name = "user.modify"
+    name = "identity.user.modify"
     description = "Modify a remote user."
     required_params = ("name",)
     optional_params = ("uid", "group", "groups", "append", "shell", "home", "comment", "lock", "unlock", "sudo")
@@ -143,25 +143,25 @@ class UserModifyPlugin(BasePlugin):
         if params.get("comment"):
             flags.extend(["--comment", quote(params["comment"])])
         if bool(params.get("lock", False)) and bool(params.get("unlock", False)):
-            raise PluginValidationError("user.modify cannot set both lock and unlock")
+            raise PluginValidationError("identity.user.modify cannot set both lock and unlock")
         if bool(params.get("lock", False)):
             flags.append("--lock")
         if bool(params.get("unlock", False)):
             flags.append("--unlock")
         if not flags:
-            return PluginResult.success(changed=False, message="no user.modify fields requested")
+            return PluginResult.success(changed=False, message="no identity.user.modify fields requested")
         command = (
             f"id -u {quote(params['name'])} >/dev/null 2>&1 && "
             f"{sudo_prefix(params, default=True)}usermod {' '.join(flags)} {quote(params['name'])} && echo {CHANGE_MARKER}"
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.modify failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="identity.user.modify failed")
 
 
 class UserRemovePlugin(BasePlugin):
     """Remove a user if it exists."""
 
-    name = "user.remove"
+    name = "identity.user.remove"
     description = "Remove a remote user."
     required_params = ("name",)
     optional_params = ("remove_home", "sudo")
@@ -175,7 +175,7 @@ class UserRemovePlugin(BasePlugin):
             f"{sudo_prefix(params, default=True)}userdel {flag} {quote(params['name'])} && echo {CHANGE_MARKER}; fi"
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="user.remove failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="identity.user.remove failed")
 
 
 class ProcessKillPlugin(BasePlugin):

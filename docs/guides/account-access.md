@@ -7,16 +7,16 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 Automax includes account access plugins for common Linux operator tasks:
 
-- `user.exists`, `user.lock`, `user.unlock`, `user.set_password`
-- `group.exists`
+- `identity.user.exists`, `identity.user.lock`, `identity.user.unlock`, `identity.user.set_password`
+- `identity.group.exists`
 - `security.ssh.authorized_key.add`
 - `security.sudo.dropin`
 
-Use `password_hash` with `user.set_password` whenever possible. Plaintext passwords are supported for operational compatibility, but command secrets or file secrets are preferred.
+Use `password_hash` with `identity.user.set_password` whenever possible. Plaintext passwords are supported for operational compatibility, but command secrets or file secrets are preferred.
 
 ```yaml
 - id: set_deploy_password
-  use: user.set_password
+  use: identity.user.set_password
   with:
     name: deploy
     password_hash: "{{ secrets.deploy_password_hash }}"

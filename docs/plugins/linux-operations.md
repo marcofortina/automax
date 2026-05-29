@@ -237,9 +237,9 @@ Udev validation/readback plugins are `udev.validate`, `udev.test` and
 Time synchronization helpers include `timedatectl.status`,
 `timedatectl.timezone`, `timedatectl.ntp` and `chrony.tracking_assert`.
 
-User and group readback/assertion plugins include `user.facts`,
-`user.shell_assert`, `user.home_assert`, `user.groups_assert`, `group.members`
-and `group.member_absent`. Removing a group member requires `confirm: true`.
+User and group readback/assertion plugins include `identity.user.facts`,
+`identity.user.shell_check`, `identity.user.home_check`, `identity.user.groups_check`, `identity.group.members`
+and `identity.group.member.remove`. Removing a group member requires `confirm: true`.
 
 ## OS-aware job-scoped capability preflight
 

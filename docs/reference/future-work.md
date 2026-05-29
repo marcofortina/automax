@@ -58,7 +58,7 @@ different guardrails to the same job definition in lab and production.
 ```text
 low: fs.dir.exists, fs.file.exists, fs.symlink.exists
 medium: systemctl.restart, fs.file.template, transfer.upload
-high: pkg.upgrade, user.remove, fs.dir.remove recursive=true
+high: pkg.upgrade, identity.user.remove, fs.dir.remove recursive=true
 ```
 
 This would give operators a quick review surface before running jobs on real

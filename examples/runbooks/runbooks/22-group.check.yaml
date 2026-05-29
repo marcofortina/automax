@@ -15,24 +15,24 @@ tasks:
   - id: catalog
     substeps:
     - id: group_create
-      use: group.create
+      use: identity.group.create
       with:
         name: nginx
     - id: group_exists
-      use: group.exists
+      use: identity.group.exists
       with:
         name: nginx
     - id: group_member_absent
-      use: group.member_absent
+      use: identity.group.member.remove
       with:
         user: deploy
         group: app
         confirm: true
     - id: group_members
-      use: group.members
+      use: identity.group.members
       with:
         group: app
     - id: group_remove
-      use: group.remove
+      use: identity.group.remove
       with:
         name: nginx

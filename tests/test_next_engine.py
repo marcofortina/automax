@@ -607,11 +607,11 @@ def test_extended_systemctl_plugins_are_registered():
         "transfer.download",
         "transfer.sync",
         "transfer.upload",
-        "user.create",
-        "user.modify",
-        "user.remove",
-        "group.create",
-        "group.remove",
+        "identity.user.create",
+        "identity.user.modify",
+        "identity.user.remove",
+        "identity.group.create",
+        "identity.group.remove",
     ):
         assert name in names
 
@@ -622,11 +622,11 @@ def test_user_group_process_plugins_are_registered():
     names = AutomaxEngine().plugin_registry.names()
 
     for name in (
-        "user.create",
-        "user.modify",
-        "user.remove",
-        "group.create",
-        "group.remove",
+        "identity.user.create",
+        "identity.user.modify",
+        "identity.user.remove",
+        "identity.group.create",
+        "identity.group.remove",
         "process.kill",
         "process.wait",
     ):
@@ -1574,8 +1574,8 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "network.connectivity.port_check",
         "systemctl.status",
         "pkg.query",
-        "user.create",
-        "group.create",
+        "identity.user.create",
+        "identity.group.create",
         "process.kill",
     ]
     for snippet in required_snippets:
@@ -3537,14 +3537,14 @@ def test_user_group_manual_commands_render_identity_flags():
     context = ExecutionContext(run_id="run", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node1", host="node1"), vars={}, outputs={}, secrets={})
 
     group_command = fallback_manual_commands(
-        "group.create",
+        "identity.group.create",
         {"name": "oinstall", "gid": 54321, "system": True, "sudo": True},
         context,
     )[0]
     assert group_command == "getent group oinstall >/dev/null || sudo -n groupadd --system --gid 54321 oinstall"
 
     user_command = fallback_manual_commands(
-        "user.create",
+        "identity.user.create",
         {
             "name": "grid",
             "uid": 54331,
