@@ -32,7 +32,7 @@ from automax.core.models import ExecutionContext, NodeStatus, PluginResult, Targ
 from automax.core.secrets import SecretManager
 from automax.core.ssh import SshSessionManager
 from automax.core.state import StateStore
-from automax.core.templating import render_mapping, render_value
+from automax.core.templating import evaluate_value, render_mapping, render_value
 from automax.core.yaml_loader import load_yaml_file
 from automax.plugins.registry import PluginRegistry, build_builtin_registry
 from automax.plugins.remote_utils import prepare_sudo_password_command
@@ -356,56 +356,124 @@ class AutomaxEngine:
         outputs: Dict[str, Any] = {}
         step_states: Dict[tuple[str, str], Dict[str, Any]] = {}
         for item in resolved.plan:
-            target: Target = item["target"]
-            effective_vars = deepcopy(resolved.variables)
-            effective_vars.update(target.vars)
             step_key = (str(item["target"].name), str(item["step"]["id"]))
             step_state = step_states.setdefault(step_key, {})
-            template_context = {
-                "job": resolved.job,
-                "task": item["task"],
-                "step": item["step"],
-                "substep": item["substep"],
-                "server": target,
-                "target": target,
-                "vars": effective_vars,
-                "outputs": outputs,
-                "secrets": resolved.secrets,
-                "step_state": step_state,
-            }
-            if not self._is_condition_true(item["substep"].get("when"), template_context):
-                continue
-            rendered_substep = render_mapping(item["substep"], template_context)
-            plugin_name = rendered_substep.get("use") or rendered_substep.get("plugin")
-            params = rendered_substep.get("with", rendered_substep.get("params", {})) or {}
-            plugin = self.plugin_registry.get(str(plugin_name))
-            plugin.validate(params)
-            context = ExecutionContext(
-                run_id="operator-preview",
+            yield from self._iter_rendered_substep_items(
+                resolved=resolved,
+                item=item,
                 dry_run=dry_run,
-                job=resolved.job,
-                task=item["task"],
-                step=item["step"],
-                substep=rendered_substep,
-                target=target,
-                vars=effective_vars,
                 outputs=outputs,
-                secrets=resolved.secrets,
-                ssh_client=None,
-                logger=self.logger,
-                command_timeout=self._resolve_command_timeout(
-                    resolved.job, item["task"], item["step"], item["substep"]
-                ),
                 step_state=step_state,
+                flow_vars={},
             )
-            yield {
-                **item,
-                "plugin": plugin,
-                "plugin_name": str(plugin_name),
-                "params": params,
-                "context": context,
-                "rendered_substep": rendered_substep,
-            }
+
+    def _iter_rendered_substep_items(
+        self,
+        *,
+        resolved: ResolvedJobContext,
+        item: Dict[str, Any],
+        dry_run: bool,
+        outputs: Dict[str, Any],
+        step_state: Dict[str, Any],
+        flow_vars: Dict[str, Any],
+    ) -> Iterable[Dict[str, Any]]:
+        target: Target = item["target"]
+        substep = item["substep"]
+        template_context = self._template_context(
+            job=resolved.job,
+            task=item["task"],
+            step=item["step"],
+            substep=substep,
+            target=target,
+            variables=resolved.variables,
+            outputs=outputs,
+            secrets=resolved.secrets,
+            step_state=step_state,
+            flow_vars=flow_vars,
+        )
+        try:
+            if not self._is_condition_true(substep.get("when"), template_context):
+                return
+        except Exception:
+            # Operator previews do not execute previous substeps, so unresolved outputs may
+            # make dynamic conditions unavailable. Keep walking nested plugin leaves so
+            # capability preflight and manual previews still see the possible operations.
+            pass
+        if self._is_if_substep(substep):
+            try:
+                branch = "then" if self._is_condition_true(substep.get("if"), template_context) else "else"
+                branches = [branch]
+            except Exception:
+                branches = ["then", "else"]
+            for branch in branches:
+                for child in substep.get(branch, []) or []:
+                    yield from self._iter_rendered_substep_items(
+                        resolved=resolved,
+                        item=self._child_item(item, child, branch),
+                        dry_run=dry_run,
+                        outputs=outputs,
+                        step_state=step_state,
+                        flow_vars=flow_vars,
+                    )
+            return
+        if self._is_for_substep(substep):
+            loop_var = str(substep.get("for", "item"))
+            try:
+                values = self._loop_values(evaluate_value(substep.get("in"), template_context))
+            except Exception:
+                values = ["__automax_loop_item__"]
+            if not values:
+                values = ["__automax_loop_item__"]
+            for index, value in enumerate(values):
+                loop_vars = dict(flow_vars)
+                loop_vars[loop_var] = value
+                loop_vars["item"] = value
+                loop_vars["loop"] = {"index": index + 1, "index0": index, "first": index == 0, "last": index == len(values) - 1, "length": len(values)}
+                for child in substep.get("do", []) or []:
+                    yield from self._iter_rendered_substep_items(
+                        resolved=resolved,
+                        item=self._child_item(item, child, f"for.{index}"),
+                        dry_run=dry_run,
+                        outputs=outputs,
+                        step_state=step_state,
+                        flow_vars=loop_vars,
+                    )
+            return
+
+        rendered_substep = render_mapping(substep, template_context)
+        plugin_name = rendered_substep.get("use") or rendered_substep.get("plugin")
+        params = rendered_substep.get("with", rendered_substep.get("params", {})) or {}
+        plugin = self.plugin_registry.get(str(plugin_name))
+        plugin.validate(params)
+        effective_vars = deepcopy(resolved.variables)
+        effective_vars.update(target.vars)
+        effective_vars.update(flow_vars)
+        context = ExecutionContext(
+            run_id="operator-preview",
+            dry_run=dry_run,
+            job=resolved.job,
+            task=item["task"],
+            step=item["step"],
+            substep=rendered_substep,
+            target=target,
+            vars=effective_vars,
+            outputs=outputs,
+            secrets=resolved.secrets,
+            ssh_client=None,
+            logger=self.logger,
+            command_timeout=self._resolve_command_timeout(
+                resolved.job, item["task"], item["step"], item["substep"]
+            ),
+            step_state=step_state,
+        )
+        yield {
+            **item,
+            "plugin": plugin,
+            "plugin_name": str(plugin_name),
+            "params": params,
+            "context": context,
+            "rendered_substep": rendered_substep,
+        }
 
 
     def render_vars_job(
@@ -1124,78 +1192,123 @@ class AutomaxEngine:
                     raise AutomaxError(
                         f"step '{task_id}:{step_id}' requires non-empty substeps"
                     )
-                seen_substeps = set()
-                for substep in substeps:
-                    substep_id = self._require_id(substep, "substep")
-                    if strict:
-                        self._validate_known_keys(
-                            substep,
-                            f"substep '{task_id}:{step_id}:{substep_id}'",
-                            {
-                                "id",
-                                "name",
-                                "description",
-                                "targets",
-                                "tags",
-                                "timeouts",
-                                "retry",
-                                "errorPolicy",
-                                "when",
-                                "use",
-                                "plugin",
-                                "with",
-                                "params",
-                                "register",
-                                "artifacts",
-                                "artifact",
-                            },
-                        )
-                    self._validate_tags(
-                        substep.get("tags"), f"substep '{task_id}:{step_id}:{substep_id}'"
-                    )
-                    self._validate_timeouts(
-                        substep.get("timeouts"), f"substep '{task_id}:{step_id}:{substep_id}'"
-                    )
-                    self._validate_retry_policy(
-                        substep.get("retry"), f"substep '{task_id}:{step_id}:{substep_id}'"
-                    )
-                    self._validate_error_policy(
-                        substep.get("errorPolicy"), f"substep '{task_id}:{step_id}:{substep_id}'"
-                    )
-                    if substep_id in seen_substeps:
-                        raise AutomaxError(
-                            f"duplicate substep id in '{task_id}:{step_id}': {substep_id}"
-                        )
-                    seen_substeps.add(substep_id)
-                    plugin_name = substep.get("use") or substep.get("plugin")
-                    if not plugin_name:
-                        raise AutomaxError(
-                            f"substep '{task_id}:{step_id}:{substep_id}' requires 'use'"
-                        )
-                    plugin = self.plugin_registry.get(str(plugin_name))
-                    params = substep.get("with", substep.get("params", {})) or {}
-                    if not isinstance(params, dict):
-                        raise AutomaxError(
-                            f"substep '{task_id}:{step_id}:{substep_id}' params must be mapping"
-                        )
-                    plugin.validate(params)
+                self._validate_substep_list(
+                    substeps,
+                    label=f"{task_id}:{step_id}",
+                    strict=strict,
+                )
 
     def _validate_plan_strict(self, plan: List[Dict[str, Any]]) -> None:
         """Validate plugin parameters after target/tag resolution."""
         for item in plan:
-            substep = item["substep"]
-            plugin_name = str(substep.get("use") or substep.get("plugin"))
-            plugin = self.plugin_registry.get(plugin_name)
-            params = substep.get("with", substep.get("params", {})) or {}
-            if not isinstance(params, dict):
-                raise AutomaxError(f"substep '{item['node_id']}' params must be mapping")
-            allowed = set(plugin.required_params) | set(plugin.optional_params)
-            unknown = sorted(set(params) - allowed)
-            if unknown:
-                raise AutomaxError(
-                    f"substep '{item['node_id']}' plugin '{plugin.name}' unknown params: "
-                    + ", ".join(unknown)
-                )
+            self._validate_substep_strict(item["substep"], item["node_id"])
+
+    def _validate_substep_list(self, substeps: Any, *, label: str, strict: bool) -> None:
+        if not isinstance(substeps, list) or not substeps:
+            raise AutomaxError(f"substep list '{label}' must be a non-empty list")
+        seen_substeps = set()
+        for substep in substeps:
+            substep_id = self._require_id(substep, "substep")
+            substep_label = f"substep '{label}:{substep_id}'"
+            if substep_id in seen_substeps:
+                raise AutomaxError(f"duplicate substep id in '{label}': {substep_id}")
+            seen_substeps.add(substep_id)
+            self._validate_substep_common(substep, substep_label, strict=strict)
+            if self._is_if_substep(substep):
+                self._validate_flow_if_substep(substep, substep_label, strict=strict)
+                continue
+            if self._is_for_substep(substep):
+                self._validate_flow_for_substep(substep, substep_label, strict=strict)
+                continue
+            self._validate_plugin_substep(substep, substep_label)
+
+    def _validate_substep_common(self, substep: Dict[str, Any], label: str, *, strict: bool) -> None:
+        if strict:
+            self._validate_known_keys(substep, label, self._allowed_substep_keys())
+        self._validate_tags(substep.get("tags"), label)
+        self._validate_timeouts(substep.get("timeouts"), label)
+        self._validate_retry_policy(substep.get("retry"), label)
+        self._validate_error_policy(substep.get("errorPolicy"), label)
+
+    def _validate_flow_if_substep(self, substep: Dict[str, Any], label: str, *, strict: bool) -> None:
+        if "use" in substep or "plugin" in substep:
+            raise AutomaxError(f"{label} cannot combine 'if' flow control with 'use'")
+        if "then" not in substep and "else" not in substep:
+            raise AutomaxError(f"{label} if flow requires 'then' or 'else'")
+        if "then" in substep:
+            self._validate_substep_list(substep["then"], label=f"{label}:then", strict=strict)
+        if "else" in substep:
+            self._validate_substep_list(substep["else"], label=f"{label}:else", strict=strict)
+
+    def _validate_flow_for_substep(self, substep: Dict[str, Any], label: str, *, strict: bool) -> None:
+        if "use" in substep or "plugin" in substep:
+            raise AutomaxError(f"{label} cannot combine 'for' flow control with 'use'")
+        variable = substep.get("for")
+        if not isinstance(variable, str) or not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", variable):
+            raise AutomaxError(f"{label} for flow requires a valid loop variable name")
+        if "in" not in substep:
+            raise AutomaxError(f"{label} for flow requires 'in'")
+        self._validate_substep_list(substep.get("do"), label=f"{label}:do", strict=strict)
+
+    def _validate_plugin_substep(self, substep: Dict[str, Any], label: str) -> None:
+        plugin_name = substep.get("use") or substep.get("plugin")
+        if not plugin_name:
+            raise AutomaxError(f"{label} requires 'use'")
+        plugin = self.plugin_registry.get(str(plugin_name))
+        params = substep.get("with", substep.get("params", {})) or {}
+        if not isinstance(params, dict):
+            raise AutomaxError(f"{label} params must be mapping")
+        plugin.validate(params)
+
+    def _validate_substep_strict(self, substep: Dict[str, Any], node_id: str) -> None:
+        if self._is_if_substep(substep):
+            for branch in ("then", "else"):
+                for child in substep.get(branch, []) or []:
+                    self._validate_substep_strict(child, f"{node_id}:{branch}.{child.get('id')}")
+            return
+        if self._is_for_substep(substep):
+            for child in substep.get("do", []) or []:
+                self._validate_substep_strict(child, f"{node_id}:do.{child.get('id')}")
+            return
+        plugin_name = str(substep.get("use") or substep.get("plugin"))
+        plugin = self.plugin_registry.get(plugin_name)
+        params = substep.get("with", substep.get("params", {})) or {}
+        if not isinstance(params, dict):
+            raise AutomaxError(f"substep '{node_id}' params must be mapping")
+        allowed = set(plugin.required_params) | set(plugin.optional_params)
+        unknown = sorted(set(params) - allowed)
+        if unknown:
+            raise AutomaxError(
+                f"substep '{node_id}' plugin '{plugin.name}' unknown params: "
+                + ", ".join(unknown)
+            )
+
+    @staticmethod
+    def _allowed_substep_keys() -> set[str]:
+        return {
+            "id",
+            "name",
+            "description",
+            "targets",
+            "tags",
+            "timeouts",
+            "retry",
+            "errorPolicy",
+            "when",
+            "if",
+            "then",
+            "else",
+            "for",
+            "in",
+            "do",
+            "use",
+            "plugin",
+            "with",
+            "params",
+            "register",
+            "artifacts",
+            "artifact",
+        }
 
     @staticmethod
     def _validate_known_keys(node: Dict[str, Any], label: str, allowed: set[str]) -> None:
@@ -1798,25 +1911,9 @@ class AutomaxEngine:
     ) -> int:
         step_state: Dict[str, Any] = {}
         for item in group:
-            task = item["task"]
-            step = item["step"]
-            substep = item["substep"]
-            target = item["target"]
-            node_id = item["node_id"]
-            store.start_node(
-                node_id=node_id,
-                target=target.name,
-                task_id=task["id"],
-                step_id=step["id"],
-                substep_id=substep["id"],
-            )
-            result = self._execute_substep_with_retry(
+            result = self._execute_item(
                 job=job,
-                task=task,
-                step=step,
-                substep=substep,
-                target=target,
-                node_id=node_id,
+                item=item,
                 store=store,
                 run_id=run_id,
                 dry_run=dry_run,
@@ -1827,47 +1924,378 @@ class AutomaxEngine:
                 step_state=step_state,
                 output_format=output_format,
                 sudo_password=sudo_password,
+                flow_vars={},
             )
-
-            with self._output_lock:
-                self._register_outputs(outputs, node_id, target.name, substep, result)
-            artifact_error = self._capture_declared_artifacts(
-                store=store,
-                job=job,
-                item=item,
-                result=result,
-                variables=variables,
-                secrets=secrets,
-                outputs=outputs,
-            )
-            if artifact_error:
-                result = PluginResult.failure(message=artifact_error)
-            store.finish_node(
-                node_id=node_id,
-                target=target.name,
-                status=self._node_status_for_result(result),
-                changed=result.changed,
-                rc=result.rc,
-                message=self._mask_text(result.message, secrets),
-                output=self._result_to_mapping(result, secrets=secrets),
-            )
-            store.record_event(
-                "substep_finished",
-                node_id=node_id,
-                target=target.name,
-                payload={"ok": result.ok, "changed": result.changed, "rc": result.rc},
-            )
-            if output_format == "text":
-                status = "WARN" if result.warning else ("OK" if result.ok else "FAILED")
-                with self._print_lock:
-                    print(
-                        f"[{status}] {target.name} {node_id} rc={result.rc} {self._mask_text(result.message, secrets)}".rstrip()
-                    )
-                    if not result.ok:
-                        self._print_result_failure_details(result, secrets)
             if not result.ok:
                 return 1
         return 0
+
+    def _execute_item(
+        self,
+        *,
+        job: Dict[str, Any],
+        item: Dict[str, Any],
+        store: StateStore,
+        run_id: str,
+        dry_run: bool,
+        variables: Dict[str, Any],
+        secrets: Dict[str, Any],
+        outputs: Dict[str, Any],
+        ssh_client: Any,
+        step_state: Dict[str, Any],
+        output_format: str,
+        sudo_password: str | None,
+        flow_vars: Dict[str, Any],
+    ) -> PluginResult:
+        substep = item["substep"]
+        if self._is_flow_substep(substep):
+            return self._execute_flow_item(
+                job=job,
+                item=item,
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+                sudo_password=sudo_password,
+                flow_vars=flow_vars,
+            )
+        return self._execute_leaf_item(
+            job=job,
+            item=item,
+            store=store,
+            run_id=run_id,
+            dry_run=dry_run,
+            variables=variables,
+            secrets=secrets,
+            outputs=outputs,
+            ssh_client=ssh_client,
+            step_state=step_state,
+            output_format=output_format,
+            sudo_password=sudo_password,
+            flow_vars=flow_vars,
+        )
+
+    def _execute_leaf_item(
+        self,
+        *,
+        job: Dict[str, Any],
+        item: Dict[str, Any],
+        store: StateStore,
+        run_id: str,
+        dry_run: bool,
+        variables: Dict[str, Any],
+        secrets: Dict[str, Any],
+        outputs: Dict[str, Any],
+        ssh_client: Any,
+        step_state: Dict[str, Any],
+        output_format: str,
+        sudo_password: str | None,
+        flow_vars: Dict[str, Any],
+    ) -> PluginResult:
+        task = item["task"]
+        step = item["step"]
+        substep = item["substep"]
+        target = item["target"]
+        node_id = item["node_id"]
+        store.start_node(
+            node_id=node_id,
+            target=target.name,
+            task_id=task["id"],
+            step_id=step["id"],
+            substep_id=substep["id"],
+        )
+        result = self._execute_substep_with_retry(
+            job=job,
+            task=task,
+            step=step,
+            substep=substep,
+            target=target,
+            node_id=node_id,
+            store=store,
+            run_id=run_id,
+            dry_run=dry_run,
+            variables=variables,
+            secrets=secrets,
+            outputs=outputs,
+            ssh_client=ssh_client,
+            step_state=step_state,
+            output_format=output_format,
+            sudo_password=sudo_password,
+            flow_vars=flow_vars,
+        )
+
+        with self._output_lock:
+            self._register_outputs(outputs, node_id, target.name, substep, result)
+        artifact_error = self._capture_declared_artifacts(
+            store=store,
+            job=job,
+            item=item,
+            result=result,
+            variables=variables,
+            secrets=secrets,
+            outputs=outputs,
+            flow_vars=flow_vars,
+        )
+        if artifact_error:
+            result = PluginResult.failure(message=artifact_error)
+        self._finish_item_node(
+            store=store,
+            item=item,
+            result=result,
+            secrets=secrets,
+            output_format=output_format,
+        )
+        return result
+
+    def _execute_flow_item(
+        self,
+        *,
+        job: Dict[str, Any],
+        item: Dict[str, Any],
+        store: StateStore,
+        run_id: str,
+        dry_run: bool,
+        variables: Dict[str, Any],
+        secrets: Dict[str, Any],
+        outputs: Dict[str, Any],
+        ssh_client: Any,
+        step_state: Dict[str, Any],
+        output_format: str,
+        sudo_password: str | None,
+        flow_vars: Dict[str, Any],
+    ) -> PluginResult:
+        task = item["task"]
+        step = item["step"]
+        substep = item["substep"]
+        target = item["target"]
+        node_id = item["node_id"]
+        store.start_node(
+            node_id=node_id,
+            target=target.name,
+            task_id=task["id"],
+            step_id=step["id"],
+            substep_id=substep["id"],
+        )
+        context = self._template_context(
+            job=job,
+            task=task,
+            step=step,
+            substep=substep,
+            target=target,
+            variables=variables,
+            outputs=outputs,
+            secrets=secrets,
+            step_state=step_state,
+            flow_vars=flow_vars,
+        )
+        if not self._is_condition_true(substep.get("when"), context):
+            result = PluginResult.skipped_result("condition evaluated to false")
+            self._finish_item_node(store=store, item=item, result=result, secrets=secrets, output_format=output_format)
+            return result
+        if self._is_if_substep(substep):
+            result = self._execute_if_flow(
+                job=job,
+                item=item,
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+                sudo_password=sudo_password,
+                flow_vars=flow_vars,
+                context=context,
+            )
+        else:
+            result = self._execute_for_flow(
+                job=job,
+                item=item,
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+                sudo_password=sudo_password,
+                flow_vars=flow_vars,
+                context=context,
+            )
+        with self._output_lock:
+            self._register_outputs(outputs, node_id, target.name, substep, result)
+        self._finish_item_node(store=store, item=item, result=result, secrets=secrets, output_format=output_format)
+        return result
+
+    def _execute_if_flow(
+        self,
+        *,
+        job: Dict[str, Any],
+        item: Dict[str, Any],
+        store: StateStore,
+        run_id: str,
+        dry_run: bool,
+        variables: Dict[str, Any],
+        secrets: Dict[str, Any],
+        outputs: Dict[str, Any],
+        ssh_client: Any,
+        step_state: Dict[str, Any],
+        output_format: str,
+        sudo_password: str | None,
+        flow_vars: Dict[str, Any],
+        context: Dict[str, Any],
+    ) -> PluginResult:
+        substep = item["substep"]
+        branch = "then" if self._is_condition_true(substep.get("if"), context) else "else"
+        executed = 0
+        for child in substep.get(branch, []) or []:
+            child_item = self._child_item(item, child, branch)
+            child_result = self._execute_item(
+                job=job,
+                item=child_item,
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+                sudo_password=sudo_password,
+                flow_vars=flow_vars,
+            )
+            executed += 1
+            if not child_result.ok:
+                return PluginResult.failure(message=f"if {branch} branch failed", data={"flow": "if", "branch": branch, "executed": executed})
+        return PluginResult.success(changed=False, message=f"if {branch} branch executed", data={"flow": "if", "branch": branch, "executed": executed})
+
+    def _execute_for_flow(
+        self,
+        *,
+        job: Dict[str, Any],
+        item: Dict[str, Any],
+        store: StateStore,
+        run_id: str,
+        dry_run: bool,
+        variables: Dict[str, Any],
+        secrets: Dict[str, Any],
+        outputs: Dict[str, Any],
+        ssh_client: Any,
+        step_state: Dict[str, Any],
+        output_format: str,
+        sudo_password: str | None,
+        flow_vars: Dict[str, Any],
+        context: Dict[str, Any],
+    ) -> PluginResult:
+        substep = item["substep"]
+        loop_var = str(substep["for"])
+        values = self._loop_values(evaluate_value(substep.get("in"), context))
+        children = substep.get("do", []) or []
+        for index, value in enumerate(values):
+            loop_vars = dict(flow_vars)
+            loop_vars[loop_var] = value
+            loop_vars["item"] = value
+            loop_vars["loop"] = {
+                "index": index + 1,
+                "index0": index,
+                "first": index == 0,
+                "last": index == len(values) - 1,
+                "length": len(values),
+            }
+            for child in children:
+                child_item = self._child_item(item, child, f"for.{index}")
+                child_result = self._execute_item(
+                    job=job,
+                    item=child_item,
+                    store=store,
+                    run_id=run_id,
+                    dry_run=dry_run,
+                    variables=variables,
+                    secrets=secrets,
+                    outputs=outputs,
+                    ssh_client=ssh_client,
+                    step_state=step_state,
+                    output_format=output_format,
+                    sudo_password=sudo_password,
+                    flow_vars=loop_vars,
+                )
+                if not child_result.ok:
+                    return PluginResult.failure(
+                        message=f"for loop failed at {loop_var}[{index}]",
+                        data={"flow": "for", "variable": loop_var, "index": index, "iterations": len(values)},
+                    )
+        return PluginResult.success(
+            changed=False,
+            message=f"for loop executed {len(values)} iteration(s)",
+            data={"flow": "for", "variable": loop_var, "iterations": len(values)},
+        )
+
+    @staticmethod
+    def _loop_values(value: Any) -> list[Any]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return value
+        if isinstance(value, tuple):
+            return list(value)
+        if isinstance(value, set):
+            return sorted(value)
+        if isinstance(value, dict):
+            return [{"key": key, "value": item} for key, item in value.items()]
+        if isinstance(value, str) and not value.strip():
+            return []
+        return [value]
+
+    @staticmethod
+    def _child_item(parent: Dict[str, Any], child: Dict[str, Any], segment: str) -> Dict[str, Any]:
+        return {
+            **parent,
+            "node_id": f"{parent['node_id']}:{segment}.{child['id']}",
+            "substep": child,
+        }
+
+    def _finish_item_node(
+        self,
+        *,
+        store: StateStore,
+        item: Dict[str, Any],
+        result: PluginResult,
+        secrets: Dict[str, Any],
+        output_format: str,
+    ) -> None:
+        store.finish_node(
+            node_id=item["node_id"],
+            target=item["target"].name,
+            status=self._node_status_for_result(result),
+            changed=result.changed,
+            rc=result.rc,
+            message=self._mask_text(result.message, secrets),
+            output=self._result_to_mapping(result, secrets=secrets),
+        )
+        store.record_event(
+            "substep_finished",
+            node_id=item["node_id"],
+            target=item["target"].name,
+            payload={"ok": result.ok, "changed": result.changed, "rc": result.rc},
+        )
+        if output_format == "text":
+            status = "WARN" if result.warning else ("OK" if result.ok else "FAILED")
+            with self._print_lock:
+                print(
+                    f"[{status}] {item['target'].name} {item['node_id']} rc={result.rc} {self._mask_text(result.message, secrets)}".rstrip()
+                )
+                if not result.ok:
+                    self._print_result_failure_details(result, secrets)
 
     def _execute_substep_with_retry(
         self,
@@ -1888,6 +2316,7 @@ class AutomaxEngine:
         step_state: Dict[str, Any],
         output_format: str,
         sudo_password: str | None,
+        flow_vars: Dict[str, Any] | None = None,
     ) -> PluginResult:
         """Execute one substep with inherited retry policy and visible retry events."""
         policy = self._resolve_retry_policy(job, task, step, substep)
@@ -1910,6 +2339,7 @@ class AutomaxEngine:
                     ssh_client=ssh_client,
                     step_state=step_state,
                     sudo_password=sudo_password,
+                    flow_vars=flow_vars or {},
                 )
                 result = self._apply_error_policy(job, task, step, substep, result, secrets)
             except Exception as exc:
@@ -1949,6 +2379,38 @@ class AutomaxEngine:
             result.data["attempt"] = attempt_records[-1]["attempt"]
         return result
 
+    def _template_context(
+        self,
+        *,
+        job: Dict[str, Any],
+        task: Dict[str, Any],
+        step: Dict[str, Any],
+        substep: Dict[str, Any],
+        target: Target,
+        variables: Dict[str, Any],
+        outputs: Dict[str, Any],
+        secrets: Dict[str, Any],
+        step_state: Dict[str, Any],
+        flow_vars: Dict[str, Any] | None = None,
+    ) -> Dict[str, Any]:
+        effective_vars = deepcopy(variables)
+        effective_vars.update(target.vars)
+        effective_vars.update(flow_vars or {})
+        context = {
+            "job": job,
+            "task": task,
+            "step": step,
+            "substep": substep,
+            "server": target,
+            "target": target,
+            "vars": effective_vars,
+            "outputs": outputs,
+            "secrets": secrets,
+            "step_state": step_state,
+        }
+        context.update(flow_vars or {})
+        return context
+
     def _execute_substep(
         self,
         *,
@@ -1965,21 +2427,23 @@ class AutomaxEngine:
         ssh_client: Any,
         step_state: Dict[str, Any],
         sudo_password: str | None = None,
+        flow_vars: Dict[str, Any] | None = None,
     ) -> PluginResult:
         effective_vars = deepcopy(variables)
         effective_vars.update(target.vars)
-        template_context = {
-            "job": job,
-            "task": task,
-            "step": step,
-            "substep": substep,
-            "server": target,
-            "target": target,
-            "vars": effective_vars,
-            "outputs": outputs,
-            "secrets": secrets,
-            "step_state": step_state,
-        }
+        effective_vars.update(flow_vars or {})
+        template_context = self._template_context(
+            job=job,
+            task=task,
+            step=step,
+            substep=substep,
+            target=target,
+            variables=variables,
+            outputs=outputs,
+            secrets=secrets,
+            step_state=step_state,
+            flow_vars=flow_vars or {},
+        )
         if not self._is_condition_true(substep.get("when"), template_context):
             return PluginResult.skipped_result("condition evaluated to false")
 
@@ -2067,7 +2531,14 @@ class AutomaxEngine:
             return True
         if isinstance(condition, bool):
             return condition
-        rendered = render_value(str(condition), context).strip().lower()
+        evaluated = evaluate_value(condition, context)
+        if isinstance(evaluated, bool):
+            return evaluated
+        if evaluated is None:
+            return False
+        if isinstance(evaluated, (list, tuple, dict, set)):
+            return bool(evaluated)
+        rendered = str(evaluated).strip().lower()
         return rendered not in ("", "0", "false", "no", "none")
 
     def _capture_declared_artifacts(
@@ -2080,6 +2551,7 @@ class AutomaxEngine:
         variables: Dict[str, Any],
         secrets: Dict[str, Any],
         outputs: Dict[str, Any],
+        flow_vars: Dict[str, Any] | None = None,
     ) -> str | None:
         """Persist stdout/stderr/data artifacts declared by a substep."""
         substep = item["substep"]
@@ -2096,19 +2568,20 @@ class AutomaxEngine:
             declaration = {"stdout": "stdout.txt", "stderr": "stderr.txt"}
         if not isinstance(declaration, dict):
             return "artifacts declaration must be a mapping or true"
-        template_context = {
-            "job": job,
-            "task": item["task"],
-            "step": item["step"],
-            "substep": substep,
-            "server": target,
-            "target": target,
-            "vars": variables,
-            "outputs": outputs,
-            "secrets": secrets,
-            "run": {"id": store.run_id},
-            "result": self._result_to_mapping(result, secrets=secrets),
-        }
+        template_context = self._template_context(
+            job=job,
+            task=item["task"],
+            step=item["step"],
+            substep=substep,
+            target=target,
+            variables=variables,
+            outputs=outputs,
+            secrets=secrets,
+            step_state={},
+            flow_vars=flow_vars or {},
+        )
+        template_context["run"] = {"id": store.run_id}
+        template_context["result"] = self._result_to_mapping(result, secrets=secrets)
         try:
             for source, raw_name in declaration.items():
                 source_name = str(source)
@@ -2584,7 +3057,28 @@ class AutomaxEngine:
                 merged.update(raw)
         return merged
 
+
+    @staticmethod
+    def _is_if_substep(substep: Dict[str, Any]) -> bool:
+        return "if" in substep
+
+    @staticmethod
+    def _is_for_substep(substep: Dict[str, Any]) -> bool:
+        return "for" in substep or "do" in substep
+
+    @classmethod
+    def _is_flow_substep(cls, substep: Dict[str, Any]) -> bool:
+        return cls._is_if_substep(substep) or cls._is_for_substep(substep)
+
     def _substep_needs_ssh(self, substep: Dict[str, Any]) -> bool:
+        if self._is_if_substep(substep):
+            return any(
+                self._substep_needs_ssh(child)
+                for branch in ("then", "else")
+                for child in substep.get(branch, []) or []
+            )
+        if self._is_for_substep(substep):
+            return any(self._substep_needs_ssh(child) for child in substep.get("do", []) or [])
         plugin_name = substep.get("use") or substep.get("plugin")
         plugin = self.plugin_registry.get(str(plugin_name))
         return bool(plugin.opens_remote_session)

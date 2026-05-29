@@ -205,7 +205,7 @@ errorPolicy:
 A result that remains failed after `errorPolicy` is then handled by retry and
 finally by `failurePolicy`. See [Error policy](error-policy.md).
 
-## Conditions
+## Conditions and flow control
 
 A substep can include a `when` expression. The expression is rendered with Jinja2
 and considered false only when it renders to `""`, `0`, `false`, `no` or `none`:
@@ -218,6 +218,61 @@ and considered false only when it renders to `""`, `0`, `false`, `no` or `none`:
     service: myapp.service
     sudo: true
 ```
+
+Use `if` with `then` and optional `else` to branch inside a step. Branches contain
+normal substeps and can use previous registered outputs:
+
+```yaml
+- id: check_service
+  use: system.service.active.check
+  with:
+    service: myapp.service
+  register: service_state
+
+- id: restart_or_start
+  if: "{{ outputs.service_state.data.active }}"
+  then:
+    - id: restart
+      use: system.service.restart
+      with:
+        service: myapp.service
+        sudo: true
+  else:
+    - id: start
+      use: system.service.start
+      with:
+        service: myapp.service
+        sudo: true
+```
+
+Use `for` / `in` / `do` to repeat substeps for each value in a list. The loop
+variable is available by its declared name, as `item`, and with loop metadata
+under `loop` (`index`, `index0`, `first`, `last`, `length`):
+
+```yaml
+- id: list_members
+  use: identity.group.member.list
+  with:
+    group: appusers
+  register: members
+
+- id: ensure_homes
+  for: member
+  in: "{{ outputs.members.data.members }}"
+  do:
+    - id: create_home
+      use: fs.dir.create
+      with:
+        path: "/home/{{ member }}"
+        owner: "{{ member }}"
+        mode: "0750"
+        sudo: true
+```
+
+Flow nodes execute on the same selected target as the parent substep. Nested
+substeps can register outputs normally; repeated loop registrations overwrite the
+same top-level name, while every execution is still stored under
+`outputs.nodes.<node-id>`.
 
 ## Output registration
 

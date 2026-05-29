@@ -14,10 +14,14 @@ from jinja2 import Environment
 from jinja2 import StrictUndefined
 from jinja2 import UndefinedError
 from jinja2 import select_autoescape
+from jinja2.nativetypes import NativeEnvironment
 
 
 class TemplateRenderError(ValueError):
     """Raised when a template cannot be rendered."""
+
+
+_NATIVE_TEMPLATE_ENV = NativeEnvironment(undefined=StrictUndefined)
 
 
 _TEXT_TEMPLATE_ENV = Environment(
@@ -34,6 +38,16 @@ def render_template_string(template_source: str, context: Dict[str, Any]) -> str
     """Render a trusted text/config template with strict undefined variables."""
     try:
         return _TEXT_TEMPLATE_ENV.from_string(template_source).render(**context)
+    except UndefinedError as exc:
+        raise TemplateRenderError(str(exc)) from exc
+
+
+def evaluate_value(value: Any, context: Dict[str, Any]) -> Any:
+    """Evaluate one trusted Jinja expression while preserving native Python types."""
+    if not isinstance(value, str):
+        return render_value(value, context)
+    try:
+        return _NATIVE_TEMPLATE_ENV.from_string(value).render(**context)
     except UndefinedError as exc:
         raise TemplateRenderError(str(exc)) from exc
 

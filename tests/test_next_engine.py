@@ -6085,3 +6085,118 @@ def test_filesystem_check_plugins_fail_only_on_wrong_existing_type():
 
     wrong_type = registry.get("fs.file.check").execute({"path": "/tmp/demo"}, _remote_context_for_result(20, stderr="wrong-type"))
     assert wrong_type.ok is False
+
+
+def test_job_flow_if_then_else_and_for_loop_use_registered_outputs(tmp_path: Path):
+    output = tmp_path / "flow.txt"
+    job = write(
+        tmp_path / "job.yaml",
+        f'''
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: flow-smoke
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: flag
+            use: command.local.run
+            with:
+              command: "printf yes"
+            register:
+              flag_value: stdout.trim
+          - id: branch
+            if: "{{{{ outputs.flag_value == 'yes' }}}}"
+            then:
+              - id: then_write
+                use: command.local.run
+                with:
+                  command: "printf 'then\\n' >> {output}"
+            else:
+              - id: else_write
+                use: command.local.run
+                with:
+                  command: "printf 'else\\n' >> {output}"
+          - id: members
+            use: command.local.run
+            with:
+              command: "printf 'alice\\nbob\\n'"
+            register: member_result
+          - id: loop_members
+            for: member
+            in: "{{{{ outputs.member_result.stdout.splitlines() }}}}"
+            do:
+              - id: append_member
+                use: command.local.run
+                with:
+                  command: "printf '{{{{ member }}}}:{{{{ loop.index }}}}\\n' >> {output}"
+''',
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  localhost:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--state-dir",
+            str(tmp_path / "runs"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert output.read_text(encoding="utf-8").splitlines() == ["then", "alice:1", "bob:2"]
+
+
+def test_job_flow_else_branch_runs_when_condition_is_false(tmp_path: Path):
+    output = tmp_path / "flow-else.txt"
+    job = write(
+        tmp_path / "job.yaml",
+        f'''
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: flow-else
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: branch
+            if: false
+            then:
+              - id: then_write
+                use: command.local.run
+                with:
+                  command: "printf 'then\\n' >> {output}"
+            else:
+              - id: else_write
+                use: command.local.run
+                with:
+                  command: "printf 'else\\n' >> {output}"
+''',
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  localhost:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--state-dir",
+            str(tmp_path / "runs"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert output.read_text(encoding="utf-8").strip() == "else"

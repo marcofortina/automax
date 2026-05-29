@@ -68,3 +68,26 @@ Registered outputs can be reused later in the same run:
 ```
 
 The full result then becomes available as `outputs.app_stat`.
+
+
+## Flow-control values
+
+`if` conditions and `for` values use the same Jinja context as normal substep
+parameters. A pure expression such as `{{ outputs.members.data.members }}` keeps
+its native Python type, so a plugin result can feed a loop directly when it
+returns a list.
+
+Inside a `for` block, Automax exposes the current value through the declared loop
+variable and through `item`. It also exposes `loop.index`, `loop.index0`,
+`loop.first`, `loop.last` and `loop.length`.
+
+```yaml
+- id: loop_members
+  for: member
+  in: "{{ outputs.members.data.members }}"
+  do:
+    - id: render_member
+      use: command.local.run
+      with:
+        command: "echo {{ loop.index }} {{ member }}"
+```
