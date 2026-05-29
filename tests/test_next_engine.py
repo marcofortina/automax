@@ -5069,7 +5069,8 @@ def test_capability_and_redaction_plugins_render_safe_previews():
     assert "super-secret-token" not in redacted.data["redacted"]
     assert "password=***" in redacted.data["redacted"]
     leaked = registry.get("security.secret.redact_check").execute({"text": "value=super-secret-token"}, context)
-    assert not leaked.ok
+    assert leaked.ok
+    assert leaked.data["clean"] is False
 
 
 
@@ -5619,6 +5620,28 @@ def test_presence_check_plugins_return_predicates_without_failing_on_absence():
 
 
 
+
+
+
+def test_security_and_filesystem_content_checks_return_predicates_on_condition_false():
+    registry = AutomaxEngine().plugin_registry
+
+    for plugin_name, params, key in (
+        ("fs.attr.check", {"path": "/tmp/demo", "attrs": "i"}, "matches"),
+        ("fs.acl.check", {"path": "/tmp/demo", "acl": "user:demo:r--"}, "matches"),
+        ("security.authselect.check", {"profile": "sssd"}, "matches"),
+        ("security.pki.cert.chain_check", {"cert": "/tmp/cert.pem", "ca_file": "/tmp/ca.pem"}, "valid"),
+        ("security.pki.cert.key_match_check", {"cert": "/tmp/cert.pem", "key": "/tmp/key.pem"}, "matches"),
+        ("security.pki.cert.san_check", {"cert": "/tmp/cert.pem", "names": ["DNS:example.com"]}, "matches"),
+        ("security.pki.cert.subject_check", {"cert": "/tmp/cert.pem", "subject": "CN=example"}, "matches"),
+        ("security.pki.cert.issuer_check", {"cert": "/tmp/cert.pem", "issuer": "CN=ca"}, "matches"),
+        ("security.pki.cert.expiry_check", {"path": "/tmp/cert.pem"}, "valid"),
+    ):
+        result = registry.get(plugin_name).execute(params, _remote_context_for_result(1, stderr="no match"))
+        assert result.ok is True
+        assert result.changed is False
+        assert result.rc == 0
+        assert result.data[key] is False
 
 def test_storage_and_process_checks_return_predicates_on_condition_false():
     registry = AutomaxEngine().plugin_registry

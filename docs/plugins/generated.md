@@ -7927,7 +7927,7 @@ with:
 
 ### `security.authselect.check`
 
-Assert the current authselect profile and enabled features on RHEL-like systems.
+Check the current authselect profile and enabled features on RHEL-like systems.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -8511,7 +8511,7 @@ with:
 
 ### `security.pki.cert.expiry_check`
 
-Assert that a certificate remains valid for at least min_days.
+Check whether a certificate remains valid for at least min_days.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -8645,7 +8645,7 @@ with:
 
 ### `security.pki.cert.issuer_check`
 
-Assert that a certificate issuer contains an expected string.
+Check whether a certificate issuer contains an expected string.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -8677,7 +8677,7 @@ with:
 
 ### `security.pki.cert.key_match_check`
 
-Assert that a certificate public key matches a private key.
+Check whether a certificate public key matches a private key.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -8709,7 +8709,7 @@ with:
 
 ### `security.pki.cert.san_check`
 
-Assert that a certificate contains required Subject Alternative Names.
+Check whether a certificate contains required Subject Alternative Names.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -8779,7 +8779,7 @@ with:
 
 ### `security.pki.cert.subject_check`
 
-Assert that a certificate subject contains an expected string.
+Check whether a certificate subject contains an expected string.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -8959,7 +8959,7 @@ with:
 
 ### `security.secret.redact_check`
 
-Assert that a payload contains no declared secret values after redaction policy is applied.
+Check whether a payload contains no declared secret values after redaction policy is applied.
 
 - Remote session: `false`
 - Dry-run support: `true`

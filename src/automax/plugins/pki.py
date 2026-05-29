@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, predicate_result_from_remote, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -118,13 +118,13 @@ class PkiKeyPermissionsPlugin(BasePlugin):
 
 class PkiCertExpiryAssertPlugin(BasePlugin):
     name = "security.pki.cert.expiry_check"
-    description = "Assert that a certificate remains valid for at least min_days."
+    description = "Check whether a certificate remains valid for at least min_days."
     required_params = ("path",)
     optional_params = ("min_days", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "security.pki.cert.expiry_check is a read-only certificate assertion with no file diff"
+        return "security.pki.cert.expiry_check is a read-only certificate expiry predicate with no file diff"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -133,6 +133,12 @@ class PkiCertExpiryAssertPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="certificate expiry assertion failed")
-        return PluginResult.success(stdout=out, stderr=err, data={"path": params["path"], "min_days": int(params.get("min_days", 30))})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="security.pki.cert.expiry_check failed",
+            data_key="valid",
+            data={"path": params["path"], "min_days": int(params.get("min_days", 30))},
+            false_rcs=(1, 2),
+        )

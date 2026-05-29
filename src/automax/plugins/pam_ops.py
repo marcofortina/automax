@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
-from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, heredoc_to_stdin, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, heredoc_to_stdin, predicate_result_from_remote, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -362,7 +362,7 @@ class PamStackFactsPlugin(BasePlugin):
 
 class PamAuthselectPlugin(BasePlugin):
     name = "security.authselect.check"
-    description = "Assert the current authselect profile and enabled features on RHEL-like systems."
+    description = "Check the current authselect profile and enabled features on RHEL-like systems."
     optional_params = ("profile", "features", "sudo")
     opens_remote_session = True
     supports_check_mode = True
@@ -371,7 +371,7 @@ class PamAuthselectPlugin(BasePlugin):
         return _as_list(params.get("features"))
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "security.authselect.check is a read-only authselect profile assertion"
+        return "security.authselect.check is a read-only authselect profile predicate"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         command = f"{sudo_prefix(params, default=True)}authselect current"
@@ -383,6 +383,11 @@ class PamAuthselectPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.authselect.check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"authselect": out})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="security.authselect.check failed",
+            data_key="matches",
+            data={"authselect": out},
+        )

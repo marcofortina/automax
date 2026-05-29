@@ -130,9 +130,14 @@ class FsAttrCheckPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         command = " && ".join(self.manual_commands(params, context))
         rc, out, err = exec_remote(context, command)
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.attr.check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"path": params["path"], "attrs": _attr_entries(params["attrs"])})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="fs.attr.check failed",
+            data_key="matches",
+            data={"path": params["path"], "attrs": _attr_entries(params["attrs"])},
+        )
 
 
 class FsQuotaPlugin(BasePlugin):
@@ -219,9 +224,14 @@ class FsAclAssertPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         command = " && ".join(self.manual_commands(params, context))
         rc, out, err = exec_remote(context, command)
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="fs.acl.check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"path": params["path"], "acl": _acl_entries(params["acl"])})
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="fs.acl.check failed",
+            data_key="matches",
+            data={"path": params["path"], "acl": _acl_entries(params["acl"])},
+        )
 
 
 class FsAclRestorePlugin(BasePlugin):

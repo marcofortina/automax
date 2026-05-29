@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Marco Fortina
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Secret redaction policy assertion plugins."""
+"""Secret redaction policy check plugins."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ def _payload(params: Dict[str, Any], context: ExecutionContext) -> str:
 
 class SecretRedactAssertPlugin(BasePlugin):
     name = "security.secret.redact_check"
-    description = "Assert that a payload contains no declared secret values after redaction policy is applied."
+    description = "Check whether a payload contains no declared secret values after redaction policy is applied."
     optional_params = ("text", "value", "source")
     supports_check_mode = True
 
@@ -38,14 +38,19 @@ class SecretRedactAssertPlugin(BasePlugin):
         return ["# security.secret.redact_check is evaluated inside Automax before output persistence"]
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "security.secret.redact_check is an in-process redaction policy assertion"
+        return "security.secret.redact_check is an in-process redaction policy predicate"
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         text = _payload(params, context)
         leaked = find_unredacted_secrets(text, context.secrets)
-        if leaked:
-            return PluginResult.failure(message="unredacted secret values detected", data={"leaks": len(leaked)})
-        return PluginResult.success(changed=False, data={"redacted": redact_text(text, context.secrets)})
+        return PluginResult.success(
+            changed=False,
+            data={
+                "clean": not leaked,
+                "leaks": len(leaked),
+                "redacted": redact_text(text, context.secrets),
+            },
+        )
 
 
 class SecretScanOutputPlugin(BasePlugin):
