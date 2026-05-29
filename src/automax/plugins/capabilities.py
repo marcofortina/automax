@@ -110,24 +110,31 @@ class CapabilityAssertPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         missing: list[str] = []
+        errors: list[dict[str, Any]] = []
         stdout_parts: list[str] = []
         stderr_parts: list[str] = []
-        for command in self.manual_commands(params, context):
+        checked = self.manual_commands(params, context)
+        for command in checked:
             rc, out, err = exec_remote(context, command)
             stdout_parts.append(out)
             stderr_parts.append(err)
-            if rc != 0:
+            if rc == 1:
                 missing.append(command)
+            elif rc != 0:
+                errors.append({"command": command, "rc": rc, "stderr": err})
         stdout = "\n".join(part for part in stdout_parts if part)
         stderr = "\n".join(part for part in stderr_parts if part)
-        checked = self.manual_commands(params, context)
-        return PluginResult.success(
-            changed=False,
-            rc=0,
-            stdout=stdout,
-            stderr=stderr,
-            data={"checked": checked, "failed": missing, "matches": not missing},
-        )
+        data = {"checked": checked, "failed": missing, "matches": not missing and not errors}
+        if errors:
+            data["errors"] = errors
+            return PluginResult.failure(
+                rc=errors[0]["rc"],
+                stdout=stdout,
+                stderr=stderr,
+                message="os.capability.check failed with a technical command error",
+                data=data,
+            )
+        return PluginResult.success(changed=False, rc=0, stdout=stdout, stderr=stderr, data=data)
 
 
 class PluginRequirementsPlugin(BasePlugin):

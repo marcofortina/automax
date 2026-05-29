@@ -5707,6 +5707,19 @@ def test_os_check_plugins_return_predicates_on_condition_false():
         assert result.rc == 0
         assert result.data[key] is False
 
+def test_capability_check_preserves_technical_failures():
+    registry = AutomaxEngine().plugin_registry
+
+    result = registry.get("os.capability.check").execute(
+        {"commands": ["sh -c 'exit 2'"]},
+        _remote_context_for_result(2, stderr="syntax error"),
+    )
+
+    assert result.ok is False
+    assert result.rc == 2
+    assert result.data["matches"] is False
+    assert result.data["errors"][0]["rc"] == 2
+
 def test_data_archive_and_compression_checks_return_predicates_on_condition_false():
     registry = AutomaxEngine().plugin_registry
 
