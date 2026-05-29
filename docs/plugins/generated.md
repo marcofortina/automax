@@ -3515,7 +3515,8 @@ Result fields:
 - `stderr`: Captured standard error when applicable.
 - `data`: Plugin-specific structured result data.
 - `data.host`: Checked host.
-- `data.port`: Checked TCP port.
+- `data.port`: Checked TCP/UDP port.
+- `data.reachable`: Whether the remote target can reach the port.
 
 Example:
 
@@ -4748,7 +4749,7 @@ with:
 
 ### `network.http.check`
 
-Assert HTTP status and optional body content.
+Check HTTP status and optional body content.
 
 - Remote session: `false`
 - Dry-run support: `true`
@@ -4778,6 +4779,7 @@ Result fields:
 - `data`: Plugin-specific structured result data.
 - `data.status`: HTTP response status code.
 - `data.body`: Decoded response body.
+- `data.matches`: Whether the HTTP response matched the expected status and body predicate.
 
 Example:
 

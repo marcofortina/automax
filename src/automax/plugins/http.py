@@ -77,25 +77,41 @@ def _expected_statuses(params: Dict[str, Any], default: int = 200) -> set[int]:
     return {int(value) for value in values}
 
 
-def _assert_response(params: Dict[str, Any], response: Dict[str, Any]) -> PluginResult:
+def _check_response(params: Dict[str, Any], response: Dict[str, Any]) -> PluginResult:
     expected = _expected_statuses(params)
     status = int(response["status"])
-    if status not in expected:
-        return PluginResult.failure(
-            rc=1,
-            stdout=response["body"],
-            message=f"unexpected HTTP status {status}, expected {sorted(expected)}",
-            data=response,
-        )
+    status_matches = status in expected
     contains = params.get("contains")
-    if contains is not None and str(contains) not in response["body"]:
+    body_matches = contains is None or str(contains) in response["body"]
+    data = dict(response)
+    data.update(
+        {
+            "expected_status": sorted(expected),
+            "status_matches": status_matches,
+            "body_matches": body_matches,
+            "matches": status_matches and body_matches,
+        }
+    )
+    return PluginResult.success(changed=False, stdout=response["body"], data=data)
+
+
+def _assert_response(params: Dict[str, Any], response: Dict[str, Any]) -> PluginResult:
+    checked = _check_response(params, response)
+    if checked.data["matches"]:
+        return checked
+    if not checked.data["status_matches"]:
         return PluginResult.failure(
             rc=1,
             stdout=response["body"],
-            message="HTTP response body does not contain expected text",
-            data=response,
+            message=f"unexpected HTTP status {response['status']}, expected {checked.data['expected_status']}",
+            data=checked.data,
         )
-    return PluginResult.success(changed=False, stdout=response["body"], data=response)
+    return PluginResult.failure(
+        rc=1,
+        stdout=response["body"],
+        message="HTTP response body does not contain expected text",
+        data=checked.data,
+    )
 
 
 class HttpRequestPlugin(BasePlugin):
@@ -142,12 +158,12 @@ class HttpAssertPlugin(HttpRequestPlugin):
     """Assert HTTP status/body from the controller."""
 
     name = "network.http.check"
-    description = "Assert HTTP status and optional body content."
+    description = "Check HTTP status and optional body content."
     optional_params = (*HttpRequestPlugin.optional_params, "contains")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
-        return _assert_response(params, _perform(params))
+        return _check_response(params, _perform(params))
 
 
 class HttpWaitPlugin(HttpAssertPlugin):
@@ -165,8 +181,8 @@ class HttpWaitPlugin(HttpAssertPlugin):
         last_result: PluginResult | None = None
         while True:
             try:
-                last_result = _assert_response(params, _perform(params))
-                if last_result.ok:
+                last_result = _check_response(params, _perform(params))
+                if last_result.data["matches"]:
                     return last_result
             except PluginValidationError as exc:
                 last_result = PluginResult.failure(message=str(exc))

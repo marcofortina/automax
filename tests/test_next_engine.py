@@ -5612,6 +5612,41 @@ def test_presence_check_plugins_return_predicates_without_failing_on_absence():
 
 
 
+
+
+def test_network_remote_check_plugins_return_predicates_on_condition_false():
+    registry = AutomaxEngine().plugin_registry
+
+    route = registry.get("network.route.check").execute({"dest": "default"}, _remote_context_for_result(1))
+    assert route.ok is True
+    assert route.data["exists"] is False
+
+    port = registry.get("network.connectivity.port_check").execute(
+        {"host": "example.com", "port": 443},
+        _remote_context_for_result(1, stderr="timed out"),
+    )
+    assert port.ok is True
+    assert port.data["reachable"] is False
+
+
+def test_http_check_returns_predicate_result_on_status_mismatch(monkeypatch):
+    import automax.plugins.http as http_plugins
+
+    monkeypatch.setattr(
+        http_plugins,
+        "_perform",
+        lambda params: {"status": 503, "headers": {}, "body": "unavailable", "error": ""},
+    )
+
+    result = AutomaxEngine().plugin_registry.get("network.http.check").execute(
+        {"url": "https://example.com", "status": 200},
+        _remote_context_for_result(0),
+    )
+
+    assert result.ok is True
+    assert result.data["matches"] is False
+    assert result.data["status_matches"] is False
+
 def test_command_backed_check_plugins_return_predicates_on_condition_false():
     result = AutomaxEngine().plugin_registry.get("network.firewall.iptables.rule_check").execute(
         {"chain": "INPUT", "rule": "-p tcp --dport 8443 -j ACCEPT", "sudo": False},

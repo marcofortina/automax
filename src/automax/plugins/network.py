@@ -12,7 +12,7 @@ from typing import Any, Dict
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError
 from automax.plugins.linux_ops import NetworkDnsConfigBase
-from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, exec_remote, heredoc_to_file_expr, predicate_result_from_remote, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -365,9 +365,14 @@ class NetworkLinkCheckPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.link.check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="network.link.check failed",
+            data_key="matches",
+            data={"name": params["name"]},
+        )
 
 
 class NetworkRouteCheckPlugin(BasePlugin):
@@ -398,9 +403,14 @@ class NetworkRouteCheckPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.route.check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="network.route.check failed",
+            data_key="exists",
+            data={"dest": params["dest"]},
+        )
 
 
 class NetworkLinkFactsPlugin(BasePlugin):
@@ -485,9 +495,13 @@ class NetworkDnsCheckPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.dns.check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="network.dns.check failed",
+            data_key="matches",
+        )
 
 
 class NetworkPortCheckPlugin(BasePlugin):
@@ -512,9 +526,14 @@ class NetworkPortCheckPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="network.connectivity.port_check failed")
-        return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
+        return predicate_result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="network.connectivity.port_check failed",
+            data_key="reachable",
+            data={"host": params["host"], "port": params["port"], "protocol": str(params.get("protocol", "tcp"))},
+        )
 
 
 class NetworkPortWaitPlugin(NetworkPortCheckPlugin):
