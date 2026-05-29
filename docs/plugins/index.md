@@ -117,14 +117,14 @@ identity.group.remove
 identity.user.check
 identity.user.create
 identity.user.facts
-identity.user.groups_check
-identity.user.home_check
+identity.user.groups.check
+identity.user.home.check
 identity.user.lock
 identity.user.modify
 identity.user.password.expire
 identity.user.password.set
 identity.user.remove
-identity.user.shell_check
+identity.user.shell.check
 identity.user.unlock
 network.connectivity.port_check
 network.connectivity.port_wait

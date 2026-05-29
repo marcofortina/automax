@@ -3486,7 +3486,7 @@ with:
   user: deploy
 ```
 
-### `identity.user.groups_check`
+### `identity.user.groups.check`
 
 Assert required group membership for a user.
 
@@ -3512,16 +3512,16 @@ Result fields:
 Example:
 
 ```yaml
-use: identity.user.groups_check
+use: identity.user.groups.check
 with:
   user: deploy
   groups:
     - app
 ```
 
-### `identity.user.home_check`
+### `identity.user.home.check`
 
-Assert a user's home directory path, owner or mode.
+Check a user's home directory path, owner or mode.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -3547,7 +3547,7 @@ Result fields:
 Example:
 
 ```yaml
-use: identity.user.home_check
+use: identity.user.home.check
 with:
   user: deploy
 ```
@@ -3714,7 +3714,7 @@ with:
   name: nginx
 ```
 
-### `identity.user.shell_check`
+### `identity.user.shell.check`
 
 Assert a user's login shell.
 
@@ -3740,7 +3740,7 @@ Result fields:
 Example:
 
 ```yaml
-use: identity.user.shell_check
+use: identity.user.shell.check
 with:
   user: deploy
   shell: /bin/bash

@@ -523,11 +523,11 @@ class UserFactsPlugin(ReadOnlyCommandPlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]: return [f"getent passwd {quote(params['user'])}; id {quote(params['user'])}; {sudo_prefix(params, default=True)}passwd -S {quote(params['user'])} 2>/dev/null || true"]
 
 class UserShellAssertPlugin(ReadOnlyCommandPlugin):
-    name="identity.user.shell_check"; description="Assert a user's login shell."; required_params=("user","shell"); optional_params=("sudo",)
+    name="identity.user.shell.check"; description="Assert a user's login shell."; required_params=("user","shell"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"test \"$(getent passwd {quote(params['user'])} | cut -d: -f7)\" = {quote(params['shell'])}"]
 
 class UserHomeAssertPlugin(ReadOnlyCommandPlugin):
-    name="identity.user.home_check"; description="Assert a user's home directory path, owner or mode."; required_params=("user",); optional_params=("path","mode","owner","sudo")
+    name="identity.user.home.check"; description="Check a user's home directory path, owner or mode."; required_params=("user",); optional_params=("path","mode","owner","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         path=f"$(getent passwd {quote(params['user'])} | cut -d: -f6)"; cmds=[]
         if params.get("path"): cmds.append(f"test \"{path}\" = {quote(params['path'])}")
@@ -536,7 +536,7 @@ class UserHomeAssertPlugin(ReadOnlyCommandPlugin):
         return cmds or [f"test -d {path}"]
 
 class UserGroupsAssertPlugin(ReadOnlyCommandPlugin):
-    name="identity.user.groups_check"; description="Assert required group membership for a user."; required_params=("user","groups"); optional_params=("sudo",)
+    name="identity.user.groups.check"; description="Assert required group membership for a user."; required_params=("user","groups"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         user=quote(params['user']); return [" && ".join(f"id -nG {user} | tr ' ' '\\n' | grep -Fx -- {quote(g)}" for g in _as_list(params['groups']))]
 

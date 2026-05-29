@@ -27,13 +27,13 @@ tasks:
       with:
         user: deploy
     - id: user_groups_assert
-      use: identity.user.groups_check
+      use: identity.user.groups.check
       with:
         user: deploy
         groups:
         - app
     - id: user_home_assert
-      use: identity.user.home_check
+      use: identity.user.home.check
       with:
         user: deploy
     - id: user_lock
@@ -58,7 +58,7 @@ tasks:
       with:
         name: automax_smoke_user
     - id: user_shell_assert
-      use: identity.user.shell_check
+      use: identity.user.shell.check
       with:
         user: deploy
         shell: /bin/bash

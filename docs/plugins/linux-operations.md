@@ -234,7 +234,7 @@ Time synchronization helpers include `os.time.status`,
 `os.time.timezone.set`, `os.time.ntp.set` and `os.time.chrony.tracking.check`.
 
 User and group readback/assertion plugins include `identity.user.facts`,
-`identity.user.shell_check`, `identity.user.home_check`, `identity.user.groups_check`, `identity.group.member.list`
+`identity.user.shell.check`, `identity.user.home.check`, `identity.user.groups.check`, `identity.group.member.list`
 and `identity.group.member.remove`. Removing a group member requires `confirm: true`.
 
 ## OS-aware job-scoped capability preflight
