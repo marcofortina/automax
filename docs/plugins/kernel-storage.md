@@ -27,7 +27,7 @@ Use `storage.lvm.facts`, `storage.lvm.*.scan`, `storage.lvm.lv.check`, `storage.
 ## Kernel, sysctl and block safety assertions
 
 Kernel hardening readback/guard plugins include `system.kernel.module.status`,
-`system.kernel.module.blacklist`, `system.kernel.cmdline.check` and
+`system.kernel.module.blacklist`, `system.kernel.boot_param.check` and
 `system.kernel.boot_param.remove`. Removing a boot parameter requires `confirm: true`.
 
 Sysctl readback and drop-in management is covered by `system.kernel.sysctl.check`,

@@ -12063,9 +12063,42 @@ with:
   name: nginx
 ```
 
+### `system.kernel.boot_param.check`
+
+Check whether a persistent kernel boot parameter is configured in GRUB defaults.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `value` | no | `string` |  | Desired parameter value. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.kernel.boot_param.check
+with:
+  name: nginx
+```
+
 ### `system.kernel.boot_param.remove`
 
-Remove a kernel boot parameter from GRUB defaults after explicit confirmation.
+Remove a persistent kernel boot parameter from GRUB defaults after explicit confirmation.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -12073,11 +12106,13 @@ Remove a kernel boot parameter from GRUB defaults after explicit confirmation.
 
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
-| `param` | yes | `string` |  | Kernel command-line parameter. |
-| `file` | no | `path` |  | Remote configuration file path. |
+| `name` | yes | `string` |  | Package, user or group name. |
+| `value` | no | `string` |  | Desired parameter value. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
 | `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
 | `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
 | `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `update_grub` | no | `boolean` | `True` | Regenerate GRUB configuration after modifying boot parameters. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -12094,38 +12129,7 @@ Example:
 ```yaml
 use: system.kernel.boot_param.remove
 with:
-  param: value
-```
-
-### `system.kernel.cmdline.check`
-
-Assert that the running kernel command line contains or omits a parameter.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `param` | yes | `string` |  | Kernel command-line parameter. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: system.kernel.cmdline.check
-with:
-  param: value
+  name: nginx
 ```
 
 ### `system.kernel.module.blacklist`

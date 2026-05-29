@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from automax.core.models import ExecutionContext, PluginResult
 from automax.plugins.base import BasePlugin, PluginValidationError, ReadOnlyCommandPlugin, RenderedFileInstallMixin
-from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, SUDO_NON_INTERACTIVE, exec_remote, heredoc_to_file_expr, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
+from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, SUDO_NON_INTERACTIVE, exec_remote, heredoc_to_file_expr, heredoc_to_stdin, shell_var_ref, tempfile_command, quote, result_from_remote, sudo_prefix
 
 
 
@@ -275,23 +275,103 @@ class KernelModuleBlacklistPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.kernel.module.blacklist failed")
 
 
-class KernelCmdlineAssertPlugin(ReadOnlyCommandPlugin):
-    name = "system.kernel.cmdline.check"
-    description = "Assert that the running kernel command line contains or omits a parameter."
-    required_params = ("param",)
-    optional_params = ("state", "sudo")
+class KernelBootParamCheckPlugin(BasePlugin):
+    name = "system.kernel.boot_param.check"
+    description = "Check whether a persistent kernel boot parameter is configured in GRUB defaults."
+    required_params = ("name",)
+    optional_params = ("value", "state", "path", "sudo")
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def _token(self, params: Dict[str, Any]) -> str:
+        if params.get("value") is None or str(params.get("value")) == "":
+            return str(params["name"])
+        return f"{params['name']}={params['value']}"
+
+    def _path(self, params: Dict[str, Any]) -> str:
+        return str(params.get("path", "/etc/default/grub"))
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        state = _state(params)
+        path = self._path(params)
+        token = self._token(params)
+        name = str(params["name"])
+        script = '''
+set -eu
+path=$1
+name=$2
+token=$3
+state=$4
+[ -e "$path" ] || { echo "missing grub defaults file: $path" >&2; exit 2; }
+present=false
+while IFS= read -r line; do
+  case "$line" in
+    GRUB_CMDLINE_LINUX=*)
+      value=${line#GRUB_CMDLINE_LINUX=}
+      value=${value#"}
+      value=${value%"}
+      for part in $value; do
+        key=${part%%=*}
+        if [ "$part" = "$token" ] || { [ "$token" = "$name" ] && [ "$key" = "$name" ]; }; then
+          present=true
+        fi
+      done
+      ;;
+  esac
+done < "$path"
+if [ "$state" = present ]; then
+  [ "$present" = true ]
+else
+  [ "$present" = false ]
+fi
+'''
+        command = heredoc_to_stdin(
+            f"{sudo_prefix(params, default=True)}sh -s -- {quote(path)} {quote(name)} {quote(token)} {quote(state)}",
+            script,
+            prefix="AUTOMAX_SH",
+        )
+        rc, out, err = exec_remote(context, command)
+        if rc == 0:
+            matches = True
+            present = state == "present"
+        elif rc == 1:
+            matches = False
+            present = state != "present"
+        else:
+            return PluginResult.failure(
+                rc=rc,
+                stdout=out,
+                stderr=err,
+                message="system.kernel.boot_param.check failed",
+                data={"path": path, "name": name, "token": token},
+            )
+        return PluginResult.success(
+            changed=False,
+            rc=0,
+            stdout=out,
+            stderr=err if matches else "",
+            data={"path": path, "name": name, "token": token, "present": present, "matches": matches},
+        )
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
         state = _state(params)
-        test = f"tr ' ' '\\n' < /proc/cmdline | grep -Fx -- {quote(params['param'])}"
+        path = self._path(params)
+        token = self._token(params)
+        name = str(params["name"])
+        if token == name:
+            test = f"grep -Eq '(^|[[:space:]]){quote(name)}(=|[[:space:]]|\")' {quote(path)}"
+        else:
+            test = f"grep -Eq '(^|[[:space:]]){quote(token)}([[:space:]]|\")' {quote(path)}"
         return [test if state == "present" else f"! {test}"]
 
 
 class KernelBootParamAbsentPlugin(BasePlugin):
     name = "system.kernel.boot_param.remove"
-    description = "Remove a kernel boot parameter from GRUB defaults after explicit confirmation."
-    required_params = ("param",)
-    optional_params = ("file", "backup", "backup_suffix", "confirm", "sudo")
+    description = "Remove a persistent kernel boot parameter from GRUB defaults after explicit confirmation."
+    required_params = ("name",)
+    optional_params = ("value", "path", "backup", "backup_suffix", "confirm", "update_grub", "sudo")
     opens_remote_session = True
 
     def validate(self, params: Dict[str, Any]) -> None:
@@ -299,19 +379,68 @@ class KernelBootParamAbsentPlugin(BasePlugin):
         if not bool(params.get("confirm", False)):
             raise PluginValidationError("system.kernel.boot_param.remove requires confirm=true")
 
+    def _token(self, params: Dict[str, Any]) -> str:
+        if params.get("value") is None or str(params.get("value")) == "":
+            return str(params["name"])
+        return f"{params['name']}={params['value']}"
+
+    def _path(self, params: Dict[str, Any]) -> str:
+        return str(params.get("path", "/etc/default/grub"))
+
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        path = str(params.get("file", "/etc/default/grub"))
-        cmds=[]
-        if bool(params.get("backup", True)):
-            cmds.append(f"test ! -e {quote(path)} || {sudo_prefix(params, default=True)}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
-        cmds.append(f"{sudo_prefix(params, default=True)}sed -i -E 's/(GRUB_CMDLINE_LINUX[^=]*=\"[^\"]*)\\b{params['param']}\\b ?/\\1/' {quote(path)}")
+        path = self._path(params)
+        token = self._token(params)
+        name = str(params["name"])
         sudo = sudo_prefix(params, default=True)
-        cmds.append(f"if command -v update-grub >/dev/null 2>&1; then {sudo}update-grub; elif command -v grub2-mkconfig >/dev/null 2>&1; then {sudo}grub2-mkconfig -o /boot/grub2/grub.cfg; fi")
+        script = '''
+set -eu
+path=$1
+name=$2
+token=$3
+tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
+[ -e "$path" ] || { echo "missing grub defaults file: $path" >&2; exit 1; }
+awk -v name="$name" -v token="$token" '
+  /^GRUB_CMDLINE_LINUX=/ {
+    line=$0
+    sub(/^GRUB_CMDLINE_LINUX="/, "", line)
+    sub(/"$/, "", line)
+    n=split(line, parts, " ")
+    out=""
+    for (i=1; i<=n; i++) {
+      if (parts[i] == "") continue
+      split(parts[i], kv, "=")
+      if (parts[i] == token || (token == name && kv[1] == name)) continue
+      out=(out == "" ? parts[i] : out " " parts[i])
+    }
+    print "GRUB_CMDLINE_LINUX=\"" out "\""
+    next
+  }
+  {print}
+' "$path" > "$tmp"
+if cmp -s "$tmp" "$path"; then
+  exit 0
+fi
+cat "$tmp" > "$path"
+echo __AUTOMAX_CHANGED__
+'''
+        cmds = []
+        if bool(params.get("backup", True)):
+            cmds.append(f"test ! -e {quote(path)} || {sudo}cp -p {quote(path)} {quote(path + str(params.get('backup_suffix', '.bak')))}")
+        cmds.append(
+            heredoc_to_stdin(
+                f"{sudo}sh -s -- {quote(path)} {quote(name)} {quote(token)}",
+                script,
+                prefix="AUTOMAX_SH",
+            )
+        )
+        if bool(params.get("update_grub", True)):
+            cmds.append(f"if command -v update-grub >/dev/null 2>&1; then {sudo}update-grub; elif command -v grub2-mkconfig >/dev/null 2>&1; then {sudo}grub2-mkconfig -o /boot/grub2/grub.cfg; fi")
         return cmds
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
-        rc,out,err=exec_remote(context," && ".join(self.manual_commands(params,context))+f" && echo {CHANGE_MARKER}")
+        rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.kernel.boot_param.remove failed")
 
 

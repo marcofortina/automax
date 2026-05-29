@@ -372,8 +372,8 @@ system.cron.validate
 system.journal.collect
 system.journal.grep
 system.kernel.boot_param.add
+system.kernel.boot_param.check
 system.kernel.boot_param.remove
-system.kernel.cmdline.check
 system.kernel.module.blacklist
 system.kernel.module.load
 system.kernel.module.persist

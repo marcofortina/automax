@@ -18,15 +18,15 @@ tasks:
       use: system.kernel.boot_param.add
       with:
         name: nginx
-    - id: system-system_kernel_boot_param_absent
+    - id: system-system_kernel_boot_param_remove
       use: system.kernel.boot_param.remove
       with:
-        param: quiet
+        name: quiet
         confirm: true
-    - id: system-system_kernel_cmdline_assert
-      use: system.kernel.cmdline.check
+    - id: system-system_kernel_boot_param_check
+      use: system.kernel.boot_param.check
       with:
-        param: quiet
+        name: quiet
     - id: system-system_kernel_module_blacklist
       use: system.kernel.module.blacklist
       with:
