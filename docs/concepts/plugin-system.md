@@ -11,7 +11,7 @@ Only canonical names are public DSL names. For example:
 
 ```text
 fs.file.template
-systemctl.restart
+system.service.restart
 db.sqlite.query
 ```
 

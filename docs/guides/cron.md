@@ -9,7 +9,7 @@ Automax manages `/etc/cron.d` entries with explicit files, which keeps changes a
 
 ```yaml
 - id: install_healthcheck_cron
-  use: cron.entry
+  use: system.cron.entry.add
   with:
     name: myapp-health
     schedule: "*/5 * * * *"
@@ -18,4 +18,4 @@ Automax manages `/etc/cron.d` entries with explicit files, which keeps changes a
     sudo: true
 ```
 
-Use `cron.file` when a full cron.d file must be installed verbatim.
+Use `system.cron.file` when a full cron.d file must be installed verbatim.

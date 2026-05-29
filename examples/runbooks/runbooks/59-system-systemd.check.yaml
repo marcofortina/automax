@@ -2,35 +2,35 @@
 apiVersion: automax.io/v1
 kind: Job
 metadata:
-  name: plugin-smoke-check-systemd
+  name: plugin-smoke-check-system-systemd
 tasks:
-- id: systemd
-  description: Check-mode catalog for systemd plugins.
+- id: system-systemd
+  description: Check-mode catalog for system systemd plugins.
   targets: all
   tags:
   - all-functions
   - check
-  - systemd
+  - system-systemd
   steps:
   - id: catalog
     substeps:
-    - id: systemd_sysusers
-      use: systemd.sysusers
+    - id: system-system_systemd_sysusers
+      use: system.systemd.sysusers
       with:
         name: nginx
         content: managed by automax
-    - id: systemd_timer
-      use: systemd.timer
+    - id: system-system_systemd_timer
+      use: system.systemd.timer
       with:
         name: nginx
         content: managed by automax
-    - id: systemd_tmpfiles
-      use: systemd.tmpfiles
+    - id: system-system_systemd_tmpfiles
+      use: system.systemd.tmpfiles
       with:
         name: nginx
         content: managed by automax
-    - id: systemd_unit
-      use: systemd.unit
+    - id: system-system_systemd_unit
+      use: system.systemd.unit
       with:
         name: nginx
         content: managed by automax

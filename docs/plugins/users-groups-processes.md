@@ -56,7 +56,7 @@ These plugins run on the remote target through SSH.
 
 ```yaml
 - id: wait_for_worker
-  use: process.wait
+  use: system.process.wait
   with:
     pattern: "myapp-worker"
     state: present
@@ -64,16 +64,16 @@ These plugins run on the remote target through SSH.
     interval: 2
 
 - id: stop_old_worker
-  use: process.kill
+  use: system.process.kill
   with:
     pattern: "old-worker"
     signal: TERM
     sudo: true
 ```
 
-`process.signal` sends a runtime signal by PID or pattern and renders the exact manual command for recovery.
-`process.assert_absent` is a read-only pgrep assertion used as a pre/post check.
-`process.assert_count` gates process cardinality with exact, minimum or maximum count checks.
+`system.process.signal` sends a runtime signal by PID or pattern and renders the exact manual command for recovery.
+`system.process.check` is a read-only pgrep assertion used as a pre/post check.
+`system.process.count_check` gates process cardinality with exact, minimum or maximum count checks.
 
 `security.sshd.config` installs server-side SSH hardening drop-ins and validates them with `sshd -t` before reload.
 `login.defs` manages account-aging defaults in `/etc/login.defs` with backup.

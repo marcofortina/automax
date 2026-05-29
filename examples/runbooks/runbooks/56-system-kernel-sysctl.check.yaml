@@ -1,0 +1,57 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-system-kernel-sysctl
+tasks:
+- id: system-kernel-sysctl
+  description: Check-mode catalog for system kernel sysctl plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - system-kernel-sysctl
+  steps:
+  - id: catalog
+    substeps:
+    - id: system-kernel-system_kernel_sysctl_assert
+      use: system.kernel.sysctl.check
+      with:
+        name: nginx
+        value: '1'
+    - id: system-kernel-system_kernel_sysctl_dropin
+      use: system.kernel.sysctl.dropin
+      with:
+        name: automax
+        settings:
+          net.ipv4.ip_forward: '0'
+    - id: system-kernel-system_kernel_sysctl_facts
+      use: system.kernel.sysctl.facts
+      with:
+        names:
+        - app1.example.com
+        - app1
+        sudo: true
+    - id: system-kernel-system_kernel_sysctl_get
+      use: system.kernel.sysctl.get
+      with:
+        name: nginx
+    - id: system-kernel-system_kernel_sysctl_persist
+      use: system.kernel.sysctl.persist
+      with:
+        name: nginx
+        value: '1'
+    - id: system-kernel-system_kernel_sysctl_reload
+      use: system.kernel.sysctl.reload
+      with:
+        file: /etc/sysctl.d/99-automax.conf
+        sudo: true
+    - id: system-kernel-system_kernel_sysctl_set
+      use: system.kernel.sysctl.set
+      with:
+        name: net.ipv4.ip_forward
+        value: '1'
+        runtime: true
+        persist: true
+        file: /etc/sysctl.d/99-automax.conf
+        sudo: true

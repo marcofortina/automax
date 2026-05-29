@@ -112,9 +112,8 @@ commands:      local.command, remote.command
 filesystem:    fs.*
 archive:       archive.*
 packages:      pkg.*
-systemd:       systemctl.*
+system:       system.service.*, system.systemd.*, system.kernel.*, system.process.*, system.cron.*, system.journal.*, system.log.*
 identity:      identity.user.*, identity.group.*
-processes:     process.*
 transfer:      transfer.*
 http/api:      http.*
 connectivity:   network.connectivity.*

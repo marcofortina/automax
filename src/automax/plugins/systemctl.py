@@ -59,7 +59,7 @@ class _SystemctlServicePlugin(BasePlugin):
 class SystemctlStartPlugin(_SystemctlServicePlugin):
     """Start a service only when it is not already active."""
 
-    name = "systemctl.start"
+    name = "system.service.start"
     description = "Start a remote systemd service."
     action = "start"
 
@@ -75,7 +75,7 @@ class SystemctlStartPlugin(_SystemctlServicePlugin):
 class SystemctlStopPlugin(_SystemctlServicePlugin):
     """Stop a service only when it is active."""
 
-    name = "systemctl.stop"
+    name = "system.service.stop"
     description = "Stop a remote systemd service."
     action = "stop"
 
@@ -91,7 +91,7 @@ class SystemctlStopPlugin(_SystemctlServicePlugin):
 class SystemctlRestartPlugin(_SystemctlServicePlugin):
     """Restart a service and mark the substep as changed."""
 
-    name = "systemctl.restart"
+    name = "system.service.restart"
     description = "Restart a remote systemd service."
     action = "restart"
 
@@ -99,7 +99,7 @@ class SystemctlRestartPlugin(_SystemctlServicePlugin):
 class SystemctlDaemonReloadPlugin(BasePlugin):
     """Reload the remote systemd manager configuration."""
 
-    name = "systemctl.daemon_reload"
+    name = "system.systemd.daemon_reload"
     description = "Run systemctl daemon-reload on a remote target."
     optional_params = ("sudo", "user")
     opens_remote_session = True
@@ -116,7 +116,7 @@ class SystemctlDaemonReloadPlugin(BasePlugin):
         if context.dry_run:
             return self.dry_run(params, context)
         if context.ssh_client is None:
-            return PluginResult.failure(message="systemctl.daemon_reload requires an SSH session")
+            return PluginResult.failure(message="system.systemd.daemon_reload requires an SSH session")
         systemctl = _systemctl_prefix(params)
         command = f"{systemctl} daemon-reload && echo {CHANGE_MARKER}"
         rc, out, err = exec_remote(context, command)
@@ -124,7 +124,7 @@ class SystemctlDaemonReloadPlugin(BasePlugin):
             rc=rc,
             stdout=out,
             stderr=err,
-            message="systemctl.daemon_reload failed",
+            message="system.systemd.daemon_reload failed",
             data={"action": "daemon-reload"},
         )
 
@@ -132,7 +132,7 @@ class SystemctlDaemonReloadPlugin(BasePlugin):
 class SystemctlReloadPlugin(_SystemctlServicePlugin):
     """Reload a service and mark the substep as changed."""
 
-    name = "systemctl.reload"
+    name = "system.service.reload"
     description = "Reload a remote systemd service."
     action = "reload"
 
@@ -140,7 +140,7 @@ class SystemctlReloadPlugin(_SystemctlServicePlugin):
 class SystemctlEnablePlugin(_SystemctlServicePlugin):
     """Enable a service only when it is not already enabled."""
 
-    name = "systemctl.enable"
+    name = "system.service.enable"
     description = "Enable a remote systemd service."
     action = "enable"
 
@@ -156,7 +156,7 @@ class SystemctlEnablePlugin(_SystemctlServicePlugin):
 class SystemctlDisablePlugin(_SystemctlServicePlugin):
     """Disable a service only when it is enabled."""
 
-    name = "systemctl.disable"
+    name = "system.service.disable"
     description = "Disable a remote systemd service."
     action = "disable"
 
@@ -172,14 +172,14 @@ class SystemctlDisablePlugin(_SystemctlServicePlugin):
 class SystemctlStatusPlugin(_SystemctlServicePlugin):
     """Return systemctl status output without changing the target."""
 
-    name = "systemctl.status"
+    name = "system.service.status"
     description = "Read remote systemd service status."
     action = "status"
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         if context.ssh_client is None:
-            return PluginResult.failure(message="systemctl.status requires an SSH session")
+            return PluginResult.failure(message="system.service.status requires an SSH session")
         systemctl = _systemctl_prefix(params)
         service = quote(params["service"])
         rc, out, err = exec_remote(context, f"{systemctl} status --no-pager {service} || true")
@@ -195,7 +195,7 @@ class SystemctlStatusPlugin(_SystemctlServicePlugin):
 class SystemctlIsActivePlugin(_SystemctlServicePlugin):
     """Check whether a service is active without changing the target."""
 
-    name = "systemctl.is_active"
+    name = "system.service.active_check"
     description = "Check remote systemd active state."
     action = "is-active"
     optional_params = (*_SystemctlServicePlugin.optional_params, "fail_on_inactive")
@@ -219,7 +219,7 @@ class SystemctlIsActivePlugin(_SystemctlServicePlugin):
 class SystemctlIsEnabledPlugin(_SystemctlServicePlugin):
     """Check whether a service is enabled without changing the target."""
 
-    name = "systemctl.is_enabled"
+    name = "system.service.enabled_check"
     description = "Check remote systemd enabled state."
     action = "is-enabled"
     optional_params = (*_SystemctlServicePlugin.optional_params, "fail_on_disabled")
@@ -243,7 +243,7 @@ class SystemctlIsEnabledPlugin(_SystemctlServicePlugin):
 class SystemctlMaskPlugin(_SystemctlServicePlugin):
     """Mask a service only when it is not already masked."""
 
-    name = "systemctl.mask"
+    name = "system.service.mask"
     description = "Mask a remote systemd service."
     action = "mask"
 
@@ -259,7 +259,7 @@ class SystemctlMaskPlugin(_SystemctlServicePlugin):
 class SystemctlUnmaskPlugin(_SystemctlServicePlugin):
     """Unmask a service only when it is currently masked."""
 
-    name = "systemctl.unmask"
+    name = "system.service.unmask"
     description = "Unmask a remote systemd service."
     action = "unmask"
 

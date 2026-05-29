@@ -57,7 +57,7 @@ different guardrails to the same job definition in lab and production.
 
 ```text
 low: fs.dir.exists, fs.file.exists, fs.symlink.exists
-medium: systemctl.restart, fs.file.template, transfer.upload
+medium: system.service.restart, fs.file.template, transfer.upload
 high: pkg.upgrade, identity.user.remove, fs.dir.remove recursive=true
 ```
 
@@ -100,7 +100,7 @@ transfer.upload
 archive.untar
 fs.symlink.create
 fs.symlink.remove
-systemctl.restart
+system.service.restart
 http.assert
 wait.http
 ```
@@ -163,29 +163,29 @@ metadata, no silent overwrite, and restore validation before destructive use.
 
 ### Systemd resource completeness
 
-The current `systemctl.*` and `systemd.unit/timer/tmpfiles/sysusers` plugins are
+The current `system.service.*` and `system.systemd.unit/timer/tmpfiles/sysusers` plugins are
 sufficient for now. Future systemd resource plugins may include:
 
 ```text
-systemd.dropin
-systemd.socket
-systemd.path
-systemd.journal_config
-systemd.unit_verify
+system.systemd.dropin
+system.systemd.socket
+system.systemd.path
+system.systemd.journal_config
+system.systemd.unit_verify
 ```
 
-`systemd.unit_verify` should wrap `systemd-analyze verify` and remain read-only.
+`system.systemd.unit_verify` should wrap `systemd-analyze verify` and remain read-only.
 
 ### Log and journal assertions
 
-Current `log.*` and `journal.*` plugins cover grep, collect and export. Future
+Current `system.log.*` and `system.journal.*` plugins cover grep, collect and export. Future
 assertive plugins may include:
 
 ```text
-journal.assert
-log.assert_absent
-log.tail
-log.since
+system.journal.check
+system.log.absent_check
+system.log.tail
+system.log.since
 ```
 
 These should be used for postcheck evidence after service and security changes.

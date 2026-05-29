@@ -119,9 +119,12 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
     path = str(params.get("path", "/tmp/automax-demo"))
     name = str(params.get("name", "demo"))
 
-    if plugin_name.startswith("systemctl."):
-        action = plugin_name.split(".", 1)[1]
-        return [_systemctl(params, "daemon-reload" if action == "daemon_reload" else action.replace("_", "-"))]
+    if plugin_name == "system.systemd.daemon_reload":
+        return [_systemctl(params, "daemon-reload")]
+    if plugin_name.startswith("system.service."):
+        action = plugin_name.rsplit(".", 1)[1]
+        action_map = {"active_check": "is-active", "enabled_check": "is-enabled"}
+        return [_systemctl(params, action_map.get(action, action.replace("_", "-")))]
 
     if plugin_name == "security.apparmor.profile":
         profile = params.get("profile", path)
@@ -292,13 +295,16 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
     if plugin_name == "storage.mount.remove":
         return [f"{sudo}umount {_q(path)}"]
 
-    if plugin_name.startswith("process."):
+    if plugin_name.startswith("system.process."):
         pattern = params.get("pattern")
-        if plugin_name == "process.kill":
+        if plugin_name in {"system.process.kill", "system.process.signal"}:
             if params.get("pid"):
                 return [f"{sudo}kill -{_q(params.get('signal', 'TERM'))} {_q(params['pid'])}"]
             return [f"{sudo}pkill -{_q(params.get('signal', 'TERM'))} -f {_q(pattern or 'process')}"]
-        if plugin_name == "process.wait":
+        if plugin_name == "system.process.check":
+            check = f"pgrep -f {_q(pattern or 'process')} >/dev/null"
+            return [check if params.get("state", "present") == "present" else f"! {check}"]
+        if plugin_name == "system.process.wait":
             return [f"timeout {_q(params.get('timeout', 60))} sh -c 'until pgrep -f {_q(pattern or 'process')} >/dev/null; do sleep {_q(params.get('interval', 2))}; done'"]
 
     if plugin_name.startswith("selinux."):
@@ -326,7 +332,7 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
         if plugin_name == "transfer.sync":
             return [f"rsync -a {_q(str(src))}/ {_q(str(dest))}/"]
 
-    if plugin_name in {"cron.entry", "cron.file"}:
+    if plugin_name in {"system.cron.entry.add", "system.cron.file"}:
         return [f"{sudo}crontab -l 2>/dev/null | sed '/# automax:{_q(name)}/d' | {sudo}crontab -"]
 
     return [

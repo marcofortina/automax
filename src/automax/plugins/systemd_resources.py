@@ -37,7 +37,7 @@ def _content(params: Dict[str, Any]) -> str:
 
 
 class SystemdUnitPlugin(RenderedFileInstallMixin, BasePlugin):
-    name = "systemd.unit"
+    name = "system.systemd.unit"
     description = "Install a systemd unit file with backup, daemon-reload and optional enable/start."
     required_params = ("name", "content")
     optional_params = ("path", "enable", "start", "backup", "backup_suffix", "sudo")
@@ -65,7 +65,7 @@ class SystemdUnitPlugin(RenderedFileInstallMixin, BasePlugin):
 
 
 class SystemdTimerPlugin(SystemdUnitPlugin):
-    name = "systemd.timer"
+    name = "system.systemd.timer"
     description = "Install a systemd timer file with backup, daemon-reload and optional enable/start."
 
     def _path(self, params: Dict[str, Any]) -> str:
@@ -76,7 +76,7 @@ class SystemdTimerPlugin(SystemdUnitPlugin):
 
 
 class SystemdTmpfilesPlugin(RenderedFileInstallMixin, BasePlugin):
-    name = "systemd.tmpfiles"
+    name = "system.systemd.tmpfiles"
     description = "Install a tmpfiles.d drop-in and optionally apply it immediately."
     required_params = ("name", "content")
     optional_params = ("path", "apply", "backup", "backup_suffix", "sudo")
@@ -103,7 +103,7 @@ class SystemdTmpfilesPlugin(RenderedFileInstallMixin, BasePlugin):
 
 
 class SystemdSysusersPlugin(SystemdTmpfilesPlugin):
-    name = "systemd.sysusers"
+    name = "system.systemd.sysusers"
     description = "Install a sysusers.d drop-in and optionally apply it immediately."
 
     def _path(self, params: Dict[str, Any]) -> str:

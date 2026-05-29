@@ -57,7 +57,7 @@ nav:
     - Mounts and fstab: guides/mounts.md
     - Package Repositories: guides/package-repositories.md
     - Linux Security Modules: guides/linux-security-modules.md
-    - Cron Management: guides/cron.md
+    - System Cron Management: guides/cron.md
     - Facts Gathering: guides/facts.md
     - Explain Jobs: guides/explain.md
     - Graph Jobs: guides/graph.md
@@ -94,14 +94,14 @@ nav:
     - Archive: plugins/archive.md
     - Package Manager: plugins/package-manager.md
     - Linux Operations: plugins/linux-operations.md
-    - Systemctl: plugins/systemctl.md
+    - System: plugins/system.md
     - Users, Groups and Processes: plugins/users-groups-processes.md
     - Transfer: plugins/transfer.md
     - HTTP/API: plugins/http-api.md
     - Database: plugins/database.md
     - Alternatives: plugins/alternatives.md
     - Firewall: plugins/firewall.md
-    - Facts and Cron: plugins/facts-cron.md
+    - Facts and System Cron: plugins/facts-cron.md
     - Kernel, Mount and Storage: plugins/kernel-storage.md
     - Security and Access Control: plugins/security.md
   - Project:

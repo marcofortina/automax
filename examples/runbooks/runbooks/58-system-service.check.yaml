@@ -1,0 +1,65 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-system-service
+tasks:
+- id: system-service
+  description: Check-mode catalog for system service plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - system-service
+  steps:
+  - id: catalog
+    substeps:
+    - id: system-service_daemon_reload
+      use: system.systemd.daemon_reload
+      with:
+        sudo: true
+        user: true
+    - id: system-service_disable
+      use: system.service.disable
+      with:
+        service: sshd
+    - id: system-service_enable
+      use: system.service.enable
+      with:
+        service: sshd
+    - id: system-service_is_active
+      use: system.service.active_check
+      with:
+        service: sshd
+    - id: system-service_is_enabled
+      use: system.service.enabled_check
+      with:
+        service: sshd
+    - id: system-service_mask
+      use: system.service.mask
+      with:
+        service: sshd
+    - id: system-service_reload
+      use: system.service.reload
+      with:
+        service: sshd
+    - id: system-service_restart
+      use: system.service.restart
+      with:
+        service: sshd
+    - id: system-service_start
+      use: system.service.start
+      with:
+        service: sshd
+    - id: system-service_status
+      use: system.service.status
+      with:
+        service: sshd
+    - id: system-service_stop
+      use: system.service.stop
+      with:
+        service: sshd
+    - id: system-service_unmask
+      use: system.service.unmask
+      with:
+        service: sshd

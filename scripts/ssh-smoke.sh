@@ -251,7 +251,7 @@ tasks:
             with:
               command: "sh -c 'sleep 30 >/dev/null 2>&1 &'"
           - id: wait_process
-            use: process.wait
+            use: system.process.wait
             with:
               pattern: "sleep 30"
               state: present
@@ -277,7 +277,7 @@ tasks:
               port: ${PORT}
               connect_timeout: ${CONNECT_TIMEOUT}
           - id: cleanup_process
-            use: process.kill
+            use: system.process.kill
             with:
               pattern: "sleep 30"
               ignore_missing: true
@@ -298,24 +298,24 @@ if [[ -n "${SMOKE_SERVICE}" ]]; then
       - id: systemd
         substeps:
           - id: status
-            use: systemctl.status
+            use: system.service.status
             with:
               service: ${SMOKE_SERVICE}
               sudo: true
           - id: is_active
-            use: systemctl.is_active
+            use: system.service.active_check
             with:
               service: ${SMOKE_SERVICE}
               sudo: true
               fail_on_inactive: false
           - id: is_enabled
-            use: systemctl.is_enabled
+            use: system.service.enabled_check
             with:
               service: ${SMOKE_SERVICE}
               sudo: true
               fail_on_disabled: false
           - id: daemon_reload
-            use: systemctl.daemon_reload
+            use: system.systemd.daemon_reload
             with:
               sudo: true
 YAML

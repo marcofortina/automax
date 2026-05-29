@@ -58,6 +58,6 @@ tasks:
       - id: systemd
         substeps:
           - id: daemon_reload
-            use: systemctl.daemon_reload
+            use: system.systemd.daemon_reload
             with:
               sudo: true

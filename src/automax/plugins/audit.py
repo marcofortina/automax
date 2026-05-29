@@ -156,7 +156,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["src"] = "README.md"
     if plugin.name == "network.link.interface":
         params["backend"] = "runtime"
-    if plugin.name in {"process.kill", "process.signal", "process.wait"}:
+    if plugin.name in {"system.process.check", "system.process.kill", "system.process.signal", "system.process.wait"}:
         params.pop("pid", None)
         params["pattern"] = "automax-demo"
     if plugin.name == "mail.send":

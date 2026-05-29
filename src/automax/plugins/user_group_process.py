@@ -181,14 +181,14 @@ class UserRemovePlugin(BasePlugin):
 class ProcessKillPlugin(BasePlugin):
     """Kill a remote process by PID or pattern."""
 
-    name = "process.kill"
+    name = "system.process.kill"
     description = "Kill a remote process by PID or pattern."
     optional_params = ("pid", "pattern", "signal", "sudo", "ignore_missing")
     opens_remote_session = True
 
     def validate(self, params: Dict[str, Any]) -> None:
         if bool(params.get("pid")) == bool(params.get("pattern")):
-            raise PluginValidationError("process.kill requires exactly one of pid or pattern")
+            raise PluginValidationError("system.process.kill requires exactly one of pid or pattern")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -201,22 +201,22 @@ class ProcessKillPlugin(BasePlugin):
         if ignore_missing:
             command = f"{command} || true"
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="process.kill failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.process.kill failed")
 
 
 class ProcessWaitPlugin(BasePlugin):
     """Wait for a process to appear or disappear."""
 
-    name = "process.wait"
+    name = "system.process.wait"
     description = "Wait for a remote process state."
     optional_params = ("pid", "pattern", "state", "timeout", "interval", "sudo")
     opens_remote_session = True
 
     def validate(self, params: Dict[str, Any]) -> None:
         if bool(params.get("pid")) == bool(params.get("pattern")):
-            raise PluginValidationError("process.wait requires exactly one of pid or pattern")
+            raise PluginValidationError("system.process.wait requires exactly one of pid or pattern")
         if str(params.get("state", "present")) not in {"present", "absent"}:
-            raise PluginValidationError("process.wait state must be present or absent")
+            raise PluginValidationError("system.process.wait state must be present or absent")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -235,28 +235,28 @@ while [ "$SECONDS" -le "$end" ]; do
   if [ {quote(state)} = absent ] && [ "$found" = 0 ]; then exit 0; fi
   sleep {interval}
 done
-echo 'process.wait timed out' >&2
+echo 'system.process.wait timed out' >&2
 exit 1
 """
         rc, out, err = exec_remote(context, command)
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="process.wait failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="system.process.wait failed")
         return PluginResult.success(changed=False, stdout=out, stderr=err)
 
 class ProcessSignalPlugin(BasePlugin):
     """Send a signal to a process by PID or pattern."""
 
-    name = "process.signal"
+    name = "system.process.signal"
     description = "Send a signal to a remote process by PID or pattern."
     optional_params = ("pid", "pattern", "signal", "sudo", "ignore_missing")
     opens_remote_session = True
 
     def validate(self, params: Dict[str, Any]) -> None:
         if bool(params.get("pid")) == bool(params.get("pattern")):
-            raise PluginValidationError("process.signal requires exactly one of pid or pattern")
+            raise PluginValidationError("system.process.signal requires exactly one of pid or pattern")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "process.signal is a runtime process operation with no file diff"
+        return "system.process.signal is a runtime process operation with no file diff"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -271,35 +271,46 @@ class ProcessSignalPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="process.signal failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.process.signal failed")
 
-class ProcessAssertAbsentPlugin(BasePlugin):
-    """Assert no process matches a pattern."""
+class ProcessCheckPlugin(BasePlugin):
+    """Check that a remote process is present or absent."""
 
-    name = "process.assert_absent"
-    description = "Assert that no remote process matches a pattern."
-    required_params = ("pattern",)
-    optional_params = ("sudo",)
+    name = "system.process.check"
+    description = "Check that a remote process is present or absent by PID or pattern."
+    optional_params = ("pid", "pattern", "state", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
+    def validate(self, params: Dict[str, Any]) -> None:
+        if bool(params.get("pid")) == bool(params.get("pattern")):
+            raise PluginValidationError("system.process.check requires exactly one of pid or pattern")
+        if str(params.get("state", "present")) not in {"present", "absent"}:
+            raise PluginValidationError("system.process.check state must be present or absent")
+
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "process.assert_absent is a read-only process assertion"
+        return "system.process.check is a read-only process state check"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return [f"! {sudo_prefix(params, default=True)}pgrep -f {quote(params['pattern'])} >/dev/null"]
+        if params.get("pid"):
+            check = f"kill -0 {quote(params['pid'])} >/dev/null 2>&1"
+        else:
+            check = f"{sudo_prefix(params, default=True)}pgrep -f {quote(params['pattern'])} >/dev/null"
+        if str(params.get("state", "present")) == "absent":
+            return [f"! {check}"]
+        return [check]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="process.assert_absent failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="system.process.check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 class ProcessAssertCountPlugin(BasePlugin):
     """Assert process count for a pattern."""
 
-    name = "process.assert_count"
+    name = "system.process.count_check"
     description = "Assert the number of remote processes matching a pattern."
     required_params = ("pattern",)
     optional_params = ("count", "min_count", "max_count", "sudo")
@@ -309,10 +320,10 @@ class ProcessAssertCountPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if not any(key in params for key in ("count", "min_count", "max_count")):
-            raise PluginValidationError("process.assert_count requires count, min_count or max_count")
+            raise PluginValidationError("system.process.count_check requires count, min_count or max_count")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "process.assert_count is a read-only process count assertion"
+        return "system.process.count_check is a read-only process count assertion"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -328,5 +339,5 @@ class ProcessAssertCountPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="process.assert_count failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="system.process.count_check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)

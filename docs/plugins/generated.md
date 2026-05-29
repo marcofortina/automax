@@ -766,172 +766,6 @@ Example:
 use: chrony.tracking_assert
 ```
 
-## cron
-
-### `cron.absent`
-
-Remove one /etc/cron.d entry file.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cron.absent
-with:
-  name: nginx
-```
-
-### `cron.entry`
-
-Manage one /etc/cron.d entry file.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `schedule` | yes | `string` |  | Five-field cron schedule. |
-| `command` | yes | `string` |  | Command line to execute. |
-| `user` | no | `string` | `root` | User field for /etc/cron.d. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `env` | no | `mapping` |  | Environment lines written before the cron entry. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.path`: Installed cron.d file path.
-
-Example:
-
-```yaml
-use: cron.entry
-with:
-  name: myapp-health
-  schedule: '*/5 * * * *'
-  user: root
-  command: /usr/local/bin/myapp-healthcheck
-  sudo: true
-```
-
-### `cron.file`
-
-Install or remove a complete /etc/cron.d file.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `content` | no | `string` |  | Text content to write. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.path`: Installed cron.d file path.
-
-Example:
-
-```yaml
-use: cron.file
-with:
-  name: nginx
-```
-
-### `cron.list`
-
-List system cron.d entries and optionally one user's crontab.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `user` | no | `string` | `False` | User account whose crontab should be listed. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cron.list
-with:
-  user: deploy
-  sudo: true
-```
-
-### `cron.validate`
-
-Validate basic cron file syntax without installing it.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cron.validate
-with:
-  path: /tmp/automax-demo
-```
-
 ## db
 
 ### `db.health`
@@ -3157,344 +2991,6 @@ with:
   name: nginx
 ```
 
-## journal
-
-### `journal.collect`
-
-Collect journalctl output for artifact capture through stdout.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `since` | no | `string` |  | Start time for journalctl queries. |
-| `until` | no | `string` |  | End time for journalctl queries. |
-| `lines` | no | `integer` | `200` | Number of log or journal lines to collect. |
-| `output` | no | `string` | `rows` | Database output format: rows, scalar, json or none. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: journal.collect
-with:
-  service: sshd
-  since: 1 hour ago
-```
-
-### `journal.grep`
-
-Collect journalctl output and filter it with grep.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
-| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `since` | no | `string` |  | Start time for journalctl queries. |
-| `until` | no | `string` |  | End time for journalctl queries. |
-| `lines` | no | `integer` | `200` | Number of log or journal lines to collect. |
-| `output` | no | `string` | `rows` | Database output format: rows, scalar, json or none. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: journal.grep
-with:
-  pattern: KEY=.*
-```
-
-## kernel
-
-### `kernel.boot_param`
-
-Ensure a persistent kernel boot parameter in GRUB-compatible defaults with backup and grub config regeneration.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `value` | no | `string` |  | Desired parameter value. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `update_grub` | no | `boolean` | `True` | Regenerate GRUB configuration after modifying boot parameters. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: kernel.boot_param
-with:
-  name: nginx
-```
-
-### `kernel.boot_param_absent`
-
-Remove a kernel boot parameter from GRUB defaults after explicit confirmation.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `param` | yes | `string` |  | Kernel command-line parameter. |
-| `file` | no | `path` |  | Remote configuration file path. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: kernel.boot_param_absent
-with:
-  param: value
-```
-
-### `kernel.cmdline_assert`
-
-Assert that the running kernel command line contains or omits a parameter.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `param` | yes | `string` |  | Kernel command-line parameter. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: kernel.cmdline_assert
-with:
-  param: value
-```
-
-### `kernel.module.blacklist`
-
-Install or remove a persistent kernel module blacklist drop-in.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `module` | yes | `string` |  | Linux kernel module name. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `file` | no | `path` |  | Remote configuration file path. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: kernel.module.blacklist
-with:
-  module: br_netfilter
-```
-
-### `kernel.module.load`
-
-Load a Linux kernel module and optionally persist it.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
-| `file` | no | `path` |  | Remote configuration file path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: kernel.module.load
-with:
-  name: br_netfilter
-  persist: true
-  sudo: true
-```
-
-### `kernel.module.persist`
-
-Persist a Linux kernel module for loading at boot.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `file` | no | `path` |  | Remote configuration file path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: kernel.module.persist
-with:
-  name: nginx
-```
-
-### `kernel.module.status`
-
-Assert or report kernel module load status.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `module` | yes | `string` |  | Linux kernel module name. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: kernel.module.status
-with:
-  module: br_netfilter
-```
-
-### `kernel.module.unload`
-
-Unload a Linux kernel module and optionally remove persisted entries.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
-| `file` | no | `path` |  | Remote configuration file path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: kernel.module.unload
-with:
-  name: nginx
-```
-
 ## limits
 
 ### `limits.dropin`
@@ -3568,76 +3064,6 @@ use: local.command
 with:
   command: echo automax
   changed: false
-```
-
-## log
-
-### `log.export`
-
-Export remote log or journal output to stdout for declared artifact capture.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `files` | no | `list` |  | Target files to inspect or modify. |
-| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `since` | no | `string` |  | Start time for journalctl queries. |
-| `lines` | no | `integer` | `200` | Number of log or journal lines to collect. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: log.export
-with:
-  files:
-    - /etc/pam.d/login
-  service: sshd
-```
-
-### `log.grep`
-
-Search remote log files with grep and return matching lines.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
-| `files` | no | `list` |  | Target files to inspect or modify. |
-| `max_count` | no | `integer` |  | Maximum number of matching log or process entries. |
-| `ignore_missing` | no | `boolean` | `True` | Treat missing processes as success. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: log.grep
-with:
-  pattern: KEY=.*
 ```
 
 ## login
@@ -6032,174 +5458,6 @@ Example:
 
 ```yaml
 use: plugin.requirements
-```
-
-## process
-
-### `process.assert_absent`
-
-Assert that no remote process matches a pattern.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: process.assert_absent
-with:
-  pattern: KEY=.*
-```
-
-### `process.assert_count`
-
-Assert the number of remote processes matching a pattern.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
-| `count` | no | `integer` | `0` | Maximum regex replacements; 0 means replace all matches. |
-| `min_count` | no | `integer` |  | Minimum number of matching process entries. |
-| `max_count` | no | `integer` |  | Maximum number of matching log or process entries. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: process.assert_count
-with:
-  pattern: KEY=.*
-```
-
-### `process.kill`
-
-Kill a remote process by PID or pattern.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `pid` | no | `integer` |  | Process id. |
-| `pattern` | no | `string` |  | Regex, process pattern or search pattern. |
-| `signal` | no | `string` | `TERM` | Signal name or number sent to a process. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `ignore_missing` | no | `boolean` | `True` | Treat missing processes as success. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: process.kill
-with:
-  pid: 1234
-  pattern: KEY=.*
-```
-
-### `process.signal`
-
-Send a signal to a remote process by PID or pattern.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `pid` | no | `integer` |  | Process id. |
-| `pattern` | no | `string` |  | Regex, process pattern or search pattern. |
-| `signal` | no | `string` | `TERM` | Signal name or number sent to a process. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `ignore_missing` | no | `boolean` | `True` | Treat missing processes as success. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: process.signal
-with:
-  pid: 1234
-  pattern: KEY=.*
-```
-
-### `process.wait`
-
-Wait for a remote process state.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `pid` | no | `integer` |  | Process id. |
-| `pattern` | no | `string` |  | Regex, process pattern or search pattern. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `timeout` | no | `number` |  | Operation timeout in seconds. |
-| `interval` | no | `number` | `2` | Polling interval in seconds. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: process.wait
-with:
-  pid: 1234
-  pattern: KEY=.*
 ```
 
 ## remote
@@ -10364,9 +9622,507 @@ with:
   sudo: true
 ```
 
-## sysctl
+## system
 
-### `sysctl.assert`
+### `system.cron.entry.add`
+
+Manage one /etc/cron.d entry file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `schedule` | yes | `string` |  | Five-field cron schedule. |
+| `command` | yes | `string` |  | Command line to execute. |
+| `user` | no | `string` | `root` | User field for /etc/cron.d. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `env` | no | `mapping` |  | Environment lines written before the cron entry. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.path`: Installed cron.d file path.
+
+Example:
+
+```yaml
+use: system.cron.entry.add
+with:
+  name: myapp-health
+  schedule: '*/5 * * * *'
+  user: root
+  command: /usr/local/bin/myapp-healthcheck
+  sudo: true
+```
+
+### `system.cron.entry.list`
+
+List system cron.d entries and optionally one user's crontab.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | no | `string` | `False` | User account whose crontab should be listed. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.cron.entry.list
+with:
+  user: deploy
+  sudo: true
+```
+
+### `system.cron.entry.remove`
+
+Remove one /etc/cron.d entry file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.cron.entry.remove
+with:
+  name: nginx
+```
+
+### `system.cron.file`
+
+Install or remove a complete /etc/cron.d file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `content` | no | `string` |  | Text content to write. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.path`: Installed cron.d file path.
+
+Example:
+
+```yaml
+use: system.cron.file
+with:
+  name: nginx
+```
+
+### `system.cron.validate`
+
+Validate basic cron file syntax without installing it.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.cron.validate
+with:
+  path: /tmp/automax-demo
+```
+
+### `system.journal.collect`
+
+Collect journalctl output for artifact capture through stdout.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `since` | no | `string` |  | Start time for journalctl queries. |
+| `until` | no | `string` |  | End time for journalctl queries. |
+| `lines` | no | `integer` | `200` | Number of log or journal lines to collect. |
+| `output` | no | `string` | `rows` | Database output format: rows, scalar, json or none. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.journal.collect
+with:
+  service: sshd
+  since: 1 hour ago
+```
+
+### `system.journal.grep`
+
+Collect journalctl output and filter it with grep.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `since` | no | `string` |  | Start time for journalctl queries. |
+| `until` | no | `string` |  | End time for journalctl queries. |
+| `lines` | no | `integer` | `200` | Number of log or journal lines to collect. |
+| `output` | no | `string` | `rows` | Database output format: rows, scalar, json or none. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.journal.grep
+with:
+  pattern: KEY=.*
+```
+
+### `system.kernel.boot_param.add`
+
+Ensure a persistent kernel boot parameter in GRUB-compatible defaults with backup and grub config regeneration.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `value` | no | `string` |  | Desired parameter value. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `update_grub` | no | `boolean` | `True` | Regenerate GRUB configuration after modifying boot parameters. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.kernel.boot_param.add
+with:
+  name: nginx
+```
+
+### `system.kernel.boot_param.remove`
+
+Remove a kernel boot parameter from GRUB defaults after explicit confirmation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `param` | yes | `string` |  | Kernel command-line parameter. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.kernel.boot_param.remove
+with:
+  param: value
+```
+
+### `system.kernel.cmdline.check`
+
+Assert that the running kernel command line contains or omits a parameter.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `param` | yes | `string` |  | Kernel command-line parameter. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.kernel.cmdline.check
+with:
+  param: value
+```
+
+### `system.kernel.module.blacklist`
+
+Install or remove a persistent kernel module blacklist drop-in.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `module` | yes | `string` |  | Linux kernel module name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.kernel.module.blacklist
+with:
+  module: br_netfilter
+```
+
+### `system.kernel.module.load`
+
+Load a Linux kernel module and optionally persist it.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.kernel.module.load
+with:
+  name: br_netfilter
+  persist: true
+  sudo: true
+```
+
+### `system.kernel.module.persist`
+
+Persist a Linux kernel module for loading at boot.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.kernel.module.persist
+with:
+  name: nginx
+```
+
+### `system.kernel.module.status`
+
+Assert or report kernel module load status.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `module` | yes | `string` |  | Linux kernel module name. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.kernel.module.status
+with:
+  module: br_netfilter
+```
+
+### `system.kernel.module.unload`
+
+Unload a Linux kernel module and optionally remove persisted entries.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `persist` | no | `boolean` | `False` | Persist the change across reboots. |
+| `file` | no | `path` |  | Remote configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.kernel.module.unload
+with:
+  name: nginx
+```
+
+### `system.kernel.sysctl.check`
 
 Assert a runtime sysctl value.
 
@@ -10392,13 +10148,13 @@ Result fields:
 Example:
 
 ```yaml
-use: sysctl.assert
+use: system.kernel.sysctl.check
 with:
   name: nginx
   value: 1
 ```
 
-### `sysctl.dropin`
+### `system.kernel.sysctl.dropin`
 
 Install a sysctl.d drop-in and reload sysctl values.
 
@@ -10428,13 +10184,13 @@ Result fields:
 Example:
 
 ```yaml
-use: sysctl.dropin
+use: system.kernel.sysctl.dropin
 with:
   name: nginx
   settings: value
 ```
 
-### `sysctl.facts`
+### `system.kernel.sysctl.facts`
 
 Read one or more sysctl values.
 
@@ -10459,7 +10215,7 @@ Result fields:
 Example:
 
 ```yaml
-use: sysctl.facts
+use: system.kernel.sysctl.facts
 with:
   names:
     - app1.example.com
@@ -10467,7 +10223,7 @@ with:
   sudo: true
 ```
 
-### `sysctl.get`
+### `system.kernel.sysctl.get`
 
 Read a Linux sysctl value.
 
@@ -10494,12 +10250,12 @@ Result fields:
 Example:
 
 ```yaml
-use: sysctl.get
+use: system.kernel.sysctl.get
 with:
   name: nginx
 ```
 
-### `sysctl.persist`
+### `system.kernel.sysctl.persist`
 
 Persist a Linux sysctl value without applying it immediately.
 
@@ -10526,13 +10282,13 @@ Result fields:
 Example:
 
 ```yaml
-use: sysctl.persist
+use: system.kernel.sysctl.persist
 with:
   name: nginx
   value: 1
 ```
 
-### `sysctl.reload`
+### `system.kernel.sysctl.reload`
 
 Reload Linux sysctl settings from a file or all configured files.
 
@@ -10557,13 +10313,13 @@ Result fields:
 Example:
 
 ```yaml
-use: sysctl.reload
+use: system.kernel.sysctl.reload
 with:
   file: /etc/sysctl.d/99-automax.conf
   sudo: true
 ```
 
-### `sysctl.set`
+### `system.kernel.sysctl.set`
 
 Set a Linux sysctl value at runtime and/or persistently.
 
@@ -10594,7 +10350,7 @@ Result fields:
 Example:
 
 ```yaml
-use: sysctl.set
+use: system.kernel.sysctl.set
 with:
   name: net.ipv4.ip_forward
   value: '1'
@@ -10604,7 +10360,242 @@ with:
   sudo: true
 ```
 
-## system
+### `system.log.export`
+
+Export remote log or journal output to stdout for declared artifact capture.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `files` | no | `list` |  | Target files to inspect or modify. |
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `since` | no | `string` |  | Start time for journalctl queries. |
+| `lines` | no | `integer` | `200` | Number of log or journal lines to collect. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.log.export
+with:
+  files:
+    - /etc/pam.d/login
+  service: sshd
+```
+
+### `system.log.grep`
+
+Search remote log files with grep and return matching lines.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
+| `files` | no | `list` |  | Target files to inspect or modify. |
+| `max_count` | no | `integer` |  | Maximum number of matching log or process entries. |
+| `ignore_missing` | no | `boolean` | `True` | Treat missing processes as success. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.log.grep
+with:
+  pattern: KEY=.*
+```
+
+### `system.process.check`
+
+Check that a remote process is present or absent by PID or pattern.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `pid` | no | `integer` |  | Process id. |
+| `pattern` | no | `string` |  | Regex, process pattern or search pattern. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.process.check
+with:
+  pid: 1234
+  pattern: KEY=.*
+```
+
+### `system.process.count_check`
+
+Assert the number of remote processes matching a pattern.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `pattern` | yes | `string` |  | Regex, process pattern or search pattern. |
+| `count` | no | `integer` | `0` | Maximum regex replacements; 0 means replace all matches. |
+| `min_count` | no | `integer` |  | Minimum number of matching process entries. |
+| `max_count` | no | `integer` |  | Maximum number of matching log or process entries. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.process.count_check
+with:
+  pattern: KEY=.*
+```
+
+### `system.process.kill`
+
+Kill a remote process by PID or pattern.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `pid` | no | `integer` |  | Process id. |
+| `pattern` | no | `string` |  | Regex, process pattern or search pattern. |
+| `signal` | no | `string` | `TERM` | Signal name or number sent to a process. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `ignore_missing` | no | `boolean` | `True` | Treat missing processes as success. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.process.kill
+with:
+  pid: 1234
+  pattern: KEY=.*
+```
+
+### `system.process.signal`
+
+Send a signal to a remote process by PID or pattern.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `pid` | no | `integer` |  | Process id. |
+| `pattern` | no | `string` |  | Regex, process pattern or search pattern. |
+| `signal` | no | `string` | `TERM` | Signal name or number sent to a process. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `ignore_missing` | no | `boolean` | `True` | Treat missing processes as success. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.process.signal
+with:
+  pid: 1234
+  pattern: KEY=.*
+```
+
+### `system.process.wait`
+
+Wait for a remote process state.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `pid` | no | `integer` |  | Process id. |
+| `pattern` | no | `string` |  | Regex, process pattern or search pattern. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `timeout` | no | `number` |  | Operation timeout in seconds. |
+| `interval` | no | `number` | `2` | Polling interval in seconds. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.process.wait
+with:
+  pid: 1234
+  pattern: KEY=.*
+```
 
 ### `system.reboot`
 
@@ -10640,102 +10631,7 @@ with:
   delay: 3
 ```
 
-## systemctl
-
-### `systemctl.daemon_reload`
-
-Run systemctl daemon-reload on a remote target.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: systemctl.daemon_reload
-with:
-  sudo: true
-  user: deploy
-```
-
-### `systemctl.disable`
-
-Disable a remote systemd service.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: systemctl.disable
-with:
-  service: sshd
-```
-
-### `systemctl.enable`
-
-Enable a remote systemd service.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: systemctl.enable
-with:
-  service: sshd
-```
-
-### `systemctl.is_active`
+### `system.service.active_check`
 
 Check remote systemd active state.
 
@@ -10762,12 +10658,74 @@ Result fields:
 Example:
 
 ```yaml
-use: systemctl.is_active
+use: system.service.active_check
 with:
   service: sshd
 ```
 
-### `systemctl.is_enabled`
+### `system.service.disable`
+
+Disable a remote systemd service.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.service.disable
+with:
+  service: sshd
+```
+
+### `system.service.enable`
+
+Enable a remote systemd service.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.service.enable
+with:
+  service: sshd
+```
+
+### `system.service.enabled_check`
 
 Check remote systemd enabled state.
 
@@ -10794,12 +10752,12 @@ Result fields:
 Example:
 
 ```yaml
-use: systemctl.is_enabled
+use: system.service.enabled_check
 with:
   service: sshd
 ```
 
-### `systemctl.mask`
+### `system.service.mask`
 
 Mask a remote systemd service.
 
@@ -10825,12 +10783,12 @@ Result fields:
 Example:
 
 ```yaml
-use: systemctl.mask
+use: system.service.mask
 with:
   service: sshd
 ```
 
-### `systemctl.reload`
+### `system.service.reload`
 
 Reload a remote systemd service.
 
@@ -10856,12 +10814,12 @@ Result fields:
 Example:
 
 ```yaml
-use: systemctl.reload
+use: system.service.reload
 with:
   service: sshd
 ```
 
-### `systemctl.restart`
+### `system.service.restart`
 
 Restart a remote systemd service.
 
@@ -10887,12 +10845,12 @@ Result fields:
 Example:
 
 ```yaml
-use: systemctl.restart
+use: system.service.restart
 with:
   service: sshd
 ```
 
-### `systemctl.start`
+### `system.service.start`
 
 Start a remote systemd service.
 
@@ -10918,12 +10876,12 @@ Result fields:
 Example:
 
 ```yaml
-use: systemctl.start
+use: system.service.start
 with:
   service: sshd
 ```
 
-### `systemctl.status`
+### `system.service.status`
 
 Read remote systemd service status.
 
@@ -10949,12 +10907,12 @@ Result fields:
 Example:
 
 ```yaml
-use: systemctl.status
+use: system.service.status
 with:
   service: sshd
 ```
 
-### `systemctl.stop`
+### `system.service.stop`
 
 Stop a remote systemd service.
 
@@ -10980,12 +10938,12 @@ Result fields:
 Example:
 
 ```yaml
-use: systemctl.stop
+use: system.service.stop
 with:
   service: sshd
 ```
 
-### `systemctl.unmask`
+### `system.service.unmask`
 
 Unmask a remote systemd service.
 
@@ -11011,14 +10969,43 @@ Result fields:
 Example:
 
 ```yaml
-use: systemctl.unmask
+use: system.service.unmask
 with:
   service: sshd
 ```
 
-## systemd
+### `system.systemd.daemon_reload`
 
-### `systemd.sysusers`
+Run systemctl daemon-reload on a remote target.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `user` | no | `boolean` | `False` | Use systemctl --user instead of the system manager. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: system.systemd.daemon_reload
+with:
+  sudo: true
+  user: deploy
+```
+
+### `system.systemd.sysusers`
 
 Install a sysusers.d drop-in and optionally apply it immediately.
 
@@ -11048,14 +11035,14 @@ Result fields:
 Example:
 
 ```yaml
-use: systemd.sysusers
+use: system.systemd.sysusers
 with:
   name: nginx
   content: managed by automax
 
 ```
 
-### `systemd.timer`
+### `system.systemd.timer`
 
 Install a systemd timer file with backup, daemon-reload and optional enable/start.
 
@@ -11086,14 +11073,14 @@ Result fields:
 Example:
 
 ```yaml
-use: systemd.timer
+use: system.systemd.timer
 with:
   name: nginx
   content: managed by automax
 
 ```
 
-### `systemd.tmpfiles`
+### `system.systemd.tmpfiles`
 
 Install a tmpfiles.d drop-in and optionally apply it immediately.
 
@@ -11123,14 +11110,14 @@ Result fields:
 Example:
 
 ```yaml
-use: systemd.tmpfiles
+use: system.systemd.tmpfiles
 with:
   name: nginx
   content: managed by automax
 
 ```
 
-### `systemd.unit`
+### `system.systemd.unit`
 
 Install a systemd unit file with backup, daemon-reload and optional enable/start.
 
@@ -11161,7 +11148,7 @@ Result fields:
 Example:
 
 ```yaml
-use: systemd.unit
+use: system.systemd.unit
 with:
   name: nginx
   content: managed by automax

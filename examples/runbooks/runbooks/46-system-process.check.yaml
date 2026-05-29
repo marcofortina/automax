@@ -1,0 +1,38 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-system-process
+tasks:
+- id: system-process
+  description: Check-mode catalog for system process plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - system-process
+  steps:
+  - id: catalog
+    substeps:
+    - id: system-system_process_check
+      use: system.process.check
+      with:
+        pattern: KEY=.*
+    - id: system-system_process_count_check
+      use: system.process.count_check
+      with:
+        pattern: automax-smoke
+        min_count: 1
+    - id: system-system_process_kill
+      use: system.process.kill
+      with:
+        pattern: automax-smoke-noop
+    - id: system-system_process_signal
+      use: system.process.signal
+      with:
+        pattern: automax-smoke-noop
+    - id: system-system_process_wait
+      use: system.process.wait
+      with:
+        pattern: automax-smoke
+        timeout: 1

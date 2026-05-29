@@ -39,11 +39,6 @@ capability.assert
 chrony.servers
 chrony.sources_assert
 chrony.tracking_assert
-cron.absent
-cron.entry
-cron.file
-cron.list
-cron.validate
 db.health
 db.mysql.query
 db.oracle.query
@@ -108,20 +103,8 @@ identity.user.remove
 identity.user.set_password
 identity.user.shell_check
 identity.user.unlock
-journal.collect
-journal.grep
-kernel.boot_param
-kernel.boot_param_absent
-kernel.cmdline_assert
-kernel.module.blacklist
-kernel.module.load
-kernel.module.persist
-kernel.module.status
-kernel.module.unload
 limits.dropin
 local.command
-log.export
-log.grep
 login.defs
 mail.send
 network.connectivity.port_check
@@ -191,11 +174,6 @@ pkg.version_assert
 pkg.version_pin
 platform.facts
 plugin.requirements
-process.assert_absent
-process.assert_count
-process.kill
-process.signal
-process.wait
 remote.command
 security.apparmor.complain
 security.apparmor.disable
@@ -320,30 +298,52 @@ storage.swap.facts
 storage.swap.remove
 storage.usage.disk_check
 storage.usage.inode_check
-sysctl.assert
-sysctl.dropin
-sysctl.facts
-sysctl.get
-sysctl.persist
-sysctl.reload
-sysctl.set
+system.cron.entry.add
+system.cron.entry.list
+system.cron.entry.remove
+system.cron.file
+system.cron.validate
+system.journal.collect
+system.journal.grep
+system.kernel.boot_param.add
+system.kernel.boot_param.remove
+system.kernel.cmdline.check
+system.kernel.module.blacklist
+system.kernel.module.load
+system.kernel.module.persist
+system.kernel.module.status
+system.kernel.module.unload
+system.kernel.sysctl.check
+system.kernel.sysctl.dropin
+system.kernel.sysctl.facts
+system.kernel.sysctl.get
+system.kernel.sysctl.persist
+system.kernel.sysctl.reload
+system.kernel.sysctl.set
+system.log.export
+system.log.grep
+system.process.check
+system.process.count_check
+system.process.kill
+system.process.signal
+system.process.wait
 system.reboot
-systemctl.daemon_reload
-systemctl.disable
-systemctl.enable
-systemctl.is_active
-systemctl.is_enabled
-systemctl.mask
-systemctl.reload
-systemctl.restart
-systemctl.start
-systemctl.status
-systemctl.stop
-systemctl.unmask
-systemd.sysusers
-systemd.timer
-systemd.tmpfiles
-systemd.unit
+system.service.active_check
+system.service.disable
+system.service.enable
+system.service.enabled_check
+system.service.mask
+system.service.reload
+system.service.restart
+system.service.start
+system.service.status
+system.service.stop
+system.service.unmask
+system.systemd.daemon_reload
+system.systemd.sysusers
+system.systemd.timer
+system.systemd.tmpfiles
+system.systemd.unit
 timedatectl.ntp
 timedatectl.status
 timedatectl.timezone
@@ -370,14 +370,14 @@ udev.validate
 - [Linux operations](linux-operations.md)
 - [Archive](archive.md)
 - [Package manager](package-manager.md)
-- [Systemctl](systemctl.md)
+- [System](system.md)
 - [Users, groups and processes](users-groups-processes.md)
 - [Transfer](transfer.md)
 - [HTTP/API](http-api.md)
 - [Database](database.md)
 - [Alternatives](alternatives.md)
 - [Firewall](firewall.md)
-- [Facts and cron](facts-cron.md)
+- [Facts and system cron](facts-cron.md)
 - [Kernel, mount and storage](kernel-storage.md)
 - [Security and access control](security.md)
 - [Extended SSH Smoke](../guides/ssh-smoke.md)

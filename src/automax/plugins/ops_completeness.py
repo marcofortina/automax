@@ -226,7 +226,7 @@ class UdevFactsPlugin(ReadOnlyCommandPlugin):
 
 # kernel/sysctl/time
 class KernelModuleStatusPlugin(ReadOnlyCommandPlugin):
-    name = "kernel.module.status"
+    name = "system.kernel.module.status"
     description = "Assert or report kernel module load status."
     required_params = ("module",)
     optional_params = ("state", "sudo")
@@ -240,7 +240,7 @@ class KernelModuleStatusPlugin(ReadOnlyCommandPlugin):
 
 
 class KernelModuleBlacklistPlugin(BasePlugin):
-    name = "kernel.module.blacklist"
+    name = "system.kernel.module.blacklist"
     description = "Install or remove a persistent kernel module blacklist drop-in."
     required_params = ("module",)
     optional_params = ("state", "file", "backup", "backup_suffix", "sudo")
@@ -272,11 +272,11 @@ class KernelModuleBlacklistPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.module.blacklist failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.kernel.module.blacklist failed")
 
 
 class KernelCmdlineAssertPlugin(ReadOnlyCommandPlugin):
-    name = "kernel.cmdline_assert"
+    name = "system.kernel.cmdline.check"
     description = "Assert that the running kernel command line contains or omits a parameter."
     required_params = ("param",)
     optional_params = ("state", "sudo")
@@ -288,7 +288,7 @@ class KernelCmdlineAssertPlugin(ReadOnlyCommandPlugin):
 
 
 class KernelBootParamAbsentPlugin(BasePlugin):
-    name = "kernel.boot_param_absent"
+    name = "system.kernel.boot_param.remove"
     description = "Remove a kernel boot parameter from GRUB defaults after explicit confirmation."
     required_params = ("param",)
     optional_params = ("file", "backup", "backup_suffix", "confirm", "sudo")
@@ -297,7 +297,7 @@ class KernelBootParamAbsentPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if not bool(params.get("confirm", False)):
-            raise PluginValidationError("kernel.boot_param_absent requires confirm=true")
+            raise PluginValidationError("system.kernel.boot_param.remove requires confirm=true")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -312,11 +312,11 @@ class KernelBootParamAbsentPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc,out,err=exec_remote(context," && ".join(self.manual_commands(params,context))+f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.boot_param_absent failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.kernel.boot_param.remove failed")
 
 
 class SysctlAssertPlugin(ReadOnlyCommandPlugin):
-    name = "sysctl.assert"
+    name = "system.kernel.sysctl.check"
     description = "Assert a runtime sysctl value."
     required_params = ("name", "value")
     optional_params = ("sudo",)
@@ -326,7 +326,7 @@ class SysctlAssertPlugin(ReadOnlyCommandPlugin):
 
 
 class SysctlFactsPlugin(ReadOnlyCommandPlugin):
-    name = "sysctl.facts"
+    name = "system.kernel.sysctl.facts"
     description = "Read one or more sysctl values."
     optional_params = ("names", "sudo")
 
@@ -336,7 +336,7 @@ class SysctlFactsPlugin(ReadOnlyCommandPlugin):
 
 
 class SysctlDropinPlugin(RenderedFileInstallMixin, BasePlugin):
-    name = "sysctl.dropin"
+    name = "system.kernel.sysctl.dropin"
     description = "Install a sysctl.d drop-in and reload sysctl values."
     required_params = ("name", "settings")
     optional_params = ("file", "reload", "backup", "backup_suffix", "sudo")
@@ -348,7 +348,7 @@ class SysctlDropinPlugin(RenderedFileInstallMixin, BasePlugin):
     def _content(self, params: Dict[str, Any]) -> str:
         settings=params["settings"]
         if not isinstance(settings, dict) or not settings:
-            raise PluginValidationError("sysctl.dropin settings must be a non-empty mapping")
+            raise PluginValidationError("system.kernel.sysctl.dropin settings must be a non-empty mapping")
         return "".join(f"{k} = {v}\n" for k,v in sorted(settings.items()))
 
     def rendered_file_path(self, params: Dict[str, Any]) -> str:

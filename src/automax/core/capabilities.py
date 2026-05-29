@@ -60,7 +60,7 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "security.pki.cert.chain_check": ("openssl",),
     "chrony.sources_assert": ("chronyc",),
     "chrony.tracking_assert": ("chronyc",),
-    "cron.list": ("crontab",),
+    "system.cron.entry.list": ("crontab",),
     "storage.fstab.validate": ("findmnt",),
     "fs.acl.set": ("getfacl", "setfacl"),
     "fs.acl.check": ("getfacl",),
@@ -139,11 +139,11 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "storage.swap.remove": ("swapoff",),
     "storage.swap.check": ("swapon",),
     "storage.swap.facts": ("swapon",),
-    "sysctl.assert": ("sysctl",),
-    "sysctl.facts": ("sysctl",),
-    "sysctl.get": ("sysctl",),
-    "sysctl.reload": ("sysctl",),
-    "sysctl.set": ("sysctl",),
+    "system.kernel.sysctl.check": ("sysctl",),
+    "system.kernel.sysctl.facts": ("sysctl",),
+    "system.kernel.sysctl.get": ("sysctl",),
+    "system.kernel.sysctl.reload": ("sysctl",),
+    "system.kernel.sysctl.set": ("sysctl",),
     "timedatectl.ntp": ("timedatectl",),
     "timedatectl.status": ("timedatectl",),
     "timedatectl.timezone": ("timedatectl",),
@@ -178,8 +178,8 @@ DEBIAN_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
 
 RHEL_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "security.authselect.profile": ("authselect",),
-    "kernel.boot_param": ("grubby",),
-    "kernel.boot_param_absent": ("grubby",),
+    "system.kernel.boot_param.add": ("grubby",),
+    "system.kernel.boot_param.remove": ("grubby",),
     "security.authselect.check": ("authselect",),
     "pkg.clean": ("rpm",),
     "pkg.hold": ("rpm",),
@@ -196,10 +196,10 @@ RHEL_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
 
 PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "archive.": ("tar", "unzip", "zip", "gzip"),
-    "kernel.module.": ("modprobe", "lsmod"),
-    "process.": ("pgrep",),
-    "systemctl.": ("systemctl",),
-    "systemd.": ("systemctl",),
+    "system.kernel.module.": ("modprobe", "lsmod"),
+    "system.process.": ("pgrep",),
+    "system.service.": ("systemctl",),
+    "system.systemd.": ("systemctl",),
 }
 
 DEBIAN_PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
@@ -361,7 +361,7 @@ RHEL_PACKAGES: Dict[str, str] = {
 DEBIAN_ONLY_PREFIXES = ("security.apparmor.", "network.firewall.ufw.")
 RHEL_ONLY_PREFIXES = ("network.firewall.firewalld.", "security.selinux.")
 DEBIAN_ONLY_EXACT = frozenset[str]()
-RHEL_ONLY_EXACT = frozenset({"security.authselect.profile", "kernel.boot_param", "kernel.boot_param_absent", "security.authselect.check"})
+RHEL_ONLY_EXACT = frozenset({"security.authselect.profile", "system.kernel.boot_param.add", "system.kernel.boot_param.remove", "security.authselect.check"})
 
 
 def plugin_os_mismatch(plugin_name: str, os_family: str | None, params: Dict[str, Any] | None = None) -> str | None:

@@ -113,7 +113,7 @@ symlinked resolver files are not overwritten silently.
 ## Runtime service checks
 
 Use `network.connectivity.port_check` for target-side TCP/UDP connectivity checks,
-`http.request` for controller-side HTTP probes, and the `process.*` family for
+`http.request` for controller-side HTTP probes, and the `system.process.*` family for
 process lifecycle checks. The former service-health wrapper namespace is
 intentionally not part of the public plugin surface.
 
@@ -143,7 +143,7 @@ operations provide state previews and manual recovery commands.
 
 ## Logs and journal collection
 
-Use `log.grep`, `journal.collect`, `journal.grep` and `log.export` to inspect
+Use `system.log.grep`, `system.journal.collect`, `system.journal.grep` and `system.log.export` to inspect
 logs, grep journal output and emit stdout suitable for artifact capture. These
 macros are read-oriented and document why no file diff is emitted.
 
@@ -190,12 +190,12 @@ network.link.interface / network.link.bond / network.link.vlan / network.route.a
 security.pki.trust.install_ca with trust_store=system
 storage.lvm.lv.snapshot / storage.lvm.lv.thin_pool / storage.lvm.lv.remove / storage.lvm.vg.remove / storage.lvm.pv.remove
 fs.acl.set / fs.attr.set / storage.quota.set / storage.quota.get / storage.quota.check / storage.quota.facts
-systemd.unit / systemd.timer / systemd.tmpfiles / systemd.sysusers
+system.systemd.unit / system.systemd.timer / system.systemd.tmpfiles / system.systemd.sysusers
 alternatives.set
 security.audit.rule / security.audit.status / security.audit.reload
 security.ssh.config / security.ssh.known_hosts / security.ssh.authorized_key.add
 security.selinux.port / security.selinux.fcontext
-kernel.boot_param
+system.kernel.boot_param.add
 security.sudo.rule / security.sudo.validate
 ```
 

@@ -36,7 +36,7 @@ tasks:
       - id: restart
         substeps:
           - id: restart_service
-            use: systemctl.restart
+            use: system.service.restart
             retry:
               attempts: 3
               delay: 2

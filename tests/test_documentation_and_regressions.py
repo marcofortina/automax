@@ -765,7 +765,7 @@ def test_plugin_specific_user_and_boolean_value_schemas_do_not_use_global_fallba
     from automax.plugins.registry import build_builtin_registry
 
     registry = build_builtin_registry()
-    registry.get("cron.list").validate({"user": "deploy", "sudo": True})
+    registry.get("system.cron.entry.list").validate({"user": "deploy", "sudo": True})
     registry.get("security.selinux.boolean").validate({"name": "httpd_can_network_connect", "value": True, "persist": True})
 
 
@@ -791,11 +791,11 @@ def test_rendered_file_install_mixin_covers_managed_file_plugins():
         "security.ssh.config",
         "security.sshd.config",
         "security.sudo.rule",
-        "sysctl.dropin",
-        "systemd.sysusers",
-        "systemd.timer",
-        "systemd.tmpfiles",
-        "systemd.unit",
+        "system.kernel.sysctl.dropin",
+        "system.systemd.sysusers",
+        "system.systemd.timer",
+        "system.systemd.tmpfiles",
+        "system.systemd.unit",
         "udev.rule",
     }
     for name in expected:
@@ -823,9 +823,9 @@ def test_read_only_command_plugin_is_shared_base_class():
         "security.apparmor.profile_check",
         "security.audit.status",
         "security.audit.search",
-        "cron.list",
+        "system.cron.entry.list",
         "security.sudo.validate",
-        "sysctl.assert",
+        "system.kernel.sysctl.check",
         "udev.validate",
     }
     for name in expected:
@@ -1305,12 +1305,12 @@ def test_ambiguous_plugin_parameters_have_plugin_specific_schemas():
         ("archive.compress", "source"): ("path",),
         ("archive.decompress", "archive"): ("path",),
         ("backup.restore", "archive"): ("boolean",),
-        ("cron.list", "user"): ("string",),
+        ("system.cron.entry.list", "user"): ("string",),
         ("network.firewall.firewalld.source", "source"): ("string",),
         ("security.selinux.boolean", "value"): ("boolean", "string"),
-        ("sysctl.set", "value"): ("string",),
-        ("systemctl.start", "user"): ("boolean",),
-        ("systemd.unit", "start"): ("boolean",),
+        ("system.kernel.sysctl.set", "value"): ("string",),
+        ("system.service.start", "user"): ("boolean",),
+        ("system.systemd.unit", "start"): ("boolean",),
         ("transfer.rsync", "archive"): ("boolean",),
     }
 

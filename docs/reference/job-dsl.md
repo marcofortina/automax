@@ -104,7 +104,7 @@ tasks:
         substeps:
           - id: reload_lb
             targets: server:lb01
-            use: systemctl.reload
+            use: system.service.reload
             with:
               service: haproxy.service
               sudo: true
@@ -212,7 +212,7 @@ and considered false only when it renders to `""`, `0`, `false`, `no` or `none`:
 
 ```yaml
 - id: restart_only_when_enabled
-  use: systemctl.restart
+  use: system.service.restart
   when: "{{ vars.restart_enabled }}"
   with:
     service: myapp.service

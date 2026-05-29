@@ -15,7 +15,7 @@ from automax.plugins.remote_utils import cleanup_trap_command, CHANGE_MARKER, ex
 
 
 class SysctlGetPlugin(BasePlugin):
-    name = "sysctl.get"
+    name = "system.kernel.sysctl.get"
     description = "Read a Linux sysctl value."
     required_params = ("name",)
     optional_params = ("sudo",)
@@ -28,12 +28,12 @@ class SysctlGetPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="sysctl.get failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="system.kernel.sysctl.get failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"name": params["name"], "value": out.strip()})
 
 
 class SysctlSetPlugin(BasePlugin):
-    name = "sysctl.set"
+    name = "system.kernel.sysctl.set"
     description = "Set a Linux sysctl value at runtime and/or persistently."
     required_params = ("name", "value")
     optional_params = ("runtime", "persist", "file", "sudo")
@@ -44,7 +44,7 @@ class SysctlSetPlugin(BasePlugin):
         runtime = bool(params.get("runtime", True))
         persist = bool(params.get("persist", False))
         if not runtime and not persist:
-            raise PluginValidationError("sysctl.set requires runtime=true and/or persist=true")
+            raise PluginValidationError("system.kernel.sysctl.set requires runtime=true and/or persist=true")
         name = str(params["name"])
         value = str(params["value"])
         file_path = str(params.get("file", "/etc/sysctl.d/99-automax.conf"))
@@ -67,7 +67,7 @@ class SysctlSetPlugin(BasePlugin):
         runtime = bool(params.get("runtime", True))
         persist = bool(params.get("persist", False))
         if not runtime and not persist:
-            raise PluginValidationError("sysctl.set requires runtime=true and/or persist=true")
+            raise PluginValidationError("system.kernel.sysctl.set requires runtime=true and/or persist=true")
         name = str(params["name"])
         value = str(params["value"])
         file_path = str(params.get("file", "/etc/sysctl.d/99-automax.conf"))
@@ -107,11 +107,11 @@ if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
             prefix="AUTOMAX_SH",
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="sysctl.set failed", data={"name": name, "value": value})
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.kernel.sysctl.set failed", data={"name": name, "value": value})
 
 
 class SysctlPersistPlugin(BasePlugin):
-    name = "sysctl.persist"
+    name = "system.kernel.sysctl.persist"
     description = "Persist a Linux sysctl value without applying it immediately."
     required_params = ("name", "value")
     optional_params = ("file", "sudo")
@@ -131,7 +131,7 @@ class SysctlPersistPlugin(BasePlugin):
 
 
 class SysctlReloadPlugin(BasePlugin):
-    name = "sysctl.reload"
+    name = "system.kernel.sysctl.reload"
     description = "Reload Linux sysctl settings from a file or all configured files."
     optional_params = ("file", "sudo")
     opens_remote_session = True
@@ -144,11 +144,11 @@ class SysctlReloadPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         command = self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}"
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="sysctl.reload failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.kernel.sysctl.reload failed")
 
 
 class KernelModuleLoadPlugin(BasePlugin):
-    name = "kernel.module.load"
+    name = "system.kernel.module.load"
     description = "Load a Linux kernel module and optionally persist it."
     required_params = ("name",)
     optional_params = ("persist", "file", "sudo")
@@ -194,11 +194,11 @@ if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
             prefix="AUTOMAX_SH",
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.module.load failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.kernel.module.load failed")
 
 
 class KernelModuleUnloadPlugin(BasePlugin):
-    name = "kernel.module.unload"
+    name = "system.kernel.module.unload"
     description = "Unload a Linux kernel module and optionally remove persisted entries."
     required_params = ("name",)
     optional_params = ("persist", "file", "sudo")
@@ -246,11 +246,11 @@ if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
             prefix="AUTOMAX_SH",
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.module.unload failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.kernel.module.unload failed")
 
 
 class KernelModulePersistPlugin(BasePlugin):
-    name = "kernel.module.persist"
+    name = "system.kernel.module.persist"
     description = "Persist a Linux kernel module for loading at boot."
     required_params = ("name",)
     optional_params = ("state", "file", "sudo")
@@ -269,7 +269,7 @@ class KernelModulePersistPlugin(BasePlugin):
         self.validate(params)
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
-            raise PluginValidationError("kernel.module.persist state must be present or absent")
+            raise PluginValidationError("system.kernel.module.persist state must be present or absent")
         module = str(params["name"])
         file_path = str(params.get("file", f"/etc/modules-load.d/{module}.conf"))
         if state == "present":
@@ -277,10 +277,10 @@ class KernelModulePersistPlugin(BasePlugin):
         else:
             command = f"if test -e {quote(file_path)}; then tmp=$(mktemp); {cleanup_trap_command('tmp')}; grep -Fxv -- {quote(module)} {quote(file_path)} > $tmp || true; if ! cmp -s $tmp {quote(file_path)}; then {sudo_prefix(params, default=True)}cp $tmp {quote(file_path)} && echo {CHANGE_MARKER}; fi; fi"
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="kernel.module.persist failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.kernel.module.persist failed")
 
 class KernelBootParamPlugin(BasePlugin):
-    name = "kernel.boot_param"
+    name = "system.kernel.boot_param.add"
     description = "Ensure a persistent kernel boot parameter in GRUB-compatible defaults with backup and grub config regeneration."
     required_params = ("name",)
     optional_params = ("value", "state", "path", "backup", "backup_suffix", "update_grub", "sudo")
@@ -303,7 +303,7 @@ class KernelBootParamPlugin(BasePlugin):
         self.validate(params)
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
-            raise PluginValidationError("kernel.boot_param state must be present or absent")
+            raise PluginValidationError("system.kernel.boot_param.add state must be present or absent")
         path = self._path(params)
         token = self._token(params)
         sudo = sudo_prefix(params, default=True)
@@ -363,4 +363,4 @@ rm -f "$tmp"
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="kernel.boot_param failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="system.kernel.boot_param.add failed")

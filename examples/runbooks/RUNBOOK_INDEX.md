@@ -16,7 +16,7 @@ Per-plugin runbooks only. No combined runbook, no reused runtime smoke flow, and
 | `runbooks/10-capability.check.yaml` | `capability` | 1 |
 | `runbooks/11-cert.check.yaml` | `security.pki.cert` | 11 |
 | `runbooks/12-chrony.check.yaml` | `chrony` | 3 |
-| `runbooks/13-cron.check.yaml` | `cron` | 5 |
+| `runbooks/13-system-cron.check.yaml` | `system.cron` | 5 |
 | `runbooks/14-db.check.yaml` | `db` | 5 |
 | `runbooks/15-download.check.yaml` | `download` | 1 |
 | `runbooks/16-env.check.yaml` | `env` | 1 |
@@ -29,11 +29,11 @@ Per-plugin runbooks only. No combined runbook, no reused runtime smoke flow, and
 | `runbooks/25-hosts.check.yaml` | `hosts` | 1 |
 | `runbooks/26-http.check.yaml` | `http` | 3 |
 | `runbooks/27-iptables.check.yaml` | `network.firewall.iptables` | 9 |
-| `runbooks/28-journal.check.yaml` | `journal` | 2 |
-| `runbooks/29-kernel.check.yaml` | `kernel` | 8 |
+| `runbooks/28-system-journal.check.yaml` | `system.journal` | 2 |
+| `runbooks/29-system-kernel.check.yaml` | `system.kernel` | 8 |
 | `runbooks/30-limits.check.yaml` | `limits` | 1 |
 | `runbooks/31-local.check.yaml` | `local` | 1 |
-| `runbooks/32-log.check.yaml` | `log` | 2 |
+| `runbooks/32-system-log.check.yaml` | `system.log` | 2 |
 | `runbooks/33-login.check.yaml` | `login` | 1 |
 | `runbooks/34-storage-lvm.check.yaml` | `storage.lvm/storage.fs` | 14 |
 | `runbooks/35-mail.check.yaml` | `mail` | 1 |
@@ -47,7 +47,7 @@ Per-plugin runbooks only. No combined runbook, no reused runtime smoke flow, and
 | `runbooks/43-pki.check.yaml` | `security.pki` | 3 |
 | `runbooks/44-platform.check.yaml` | `platform` | 1 |
 | `runbooks/45-plugin.check.yaml` | `plugin` | 1 |
-| `runbooks/46-process.check.yaml` | `process` | 5 |
+| `runbooks/46-system-process.check.yaml` | `system.process` | 5 |
 | `runbooks/47-remote.check.yaml` | `remote` | 1 |
 | `runbooks/48-network-dns-facts.check.yaml` | `network.dns` | 2 |
 | `runbooks/49-secret.check.yaml` | `security.secret` | 3 |
@@ -56,10 +56,10 @@ Per-plugin runbooks only. No combined runbook, no reused runtime smoke flow, and
 | `runbooks/52-sshd.check.yaml` | `security.sshd` | 2 |
 | `runbooks/53-sudo.check.yaml` | `security.sudo` | 6 |
 | `runbooks/55-storage-swap.check.yaml` | `storage.swap` | 4 |
-| `runbooks/56-sysctl.check.yaml` | `sysctl` | 7 |
+| `runbooks/56-system-kernel-sysctl.check.yaml` | `system.kernel.sysctl` | 7 |
 | `runbooks/57-system.check.yaml` | `system` | 1 |
-| `runbooks/58-systemctl.check.yaml` | `systemctl` | 12 |
-| `runbooks/59-systemd.check.yaml` | `systemd` | 4 |
+| `runbooks/58-system-service.check.yaml` | `system.service/system.systemd` | 12 |
+| `runbooks/59-system-systemd.check.yaml` | `system.systemd` | 4 |
 | `runbooks/60-timedatectl.check.yaml` | `timedatectl` | 3 |
 | `runbooks/61-tool.check.yaml` | `tool` | 2 |
 | `runbooks/62-transfer.check.yaml` | `transfer` | 4 |

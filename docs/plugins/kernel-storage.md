@@ -7,9 +7,9 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 ## Kernel modules and sysctl
 
-`kernel.module.load`, `kernel.module.unload` and `kernel.module.persist` control
-module runtime and boot persistence separately. `sysctl.get`, `sysctl.set`,
-`sysctl.persist` and `sysctl.reload` separate runtime reads, runtime writes,
+`system.kernel.module.load`, `system.kernel.module.unload` and `system.kernel.module.persist` control
+module runtime and boot persistence separately. `system.kernel.sysctl.get`, `system.kernel.sysctl.set`,
+`system.kernel.sysctl.persist` and `system.kernel.sysctl.reload` separate runtime reads, runtime writes,
 persistent drop-ins and reload operations.
 
 ## Block and mount operations
@@ -26,12 +26,12 @@ Use `storage.lvm.facts`, `storage.lvm.*.scan`, `storage.lvm.lv.check`, `storage.
 
 ## Kernel, sysctl and block safety assertions
 
-Kernel hardening readback/guard plugins include `kernel.module.status`,
-`kernel.module.blacklist`, `kernel.cmdline_assert` and
-`kernel.boot_param_absent`. Removing a boot parameter requires `confirm: true`.
+Kernel hardening readback/guard plugins include `system.kernel.module.status`,
+`system.kernel.module.blacklist`, `system.kernel.cmdline.check` and
+`system.kernel.boot_param.remove`. Removing a boot parameter requires `confirm: true`.
 
-Sysctl readback and drop-in management is covered by `sysctl.assert`,
-`sysctl.facts` and `sysctl.dropin`.
+Sysctl readback and drop-in management is covered by `system.kernel.sysctl.check`,
+`system.kernel.sysctl.facts` and `system.kernel.sysctl.dropin`.
 
 Block-device safety assertions should be placed before destructive storage steps:
 `storage.block.size_check`, `storage.fs.check`, `storage.block.mount_check`,

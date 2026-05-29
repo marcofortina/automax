@@ -1,0 +1,51 @@
+# Check-only plugin catalog. Run with automax run --check, not as a normal runtime job.
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: plugin-smoke-check-system-kernel
+tasks:
+- id: system-kernel
+  description: Check-mode catalog for system kernel plugins.
+  targets: all
+  tags:
+  - all-functions
+  - check
+  - system-kernel
+  steps:
+  - id: catalog
+    substeps:
+    - id: system-system_kernel_boot_param
+      use: system.kernel.boot_param.add
+      with:
+        name: nginx
+    - id: system-system_kernel_boot_param_absent
+      use: system.kernel.boot_param.remove
+      with:
+        param: quiet
+        confirm: true
+    - id: system-system_kernel_cmdline_assert
+      use: system.kernel.cmdline.check
+      with:
+        param: quiet
+    - id: system-system_kernel_module_blacklist
+      use: system.kernel.module.blacklist
+      with:
+        module: br_netfilter
+    - id: system-system_kernel_module_load
+      use: system.kernel.module.load
+      with:
+        name: br_netfilter
+        persist: true
+        sudo: true
+    - id: system-system_kernel_module_persist
+      use: system.kernel.module.persist
+      with:
+        name: nginx
+    - id: system-system_kernel_module_status
+      use: system.kernel.module.status
+      with:
+        module: br_netfilter
+    - id: system-system_kernel_module_unload
+      use: system.kernel.module.unload
+      with:
+        name: nginx

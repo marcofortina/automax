@@ -21,7 +21,7 @@ def _safe_name(name: str) -> str:
 
 
 class CronEntryPlugin(BasePlugin):
-    name = "cron.entry"
+    name = "system.cron.entry.add"
     description = "Manage one /etc/cron.d entry file."
     required_params = ("name", "schedule", "command")
     optional_params = ("user", "state", "env", "sudo")
@@ -35,14 +35,14 @@ class CronEntryPlugin(BasePlugin):
         super().validate(params)
         _safe_name(str(params["name"]))
         if str(params.get("state", "present")) not in {"present", "absent"}:
-            raise PluginValidationError("cron.entry state must be present or absent")
+            raise PluginValidationError("system.cron.entry.add state must be present or absent")
         env = params.get("env") or {}
         if not isinstance(env, dict):
-            raise PluginValidationError("cron.entry env must be a mapping")
+            raise PluginValidationError("system.cron.entry.add env must be a mapping")
         for key, value in env.items():
             validate_env_name(key)
             if "\n" in str(value) or "\r" in str(value):
-                raise PluginValidationError("cron.entry env values must be single-line")
+                raise PluginValidationError("system.cron.entry.add env values must be single-line")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -50,7 +50,7 @@ class CronEntryPlugin(BasePlugin):
         if str(params.get("state", "present")) == "absent":
             command = f"if test -e {quote(dest)}; then {sudo_prefix(params, default=True)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
             rc, out, err = exec_remote(context, command)
-            return result_from_remote(rc=rc, stdout=out, stderr=err, message="cron.entry failed")
+            return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.cron.entry.add failed")
         env_lines = []
         env = params.get("env") or {}
         for key, value in env.items():
@@ -65,11 +65,11 @@ class CronEntryPlugin(BasePlugin):
         )
         temp_path = upload_text_to_temp(context, content)
         rc, out, err = install_uploaded_file(context, temp_path, dest, sudo=bool(params.get("sudo", True)), mode="0644", owner="root", group="root")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="cron.entry failed", data={"path": dest})
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.cron.entry.add failed", data={"path": dest})
 
 
 class CronFilePlugin(BasePlugin):
-    name = "cron.file"
+    name = "system.cron.file"
     description = "Install or remove a complete /etc/cron.d file."
     required_params = ("name",)
     optional_params = ("content", "state", "sudo")
@@ -80,9 +80,9 @@ class CronFilePlugin(BasePlugin):
         _safe_name(str(params["name"]))
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
-            raise PluginValidationError("cron.file state must be present or absent")
+            raise PluginValidationError("system.cron.file state must be present or absent")
         if state == "present" and "content" not in params:
-            raise PluginValidationError("cron.file requires content when state=present")
+            raise PluginValidationError("system.cron.file requires content when state=present")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -90,14 +90,14 @@ class CronFilePlugin(BasePlugin):
         if str(params.get("state", "present")) == "absent":
             command = f"if test -e {quote(dest)}; then {sudo_prefix(params, default=True)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
             rc, out, err = exec_remote(context, command)
-            return result_from_remote(rc=rc, stdout=out, stderr=err, message="cron.file failed")
+            return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.cron.file failed")
         temp_path = upload_text_to_temp(context, str(params["content"]).rstrip() + "\n")
         rc, out, err = install_uploaded_file(context, temp_path, dest, sudo=bool(params.get("sudo", True)), mode="0644", owner="root", group="root")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="cron.file failed", data={"path": dest})
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.cron.file failed", data={"path": dest})
 
 
 class CronListPlugin(ReadOnlyCommandPlugin):
-    name = "cron.list"
+    name = "system.cron.entry.list"
     description = "List system cron.d entries and optionally one user's crontab."
     optional_params = ("user", "sudo")
     parameter_schema = {"user": {"type": "string", "description": "User account whose crontab should be listed."}}
@@ -105,7 +105,7 @@ class CronListPlugin(ReadOnlyCommandPlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cron.list is a read-only cron listing"
+        return "system.cron.entry.list is a read-only cron listing"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         if params.get("user"):
@@ -115,12 +115,12 @@ class CronListPlugin(ReadOnlyCommandPlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cron.list failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="system.cron.entry.list failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"cron": out})
 
 
 class CronAbsentPlugin(BasePlugin):
-    name = "cron.absent"
+    name = "system.cron.entry.remove"
     description = "Remove one /etc/cron.d entry file."
     required_params = ("name",)
     optional_params = ("sudo",)
@@ -131,7 +131,7 @@ class CronAbsentPlugin(BasePlugin):
         _safe_name(str(params["name"]))
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cron.absent removes one /etc/cron.d file when present"
+        return "system.cron.entry.remove removes one /etc/cron.d file when present"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -140,11 +140,11 @@ class CronAbsentPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="cron.absent failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="system.cron.entry.remove failed")
 
 
 class CronValidatePlugin(ReadOnlyCommandPlugin):
-    name = "cron.validate"
+    name = "system.cron.validate"
     description = "Validate basic cron file syntax without installing it."
     required_params = ("path",)
     optional_params = ("sudo",)

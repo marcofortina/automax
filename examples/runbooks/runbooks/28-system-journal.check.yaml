@@ -2,24 +2,24 @@
 apiVersion: automax.io/v1
 kind: Job
 metadata:
-  name: plugin-smoke-check-journal
+  name: plugin-smoke-check-system-journal
 tasks:
-- id: journal
-  description: Check-mode catalog for journal plugins.
+- id: system-journal
+  description: Check-mode catalog for system journal plugins.
   targets: all
   tags:
   - all-functions
   - check
-  - journal
+  - system-journal
   steps:
   - id: catalog
     substeps:
-    - id: journal_collect
-      use: journal.collect
+    - id: system-system_journal_collect
+      use: system.journal.collect
       with:
         service: sshd
         since: 1 hour ago
-    - id: journal_grep
-      use: journal.grep
+    - id: system-system_journal_grep
+      use: system.journal.grep
       with:
         pattern: KEY=.*

@@ -2,25 +2,25 @@
 apiVersion: automax.io/v1
 kind: Job
 metadata:
-  name: plugin-smoke-check-log
+  name: plugin-smoke-check-system-log
 tasks:
-- id: log
-  description: Check-mode catalog for log plugins.
+- id: system-log
+  description: Check-mode catalog for system log plugins.
   targets: all
   tags:
   - all-functions
   - check
-  - log
+  - system-log
   steps:
   - id: catalog
     substeps:
-    - id: log_export
-      use: log.export
+    - id: system-system_log_export
+      use: system.log.export
       with:
         files:
         - /etc/pam.d/login
         service: sshd
-    - id: log_grep
-      use: log.grep
+    - id: system-system_log_grep
+      use: system.log.grep
       with:
         pattern: KEY=.*

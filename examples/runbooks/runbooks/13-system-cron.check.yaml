@@ -2,43 +2,43 @@
 apiVersion: automax.io/v1
 kind: Job
 metadata:
-  name: plugin-smoke-check-cron
+  name: plugin-smoke-check-system-cron
 tasks:
-- id: cron
-  description: Check-mode catalog for cron plugins.
+- id: system-cron
+  description: Check-mode catalog for system cron plugins.
   targets: all
   tags:
   - all-functions
   - check
-  - cron
+  - system-cron
   steps:
   - id: catalog
     substeps:
-    - id: cron_absent
-      use: cron.absent
+    - id: system-system_system_cron_entry_add_remove
+      use: system.cron.entry.remove
       with:
         name: nginx
-    - id: cron_entry
-      use: cron.entry
+    - id: system-system_cron_entry_add
+      use: system.cron.entry.add
       with:
         name: myapp-health
         schedule: '*/5 * * * *'
         user: root
         command: /usr/local/bin/myapp-healthcheck
         sudo: true
-    - id: cron_file
-      use: cron.file
+    - id: system-system_cron_file
+      use: system.cron.file
       with:
         name: automax-smoke
         content: '* * * * * root /bin/true
 
           '
-    - id: cron_list
-      use: cron.list
+    - id: system-system_cron_entry_list
+      use: system.cron.entry.list
       with:
         user: deploy
         sudo: true
-    - id: cron_validate
-      use: cron.validate
+    - id: system-system_cron_validate
+      use: system.cron.validate
       with:
         path: /tmp/automax-demo

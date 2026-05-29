@@ -19,7 +19,7 @@ def _diff(path: str, text: str) -> list[Dict[str, Any]]:
 
 
 class LogGrepPlugin(BasePlugin):
-    name = "log.grep"
+    name = "system.log.grep"
     description = "Search remote log files with grep and return matching lines."
     required_params = ("pattern",)
     optional_params = ("files", "max_count", "ignore_missing", "sudo")
@@ -27,7 +27,7 @@ class LogGrepPlugin(BasePlugin):
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         self.validate(params)
-        return _diff("log.grep", f"grep pattern={params['pattern']} files={params.get('files', [])}")
+        return _diff("system.log.grep", f"grep pattern={params['pattern']} files={params.get('files', [])}")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -41,19 +41,19 @@ class LogGrepPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc not in {0, 1}:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="log.grep failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="system.log.grep failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
 class JournalCollectPlugin(BasePlugin):
-    name = "journal.collect"
+    name = "system.journal.collect"
     description = "Collect journalctl output for artifact capture through stdout."
     required_params: tuple[str, ...] = ()
     optional_params = ("service", "since", "until", "lines", "output", "sudo")
     opens_remote_session = True
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
-        return _diff("journal.collect", f"journalctl service={params.get('service', '')} since={params.get('since', '')} lines={params.get('lines', '')}")
+        return _diff("system.journal.collect", f"journalctl service={params.get('service', '')} since={params.get('since', '')} lines={params.get('lines', '')}")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         command = [f"{sudo_prefix(params, default=False)}journalctl", "--no-pager"]
@@ -72,12 +72,12 @@ class JournalCollectPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="journal.collect failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="system.journal.collect failed")
         return PluginResult.success(stdout=out, stderr=err)
 
 
 class JournalGrepPlugin(JournalCollectPlugin):
-    name = "journal.grep"
+    name = "system.journal.grep"
     description = "Collect journalctl output and filter it with grep."
     required_params = ("pattern",)
 
@@ -87,14 +87,14 @@ class JournalGrepPlugin(JournalCollectPlugin):
 
 
 class LogExportPlugin(BasePlugin):
-    name = "log.export"
+    name = "system.log.export"
     description = "Export remote log or journal output to stdout for declared artifact capture."
     required_params: tuple[str, ...] = ()
     optional_params = ("files", "service", "since", "lines", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "log.export emits stdout for artifact capture and does not modify files"
+        return "system.log.export emits stdout for artifact capture and does not modify files"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         if params.get("files"):
@@ -105,5 +105,5 @@ class LogExportPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="log.export failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="system.log.export failed")
         return PluginResult.success(stdout=out, stderr=err)

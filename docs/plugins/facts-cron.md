@@ -14,12 +14,12 @@ target.
 
 ## Cron
 
-Use `cron.entry` for one managed cron.d entry and `cron.file` for a complete
+Use `system.cron.entry.add` for one managed cron.d entry and `system.cron.file` for a complete
 cron.d file. Prefer systemd timers when the service model is systemd-native, and
 use cron only when the target platform or operational requirement needs it.
 
 ## Cron readback and validation
 
-Use `cron.list` to inspect existing cron state, `cron.absent` for explicit
-removal of `/etc/cron.d` entries, and `cron.validate` to check cron file syntax
+Use `system.cron.entry.list` to inspect existing cron state, `system.cron.entry.remove` for explicit
+removal of `/etc/cron.d` entries, and `system.cron.validate` to check cron file syntax
 before installing or replacing a schedule file.

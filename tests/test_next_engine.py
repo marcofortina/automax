@@ -466,21 +466,21 @@ tasks:
       - id: services
         substeps:
           - id: daemon_reload
-            use: systemctl.daemon_reload
+            use: system.systemd.daemon_reload
             with:
               sudo: true
           - id: start
-            use: systemctl.start
+            use: system.service.start
             with:
               service: automax-demo.service
               sudo: true
           - id: stop
-            use: systemctl.stop
+            use: system.service.stop
             with:
               service: automax-demo.service
               sudo: true
           - id: restart
-            use: systemctl.restart
+            use: system.service.restart
             with:
               service: automax-demo.service
               sudo: true
@@ -596,14 +596,14 @@ def test_extended_systemctl_plugins_are_registered():
     names = AutomaxEngine().plugin_registry.names()
 
     for name in (
-        "systemctl.reload",
-        "systemctl.enable",
-        "systemctl.disable",
-        "systemctl.status",
-        "systemctl.is_active",
-        "systemctl.is_enabled",
-        "systemctl.mask",
-        "systemctl.unmask",
+        "system.service.reload",
+        "system.service.enable",
+        "system.service.disable",
+        "system.service.status",
+        "system.service.active_check",
+        "system.service.enabled_check",
+        "system.service.mask",
+        "system.service.unmask",
         "transfer.download",
         "transfer.sync",
         "transfer.upload",
@@ -627,8 +627,8 @@ def test_user_group_process_plugins_are_registered():
         "identity.user.remove",
         "identity.group.create",
         "identity.group.remove",
-        "process.kill",
-        "process.wait",
+        "system.process.kill",
+        "system.process.wait",
     ):
         assert name in names
 
@@ -660,7 +660,7 @@ def test_wait_and_assert_plugins_are_registered():
 
     for name in (
         "network.connectivity.port_wait",
-        "process.wait",
+        "system.process.wait",
         "network.connectivity.port_check",
         "storage.usage.disk_check",
     ):
@@ -1567,16 +1567,16 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "transfer.sync",
         "fs.file.wait",
         "fs.dir.wait",
-        "process.wait",
+        "system.process.wait",
         "fs.file.exists",
         "fs.dir.exists",
         "storage.usage.disk_check",
         "network.connectivity.port_check",
-        "systemctl.status",
+        "system.service.status",
         "pkg.query",
         "identity.user.create",
         "identity.group.create",
-        "process.kill",
+        "system.process.kill",
     ]
     for snippet in required_snippets:
         assert snippet in script
@@ -3642,8 +3642,8 @@ def test_health_namespace_is_not_public_plugin_surface():
     assert not any(name.startswith("health.") for name in names)
     assert "http.request" in names
     assert "network.connectivity.port_check" in names
-    assert "process.assert_absent" in names
-    assert "process.assert_count" in names
+    assert "system.process.check" in names
+    assert "system.process.count_check" in names
 
 
 def test_pki_plugins_install_permissions_and_expiry_preview():
@@ -3705,7 +3705,7 @@ def test_log_and_journal_plugins_render_queries_and_exports():
     from automax.plugins.logs import JournalCollectPlugin, JournalGrepPlugin, LogExportPlugin, LogGrepPlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("log.grep", "journal.collect", "journal.grep", "log.export"):
+    for name in ("system.log.grep", "system.journal.collect", "system.journal.grep", "system.log.export"):
         assert name in names
 
     context = _sysops_preview_context()
@@ -3830,7 +3830,7 @@ def test_systemd_resource_plugins_render_units_and_dropins():
     from automax.plugins.systemd_resources import SystemdSysusersPlugin, SystemdTimerPlugin, SystemdTmpfilesPlugin, SystemdUnitPlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("systemd.unit", "systemd.timer", "systemd.tmpfiles", "systemd.sysusers"):
+    for name in ("system.systemd.unit", "system.systemd.timer", "system.systemd.tmpfiles", "system.systemd.sysusers"):
         assert name in names
     context = _sysops_preview_context()
     assert "systemctl daemon-reload" in " && ".join(SystemdUnitPlugin().manual_commands({"name": "demo.service", "content": "[Service]\nExecStart=/bin/true\n"}, context))
@@ -3933,7 +3933,7 @@ def test_selinux_port_and_fcontext_plugins_render_persistent_rules():
 def test_kernel_boot_param_plugin_renders_safe_grub_update():
     from automax.plugins.kernel import KernelBootParamPlugin
 
-    assert "kernel.boot_param" in AutomaxEngine().plugin_registry.names()
+    assert "system.kernel.boot_param.add" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = " && ".join(KernelBootParamPlugin().manual_commands({"name": "transparent_hugepage", "value": "never"}, context))
     assert "/etc/default/grub" in command
@@ -4065,7 +4065,7 @@ def test_storage_usage_inode_check_plugin_renders_df_inode_check():
 def test_process_signal_plugin_renders_runtime_signal():
     from automax.plugins.user_group_process import ProcessSignalPlugin
 
-    assert "process.signal" in AutomaxEngine().plugin_registry.names()
+    assert "system.process.signal" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = ProcessSignalPlugin().manual_commands({"pattern": "worker", "signal": "HUP"}, context)[0]
     assert "pkill -HUP -f worker" in command
@@ -4073,18 +4073,18 @@ def test_process_signal_plugin_renders_runtime_signal():
 
 
 def test_process_assert_absent_plugin_renders_pgrep_assertion():
-    from automax.plugins.user_group_process import ProcessAssertAbsentPlugin
+    from automax.plugins.user_group_process import ProcessCheckPlugin
 
-    assert "process.assert_absent" in AutomaxEngine().plugin_registry.names()
+    assert "system.process.check" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
-    assert "pgrep -f worker" in ProcessAssertAbsentPlugin().manual_commands({"pattern": "worker"}, context)[0]
-    assert ProcessAssertAbsentPlugin().supports_check_mode is True
+    assert "pgrep -f worker" in ProcessCheckPlugin().manual_commands({"pattern": "worker"}, context)[0]
+    assert ProcessCheckPlugin().supports_check_mode is True
 
 
 def test_process_assert_count_plugin_renders_count_assertion():
     from automax.plugins.user_group_process import ProcessAssertCountPlugin
 
-    assert "process.assert_count" in AutomaxEngine().plugin_registry.names()
+    assert "system.process.count_check" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = ProcessAssertCountPlugin().manual_commands({"pattern": "worker", "min_count": 1, "max_count": 3}, context)[0]
     assert "pgrep -fc worker" in command
@@ -4380,19 +4380,22 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "fs.dir.remove":
         params["path"] = "/tmp/automax-demo-dir"
         params["recursive"] = True
-    if plugin.name == "process.signal":
+    if plugin.name == "system.process.signal":
         params.pop("pid", None)
         params["pattern"] = "automax-demo"
-    if plugin.name == "process.kill":
+    if plugin.name == "system.process.kill":
         params.pop("pid", None)
         params["pattern"] = "automax-demo"
-    if plugin.name == "process.wait":
+    if plugin.name == "system.process.wait":
+        params.pop("pid", None)
+        params["pattern"] = "automax-demo"
+    if plugin.name == "system.process.check":
         params.pop("pid", None)
         params["pattern"] = "automax-demo"
     if plugin.name == "mail.send":
         params["from"] = "automax@example.invalid"
         params["to"] = ["ops@example.invalid"]
-    if plugin.name == "cron.entry":
+    if plugin.name == "system.cron.entry.add":
         params["schedule"] = "* * * * *"
         params["command"] = "true"
     if plugin.name == "network.firewall.nftables.apply" or plugin.name == "network.firewall.nftables.validate":
@@ -4578,9 +4581,9 @@ def test_cron_readback_plugins_render_manual_commands():
     context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
     registry = build_builtin_registry()
 
-    assert "crontab -l" in registry.get("cron.list").manual_commands({}, context)[0]
-    assert "/etc/cron.d/demo" in registry.get("cron.absent").manual_commands({"name": "demo", "sudo": False}, context)[0]
-    assert "awk" in registry.get("cron.validate").manual_commands({"path": "/tmp/cron"}, context)[0]
+    assert "crontab -l" in registry.get("system.cron.entry.list").manual_commands({}, context)[0]
+    assert "/etc/cron.d/demo" in registry.get("system.cron.entry.remove").manual_commands({"name": "demo", "sudo": False}, context)[0]
+    assert "awk" in registry.get("system.cron.validate").manual_commands({"path": "/tmp/cron"}, context)[0]
 
 
 def test_transfer_plugins_allow_templated_controller_sources_in_static_validation():

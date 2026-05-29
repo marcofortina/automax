@@ -5,11 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Kernel tuning
 
-Automax manages Linux runtime kernel parameters through `sysctl.*` and kernel modules through `kernel.module.*`.
+Automax manages Linux runtime kernel parameters through `system.kernel.sysctl.*` and kernel modules through `system.kernel.module.*`.
 
 ```yaml
 - id: enable_forwarding
-  use: sysctl.set
+  use: system.kernel.sysctl.set
   with:
     name: net.ipv4.ip_forward
     value: "1"
@@ -21,11 +21,11 @@ Automax manages Linux runtime kernel parameters through `sysctl.*` and kernel mo
 
 ```yaml
 - id: load_bridge_filter
-  use: kernel.module.load
+  use: system.kernel.module.load
   with:
     name: br_netfilter
     persist: true
     sudo: true
 ```
 
-Use `sysctl.get` for checks, `sysctl.reload` to reload persisted files, and `kernel.module.unload` / `kernel.module.persist` for module lifecycle management.
+Use `system.kernel.sysctl.get` for checks, `system.kernel.sysctl.reload` to reload persisted files, and `system.kernel.module.unload` / `system.kernel.module.persist` for module lifecycle management.

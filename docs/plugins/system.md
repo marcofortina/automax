@@ -3,64 +3,64 @@ Copyright (C) 2026 Marco Fortina
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-# Systemctl plugins
+# System plugins
 
-Systemctl plugins manage systemd units on the remote target. Use `sudo: true` for system services. Use `user: true` for `systemctl --user` operations.
+`system.service.*` plugins manage systemd units on the remote target. Use `sudo: true` for system services. Use `user: true` for `systemctl --user` operations.
 
 ## Lifecycle
 
 ```yaml
 - id: start_service
-  use: systemctl.start
+  use: system.service.start
   with:
     service: nginx.service
     sudo: true
 
 - id: stop_service
-  use: systemctl.stop
+  use: system.service.stop
   with:
     service: nginx.service
     sudo: true
 
 - id: restart_service
-  use: systemctl.restart
+  use: system.service.restart
   with:
     service: nginx.service
     sudo: true
 
 - id: reload_service
-  use: systemctl.reload
+  use: system.service.reload
   with:
     service: nginx.service
     sudo: true
 ```
 
 `start` and `stop` check the current state first. `restart`, `reload` and
-`daemon_reload` mark the substep changed when they run.
+`system.systemd.daemon_reload` marks the substep changed when they run.
 
 ## Enablement and masking
 
 ```yaml
 - id: enable_service
-  use: systemctl.enable
+  use: system.service.enable
   with:
     service: nginx.service
     sudo: true
 
 - id: disable_service
-  use: systemctl.disable
+  use: system.service.disable
   with:
     service: nginx.service
     sudo: true
 
 - id: mask_service
-  use: systemctl.mask
+  use: system.service.mask
   with:
     service: old.service
     sudo: true
 
 - id: unmask_service
-  use: systemctl.unmask
+  use: system.service.unmask
   with:
     service: old.service
     sudo: true
@@ -70,19 +70,19 @@ Systemctl plugins manage systemd units on the remote target. Use `sudo: true` fo
 
 ```yaml
 - id: get_status
-  use: systemctl.status
+  use: system.service.status
   with:
     service: nginx.service
   register:
     nginx_status: stdout.trim
 
 - id: is_active
-  use: systemctl.is_active
+  use: system.service.active_check
   with:
     service: nginx.service
 
 - id: is_enabled
-  use: systemctl.is_enabled
+  use: system.service.enabled_check
   with:
     service: nginx.service
 ```
@@ -91,10 +91,10 @@ Systemctl plugins manage systemd units on the remote target. Use `sudo: true` fo
 
 ```yaml
 - id: daemon_reload
-  use: systemctl.daemon_reload
+  use: system.systemd.daemon_reload
   with:
     sudo: true
 ```
 
 
-`systemctl.is_active` accepts `fail_on_inactive: true` when the check should fail instead of returning `data.active=false`. `systemctl.is_enabled` accepts `fail_on_disabled: true` for the same pattern.
+`system.service.active_check` accepts `fail_on_inactive: true` when the check should fail instead of returning `data.active=false`. `system.service.enabled_check` accepts `fail_on_disabled: true` for the same pattern.
