@@ -4275,7 +4275,6 @@ use: network.firewall.firewalld.source
 with:
   source: 10.0.0.0/8
   zone: public
-  state: present
   sudo: true
 ```
 
@@ -9540,7 +9539,7 @@ with:
 
 ### `security.ssh.authorized_key.add`
 
-Ensure an SSH authorized key is present or absent for a remote user.
+Ensure one SSH authorized key is present for a remote user.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -9550,7 +9549,6 @@ Ensure an SSH authorized key is present or absent for a remote user.
 |---|---:|---|---|---|
 | `user` | yes | `string` | `False` | Remote user account owning authorized_keys. |
 | `key` | yes | `string` |  | Authorized key line to manage. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 | `key_options` | no | `string` |  | SSH authorized_keys options prefix. |
 | `exclusive` | no | `boolean` | `False` | Keep only managed entries where supported. |
@@ -9573,8 +9571,40 @@ use: security.ssh.authorized_key.add
 with:
   user: deploy
   key: '{{ vars.deploy_public_key }}'
-  state: present
   sudo: true
+```
+
+### `security.ssh.authorized_key.check`
+
+Check whether one SSH authorized key is present for a remote user.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `string` | `False` | Remote user account owning authorized_keys. |
+| `key` | yes | `string` |  | Authorized key line to check. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `key_options` | no | `string` |  | SSH authorized_keys options prefix. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.ssh.authorized_key.check
+with:
+  user: deploy
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
 ```
 
 ### `security.ssh.authorized_key.remove`
@@ -9590,6 +9620,7 @@ Remove one SSH authorized_keys line for a remote user.
 | `user` | yes | `string` | `False` | Remote user account owning authorized_keys. |
 | `key` | yes | `string` |  | SSH public key line. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `key_options` | no | `string` |  | SSH authorized_keys options prefix. |
 
 Result fields:
 

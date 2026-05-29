@@ -241,8 +241,8 @@ class SshAuthorizedKeyAbsentPlugin(BasePlugin):
     name = "security.ssh.authorized_key.remove"
     description = "Remove one SSH authorized_keys line for a remote user."
     required_params = ("user", "key")
-    optional_params = ("sudo",)
-    parameter_schema = {"user": {"type": "string", "description": "Remote user account owning authorized_keys."}}
+    optional_params = ("sudo", "key_options")
+    parameter_schema = {"user": {"type": "string", "description": "Remote user account owning authorized_keys."}, "key_options": {"type": "string", "description": "SSH authorized_keys options prefix."}}
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
@@ -266,9 +266,12 @@ cat "$tmp" > "$auth_file"
 rm -f "$tmp"
 echo __AUTOMAX_CHANGED__
 '''
+        key = str(params["key"])
+        if params.get("key_options") and not key.startswith(str(params["key_options"])):
+            key = f"{params['key_options']} {key}"
         return [
             heredoc_to_stdin(
-                f"{sudo_prefix(params, default=True)}sh -s -- {quote(params['user'])} {quote(params['key'])}",
+                f"{sudo_prefix(params, default=True)}sh -s -- {quote(params['user'])} {quote(key)}",
                 script,
                 prefix="AUTOMAX_SH",
             )

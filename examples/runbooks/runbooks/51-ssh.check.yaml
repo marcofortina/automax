@@ -20,6 +20,11 @@ tasks:
         user: deploy
         key: '{{ vars.deploy_public_key }}'
         sudo: true
+    - id: ssh_authorized_key_check
+      use: security.ssh.authorized_key.check
+      with:
+        user: deploy
+        key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
     - id: ssh_authorized_key_absent
       use: security.ssh.authorized_key.remove
       with:

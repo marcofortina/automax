@@ -933,6 +933,7 @@ def test_security_namespace_replaces_legacy_security_plugin_names():
         "security.secret.redact_check",
         "security.selinux.mode",
         "security.ssh.authorized_key.add",
+        "security.ssh.authorized_key.check",
         "security.ssh.authorized_key.remove",
         "security.sshd.validate",
         "security.sudo.dropin",

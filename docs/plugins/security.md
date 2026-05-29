@@ -67,7 +67,7 @@ rules, and `security.sudo.validate` before relying on a sudoers change.
 ## SSH operational checks
 
 Use `security.ssh.fingerprint`, `security.ssh.public_key`, `security.ssh.host_keygen`,
-`security.ssh.authorized_key.remove` and `security.sshd.validate` to make SSH key and daemon
+`security.ssh.authorized_key.check`, `security.ssh.authorized_key.remove` and `security.sshd.validate` to make SSH key and daemon
 operations auditable before and after access-control changes.
 
 ## Certificate assertions

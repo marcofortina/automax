@@ -456,6 +456,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
     from automax.plugins.users_extra import (
         GroupCheckPlugin,
         ExtendedSshAuthorizedKeyPlugin,
+        SshAuthorizedKeyCheckPlugin,
         SudoersDropinPlugin,
         UserCheckPlugin,
         UserLockPlugin,
@@ -694,6 +695,7 @@ def build_builtin_registry(extra_plugin_paths: Iterable[str] = ()) -> PluginRegi
         GroupMemberCheckPlugin(),
         GroupMemberAbsentPlugin(),
         ExtendedSshAuthorizedKeyPlugin(),
+        SshAuthorizedKeyCheckPlugin(),
         ExtendedSshdConfigPlugin(),
         LoginDefsPlugin(),
         LoginDefsGetPlugin(),

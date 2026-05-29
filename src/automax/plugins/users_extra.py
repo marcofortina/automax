@@ -157,34 +157,38 @@ class UserPasswordExpirePlugin(BasePlugin):
         )
 
 
+def _authorized_key_line_from_params(params: Dict[str, Any]) -> str:
+    key = str(params["key"])
+    if params.get("key_options") and not key.startswith(str(params["key_options"])):
+        key = f"{params['key_options']} {key}"
+    if params.get("comment_update"):
+        parts = key.split()
+        if len(parts) >= 2:
+            key = " ".join([*parts[:2], str(params["comment_update"])])
+    return key
+
+
 class SshAuthorizedKeyPlugin(BasePlugin):
-    """Manage one line in a remote user's authorized_keys file."""
+    """Ensure one line is present in a remote user's authorized_keys file."""
 
     name = "security.ssh.authorized_key.add"
-    description = "Ensure an SSH authorized key is present or absent for a remote user."
+    description = "Ensure one SSH authorized key is present for a remote user."
     required_params = ("user", "key")
-    optional_params = ("state", "sudo")
+    optional_params = ("sudo",)
     parameter_schema = {
         "user": {"type": "string", "description": "Remote user account owning authorized_keys."},
         "key": {"type": "string", "description": "Authorized key line to manage."},
     }
     opens_remote_session = True
 
-    def validate(self, params: Dict[str, Any]) -> None:
-        super().validate(params)
-        if str(params.get("state", "present")) not in {"present", "absent"}:
-            raise PluginValidationError("security.ssh.authorized_key.add state must be present or absent")
-
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         user = str(params["user"])
-        key = str(params["key"])
-        state = str(params.get("state", "present"))
-        script = r'''
+        key = _authorized_key_line_from_params(params)
+        script = '''
 set -eu
 user=$1
 key=$2
-state=$3
 home=$(getent passwd "$user" | cut -d: -f6)
 if [ -z "$home" ]; then
   echo "user not found: $user" >&2
@@ -196,34 +200,79 @@ mkdir -p "$ssh_dir"
 touch "$auth_file"
 chmod 700 "$ssh_dir"
 chmod 600 "$auth_file"
-if [ "$state" = present ]; then
-  if grep -Fqx -- "$key" "$auth_file"; then
-    exit 0
-  fi
-  printf '%s\n' "$key" >> "$auth_file"
-  echo __AUTOMAX_CHANGED__
-else
-  tmp=$(mktemp)
-trap 'rm -f "$tmp"' EXIT
-  grep -Fxv -- "$key" "$auth_file" > "$tmp" || true
-  if cmp -s "$tmp" "$auth_file"; then
-    rm -f "$tmp"
-    exit 0
-  fi
-  cat "$tmp" > "$auth_file"
-  rm -f "$tmp"
-  echo __AUTOMAX_CHANGED__
+if grep -Fqx -- "$key" "$auth_file"; then
+  exit 0
 fi
+printf '%s\n' "$key" >> "$auth_file"
+echo __AUTOMAX_CHANGED__
 chown -R "$user":"$user" "$ssh_dir" 2>/dev/null || true
 '''
         prefix = sudo_prefix(params, default=True)
         command = heredoc_to_stdin(
-            f"{prefix}sh -s -- {quote(user)} {quote(key)} {quote(state)}",
+            f"{prefix}sh -s -- {quote(user)} {quote(key)}",
             script,
             prefix="AUTOMAX_SH",
         )
         rc, out, err = exec_remote(context, command)
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.ssh.authorized_key.add failed")
+
+
+class SshAuthorizedKeyCheckPlugin(BasePlugin):
+    """Check whether one SSH authorized key line is present for a remote user."""
+
+    name = "security.ssh.authorized_key.check"
+    description = "Check whether one SSH authorized key is present for a remote user."
+    required_params = ("user", "key")
+    optional_params = ("sudo", "key_options")
+    parameter_schema = {
+        "user": {"type": "string", "description": "Remote user account owning authorized_keys."},
+        "key": {"type": "string", "description": "Authorized key line to check."},
+    }
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        user = str(params["user"])
+        key = _authorized_key_line_from_params(params)
+        script = '''
+set -eu
+user=$1
+key=$2
+home=$(getent passwd "$user" | cut -d: -f6)
+if [ -z "$home" ]; then
+  echo "user not found: $user" >&2
+  exit 2
+fi
+auth_file="$home/.ssh/authorized_keys"
+[ -e "$auth_file" ] || exit 1
+grep -Fqx -- "$key" "$auth_file"
+'''
+        command = heredoc_to_stdin(
+            f"{sudo_prefix(params, default=True)}sh -s -- {quote(user)} {quote(key)}",
+            script,
+            prefix="AUTOMAX_SH",
+        )
+        rc, out, err = exec_remote(context, command)
+        if rc == 0:
+            present = True
+        elif rc == 1:
+            present = False
+        else:
+            return PluginResult.failure(
+                rc=rc,
+                stdout=out,
+                stderr=err,
+                message="security.ssh.authorized_key.check failed",
+                data={"user": user},
+            )
+        return PluginResult.success(
+            changed=False,
+            rc=0,
+            stdout=out,
+            stderr=err if present else "",
+            data={"user": user, "present": present},
+        )
 
 
 class SudoersDropinPlugin(BasePlugin):
@@ -285,14 +334,9 @@ def _authorized_key_execute_extended(self: SshAuthorizedKeyPlugin, params: Dict[
         rc, out, err = exec_remote(context, f"printf '%s\\n' {quote(key)} | ssh-keygen -lf - | grep -F -- {quote(params['fingerprint_assert'])}")
         if rc != 0:
             return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.ssh.authorized_key.add fingerprint_assert failed")
-    if params.get("key_options") and not key.startswith(str(params["key_options"])):
-        key = f"{params['key_options']} {key}"
-    if params.get("comment_update"):
-        parts = key.split()
-        if len(parts) >= 2:
-            key = " ".join([*parts[:2], str(params["comment_update"])])
+    key = _authorized_key_line_from_params(params)
     params["key"] = key
-    if bool(params.get("exclusive", False)) and str(params.get("state", "present")) == "present":
+    if bool(params.get("exclusive", False)):
         user = str(params["user"])
         prefix = sudo_prefix(params, default=True)
         script = r'''
@@ -325,7 +369,7 @@ echo __AUTOMAX_CHANGED__
 class ExtendedSshAuthorizedKeyPlugin(SshAuthorizedKeyPlugin):
     """security.ssh.authorized_key.add with exclusive, fingerprint and comment controls."""
 
-    optional_params = ("state", "sudo", "key_options", "exclusive", "comment_update", "fingerprint_assert")
+    optional_params = ("sudo", "key_options", "exclusive", "comment_update", "fingerprint_assert")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         return _authorized_key_execute_extended(self, params, context)

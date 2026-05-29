@@ -193,7 +193,7 @@ fs.acl.set / fs.attr.set / storage.quota.set / storage.quota.get / storage.quota
 system.systemd.unit / system.systemd.timer / system.systemd.tmpfiles / system.systemd.sysusers
 os.alternatives.set
 security.audit.rule / security.audit.status / security.audit.reload
-security.ssh.config / security.ssh.known_hosts / security.ssh.authorized_key.add
+security.ssh.config / security.ssh.known_hosts / security.ssh.authorized_key.add / security.ssh.authorized_key.check
 security.selinux.port / security.selinux.fcontext
 system.kernel.boot_param.add
 security.sudo.rule / security.sudo.validate

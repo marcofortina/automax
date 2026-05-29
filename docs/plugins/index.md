@@ -298,6 +298,7 @@ security.selinux.mode
 security.selinux.port
 security.selinux.restorecon
 security.ssh.authorized_key.add
+security.ssh.authorized_key.check
 security.ssh.authorized_key.remove
 security.ssh.config
 security.ssh.fingerprint
