@@ -1320,9 +1320,9 @@ def test_top_level_firewall_namespaces_are_not_public_plugin_surface():
 
     old_names = [
         "iptables.chain",
-        "iptables.counter_assert",
+        "iptables.counter_check",
         "iptables.delete",
-        "iptables.exists_assert",
+        "iptables.rule_check",
         "iptables.list",
         "iptables.policy",
         "iptables.restore",
@@ -1343,7 +1343,7 @@ def test_top_level_firewall_namespaces_are_not_public_plugin_surface():
         "nftables.export",
         "nftables.list",
         "nftables.rollback_file",
-        "nftables.ruleset_assert",
+        "nftables.ruleset_check",
         "nftables.validate",
         "ufw.delete",
         "ufw.disable",

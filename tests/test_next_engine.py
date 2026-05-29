@@ -4427,7 +4427,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["max_stratum"] = 16
     if plugin.name == "os.package.check":
         params["state"] = "installed"
-    if plugin.name == "network.firewall.iptables.counter_assert":
+    if plugin.name == "network.firewall.iptables.counter_check":
         params["min_packets"] = 1
     if plugin.name == "fs.file.replace":
         params["count"] = 0

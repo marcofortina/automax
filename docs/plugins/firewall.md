@@ -55,11 +55,11 @@ firewalld backend extras manage source bindings, ICMP blocks, masquerading and
 forward-port rules through explicit plugins: `network.firewall.firewalld.source`,
 `network.firewall.firewalld.icmp_block`, `network.firewall.firewalld.masquerade` and `network.firewall.firewalld.forward_port`.
 
-nftables extras provide readback assertion and rollback: `network.firewall.nftables.ruleset_assert`
+nftables extras provide readback assertion and rollback: `network.firewall.nftables.ruleset_check`
 and `network.firewall.nftables.rollback_file`. Rollback requires `confirm: true`.
 
 iptables extras provide deletion, rule existence assertion and counter assertion:
-`network.firewall.iptables.delete`, `network.firewall.iptables.exists_assert` and `network.firewall.iptables.counter_assert`.
+`network.firewall.iptables.delete`, `network.firewall.iptables.rule_check` and `network.firewall.iptables.counter_check`.
 Deletion requires `confirm: true`.
 
 UFW extras provide `network.firewall.ufw.delete` and `network.firewall.ufw.reset`. Both require `confirm: true`

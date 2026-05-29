@@ -4117,7 +4117,7 @@ with:
   chain: value
 ```
 
-### `network.firewall.iptables.counter_assert`
+### `network.firewall.iptables.counter_check`
 
 Assert iptables chain packet counters are above a threshold.
 
@@ -4145,7 +4145,7 @@ Result fields:
 Example:
 
 ```yaml
-use: network.firewall.iptables.counter_assert
+use: network.firewall.iptables.counter_check
 with:
   chain: value
 ```
@@ -4180,40 +4180,6 @@ Example:
 
 ```yaml
 use: network.firewall.iptables.delete
-with:
-  chain: value
-  rule: allow
-```
-
-### `network.firewall.iptables.exists_assert`
-
-Assert an iptables rule exists.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `chain` | yes | `string` |  | Firewall chain name. |
-| `rule` | yes | `string` |  | Firewall action such as allow, deny, reject or limit. |
-| `table` | no | `string` |  | Routing table name or number. |
-| `ipv6` | no | `boolean` | `False` | Use IPv6 command variant when supported. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: network.firewall.iptables.exists_assert
 with:
   chain: value
   rule: allow
@@ -4355,6 +4321,40 @@ Example:
 
 ```yaml
 use: network.firewall.iptables.rule
+with:
+  chain: value
+  rule: allow
+```
+
+### `network.firewall.iptables.rule_check`
+
+Assert an iptables rule exists.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `chain` | yes | `string` |  | Firewall chain name. |
+| `rule` | yes | `string` |  | Firewall action such as allow, deny, reject or limit. |
+| `table` | no | `string` |  | Routing table name or number. |
+| `ipv6` | no | `boolean` | `False` | Use IPv6 command variant when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: network.firewall.iptables.rule_check
 with:
   chain: value
   rule: allow
@@ -4527,7 +4527,7 @@ with:
   file: /etc/sysctl.d/99-automax.conf
 ```
 
-### `network.firewall.nftables.ruleset_assert`
+### `network.firewall.nftables.ruleset_check`
 
 Assert the active nftables ruleset contains a fragment.
 
@@ -4552,7 +4552,7 @@ Result fields:
 Example:
 
 ```yaml
-use: network.firewall.nftables.ruleset_assert
+use: network.firewall.nftables.ruleset_check
 with:
   fragment: value
 ```

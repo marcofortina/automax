@@ -136,9 +136,9 @@ network.firewall.firewalld.source
 network.firewall.firewalld.status
 network.firewall.firewalld.zone
 network.firewall.iptables.chain
-network.firewall.iptables.counter_assert
+network.firewall.iptables.counter_check
 network.firewall.iptables.delete
-network.firewall.iptables.exists_assert
+network.firewall.iptables.rule_check
 network.firewall.iptables.list
 network.firewall.iptables.policy
 network.firewall.iptables.restore
@@ -148,7 +148,7 @@ network.firewall.nftables.apply
 network.firewall.nftables.export
 network.firewall.nftables.list
 network.firewall.nftables.rollback_file
-network.firewall.nftables.ruleset_assert
+network.firewall.nftables.ruleset_check
 network.firewall.nftables.validate
 network.firewall.ufw.delete
 network.firewall.ufw.disable

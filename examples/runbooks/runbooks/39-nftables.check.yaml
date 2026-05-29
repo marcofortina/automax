@@ -34,8 +34,8 @@ tasks:
       with:
         file: /etc/sysctl.d/99-automax.conf
         confirm: true
-    - id: network_firewall_nftables_ruleset_assert
-      use: network.firewall.nftables.ruleset_assert
+    - id: network_firewall_nftables_ruleset_check
+      use: network.firewall.nftables.ruleset_check
       with:
         fragment: table inet
     - id: network_firewall_nftables_validate
