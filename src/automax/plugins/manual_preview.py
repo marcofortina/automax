@@ -136,7 +136,7 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
         return [f"{sudo}aa-status"]
 
     if plugin_name.startswith("assert."):
-        if plugin_name == "storage.usage.disk_check":
+        if plugin_name == "storage.usage.disk.check":
             return [f"df -Pm {_q(path)}"]
 
     if plugin_name == "network.connectivity.port.check":

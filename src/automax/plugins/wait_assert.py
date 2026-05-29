@@ -15,7 +15,7 @@ from automax.plugins.remote_utils import exec_remote, quote, sudo_prefix
 class AssertDiskPlugin(BasePlugin):
     """Check disk capacity thresholds for a remote filesystem path."""
 
-    name = "storage.usage.disk_check"
+    name = "storage.usage.disk.check"
     description = "Check remote filesystem free space and used percentage thresholds."
     required_params = ("path",)
     optional_params = ("min_free_mb", "min_free_percent", "max_used_percent", "sudo")
@@ -25,10 +25,10 @@ class AssertDiskPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if not any(key in params for key in ("min_free_mb", "min_free_percent", "max_used_percent")):
-            raise PluginValidationError("storage.usage.disk_check requires min_free_mb, min_free_percent or max_used_percent")
+            raise PluginValidationError("storage.usage.disk.check requires min_free_mb, min_free_percent or max_used_percent")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "storage.usage.disk_check is a read-only disk usage check"
+        return "storage.usage.disk.check is a read-only disk usage guard"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -60,7 +60,7 @@ class AssertDiskPlugin(BasePlugin):
         command = f"{sudo_prefix(params, default=False)}df -Pk {quote(params['path'])} | awk 'NR==2 {{gsub(/%/, \"\", $5); print $2, $3, $4, $5}}'"
         rc, out, err = exec_remote(context, command, get_pty=bool(params.get("sudo", False)))
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.usage.disk_check failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.usage.disk.check failed")
         try:
             total_kb, used_kb, free_kb, used_percent_raw = [int(item) for item in out.strip().split()[:4]]
         except (ValueError, IndexError) as exc:
@@ -68,7 +68,7 @@ class AssertDiskPlugin(BasePlugin):
                 rc=1,
                 stdout=out,
                 stderr=str(exc),
-                message="storage.usage.disk_check could not parse df output",
+                message="storage.usage.disk.check could not parse df output",
             )
         free_mb = free_kb // 1024
         free_percent = (free_kb / total_kb * 100.0) if total_kb else 0.0
@@ -89,4 +89,6 @@ class AssertDiskPlugin(BasePlugin):
         if "max_used_percent" in params and used_percent > float(params["max_used_percent"]):
             compliant = False
         data["compliant"] = compliant
+        if not compliant:
+            return PluginResult.failure(rc=1, stdout=out, data=data, message="storage.usage.disk.check threshold not met")
         return PluginResult.success(changed=False, data=data)

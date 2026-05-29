@@ -171,6 +171,8 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["state"] = "enforcing"
     if plugin.name == "storage.quota.set":
         params["type"] = "user"
+    if plugin.name == "storage.block.mount.check":
+        params["state"] = "mounted"
     if plugin.name == "security.apparmor.profile.check":
         params["state"] = "enforce"
     if plugin.name == "security.audit.backlog.check":

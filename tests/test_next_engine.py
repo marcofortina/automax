@@ -823,7 +823,7 @@ def test_wait_and_assert_plugins_are_registered():
         "network.connectivity.port.wait",
         "system.process.wait",
         "network.connectivity.port.check",
-        "storage.usage.disk_check",
+        "storage.usage.disk.check",
     ):
         assert name in names
 
@@ -861,7 +861,7 @@ tasks:
             with:
               path: /tmp
           - id: assert_disk
-            use: storage.usage.disk_check
+            use: storage.usage.disk.check
             with:
               path: /
               min_free_mb: 1
@@ -1731,7 +1731,7 @@ def test_extended_ssh_smoke_script_covers_runtime_plugin_families():
         "system.process.wait",
         "fs.file.check",
         "fs.dir.check",
-        "storage.usage.disk_check",
+        "storage.usage.disk.check",
         "network.connectivity.port.check",
         "system.service.status",
         "os.package.query",
@@ -4202,7 +4202,7 @@ def test_fs_bind_mount_plugin_renders_runtime_and_persistent_commands():
 def test_storage_usage_disk_check_plugin_renders_df_check():
     from automax.plugins.wait_assert import AssertDiskPlugin
 
-    assert "storage.usage.disk_check" in AutomaxEngine().plugin_registry.names()
+    assert "storage.usage.disk.check" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = AssertDiskPlugin().manual_commands({"path": "/", "max_used_percent": 90}, context)[0]
     assert "df -Pk /" in command
@@ -4214,10 +4214,11 @@ def test_storage_usage_disk_check_plugin_renders_df_check():
 def test_storage_usage_inode_check_plugin_renders_df_inode_check():
     from automax.plugins.fs_advanced import FsInodeUsageAssertPlugin
 
-    assert "storage.usage.inode_check" in AutomaxEngine().plugin_registry.names()
+    assert "storage.usage.inode.check" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
-    command = FsInodeUsageAssertPlugin().manual_commands({"path": "/", "max_used_percent": 85}, context)[0]
+    command = FsInodeUsageAssertPlugin().manual_commands({"path": "/", "min_free_inodes": 100, "max_used_percent": 85}, context)[0]
     assert "df -Pi /" in command
+    assert "min_free_inodes=100" in command
     assert "max_used_percent=85" in command
     assert "used_percent > max_used_percent" in command
     assert FsInodeUsageAssertPlugin().supports_check_mode is True
@@ -5833,21 +5834,51 @@ def test_storage_and_process_checks_return_predicates_on_condition_false():
         assert result.data[key] is False
 
 
-def test_usage_checks_report_non_compliance_without_failing():
+
+def test_storage_block_mount_check_supports_unmounted_state_without_path():
     registry = AutomaxEngine().plugin_registry
 
-    disk = registry.get("storage.usage.disk_check").execute(
+    assert "storage.block.mount.check" in registry.names()
+    assert "storage.block.not_mounted_check" not in registry.names()
+
+    unmounted = registry.get("storage.block.mount.check").execute(
+        {"device": "/dev/sdb1", "state": "unmounted"},
+        _remote_context_for_result(1, stdout="", stderr=""),
+    )
+    assert unmounted.ok is True
+    assert unmounted.data["matches"] is True
+    assert unmounted.data["mounted"] is False
+
+    mounted_elsewhere = registry.get("storage.block.mount.check").execute(
+        {"device": "/dev/sdb1", "state": "unmounted"},
+        _remote_context_for_result(0, stdout="/data", stderr=""),
+    )
+    assert mounted_elsewhere.ok is True
+    assert mounted_elsewhere.data["matches"] is False
+    assert mounted_elsewhere.data["mounted"] is True
+
+    missing_device = registry.get("storage.block.mount.check").execute(
+        {"device": "/dev/missing", "state": "mounted"},
+        _remote_context_for_result(2, stdout="", stderr=""),
+    )
+    assert missing_device.ok is False
+
+
+def test_usage_checks_fail_when_thresholds_are_not_met():
+    registry = AutomaxEngine().plugin_registry
+
+    disk = registry.get("storage.usage.disk.check").execute(
         {"path": "/", "min_free_mb": 999999999},
         _remote_context_for_result(0, stdout="1000 900 100 90\n"),
     )
-    assert disk.ok is True
+    assert disk.ok is False
     assert disk.data["compliant"] is False
 
-    inode = registry.get("storage.usage.inode_check").execute(
+    inode = registry.get("storage.usage.inode.check").execute(
         {"path": "/", "max_used_percent": 1},
         _remote_context_for_result(0, stdout="1000 900 100 90\n"),
     )
-    assert inode.ok is True
+    assert inode.ok is False
     assert inode.data["compliant"] is False
 
 def test_os_check_plugins_return_predicates_on_condition_false():

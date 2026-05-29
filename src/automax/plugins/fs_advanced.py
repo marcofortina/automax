@@ -63,24 +63,25 @@ class FsBindMountPlugin(BasePlugin):
 
 
 class FsInodeUsageAssertPlugin(BasePlugin):
-    name = "storage.usage.inode_check"
+    name = "storage.usage.inode.check"
     description = "Check remote filesystem inode free and used percentage thresholds."
     required_params = ("path",)
-    optional_params = ("max_used_percent", "min_free_percent", "sudo")
+    optional_params = ("min_free_inodes", "max_used_percent", "min_free_percent", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
-        if "max_used_percent" not in params and "min_free_percent" not in params:
-            raise PluginValidationError("storage.usage.inode_check requires max_used_percent or min_free_percent")
+        if not any(key in params for key in ("min_free_inodes", "max_used_percent", "min_free_percent")):
+            raise PluginValidationError("storage.usage.inode.check requires min_free_inodes, max_used_percent or min_free_percent")
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "storage.usage.inode_check is a read-only inode usage check"
+        return "storage.usage.inode.check is a read-only inode usage check"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
         awk_vars = {
+            "min_free_inodes": params.get("min_free_inodes", ""),
             "max_used_percent": params.get("max_used_percent", ""),
             "min_free_percent": params.get("min_free_percent", ""),
         }
@@ -91,6 +92,7 @@ class FsInodeUsageAssertPlugin(BasePlugin):
             'free_percent=($2>0 ? ($4/$2)*100 : 0); '
             'used_percent=$5+0; '
             'ok=1; '
+            'if (min_free_inodes != "" && $4 < min_free_inodes) ok=0; '
             'if (max_used_percent != "" && used_percent > max_used_percent) ok=0; '
             'if (min_free_percent != "" && free_percent < min_free_percent) ok=0; '
             'printf "free_percent=%.2f used_percent=%.2f\n", free_percent, used_percent; '
@@ -104,18 +106,22 @@ class FsInodeUsageAssertPlugin(BasePlugin):
         command = f"{sudo_prefix(params, default=True)}df -Pi {quote(params['path'])} | awk 'NR==2 {{gsub(/%/, \"\", $5); print $2, $3, $4, $5}}'"
         rc, out, err = exec_remote(context, command)
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.usage.inode_check failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="storage.usage.inode.check failed")
         try:
             total, used, free, used_percent_raw = [int(item) for item in out.strip().split()[:4]]
         except (ValueError, IndexError) as exc:
-            return PluginResult.failure(rc=1, stdout=out, stderr=str(exc), message="storage.usage.inode_check could not parse df output")
+            return PluginResult.failure(rc=1, stdout=out, stderr=str(exc), message="storage.usage.inode.check could not parse df output")
         free_percent = (free / total * 100.0) if total else 0.0
         used_percent = float(used_percent_raw)
         data = {"total_inodes": total, "used_inodes": used, "free_inodes": free, "free_percent": free_percent, "used_percent": used_percent}
         compliant = True
+        if "min_free_inodes" in params and free < int(params["min_free_inodes"]):
+            compliant = False
         if "max_used_percent" in params and used_percent > float(params["max_used_percent"]):
             compliant = False
         if "min_free_percent" in params and free_percent < float(params["min_free_percent"]):
             compliant = False
         data["compliant"] = compliant
+        if not compliant:
+            return PluginResult.failure(rc=1, stdout=out, stderr=err, data=data, message="storage.usage.inode.check threshold not met")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data=data)

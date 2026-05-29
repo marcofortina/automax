@@ -10060,7 +10060,7 @@ with:
 
 ## storage
 
-### `storage.block.empty_check`
+### `storage.block.empty.check`
 
 Check that a block device has no detectable signature before destructive use.
 
@@ -10085,7 +10085,7 @@ Result fields:
 Example:
 
 ```yaml
-use: storage.block.empty_check
+use: storage.block.empty.check
 with:
   device: /dev/sdb
 ```
@@ -10155,9 +10155,9 @@ with:
   device: /dev/sdb
 ```
 
-### `storage.block.mount_check`
+### `storage.block.mount.check`
 
-Check that a block device is mounted at a path.
+Check block device mount state, optionally at a specific path.
 
 - Remote session: `true`
 - Dry-run support: `true`
@@ -10166,7 +10166,8 @@ Check that a block device is mounted at a path.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `device` | yes | `path` |  | Block device path. |
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `path` | no | `path` |  | Optional mountpoint path to match. |
+| `state` | no | `string` | `mounted` | Expected mount state. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
 
 Result fields:
@@ -10181,38 +10182,7 @@ Result fields:
 Example:
 
 ```yaml
-use: storage.block.mount_check
-with:
-  device: /dev/sdb
-  path: /tmp/automax-demo
-```
-
-### `storage.block.not_mounted_check`
-
-Check that a block device is not mounted.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `device` | yes | `path` |  | Block device path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: storage.block.not_mounted_check
+use: storage.block.mount.check
 with:
   device: /dev/sdb
 ```
@@ -10353,7 +10323,7 @@ with:
   device: /dev/sdb
 ```
 
-### `storage.block.size_check`
+### `storage.block.size.check`
 
 Check block device size in bytes.
 
@@ -10379,7 +10349,7 @@ Result fields:
 Example:
 
 ```yaml
-use: storage.block.size_check
+use: storage.block.size.check
 with:
   device: /dev/sdb
   size: 16G
@@ -11717,7 +11687,7 @@ with:
   path: /tmp/automax-demo
 ```
 
-### `storage.usage.disk_check`
+### `storage.usage.disk.check`
 
 Check remote filesystem free space and used percentage thresholds.
 
@@ -11745,7 +11715,7 @@ Result fields:
 Example:
 
 ```yaml
-use: storage.usage.disk_check
+use: storage.usage.disk.check
 with:
   path: /var
   min_free_mb: 1024
@@ -11753,7 +11723,7 @@ with:
   sudo: true
 ```
 
-### `storage.usage.inode_check`
+### `storage.usage.inode.check`
 
 Check remote filesystem inode free and used percentage thresholds.
 
@@ -11764,6 +11734,7 @@ Check remote filesystem inode free and used percentage thresholds.
 | Parameter | Required | Type | Default | Description |
 |---|---:|---|---|---|
 | `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `min_free_inodes` | no | `integer` |  | Minimum free inode count. |
 | `max_used_percent` | no | `number` |  | Maximum allowed used percentage. |
 | `min_free_percent` | no | `number` |  | Minimum free disk percentage. |
 | `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
@@ -11780,7 +11751,7 @@ Result fields:
 Example:
 
 ```yaml
-use: storage.usage.inode_check
+use: storage.usage.inode.check
 with:
   path: /var
   max_used_percent: 85

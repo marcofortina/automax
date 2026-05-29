@@ -1092,6 +1092,12 @@ def test_storage_namespace_replaces_legacy_storage_plugin_names():
         "swap.absent",
         "swap.present",
         "swap.status",
+        "storage.block.empty_check",
+        "storage.block.mount_check",
+        "storage.block.not_mounted_check",
+        "storage.block.size_check",
+        "storage.usage.disk_check",
+        "storage.usage.inode_check",
     ]
     names = set(build_builtin_registry().names())
     assert not (names & set(old_names))
@@ -1113,8 +1119,8 @@ def test_storage_namespace_replaces_legacy_storage_plugin_names():
         "storage.quota.get",
         "storage.quota.check",
         "storage.quota.facts",
-        "storage.usage.disk_check",
-        "storage.usage.inode_check",
+        "storage.usage.disk.check",
+        "storage.usage.inode.check",
     } <= names
 
     searched = [
