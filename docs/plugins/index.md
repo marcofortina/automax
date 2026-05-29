@@ -109,8 +109,10 @@ fs.symlink.remove
 fs.symlink.wait
 identity.group.check
 identity.group.create
+identity.group.member.add
+identity.group.member.check
+identity.group.member.list
 identity.group.member.remove
-identity.group.members
 identity.group.remove
 identity.user.check
 identity.user.create

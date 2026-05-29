@@ -979,6 +979,7 @@ def test_identity_namespace_replaces_legacy_user_group_plugin_names():
         "group.member_absent",
         "group.members",
         "group.remove",
+        "identity.group.members",
     ]
     names = set(build_builtin_registry().names())
     assert not (names & set(old_names))
@@ -996,8 +997,10 @@ def test_identity_namespace_replaces_legacy_user_group_plugin_names():
         "identity.user.unlock",
         "identity.group.create",
         "identity.group.check",
+        "identity.group.member.add",
+        "identity.group.member.check",
+        "identity.group.member.list",
         "identity.group.member.remove",
-        "identity.group.members",
         "identity.group.remove",
     } <= names
 

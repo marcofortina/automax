@@ -3229,6 +3229,100 @@ with:
   name: nginx
 ```
 
+### `identity.group.member.add`
+
+Add a user to a group if membership is missing.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `string` | `False` | User account name. |
+| `group` | yes | `string` |  | Group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: identity.group.member.add
+with:
+  user: deploy
+  group: app
+```
+
+### `identity.group.member.check`
+
+Check whether a user is a member of a group.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `string` | `False` | User account name. |
+| `group` | yes | `string` |  | Group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: identity.group.member.check
+with:
+  user: deploy
+  group: app
+```
+
+### `identity.group.member.list`
+
+List members of a group.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `group` | yes | `string` |  | Group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: identity.group.member.list
+with:
+  group: app
+```
+
 ### `identity.group.member.remove`
 
 Remove a user from a group after explicit confirmation.
@@ -3259,36 +3353,6 @@ Example:
 use: identity.group.member.remove
 with:
   user: deploy
-  group: app
-```
-
-### `identity.group.members`
-
-List members of a group.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `group` | yes | `string` |  | Group name. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: identity.group.members
-with:
   group: app
 ```
 

@@ -411,19 +411,159 @@ class UserGroupsAssertPlugin(ReadOnlyCommandPlugin):
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         user=quote(params['user']); return [" && ".join(f"id -nG {user} | tr ' ' '\\n' | grep -Fx -- {quote(g)}" for g in _as_list(params['groups']))]
 
-class GroupMembersPlugin(ReadOnlyCommandPlugin):
-    name="identity.group.members"; description="List members of a group."; required_params=("group",); optional_params=("sudo",)
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"getent group {quote(params['group'])}"]
+class GroupMembersPlugin(BasePlugin):
+    name = "identity.group.member.list"
+    description = "List members of a group."
+    required_params = ("group",)
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        group = str(params["group"])
+        rc, out, err = exec_remote(context, f"getent group {quote(group)}")
+        if rc != 0:
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="identity.group.member.list failed")
+        line = out.strip().splitlines()[0] if out.strip() else ""
+        parts = line.split(":", 3)
+        members = [item for item in (parts[3].split(",") if len(parts) > 3 and parts[3] else []) if item]
+        return PluginResult.success(
+            changed=False,
+            rc=0,
+            stdout=out,
+            stderr=err,
+            data={"group": group, "members": members},
+        )
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        return [f"getent group {quote(params['group'])}"]
+
+
+class GroupMemberAddPlugin(BasePlugin):
+    name = "identity.group.member.add"
+    description = "Add a user to a group if membership is missing."
+    required_params = ("user", "group")
+    optional_params = ("sudo",)
+    opens_remote_session = True
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        user = quote(params["user"])
+        group = quote(params["group"])
+        return [
+            f"id -u {user} >/dev/null 2>&1 && getent group {group} >/dev/null && "
+            f"(id -nG {user} | tr ' ' '\\n' | grep -Fx -- {group} >/dev/null || "
+            f"{sudo_prefix(params, default=True)}gpasswd -a {user} {group})"
+        ]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        user = quote(params["user"])
+        group = quote(params["group"])
+        command = (
+            f"id -u {user} >/dev/null 2>&1 && getent group {group} >/dev/null && "
+            f"if id -nG {user} | tr ' ' '\\n' | grep -Fx -- {group} >/dev/null; then "
+            f"true; else {sudo_prefix(params, default=True)}gpasswd -a {user} {group} && echo {CHANGE_MARKER}; fi"
+        )
+        rc, out, err = exec_remote(context, command)
+        return result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="identity.group.member.add failed",
+            data={"user": params["user"], "group": params["group"], "member": rc == 0},
+        )
+
+
+class GroupMemberCheckPlugin(BasePlugin):
+    name = "identity.group.member.check"
+    description = "Check whether a user is a member of a group."
+    required_params = ("user", "group")
+    optional_params = ("sudo",)
+    opens_remote_session = True
+    supports_check_mode = True
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        user = str(params["user"])
+        group = str(params["group"])
+        command = (
+            f"id -u {quote(user)} >/dev/null 2>&1 && "
+            f"getent group {quote(group)} >/dev/null && "
+            f"id -nG {quote(user)} | tr ' ' '\\n' | grep -Fx -- {quote(group)} >/dev/null"
+        )
+        rc, out, err = exec_remote(context, command)
+        if rc == 0:
+            member = True
+        elif rc == 1:
+            member = False
+        else:
+            return PluginResult.failure(
+                rc=rc,
+                stdout=out,
+                stderr=err,
+                message="identity.group.member.check failed",
+                data={"user": user, "group": group},
+            )
+        return PluginResult.success(
+            changed=False,
+            rc=0,
+            stdout=out,
+            stderr=err if member else "",
+            data={"user": user, "group": group, "member": member},
+        )
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        user = quote(params["user"])
+        group = quote(params["group"])
+        return [
+            f"id -u {user} >/dev/null 2>&1 && getent group {group} >/dev/null && "
+            f"id -nG {user} | tr ' ' '\\n' | grep -Fx -- {group}"
+        ]
+
 
 class GroupMemberAbsentPlugin(BasePlugin):
-    name="identity.group.member.remove"; description="Remove a user from a group after explicit confirmation."; required_params=("user","group"); optional_params=("confirm","sudo"); opens_remote_session=True
-    def validate(self, params: Dict[str, Any])->None:
+    name = "identity.group.member.remove"
+    description = "Remove a user from a group after explicit confirmation."
+    required_params = ("user", "group")
+    optional_params = ("confirm", "sudo")
+    opens_remote_session = True
+
+    def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
-        if not bool(params.get("confirm", False)): raise PluginValidationError("identity.group.member.remove requires confirm=true")
-    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
-        self.validate(params); return [f"{sudo_prefix(params, default=True)}gpasswd -d {quote(params['user'])} {quote(params['group'])}"]
-    def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
-        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="identity.group.member.remove failed")
+        if not bool(params.get("confirm", False)):
+            raise PluginValidationError("identity.group.member.remove requires confirm=true")
+
+    def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
+        self.validate(params)
+        user = quote(params["user"])
+        group = quote(params["group"])
+        return [
+            f"id -u {user} >/dev/null 2>&1 && getent group {group} >/dev/null && "
+            f"(id -nG {user} | tr ' ' '\\n' | grep -Fx -- {group} >/dev/null && "
+            f"{sudo_prefix(params, default=True)}gpasswd -d {user} {group} || true)"
+        ]
+
+    def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
+        self.validate(params)
+        user = quote(params["user"])
+        group = quote(params["group"])
+        command = (
+            f"id -u {user} >/dev/null 2>&1 && getent group {group} >/dev/null && "
+            f"if id -nG {user} | tr ' ' '\\n' | grep -Fx -- {group} >/dev/null; then "
+            f"{sudo_prefix(params, default=True)}gpasswd -d {user} {group} && echo {CHANGE_MARKER}; fi"
+        )
+        rc, out, err = exec_remote(context, command)
+        return result_from_remote(
+            rc=rc,
+            stdout=out,
+            stderr=err,
+            message="identity.group.member.remove failed",
+            data={"user": params["user"], "group": params["group"]},
+        )
 
 class SudoListPlugin(ReadOnlyCommandPlugin):
     name="security.sudo.list"; description="List sudo privileges for a user."; required_params=("user",); optional_params=("sudo",)
@@ -601,6 +741,8 @@ for _cls in (UserFactsPlugin, UserShellAssertPlugin, UserHomeAssertPlugin, UserG
     _cls.parameter_schema = {"user": {"type": "string", "description": "User account name."}}
 UserShellAssertPlugin.parameter_schema = {"user": {"type": "string", "description": "User account name."}, "shell": {"type": "string", "description": "Expected login shell."}}
 GroupMembersPlugin.parameter_schema = {"group": {"type": "string", "description": "Group name."}}
+GroupMemberAddPlugin.parameter_schema = {"user": {"type": "string", "description": "User account name."}, "group": {"type": "string", "description": "Group name."}}
+GroupMemberCheckPlugin.parameter_schema = {"user": {"type": "string", "description": "User account name."}, "group": {"type": "string", "description": "Group name."}}
 GroupMemberAbsentPlugin.parameter_schema = {"user": {"type": "string", "description": "User account name."}, "group": {"type": "string", "description": "Group name."}}
 
 

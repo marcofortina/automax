@@ -22,14 +22,24 @@ tasks:
       use: identity.group.check
       with:
         name: nginx
-    - id: group_member_absent
+    - id: group_member_add
+      use: identity.group.member.add
+      with:
+        user: deploy
+        group: app
+    - id: group_member_check
+      use: identity.group.member.check
+      with:
+        user: deploy
+        group: app
+    - id: group_member_remove
       use: identity.group.member.remove
       with:
         user: deploy
         group: app
         confirm: true
-    - id: group_members
-      use: identity.group.members
+    - id: group_member_list
+      use: identity.group.member.list
       with:
         group: app
     - id: group_remove
