@@ -19,7 +19,7 @@ def _diff(path: str, content: str, kind: str) -> list[Dict[str, Any]]:
 
 
 class SudoRulePlugin(RenderedFileInstallMixin, BasePlugin):
-    name = "sudo.rule"
+    name = "security.sudo.rule"
     description = "Install a structured sudoers.d rule with visudo validation, backup and safe mode."
     required_params = ("name", "subject")
     optional_params = ("hosts", "runas", "commands", "nopassword", "path", "backup", "backup_suffix", "sudo")
@@ -52,14 +52,14 @@ class SudoRulePlugin(RenderedFileInstallMixin, BasePlugin):
 
 
 class SudoValidatePlugin(ReadOnlyCommandPlugin):
-    name = "sudo.validate"
+    name = "security.sudo.validate"
     description = "Validate sudoers syntax with visudo without changing files."
     optional_params = ("path", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "sudo.validate is read-only validation and does not change files"
+        return "security.sudo.validate is read-only validation and does not change files"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         path = str(params.get("path", "/etc/sudoers"))
@@ -68,5 +68,5 @@ class SudoValidatePlugin(ReadOnlyCommandPlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="sudo.validate failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.sudo.validate failed")
         return PluginResult.success(changed=False, stdout=out, stderr=err)

@@ -164,16 +164,16 @@ def sample_params(plugin: Any) -> dict[str, Any]:
         params["to"] = ["ops@example.invalid"]
     if plugin.name == "network.firewall.nftables.apply" or plugin.name == "network.firewall.nftables.validate":
         params["content"] = "flush ruleset\n"
-    if plugin.name == "pki.ca_install":
+    if plugin.name == "security.pki.trust.install_ca":
         params["name"] = "automax-demo"
         params["content"] = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----\n"
-    if plugin.name == "selinux.mode":
+    if plugin.name == "security.selinux.mode":
         params["state"] = "enforcing"
     if plugin.name == "fs.quota":
         params["type"] = "user"
-    if plugin.name == "apparmor.profile_assert":
+    if plugin.name == "security.apparmor.profile_check":
         params["state"] = "enforce"
-    if plugin.name == "auditd.backlog_assert":
+    if plugin.name == "security.audit.backlog_check":
         params["max_lost"] = 0
         params["max_backlog"] = 8192
     if plugin.name == "chrony.tracking_assert":
@@ -184,7 +184,7 @@ def sample_params(plugin: Any) -> dict[str, Any]:
     if plugin.name == "fs.file.replace":
         params["count"] = 0
         params["match_count_assert"] = 1
-    if plugin.name == "sshd.config":
+    if plugin.name == "security.sshd.config":
         params["match_blocks"] = [{"match": "User deploy", "settings": {"X11Forwarding": "no"}}]
     if plugin.name == "network.dns.config":
         params["backend"] = "plain-file"

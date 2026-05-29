@@ -150,7 +150,7 @@ class LimitsDropinPlugin(RenderedFileInstallMixin, BasePlugin):
 
 
 class PamLimitsPlugin(BasePlugin):
-    name = "pam.limits"
+    name = "security.pam.limits"
     description = "Ensure pam_limits.so is enabled in one or more PAM service files."
     required_params: tuple[str, ...] = ()
     optional_params = ("files", "backup", "backup_suffix", "sudo")
@@ -179,7 +179,7 @@ class PamLimitsPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="pam.limits failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="security.pam.limits failed")
 
 
 class HostsEntryPlugin(BasePlugin):

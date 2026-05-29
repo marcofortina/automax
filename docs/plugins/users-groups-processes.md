@@ -75,10 +75,10 @@ These plugins run on the remote target through SSH.
 `process.assert_absent` is a read-only pgrep assertion used as a pre/post check.
 `process.assert_count` gates process cardinality with exact, minimum or maximum count checks.
 
-`sshd.config` installs server-side SSH hardening drop-ins and validates them with `sshd -t` before reload.
+`security.sshd.config` installs server-side SSH hardening drop-ins and validates them with `sshd -t` before reload.
 `login.defs` manages account-aging defaults in `/etc/login.defs` with backup.
-`password.policy` installs pwquality drop-ins for password complexity policy.
-`authselect.profile` selects RHEL-style authentication profiles with explicit backup by default.
+`security.password.policy` installs pwquality drop-ins for password complexity policy.
+`security.authselect.profile` selects RHEL-style authentication profiles with explicit backup by default.
 
 ## Account assertions and access changes
 

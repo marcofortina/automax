@@ -23,7 +23,7 @@ def _payload(params: Dict[str, Any], context: ExecutionContext) -> str:
 
 
 class SecretRedactAssertPlugin(BasePlugin):
-    name = "secret.redact_assert"
+    name = "security.secret.redact_check"
     description = "Assert that a payload contains no declared secret values after redaction policy is applied."
     optional_params = ("text", "value", "source")
     supports_check_mode = True
@@ -31,14 +31,14 @@ class SecretRedactAssertPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if not any(key in params for key in ("text", "value", "source")):
-            raise PluginValidationError("secret.redact_assert requires text, value or source")
+            raise PluginValidationError("security.secret.redact_check requires text, value or source")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
-        return ["# secret.redact_assert is evaluated inside Automax before output persistence"]
+        return ["# security.secret.redact_check is evaluated inside Automax before output persistence"]
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "secret.redact_assert is an in-process redaction policy assertion"
+        return "security.secret.redact_check is an in-process redaction policy assertion"
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         text = _payload(params, context)
@@ -49,13 +49,13 @@ class SecretRedactAssertPlugin(BasePlugin):
 
 
 class SecretScanOutputPlugin(BasePlugin):
-    name = "secret.scan_output"
+    name = "security.secret.scan_output"
     description = "Scan an arbitrary output payload and report whether redaction would change it."
     optional_params = ("text", "value", "source")
     supports_check_mode = True
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
-        return ["# secret.scan_output is evaluated inside Automax; no shell command is required"]
+        return ["# security.secret.scan_output is evaluated inside Automax; no shell command is required"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         text = _payload(params, context)
@@ -64,5 +64,5 @@ class SecretScanOutputPlugin(BasePlugin):
 
 
 class SecretScanPreviewPlugin(SecretScanOutputPlugin):
-    name = "secret.scan_preview"
+    name = "security.secret.scan_preview"
     description = "Scan preview/manual-command text with the same redaction policy used by the engine."

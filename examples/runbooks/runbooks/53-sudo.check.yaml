@@ -15,26 +15,33 @@ tasks:
   - id: catalog
     substeps:
     - id: sudo_assert
-      use: sudo.assert
+      use: security.sudo.check
       with:
         user: deploy
         rule: allow
     - id: sudo_can_run
-      use: sudo.can_run
+      use: security.sudo.can_run
       with:
         user: deploy
         command: echo automax
     - id: sudo_list
-      use: sudo.list
+      use: security.sudo.list
       with:
         user: deploy
     - id: sudo_rule
-      use: sudo.rule
+      use: security.sudo.rule
       with:
         name: nginx
         subject: Automax notification
     - id: sudo_validate
-      use: sudo.validate
+      use: security.sudo.validate
       with:
         path: /tmp/automax-demo
+        sudo: true
+    - id: sudo_dropin
+      use: security.sudo.dropin
+      with:
+        name: deploy-myapp
+        content: 'deploy ALL=(root) /bin/systemctl restart myapp'
+        validate: true
         sudo: true

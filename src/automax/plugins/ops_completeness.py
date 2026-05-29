@@ -35,7 +35,7 @@ def _state(params: Dict[str, Any], allowed: set[str] = {"present", "absent"}) ->
 
 # AppArmor
 class ApparmorEnforcePlugin(BasePlugin):
-    name = "apparmor.enforce"
+    name = "security.apparmor.enforce"
     description = "Put one AppArmor profile in enforcing mode."
     required_params = ("profile",)
     optional_params = ("sudo",)
@@ -47,11 +47,11 @@ class ApparmorEnforcePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="apparmor.enforce failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.apparmor.enforce failed")
 
 
 class ApparmorComplainPlugin(ApparmorEnforcePlugin):
-    name = "apparmor.complain"
+    name = "security.apparmor.complain"
     description = "Put one AppArmor profile in complain mode."
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
@@ -60,14 +60,14 @@ class ApparmorComplainPlugin(ApparmorEnforcePlugin):
 
 
 class ApparmorDisablePlugin(ApparmorEnforcePlugin):
-    name = "apparmor.disable"
+    name = "security.apparmor.disable"
     description = "Disable one AppArmor profile after explicit confirmation."
     optional_params = ("confirm", "sudo")
 
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if not bool(params.get("confirm", False)):
-            raise PluginValidationError("apparmor.disable requires confirm=true")
+            raise PluginValidationError("security.apparmor.disable requires confirm=true")
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -75,7 +75,7 @@ class ApparmorDisablePlugin(ApparmorEnforcePlugin):
 
 
 class ApparmorProfileAssertPlugin(ReadOnlyCommandPlugin):
-    name = "apparmor.profile_assert"
+    name = "security.apparmor.profile_check"
     description = "Assert that an AppArmor profile is loaded in the expected mode."
     required_params = ("profile", "state")
     optional_params = ("sudo",)
@@ -84,7 +84,7 @@ class ApparmorProfileAssertPlugin(ReadOnlyCommandPlugin):
         self.validate(params)
         state = str(params["state"])
         if state not in {"enforce", "complain", "disabled"}:
-            raise PluginValidationError("apparmor.profile_assert state must be enforce, complain or disabled")
+            raise PluginValidationError("security.apparmor.profile_check state must be enforce, complain or disabled")
         profile = quote(params["profile"])
         if state == "disabled":
             return [f"! {sudo_prefix(params, default=True)}aa-status 2>/dev/null | grep -F -- {profile}"]
@@ -92,7 +92,7 @@ class ApparmorProfileAssertPlugin(ReadOnlyCommandPlugin):
 
 
 class ApparmorParserValidatePlugin(ReadOnlyCommandPlugin):
-    name = "apparmor.parser_validate"
+    name = "security.apparmor.validate"
     description = "Validate an AppArmor profile with apparmor_parser before applying it."
     required_params = ("profile",)
     optional_params = ("sudo",)
@@ -104,7 +104,7 @@ class ApparmorParserValidatePlugin(ReadOnlyCommandPlugin):
 
 # auditd
 class AuditdRulesFactsPlugin(ReadOnlyCommandPlugin):
-    name = "auditd.rules_facts"
+    name = "security.audit.rules.facts"
     description = "List active auditd rules and persistent rules.d files."
     optional_params = ("sudo",)
 
@@ -113,7 +113,7 @@ class AuditdRulesFactsPlugin(ReadOnlyCommandPlugin):
 
 
 class AuditdWatchPlugin(BasePlugin):
-    name = "auditd.watch"
+    name = "security.audit.watch"
     description = "Install an auditd filesystem watch rule."
     required_params = ("name", "path", "permissions", "key")
     optional_params = ("backup", "backup_suffix", "reload", "sudo")
@@ -140,11 +140,11 @@ class AuditdWatchPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="auditd.watch failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.audit.watch failed")
 
 
 class AuditdSyscallPlugin(AuditdWatchPlugin):
-    name = "auditd.syscall"
+    name = "security.audit.syscall"
     description = "Install an auditd syscall rule."
     required_params = ("name", "syscalls", "key")
     optional_params = ("arch", "action", "filters", "backup", "backup_suffix", "reload", "sudo")
@@ -156,7 +156,7 @@ class AuditdSyscallPlugin(AuditdWatchPlugin):
 
 
 class AuditdSearchPlugin(ReadOnlyCommandPlugin):
-    name = "auditd.search"
+    name = "security.audit.search"
     description = "Search audit events by key, user or time window."
     optional_params = ("key", "user", "start", "end", "sudo")
     parameter_schema = {
@@ -180,7 +180,7 @@ class AuditdSearchPlugin(ReadOnlyCommandPlugin):
 
 
 class AuditdBacklogAssertPlugin(ReadOnlyCommandPlugin):
-    name = "auditd.backlog_assert"
+    name = "security.audit.backlog_check"
     description = "Assert auditd lost-event count and backlog are below thresholds."
     optional_params = ("max_lost", "max_backlog", "sudo")
 
@@ -426,15 +426,15 @@ class GroupMemberAbsentPlugin(BasePlugin):
         rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="group.member_absent failed")
 
 class SudoListPlugin(ReadOnlyCommandPlugin):
-    name="sudo.list"; description="List sudo privileges for a user."; required_params=("user",); optional_params=("sudo",)
+    name="security.sudo.list"; description="List sudo privileges for a user."; required_params=("user",); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{sudo_prefix(params, default=True)}sudo -l -U {quote(params['user'])}"]
 
 class SudoAssertPlugin(ReadOnlyCommandPlugin):
-    name="sudo.assert"; description="Assert sudo -l output contains a rule fragment."; required_params=("user","rule"); optional_params=("sudo",)
+    name="security.sudo.check"; description="Assert sudo -l output contains a rule fragment."; required_params=("user","rule"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"{sudo_prefix(params, default=True)}sudo -l -U {quote(params['user'])} | grep -F -- {quote(params['rule'])}"]
 
 class SudoCanRunPlugin(ReadOnlyCommandPlugin):
-    name="sudo.can_run"; description="Assert that a user can run a command via sudo without prompting."; required_params=("user","command"); optional_params=("run_as","sudo")
+    name="security.sudo.can_run"; description="Assert that a user can run a command via sudo without prompting."; required_params=("user","command"); optional_params=("run_as","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         run_as=f" -u {quote(params.get('run_as'))}" if params.get("run_as") else ""; return [f"{sudo_prefix(params, default=True)}{SUDO_NON_INTERACTIVE} -l -U {quote(params['user'])}{run_as} {quote(params['command'])}"]
 
@@ -497,30 +497,30 @@ class BlockNotMountedAssertPlugin(ReadOnlyCommandPlugin):
 
 # PAM stack helpers
 class PamIncludeAssertPlugin(ReadOnlyCommandPlugin):
-    name="pam.include_assert"; description="Assert a PAM service includes another stack."; required_params=("service","include"); optional_params=("sudo",)
+    name="security.pam.include_check"; description="Assert a PAM service includes another stack."; required_params=("service","include"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"grep -Eq '(^|[[:space:]])(include|substack|@include)[[:space:]]+{params['include']}($|[[:space:]])' /etc/pam.d/{quote(params['service'])}"]
 
 class PamModuleAssertPlugin(ReadOnlyCommandPlugin):
-    name="pam.module_assert"; description="Assert a PAM module line exists in a service."; required_params=("service","module"); optional_params=("type","sudo")
+    name="security.pam.module_check"; description="Assert a PAM module line exists in a service."; required_params=("service","module"); optional_params=("type","sudo")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         prefix=f"^{params.get('type')}[[:space:]]+" if params.get("type") else ""; return [f"grep -Eq {quote(prefix + '.*' + str(params['module']))} /etc/pam.d/{quote(params['service'])}"]
 
 class PamOrderAssertPlugin(ReadOnlyCommandPlugin):
-    name="pam.order_assert"; description="Assert one PAM line appears before another."; required_params=("service","before","after"); optional_params=("sudo",)
+    name="security.pam.order_check"; description="Assert one PAM line appears before another."; required_params=("service","before","after"); optional_params=("sudo",)
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]: return [f"awk '/{params['before']}/{{b=NR}} /{params['after']}/{{a=NR}} END{{exit !(b && a && b<a)}}' /etc/pam.d/{quote(params['service'])}"]
 
 class PamBackupPlugin(BasePlugin):
-    name="pam.backup"; description="Backup one PAM service file."; required_params=("service",); optional_params=("dest","sudo"); opens_remote_session=True
+    name="security.pam.backup"; description="Backup one PAM service file."; required_params=("service",); optional_params=("dest","sudo"); opens_remote_session=True
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         src=f"/etc/pam.d/{params['service']}"; dest=str(params.get("dest", src+".bak")); return [f"{sudo_prefix(params, default=True)}cp -p {quote(src)} {quote(dest)}"]
     def execute(self, params: Dict[str, Any], context: ExecutionContext)->PluginResult:
-        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="pam.backup failed")
+        rc,out,err=exec_remote(context,self.manual_commands(params,context)[0]+f" && echo {CHANGE_MARKER}"); return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.pam.backup failed")
 
 class PamRestorePlugin(PamBackupPlugin):
-    name="pam.restore"; description="Restore one PAM service file from backup after confirmation."; required_params=("service","src"); optional_params=("confirm","sudo")
+    name="security.pam.restore"; description="Restore one PAM service file from backup after confirmation."; required_params=("service","src"); optional_params=("confirm","sudo")
     def validate(self, params: Dict[str, Any])->None:
         super().validate(params)
-        if not bool(params.get("confirm", False)): raise PluginValidationError("pam.restore requires confirm=true")
+        if not bool(params.get("confirm", False)): raise PluginValidationError("security.pam.restore requires confirm=true")
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext)->list[str]:
         self.validate(params); dest=f"/etc/pam.d/{params['service']}"; return [f"{sudo_prefix(params, default=True)}cp -p {quote(params['src'])} {quote(dest)}"]
 

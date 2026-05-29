@@ -15,38 +15,38 @@ tasks:
   - id: catalog
     substeps:
     - id: auditd_backlog_assert
-      use: auditd.backlog_assert
+      use: security.audit.backlog_check
       with: {}
     - id: auditd_reload
-      use: auditd.reload
+      use: security.audit.reload
       with:
         sudo: true
     - id: auditd_rule
-      use: auditd.rule
+      use: security.audit.rule
       with:
         name: nginx
     - id: auditd_rules_facts
-      use: auditd.rules_facts
+      use: security.audit.rules.facts
       with:
         sudo: true
     - id: auditd_search
-      use: auditd.search
+      use: security.audit.search
       with:
         key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
         user: deploy
     - id: auditd_status
-      use: auditd.status
+      use: security.audit.status
       with:
         sudo: true
     - id: auditd_syscall
-      use: auditd.syscall
+      use: security.audit.syscall
       with:
         name: openat
         syscalls:
         - openat
         key: automax
     - id: auditd_watch
-      use: auditd.watch
+      use: security.audit.watch
       with:
         name: automax-watch
         path: /tmp/automax-demo

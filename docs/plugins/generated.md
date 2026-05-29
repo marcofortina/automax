@@ -105,255 +105,6 @@ with:
   path: /tmp/automax-demo
 ```
 
-## apparmor
-
-### `apparmor.complain`
-
-Put one AppArmor profile in complain mode.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: apparmor.complain
-with:
-  profile: /etc/apparmor.d/usr.sbin.nginx
-```
-
-### `apparmor.disable`
-
-Disable one AppArmor profile after explicit confirmation.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
-| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: apparmor.disable
-with:
-  profile: /etc/apparmor.d/usr.sbin.nginx
-```
-
-### `apparmor.enforce`
-
-Put one AppArmor profile in enforcing mode.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: apparmor.enforce
-with:
-  profile: /etc/apparmor.d/usr.sbin.nginx
-```
-
-### `apparmor.parser_validate`
-
-Validate an AppArmor profile with apparmor_parser before applying it.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: apparmor.parser_validate
-with:
-  profile: /etc/apparmor.d/usr.sbin.nginx
-```
-
-### `apparmor.profile`
-
-Set an AppArmor profile to enforce or complain mode.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
-| `state` | yes | `string` |  | Desired state such as present, absent, started or stopped. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: apparmor.profile
-with:
-  profile: /etc/apparmor.d/usr.sbin.nginx
-  state: enforce
-  sudo: true
-```
-
-### `apparmor.profile_assert`
-
-Assert that an AppArmor profile is loaded in the expected mode.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
-| `state` | yes | `string` |  | Desired state such as present, absent, started or stopped. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: apparmor.profile_assert
-with:
-  profile: /etc/apparmor.d/usr.sbin.nginx
-  state: present
-```
-
-### `apparmor.reload`
-
-Reload one AppArmor profile file or the AppArmor service.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `profile` | no | `string` |  | AppArmor profile, authselect profile or profile file path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: apparmor.reload
-with:
-  profile: /etc/apparmor.d/usr.sbin.nginx
-  sudo: true
-```
-
-### `apparmor.status`
-
-Read AppArmor status.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.status`: Raw AppArmor status output.
-
-Example:
-
-```yaml
-use: apparmor.status
-with:
-  sudo: true
-```
-
 ## archive
 
 ### `archive.compress`
@@ -611,308 +362,6 @@ Example:
 use: assert.disk
 with:
   path: /tmp/automax-demo
-```
-
-## auditd
-
-### `auditd.backlog_assert`
-
-Assert auditd lost-event count and backlog are below thresholds.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `max_lost` | no | `integer` | `0` | Maximum allowed audit lost-event count. |
-| `max_backlog` | no | `integer` | `8192` | Maximum allowed audit backlog. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: auditd.backlog_assert
-```
-
-### `auditd.reload`
-
-Reload auditd rules using augenrules or the auditd service.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: auditd.reload
-with:
-  sudo: true
-```
-
-### `auditd.rule`
-
-Install an auditd rules.d drop-in with backup and optional reload.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `rule` | no | `string` |  | Firewall action such as allow, deny, reject or limit. |
-| `rules` | no | `list` |  | Structured rule entries. |
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: auditd.rule
-with:
-  name: nginx
-```
-
-### `auditd.rules_facts`
-
-List active auditd rules and persistent rules.d files.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: auditd.rules_facts
-with:
-  sudo: true
-```
-
-### `auditd.search`
-
-Search audit events by key, user or time window.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `key` | no | `string` |  | Audit event key. |
-| `user` | no | `string` |  | Audit user name or numeric UID. |
-| `start` | no | `string` |  | Audit search start time. |
-| `end` | no | `string` |  | Audit search end time. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: auditd.search
-with:
-  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
-  user: deploy
-```
-
-### `auditd.status`
-
-Read auditd status without changing the system.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: auditd.status
-with:
-  sudo: true
-```
-
-### `auditd.syscall`
-
-Install an auditd syscall rule.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `syscalls` | yes | `list` |  | Audit syscall names. |
-| `key` | yes | `string` |  | SSH public key line. |
-| `arch` | no | `string` | `b64` | CPU architecture selector for audit rules. |
-| `action` | no | `string` |  | udev action to trigger. |
-| `filters` | no | `list` |  | Audit rule filters such as auid>=1000. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: auditd.syscall
-with:
-  name: nginx
-  syscalls: value
-  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
-```
-
-### `auditd.watch`
-
-Install an auditd filesystem watch rule.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `permissions` | yes | `string` |  | Audit permissions such as rwa or wa. |
-| `key` | yes | `string` |  | SSH public key line. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: auditd.watch
-with:
-  name: nginx
-  path: /tmp/automax-demo
-  permissions: value
-  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
-```
-
-## authselect
-
-### `authselect.profile`
-
-Select an authselect profile with optional features and backup.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
-| `features` | no | `list` |  | Profile or backend feature flags. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `force` | no | `boolean` | `False` | Force the operation when supported. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: authselect.profile
-with:
-  profile: /etc/apparmor.d/usr.sbin.nginx
 ```
 
 ## backup
@@ -1682,383 +1131,6 @@ Example:
 
 ```yaml
 use: capability.assert
-```
-
-## cert
-
-### `cert.expiry_report`
-
-Report certificate expiry and optionally fail inside a warning window.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `cert` | yes | `path` |  | Certificate path. |
-| `warning_days` | no | `integer` | `30` | Certificate expiry warning window in days. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cert.expiry_report
-with:
-  cert: value
-```
-
-### `cert.fingerprint`
-
-Read a certificate fingerprint with openssl.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `cert` | yes | `path` |  | Certificate path. |
-| `algorithm` | no | `string` | `sha256` | Fingerprint or checksum algorithm name. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cert.fingerprint
-with:
-  cert: value
-```
-
-### `cert.generate_csr`
-
-Generate a CSR from an existing private key using openssl.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `key` | yes | `string` |  | SSH public key line. |
-| `dest` | yes | `path` |  | Destination path. |
-| `subject` | yes | `string` |  | Email subject line. |
-| `config` | no | `path` |  | OpenSSL configuration file path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cert.generate_csr
-with:
-  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
-  dest: /tmp/dest
-  subject: Automax notification
-```
-
-### `cert.install_ca_bundle`
-
-Install a CA bundle file with safe permissions and optional trust-store refresh.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `src` | yes | `path` |  | Source path. |
-| `dest` | yes | `path` |  | Destination path. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `update_trust` | no | `boolean` | `True` | Refresh the system trust store after installing a CA certificate. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cert.install_ca_bundle
-with:
-  src: /tmp/source
-  dest: /tmp/dest
-```
-
-### `cert.install_keypair`
-
-Install a certificate and private key with safe permissions and optional validation.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `cert` | yes | `path` |  | Certificate path. |
-| `key` | yes | `string` |  | SSH public key line. |
-| `cert_dest` | yes | `path` |  | Installed certificate destination path. |
-| `key_dest` | yes | `path` |  | Installed private key destination path. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `validate` | no | `boolean` | `True` | Validate generated or uploaded content before installing it. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cert.install_keypair
-with:
-  cert: value
-  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
-  cert_dest: value
-  key_dest: value
-```
-
-### `cert.issuer_assert`
-
-Assert that a certificate issuer contains an expected string.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `cert` | yes | `path` |  | Certificate path. |
-| `issuer` | yes | `string` |  | Expected certificate issuer string. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cert.issuer_assert
-with:
-  cert: value
-  issuer: CN=Example CA
-```
-
-### `cert.matches_key`
-
-Assert that a certificate public key matches a private key.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `cert` | yes | `path` |  | Certificate path. |
-| `key` | yes | `string` |  | SSH public key line. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cert.matches_key
-with:
-  cert: value
-  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
-```
-
-### `cert.san_assert`
-
-Assert that a certificate contains required Subject Alternative Names.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `cert` | yes | `path` |  | Certificate path. |
-| `names` | yes | `list` |  | Hostnames or aliases for a hosts entry. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cert.san_assert
-with:
-  cert: value
-  names:
-    - app1.example.com
-    - app1
-```
-
-### `cert.self_signed`
-
-Generate a self-signed certificate using an existing private key.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `key` | yes | `string` |  | SSH public key line. |
-| `cert` | yes | `path` |  | Certificate path. |
-| `subject` | yes | `string` |  | Email subject line. |
-| `days` | no | `integer` | `365` | Certificate validity in days. |
-| `extensions` | no | `string` |  | OpenSSL extension section name. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cert.self_signed
-with:
-  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
-  cert: value
-  subject: Automax notification
-```
-
-### `cert.subject_assert`
-
-Assert that a certificate subject contains an expected string.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `cert` | yes | `path` |  | Certificate path. |
-| `subject` | yes | `string` |  | Email subject line. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cert.subject_assert
-with:
-  cert: value
-  subject: Automax notification
-```
-
-### `cert.verify_chain`
-
-Verify a certificate chain against a CA bundle with openssl verify.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `cert` | yes | `path` |  | Certificate path. |
-| `ca_file` | yes | `path` |  | CA bundle file path. |
-| `untrusted` | no | `path` |  | Untrusted intermediate certificate chain file. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: cert.verify_chain
-with:
-  cert: value
-  ca_file: value
 ```
 
 ## chrony
@@ -7422,523 +6494,6 @@ with:
   dest: /tmp/dest
 ```
 
-## pam
-
-### `pam.access`
-
-Manage access.conf entries and optional pam_access service wiring.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `entries` | yes | `list` |  | Structured entries for limits or configuration files. |
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `services` | no | `list` |  | PAM service names to inspect or modify. |
-| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.access
-with:
-  entries:
-    - {'domain': 'appuser', 'type': 'soft', 'item': 'nofile', 'value': 1024}
-```
-
-### `pam.authselect`
-
-Assert the current authselect profile and enabled features on RHEL-like systems.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `profile` | no | `string` |  | AppArmor profile, authselect profile or profile file path. |
-| `features` | no | `list` |  | Profile or backend feature flags. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.authselect
-with:
-  profile: /etc/apparmor.d/usr.sbin.nginx
-```
-
-### `pam.backup`
-
-Backup one PAM service file.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `dest` | no | `path` |  | Destination path. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.backup
-with:
-  service: sshd
-```
-
-### `pam.faillock`
-
-Manage faillock.conf settings and optional pam_faillock service wiring.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `settings` | yes | `mapping` |  | SSH client or server settings. |
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `services` | no | `list` |  | PAM service names to inspect or modify. |
-| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.faillock
-with:
-  settings: value
-```
-
-### `pam.include_assert`
-
-Assert a PAM service includes another stack.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `include` | yes | `string` |  | PAM include/substack target name. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.include_assert
-with:
-  service: sshd
-  include: value
-```
-
-### `pam.limits`
-
-Ensure pam_limits.so is enabled in one or more PAM service files.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `files` | no | `list` |  | Target files to inspect or modify. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.limits
-with:
-  files:
-    - /etc/pam.d/login
-```
-
-### `pam.module_assert`
-
-Assert a PAM module line exists in a service.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `module` | yes | `string` |  | Linux kernel module name. |
-| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.module_assert
-with:
-  service: sshd
-  module: br_netfilter
-```
-
-### `pam.order_assert`
-
-Assert one PAM line appears before another.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `before` | yes | `string` |  | Marker that must appear before another line or rule. |
-| `after` | yes | `string` |  | Marker that must appear after another line or rule. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.order_assert
-with:
-  service: sshd
-  before: value
-  after: value
-```
-
-### `pam.pwhistory`
-
-Manage pwhistory.conf settings and optional pam_pwhistory service wiring.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `settings` | yes | `mapping` |  | SSH client or server settings. |
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `services` | no | `list` |  | PAM service names to inspect or modify. |
-| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
-| `control` | no | `string` |  | PAM control field such as required, requisite, sufficient or a bracketed control expression. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.pwhistory
-with:
-  settings: value
-```
-
-### `pam.restore`
-
-Restore one PAM service file from backup after confirmation.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `src` | yes | `path` |  | Source path. |
-| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.restore
-with:
-  service: sshd
-  src: /tmp/source
-```
-
-### `pam.service_line`
-
-Ensure or remove one exact line in one PAM service file with backup.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `line` | yes | `string` |  | Exact line to ensure in a remote file. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.service_line
-with:
-  service: sshd
-  line: KEY=value
-```
-
-### `pam.stack_facts`
-
-Inventory PAM service files and include/substack relationships.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `services` | no | `list` |  | PAM service names to inspect or modify. |
-| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.stack_facts
-with:
-  service: sshd
-  services:
-    - sshd
-```
-
-### `pam.succeed_if`
-
-Ensure or remove one guarded pam_succeed_if condition in a PAM service file.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `condition` | yes | `string` |  | PAM condition expression, for example user ingroup wheel. |
-| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
-| `control` | no | `string` |  | PAM control field such as required, requisite, sufficient or a bracketed control expression. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.succeed_if
-with:
-  service: sshd
-  condition: user ingroup wheel
-```
-
-### `pam.validate`
-
-Run read-only sanity checks against explicit PAM service files.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
-| `services` | no | `list` |  | PAM service names to inspect or modify. |
-| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pam.validate
-with:
-  service: sshd
-  services:
-    - sshd
-```
-
-## password
-
-### `password.policy`
-
-Install a pwquality password policy drop-in.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Package, user or group name. |
-| `settings` | yes | `mapping` |  | SSH client or server settings. |
-| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: password.policy
-with:
-  name: nginx
-  settings: value
-```
-
 ## pkg
 
 ### `pkg.clean`
@@ -8569,114 +7124,6 @@ with:
   version: 1.2.3*
 ```
 
-## pki
-
-### `pki.ca_install`
-
-Install a CA certificate into an explicit path or a distro-native system trust store.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `dest` | no | `path` |  | Destination path. |
-| `name` | no | `string` |  | Package, user or group name. |
-| `trust_store` | no | `string` | `explicit` | Trust-store mode: explicit path or system auto path. |
-| `src` | no | `path` |  | Source path. |
-| `content` | no | `string` |  | Text content to write. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
-| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
-| `update_trust` | no | `boolean` | `True` | Refresh the system trust store after installing a CA certificate. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pki.ca_install
-with:
-  dest: /tmp/dest
-  name: nginx
-```
-
-### `pki.cert_expiry_assert`
-
-Assert that a certificate remains valid for at least min_days.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `min_days` | no | `integer` | `30` | Minimum remaining certificate validity in days. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pki.cert_expiry_assert
-with:
-  path: /tmp/automax-demo
-```
-
-### `pki.key_permissions`
-
-Enforce owner/group/mode on a private key or certificate file.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
-| `owner` | no | `string` |  | Remote file owner. |
-| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: pki.key_permissions
-with:
-  path: /tmp/automax-demo
-```
-
 ## platform
 
 ### `platform.facts`
@@ -8945,9 +7392,1548 @@ with:
   success_rc: 0
 ```
 
-## secret
+## security
 
-### `secret.redact_assert`
+### `security.apparmor.complain`
+
+Put one AppArmor profile in complain mode.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.apparmor.complain
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+```
+
+### `security.apparmor.disable`
+
+Disable one AppArmor profile after explicit confirmation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.apparmor.disable
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+```
+
+### `security.apparmor.enforce`
+
+Put one AppArmor profile in enforcing mode.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.apparmor.enforce
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+```
+
+### `security.apparmor.profile`
+
+Set an AppArmor profile to enforce or complain mode.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `state` | yes | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.apparmor.profile
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+  state: enforce
+  sudo: true
+```
+
+### `security.apparmor.profile_check`
+
+Assert that an AppArmor profile is loaded in the expected mode.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `state` | yes | `string` |  | Desired state such as present, absent, started or stopped. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.apparmor.profile_check
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+  state: present
+```
+
+### `security.apparmor.reload`
+
+Reload one AppArmor profile file or the AppArmor service.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | no | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.apparmor.reload
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+  sudo: true
+```
+
+### `security.apparmor.status`
+
+Read AppArmor status.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.status`: Raw AppArmor status output.
+
+Example:
+
+```yaml
+use: security.apparmor.status
+with:
+  sudo: true
+```
+
+### `security.apparmor.validate`
+
+Validate an AppArmor profile with apparmor_parser before applying it.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.apparmor.validate
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+```
+
+### `security.audit.backlog_check`
+
+Assert auditd lost-event count and backlog are below thresholds.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `max_lost` | no | `integer` | `0` | Maximum allowed audit lost-event count. |
+| `max_backlog` | no | `integer` | `8192` | Maximum allowed audit backlog. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.audit.backlog_check
+```
+
+### `security.audit.reload`
+
+Reload auditd rules using augenrules or the auditd service.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.audit.reload
+with:
+  sudo: true
+```
+
+### `security.audit.rule`
+
+Install an auditd rules.d drop-in with backup and optional reload.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `rule` | no | `string` |  | Firewall action such as allow, deny, reject or limit. |
+| `rules` | no | `list` |  | Structured rule entries. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.audit.rule
+with:
+  name: nginx
+```
+
+### `security.audit.rules.facts`
+
+List active auditd rules and persistent rules.d files.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.audit.rules.facts
+with:
+  sudo: true
+```
+
+### `security.audit.search`
+
+Search audit events by key, user or time window.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `key` | no | `string` |  | Audit event key. |
+| `user` | no | `string` |  | Audit user name or numeric UID. |
+| `start` | no | `string` |  | Audit search start time. |
+| `end` | no | `string` |  | Audit search end time. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.audit.search
+with:
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+  user: deploy
+```
+
+### `security.audit.status`
+
+Read auditd status without changing the system.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.audit.status
+with:
+  sudo: true
+```
+
+### `security.audit.syscall`
+
+Install an auditd syscall rule.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `syscalls` | yes | `list` |  | Audit syscall names. |
+| `key` | yes | `string` |  | SSH public key line. |
+| `arch` | no | `string` | `b64` | CPU architecture selector for audit rules. |
+| `action` | no | `string` |  | udev action to trigger. |
+| `filters` | no | `list` |  | Audit rule filters such as auid>=1000. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.audit.syscall
+with:
+  name: nginx
+  syscalls: value
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+```
+
+### `security.audit.watch`
+
+Install an auditd filesystem watch rule.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `permissions` | yes | `string` |  | Audit permissions such as rwa or wa. |
+| `key` | yes | `string` |  | SSH public key line. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `reload` | no | `boolean` | `False` | Reload service configuration after a change. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.audit.watch
+with:
+  name: nginx
+  path: /tmp/automax-demo
+  permissions: value
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+```
+
+### `security.authselect.check`
+
+Assert the current authselect profile and enabled features on RHEL-like systems.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | no | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `features` | no | `list` |  | Profile or backend feature flags. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.authselect.check
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+```
+
+### `security.authselect.profile`
+
+Select an authselect profile with optional features and backup.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `profile` | yes | `string` |  | AppArmor profile, authselect profile or profile file path. |
+| `features` | no | `list` |  | Profile or backend feature flags. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `force` | no | `boolean` | `False` | Force the operation when supported. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.authselect.profile
+with:
+  profile: /etc/apparmor.d/usr.sbin.nginx
+```
+
+### `security.pam.access`
+
+Manage access.conf entries and optional pam_access service wiring.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `entries` | yes | `list` |  | Structured entries for limits or configuration files. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `services` | no | `list` |  | PAM service names to inspect or modify. |
+| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pam.access
+with:
+  entries:
+    - {'domain': 'appuser', 'type': 'soft', 'item': 'nofile', 'value': 1024}
+```
+
+### `security.pam.backup`
+
+Backup one PAM service file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `dest` | no | `path` |  | Destination path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pam.backup
+with:
+  service: sshd
+```
+
+### `security.pam.faillock`
+
+Manage faillock.conf settings and optional pam_faillock service wiring.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `settings` | yes | `mapping` |  | SSH client or server settings. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `services` | no | `list` |  | PAM service names to inspect or modify. |
+| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pam.faillock
+with:
+  settings: value
+```
+
+### `security.pam.include_check`
+
+Assert a PAM service includes another stack.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `include` | yes | `string` |  | PAM include/substack target name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pam.include_check
+with:
+  service: sshd
+  include: value
+```
+
+### `security.pam.limits`
+
+Ensure pam_limits.so is enabled in one or more PAM service files.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `files` | no | `list` |  | Target files to inspect or modify. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pam.limits
+with:
+  files:
+    - /etc/pam.d/login
+```
+
+### `security.pam.module_check`
+
+Assert a PAM module line exists in a service.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `module` | yes | `string` |  | Linux kernel module name. |
+| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pam.module_check
+with:
+  service: sshd
+  module: br_netfilter
+```
+
+### `security.pam.order_check`
+
+Assert one PAM line appears before another.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `before` | yes | `string` |  | Marker that must appear before another line or rule. |
+| `after` | yes | `string` |  | Marker that must appear after another line or rule. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pam.order_check
+with:
+  service: sshd
+  before: value
+  after: value
+```
+
+### `security.pam.pwhistory`
+
+Manage pwhistory.conf settings and optional pam_pwhistory service wiring.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `settings` | yes | `mapping` |  | SSH client or server settings. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `services` | no | `list` |  | PAM service names to inspect or modify. |
+| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
+| `control` | no | `string` |  | PAM control field such as required, requisite, sufficient or a bracketed control expression. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pam.pwhistory
+with:
+  settings: value
+```
+
+### `security.pam.restore`
+
+Restore one PAM service file from backup after confirmation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `src` | yes | `path` |  | Source path. |
+| `confirm` | no | `boolean` |  | Explicit destructive-operation confirmation flag. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pam.restore
+with:
+  service: sshd
+  src: /tmp/source
+```
+
+### `security.pam.service_line`
+
+Ensure or remove one exact line in one PAM service file with backup.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `line` | yes | `string` |  | Exact line to ensure in a remote file. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pam.service_line
+with:
+  service: sshd
+  line: KEY=value
+```
+
+### `security.pam.stack.facts`
+
+Inventory PAM service files and include/substack relationships.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `services` | no | `list` |  | PAM service names to inspect or modify. |
+| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pam.stack.facts
+with:
+  service: sshd
+  services:
+    - sshd
+```
+
+### `security.pam.succeed_if`
+
+Ensure or remove one guarded pam_succeed_if condition in a PAM service file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | yes | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `condition` | yes | `string` |  | PAM condition expression, for example user ingroup wheel. |
+| `type` | no | `string` |  | Path type filter: path, file, directory, dir, symlink or any. |
+| `control` | no | `string` |  | PAM control field such as required, requisite, sufficient or a bracketed control expression. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pam.succeed_if
+with:
+  service: sshd
+  condition: user ingroup wheel
+```
+
+### `security.pam.validate`
+
+Run read-only sanity checks against explicit PAM service files.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `service` | no | `string` |  | Service name, PAM service name or systemd unit depending on the plugin. |
+| `services` | no | `list` |  | PAM service names to inspect or modify. |
+| `service_files` | no | `list` |  | Explicit PAM service file paths to inspect or modify. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pam.validate
+with:
+  service: sshd
+  services:
+    - sshd
+```
+
+### `security.password.policy`
+
+Install a pwquality password policy drop-in.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Package, user or group name. |
+| `settings` | yes | `mapping` |  | SSH client or server settings. |
+| `path` | no | `path` |  | Remote or local path, depending on the plugin. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.password.policy
+with:
+  name: nginx
+  settings: value
+```
+
+### `security.pki.cert.chain_check`
+
+Verify a certificate chain against a CA bundle with openssl verify.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `ca_file` | yes | `path` |  | CA bundle file path. |
+| `untrusted` | no | `path` |  | Untrusted intermediate certificate chain file. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.cert.chain_check
+with:
+  cert: value
+  ca_file: value
+```
+
+### `security.pki.cert.expiry_check`
+
+Assert that a certificate remains valid for at least min_days.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `min_days` | no | `integer` | `30` | Minimum remaining certificate validity in days. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.cert.expiry_check
+with:
+  path: /tmp/automax-demo
+```
+
+### `security.pki.cert.expiry_report`
+
+Report certificate expiry and optionally fail inside a warning window.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `warning_days` | no | `integer` | `30` | Certificate expiry warning window in days. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.cert.expiry_report
+with:
+  cert: value
+```
+
+### `security.pki.cert.fingerprint`
+
+Read a certificate fingerprint with openssl.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `algorithm` | no | `string` | `sha256` | Fingerprint or checksum algorithm name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.cert.fingerprint
+with:
+  cert: value
+```
+
+### `security.pki.cert.install_keypair`
+
+Install a certificate and private key with safe permissions and optional validation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `key` | yes | `string` |  | SSH public key line. |
+| `cert_dest` | yes | `path` |  | Installed certificate destination path. |
+| `key_dest` | yes | `path` |  | Installed private key destination path. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `validate` | no | `boolean` | `True` | Validate generated or uploaded content before installing it. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.cert.install_keypair
+with:
+  cert: value
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+  cert_dest: value
+  key_dest: value
+```
+
+### `security.pki.cert.issuer_check`
+
+Assert that a certificate issuer contains an expected string.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `issuer` | yes | `string` |  | Expected certificate issuer string. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.cert.issuer_check
+with:
+  cert: value
+  issuer: CN=Example CA
+```
+
+### `security.pki.cert.key_match_check`
+
+Assert that a certificate public key matches a private key.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `key` | yes | `string` |  | SSH public key line. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.cert.key_match_check
+with:
+  cert: value
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+```
+
+### `security.pki.cert.san_check`
+
+Assert that a certificate contains required Subject Alternative Names.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `names` | yes | `list` |  | Hostnames or aliases for a hosts entry. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.cert.san_check
+with:
+  cert: value
+  names:
+    - app1.example.com
+    - app1
+```
+
+### `security.pki.cert.self_signed`
+
+Generate a self-signed certificate using an existing private key.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `key` | yes | `string` |  | SSH public key line. |
+| `cert` | yes | `path` |  | Certificate path. |
+| `subject` | yes | `string` |  | Email subject line. |
+| `days` | no | `integer` | `365` | Certificate validity in days. |
+| `extensions` | no | `string` |  | OpenSSL extension section name. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.cert.self_signed
+with:
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+  cert: value
+  subject: Automax notification
+```
+
+### `security.pki.cert.subject_check`
+
+Assert that a certificate subject contains an expected string.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `cert` | yes | `path` |  | Certificate path. |
+| `subject` | yes | `string` |  | Email subject line. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.cert.subject_check
+with:
+  cert: value
+  subject: Automax notification
+```
+
+### `security.pki.csr.generate`
+
+Generate a CSR from an existing private key using openssl.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `key` | yes | `string` |  | SSH public key line. |
+| `dest` | yes | `path` |  | Destination path. |
+| `subject` | yes | `string` |  | Email subject line. |
+| `config` | no | `path` |  | OpenSSL configuration file path. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.csr.generate
+with:
+  key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
+  dest: /tmp/dest
+  subject: Automax notification
+```
+
+### `security.pki.key.permissions`
+
+Enforce owner/group/mode on a private key or certificate file.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `path` | yes | `path` |  | Remote or local path, depending on the plugin. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.key.permissions
+with:
+  path: /tmp/automax-demo
+```
+
+### `security.pki.trust.install_bundle`
+
+Install a CA bundle file with safe permissions and optional trust-store refresh.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `src` | yes | `path` |  | Source path. |
+| `dest` | yes | `path` |  | Destination path. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `update_trust` | no | `boolean` | `True` | Refresh the system trust store after installing a CA certificate. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.trust.install_bundle
+with:
+  src: /tmp/source
+  dest: /tmp/dest
+```
+
+### `security.pki.trust.install_ca`
+
+Install a CA certificate into an explicit path or a distro-native system trust store.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `dest` | no | `path` |  | Destination path. |
+| `name` | no | `string` |  | Package, user or group name. |
+| `trust_store` | no | `string` | `explicit` | Trust-store mode: explicit path or system auto path. |
+| `src` | no | `path` |  | Source path. |
+| `content` | no | `string` |  | Text content to write. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `owner` | no | `string` |  | Remote file owner. |
+| `group` | no | `string` |  | Primary group, file group owner or remote group name. |
+| `backup` | no | `boolean` | `False` | Create a backup before modifying an existing file. |
+| `backup_suffix` | no | `string` | `.bak` | Suffix appended to the original path when backup is enabled. |
+| `update_trust` | no | `boolean` | `True` | Refresh the system trust store after installing a CA certificate. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+| `encoding` | no | `string` | `utf-8` | Text encoding used for command output, HTTP bodies or file content. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.pki.trust.install_ca
+with:
+  dest: /tmp/dest
+  name: nginx
+```
+
+### `security.secret.redact_check`
 
 Assert that a payload contains no declared secret values after redaction policy is applied.
 
@@ -8973,13 +8959,13 @@ Result fields:
 Example:
 
 ```yaml
-use: secret.redact_assert
+use: security.secret.redact_check
 with:
   text: password=secret
   value: 1
 ```
 
-### `secret.scan_output`
+### `security.secret.scan_output`
 
 Scan an arbitrary output payload and report whether redaction would change it.
 
@@ -9005,13 +8991,13 @@ Result fields:
 Example:
 
 ```yaml
-use: secret.scan_output
+use: security.secret.scan_output
 with:
   text: password=secret
   value: 1
 ```
 
-### `secret.scan_preview`
+### `security.secret.scan_preview`
 
 Scan preview/manual-command text with the same redaction policy used by the engine.
 
@@ -9037,15 +9023,13 @@ Result fields:
 Example:
 
 ```yaml
-use: secret.scan_preview
+use: security.secret.scan_preview
 with:
   text: password=secret
   value: 1
 ```
 
-## selinux
-
-### `selinux.boolean`
+### `security.selinux.boolean`
 
 Set an SELinux boolean.
 
@@ -9072,7 +9056,7 @@ Result fields:
 Example:
 
 ```yaml
-use: selinux.boolean
+use: security.selinux.boolean
 with:
   name: httpd_can_network_connect
   value: true
@@ -9080,7 +9064,7 @@ with:
   sudo: true
 ```
 
-### `selinux.context`
+### `security.selinux.context`
 
 Manage an SELinux fcontext rule.
 
@@ -9107,13 +9091,13 @@ Result fields:
 Example:
 
 ```yaml
-use: selinux.context
+use: security.selinux.context
 with:
   path: /tmp/automax-demo
   selinux_type: httpd_sys_content_t
 ```
 
-### `selinux.fcontext`
+### `security.selinux.fcontext`
 
 Manage a persistent SELinux fcontext mapping with semanage fcontext.
 
@@ -9140,13 +9124,13 @@ Result fields:
 Example:
 
 ```yaml
-use: selinux.fcontext
+use: security.selinux.fcontext
 with:
   path: /tmp/automax-demo
   selinux_type: httpd_sys_content_t
 ```
 
-### `selinux.mode`
+### `security.selinux.mode`
 
 Set SELinux runtime and/or persistent mode.
 
@@ -9172,12 +9156,12 @@ Result fields:
 Example:
 
 ```yaml
-use: selinux.mode
+use: security.selinux.mode
 with:
   state: present
 ```
 
-### `selinux.port`
+### `security.selinux.port`
 
 Manage a persistent SELinux port type mapping with semanage port.
 
@@ -9205,14 +9189,14 @@ Result fields:
 Example:
 
 ```yaml
-use: selinux.port
+use: security.selinux.port
 with:
   port: 22
   protocol: tcp
   selinux_type: httpd_sys_content_t
 ```
 
-### `selinux.restorecon`
+### `security.selinux.restorecon`
 
 Run restorecon on a remote path.
 
@@ -9238,14 +9222,12 @@ Result fields:
 Example:
 
 ```yaml
-use: selinux.restorecon
+use: security.selinux.restorecon
 with:
   path: /tmp/automax-demo
 ```
 
-## ssh
-
-### `ssh.authorized_key`
+### `security.ssh.authorized_key.add`
 
 Ensure an SSH authorized key is present or absent for a remote user.
 
@@ -9276,7 +9258,7 @@ Result fields:
 Example:
 
 ```yaml
-use: ssh.authorized_key
+use: security.ssh.authorized_key.add
 with:
   user: deploy
   key: '{{ vars.deploy_public_key }}'
@@ -9284,7 +9266,7 @@ with:
   sudo: true
 ```
 
-### `ssh.authorized_key_absent`
+### `security.ssh.authorized_key.remove`
 
 Remove one SSH authorized_keys line for a remote user.
 
@@ -9310,13 +9292,13 @@ Result fields:
 Example:
 
 ```yaml
-use: ssh.authorized_key_absent
+use: security.ssh.authorized_key.remove
 with:
   user: deploy
   key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
 ```
 
-### `ssh.config`
+### `security.ssh.config`
 
 Install SSH client or sshd config drop-ins with backup and optional reload.
 
@@ -9348,13 +9330,13 @@ Result fields:
 Example:
 
 ```yaml
-use: ssh.config
+use: security.ssh.config
 with:
   name: nginx
   settings: value
 ```
 
-### `ssh.fingerprint`
+### `security.ssh.fingerprint`
 
 Read an SSH public or private key fingerprint with ssh-keygen.
 
@@ -9380,12 +9362,12 @@ Result fields:
 Example:
 
 ```yaml
-use: ssh.fingerprint
+use: security.ssh.fingerprint
 with:
   path: /tmp/automax-demo
 ```
 
-### `ssh.host_keygen`
+### `security.ssh.host_keygen`
 
 Generate missing OpenSSH host keys on a remote target.
 
@@ -9411,14 +9393,14 @@ Result fields:
 Example:
 
 ```yaml
-use: ssh.host_keygen
+use: security.ssh.host_keygen
 with:
   types:
     - ed25519
   force: true
 ```
 
-### `ssh.keygen`
+### `security.ssh.keygen`
 
 Generate an SSH keypair on a remote target with idempotent overwrite protection.
 
@@ -9454,12 +9436,12 @@ Result fields:
 Example:
 
 ```yaml
-use: ssh.keygen
+use: security.ssh.keygen
 with:
   path: /tmp/automax-demo
 ```
 
-### `ssh.known_hosts`
+### `security.ssh.known_hosts`
 
 Ensure a known_hosts entry exists or is removed on a remote target.
 
@@ -9491,12 +9473,12 @@ Result fields:
 Example:
 
 ```yaml
-use: ssh.known_hosts
+use: security.ssh.known_hosts
 with:
   host: 127.0.0.1
 ```
 
-### `ssh.public_key`
+### `security.ssh.public_key`
 
 Derive or read an SSH public key from a private key path.
 
@@ -9523,14 +9505,12 @@ Result fields:
 Example:
 
 ```yaml
-use: ssh.public_key
+use: security.ssh.public_key
 with:
   path: /tmp/automax-demo
 ```
 
-## sshd
-
-### `sshd.config`
+### `security.sshd.config`
 
 Install an sshd_config.d hardening drop-in with sshd syntax validation.
 
@@ -9562,13 +9542,13 @@ Result fields:
 Example:
 
 ```yaml
-use: sshd.config
+use: security.sshd.config
 with:
   name: nginx
   settings: value
 ```
 
-### `sshd.validate`
+### `security.sshd.validate`
 
 Validate sshd configuration with sshd -t.
 
@@ -9593,46 +9573,12 @@ Result fields:
 Example:
 
 ```yaml
-use: sshd.validate
+use: security.sshd.validate
 with:
   sudo: true
 ```
 
-## sudo
-
-### `sudo.assert`
-
-Assert sudo -l output contains a rule fragment.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `true`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `user` | yes | `string` | `False` | User account name. |
-| `rule` | yes | `string` |  | Firewall action such as allow, deny, reject or limit. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-
-Example:
-
-```yaml
-use: sudo.assert
-with:
-  user: deploy
-  rule: allow
-```
-
-### `sudo.can_run`
+### `security.sudo.can_run`
 
 Assert that a user can run a command via sudo without prompting.
 
@@ -9659,13 +9605,83 @@ Result fields:
 Example:
 
 ```yaml
-use: sudo.can_run
+use: security.sudo.can_run
 with:
   user: deploy
   command: echo automax
 ```
 
-### `sudo.list`
+### `security.sudo.check`
+
+Assert sudo -l output contains a rule fragment.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `true`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `user` | yes | `string` | `False` | User account name. |
+| `rule` | yes | `string` |  | Firewall action such as allow, deny, reject or limit. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+
+Example:
+
+```yaml
+use: security.sudo.check
+with:
+  user: deploy
+  rule: allow
+```
+
+### `security.sudo.dropin`
+
+Install or remove a sudoers drop-in file with visudo validation.
+
+- Remote session: `true`
+- Dry-run support: `true`
+- Check mode support: `false`
+
+| Parameter | Required | Type | Default | Description |
+|---|---:|---|---|---|
+| `name` | yes | `string` |  | Drop-in filename under /etc/sudoers.d. |
+| `content` | no | `string` |  | sudoers content installed when state=present. |
+| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
+| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
+| `validate` | no | `boolean` | `True` | Validate content with visudo before installing. |
+| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
+
+Result fields:
+
+- `changed`: Whether the plugin changed the target or controller state.
+- `message`: Human-readable result message.
+- `rc`: Process or command return code when applicable.
+- `stdout`: Captured standard output when applicable.
+- `stderr`: Captured standard error when applicable.
+- `data`: Plugin-specific structured result data.
+- `data.path`: Installed sudoers drop-in path.
+
+Example:
+
+```yaml
+use: security.sudo.dropin
+with:
+  name: deploy-myapp
+  content: 'deploy ALL=(root) /bin/systemctl restart myapp'
+  validate: true
+  sudo: true
+```
+
+### `security.sudo.list`
 
 List sudo privileges for a user.
 
@@ -9690,12 +9706,12 @@ Result fields:
 Example:
 
 ```yaml
-use: sudo.list
+use: security.sudo.list
 with:
   user: deploy
 ```
 
-### `sudo.rule`
+### `security.sudo.rule`
 
 Install a structured sudoers.d rule with visudo validation, backup and safe mode.
 
@@ -9728,13 +9744,13 @@ Result fields:
 Example:
 
 ```yaml
-use: sudo.rule
+use: security.sudo.rule
 with:
   name: nginx
   subject: Automax notification
 ```
 
-### `sudo.validate`
+### `security.sudo.validate`
 
 Validate sudoers syntax with visudo without changing files.
 
@@ -9759,49 +9775,9 @@ Result fields:
 Example:
 
 ```yaml
-use: sudo.validate
+use: security.sudo.validate
 with:
   path: /tmp/automax-demo
-  sudo: true
-```
-
-## sudoers
-
-### `sudoers.dropin`
-
-Install or remove a sudoers drop-in file with visudo validation.
-
-- Remote session: `true`
-- Dry-run support: `true`
-- Check mode support: `false`
-
-| Parameter | Required | Type | Default | Description |
-|---|---:|---|---|---|
-| `name` | yes | `string` |  | Drop-in filename under /etc/sudoers.d. |
-| `content` | no | `string` |  | sudoers content installed when state=present. |
-| `state` | no | `string` |  | Desired state such as present, absent, started or stopped. |
-| `mode` | no | `string` |  | POSIX file mode, for example 0644 or 0755. |
-| `validate` | no | `boolean` | `True` | Validate content with visudo before installing. |
-| `sudo` | no | `boolean` | `False` | Run the remote operation through sudo -n when supported. |
-
-Result fields:
-
-- `changed`: Whether the plugin changed the target or controller state.
-- `message`: Human-readable result message.
-- `rc`: Process or command return code when applicable.
-- `stdout`: Captured standard output when applicable.
-- `stderr`: Captured standard error when applicable.
-- `data`: Plugin-specific structured result data.
-- `data.path`: Installed sudoers drop-in path.
-
-Example:
-
-```yaml
-use: sudoers.dropin
-with:
-  name: deploy-myapp
-  content: 'deploy ALL=(root) /bin/systemctl restart myapp'
-  validate: true
   sudo: true
 ```
 

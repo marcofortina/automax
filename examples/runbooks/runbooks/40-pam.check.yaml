@@ -15,7 +15,7 @@ tasks:
   - id: catalog
     substeps:
     - id: pam_access
-      use: pam.access
+      use: security.pam.access
       with:
         entries:
         - domain: appuser
@@ -23,68 +23,68 @@ tasks:
           item: nofile
           value: 1024
     - id: pam_authselect
-      use: pam.authselect
+      use: security.authselect.check
       with:
         profile: /etc/apparmor.d/usr.sbin.nginx
     - id: pam_backup
-      use: pam.backup
+      use: security.pam.backup
       with:
         service: sshd
     - id: pam_faillock
-      use: pam.faillock
+      use: security.pam.faillock
       with:
         settings:
           deny: '5'
     - id: pam_include_assert
-      use: pam.include_assert
+      use: security.pam.include_check
       with:
         service: sshd
         include: common-auth
     - id: pam_limits
-      use: pam.limits
+      use: security.pam.limits
       with:
         files:
         - /etc/pam.d/login
     - id: pam_module_assert
-      use: pam.module_assert
+      use: security.pam.module_check
       with:
         service: sshd
         module: br_netfilter
     - id: pam_order_assert
-      use: pam.order_assert
+      use: security.pam.order_check
       with:
         service: sshd
         before: pam_permit.so
         after: pam_deny.so
     - id: pam_pwhistory
-      use: pam.pwhistory
+      use: security.pam.pwhistory
       with:
         settings:
           remember: '5'
     - id: pam_restore
-      use: pam.restore
+      use: security.pam.restore
       with:
         service: sshd
         src: /tmp/source
         confirm: true
     - id: pam_service_line
-      use: pam.service_line
+      use: security.pam.service_line
       with:
         service: sshd
         line: KEY=value
     - id: pam_stack_facts
-      use: pam.stack_facts
+      use: security.pam.stack.facts
       with:
         service: sshd
         services:
         - sshd
     - id: pam_succeed_if
-      use: pam.succeed_if
+      use: security.pam.succeed_if
       with:
         service: sshd
         condition: user ingroup wheel
     - id: pam_validate
-      use: pam.validate
+      use: security.pam.validate
       with:
         service: sshd
         services:

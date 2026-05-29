@@ -23,7 +23,7 @@ def _diff(path: str, content: str, kind: str) -> list[Dict[str, Any]]:
 
 
 class SshdConfigPlugin(RenderedFileInstallMixin, BasePlugin):
-    name = "sshd.config"
+    name = "security.sshd.config"
     description = "Install an sshd_config.d hardening drop-in with sshd syntax validation."
     required_params = ("name", "settings")
     optional_params = ("path", "backup", "backup_suffix", "reload", "sudo")
@@ -40,7 +40,7 @@ class SshdConfigPlugin(RenderedFileInstallMixin, BasePlugin):
     def _content(self, params: Dict[str, Any]) -> str:
         settings = params.get("settings")
         if not isinstance(settings, dict) or not settings:
-            raise PluginValidationError("sshd.config settings must be a non-empty mapping")
+            raise PluginValidationError("security.sshd.config settings must be a non-empty mapping")
         return "# Managed by automax\n" + _settings_content(settings)
 
     def rendered_file_path(self, params: Dict[str, Any]) -> str:
@@ -95,7 +95,7 @@ class LoginDefsPlugin(BasePlugin):
         return result_from_remote(rc=rc, stdout=out, stderr=err, message="login.defs failed")
 
 class PasswordPolicyPlugin(RenderedFileInstallMixin, BasePlugin):
-    name = "password.policy"
+    name = "security.password.policy"
     description = "Install a pwquality password policy drop-in."
     required_params = ("name", "settings")
     optional_params = ("path", "backup", "backup_suffix", "sudo")
@@ -112,7 +112,7 @@ class PasswordPolicyPlugin(RenderedFileInstallMixin, BasePlugin):
     def _content(self, params: Dict[str, Any]) -> str:
         settings = params.get("settings")
         if not isinstance(settings, dict) or not settings:
-            raise PluginValidationError("password.policy settings must be a non-empty mapping")
+            raise PluginValidationError("security.password.policy settings must be a non-empty mapping")
         return "# Managed by automax\n" + _settings_content(settings, " = ")
 
     def rendered_file_path(self, params: Dict[str, Any]) -> str:
@@ -122,7 +122,7 @@ class PasswordPolicyPlugin(RenderedFileInstallMixin, BasePlugin):
         return self._content(params)
 
 class AuthselectProfilePlugin(BasePlugin):
-    name = "authselect.profile"
+    name = "security.authselect.profile"
     description = "Select an authselect profile with optional features and backup."
     required_params = ("profile",)
     optional_params = ("features", "backup", "force", "sudo")
@@ -135,7 +135,7 @@ class AuthselectProfilePlugin(BasePlugin):
         return [str(item) for item in raw]
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "authselect.profile changes PAM/NSS profile state through authselect"
+        return "security.authselect.profile changes PAM/NSS profile state through authselect"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -147,7 +147,7 @@ class AuthselectProfilePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="authselect.profile failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.authselect.profile failed")
 
 # Extended sshd_config rendering with Match blocks and explicit validation controls.
 
@@ -156,17 +156,17 @@ def _sshd_content_extended(self: SshdConfigPlugin, params: Dict[str, Any]) -> st
     blocks = params.get("match_blocks") or []
     for block in blocks:
         if not isinstance(block, dict) or "match" not in block or "settings" not in block:
-            raise PluginValidationError("sshd.config match_blocks entries require match and settings")
+            raise PluginValidationError("security.sshd.config match_blocks entries require match and settings")
         content += f"\nMatch {block['match']}\n"
         settings = block["settings"]
         if not isinstance(settings, dict):
-            raise PluginValidationError("sshd.config match block settings must be a mapping")
+            raise PluginValidationError("security.sshd.config match block settings must be a mapping")
         for key, value in sorted(settings.items()):
             content += f"    {key} {value}\n"
     return content
 
 class ExtendedSshdConfigPlugin(SshdConfigPlugin):
-    """sshd.config with Match block and validation controls."""
+    """security.sshd.config with Match block and validation controls."""
 
     optional_params = ("path", "backup", "backup_suffix", "reload", "validate_before_reload", "match_blocks", "sudo")
 

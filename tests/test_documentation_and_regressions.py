@@ -705,7 +705,7 @@ def test_plugin_smoke_runbooks_match_archive_decompress_parameters():
 def test_plugin_smoke_runbooks_match_auditd_search_user_schema():
     from automax.plugins.registry import build_builtin_registry
 
-    plugin = build_builtin_registry().get("auditd.search")
+    plugin = build_builtin_registry().get("security.audit.search")
     plugin.validate({"key": "automax", "user": "deploy", "start": "recent", "end": "now"})
 
     runbook = yaml.safe_load(Path("examples/runbooks/runbooks/05-auditd.check.yaml").read_text(encoding="utf-8"))
@@ -714,7 +714,7 @@ def test_plugin_smoke_runbooks_match_auditd_search_user_schema():
         for task in runbook.get("tasks", [])
         for step in task.get("steps", [])
         for substep in step.get("substeps", [])
-        if substep.get("use") == "auditd.search"
+        if substep.get("use") == "security.audit.search"
     ]
     assert search_substeps
     assert all(isinstance((substep.get("with") or {}).get("user"), str) for substep in search_substeps)
@@ -766,7 +766,7 @@ def test_plugin_specific_user_and_boolean_value_schemas_do_not_use_global_fallba
 
     registry = build_builtin_registry()
     registry.get("cron.list").validate({"user": "deploy", "sudo": True})
-    registry.get("selinux.boolean").validate({"name": "httpd_can_network_connect", "value": True, "persist": True})
+    registry.get("security.selinux.boolean").validate({"name": "httpd_can_network_connect", "value": True, "persist": True})
 
 
 
@@ -783,14 +783,14 @@ def test_rendered_file_install_mixin_covers_managed_file_plugins():
 
     registry = build_builtin_registry()
     expected = {
-        "auditd.rule",
+        "security.audit.rule",
         "chrony.servers",
         "limits.dropin",
         "network.dns.config",
-        "password.policy",
-        "ssh.config",
-        "sshd.config",
-        "sudo.rule",
+        "security.password.policy",
+        "security.ssh.config",
+        "security.sshd.config",
+        "security.sudo.rule",
         "sysctl.dropin",
         "systemd.sysusers",
         "systemd.timer",
@@ -801,7 +801,7 @@ def test_rendered_file_install_mixin_covers_managed_file_plugins():
     for name in expected:
         assert isinstance(registry.get(name), RenderedFileInstallMixin)
 
-    sudo_commands = registry.get("sudo.rule").manual_commands(
+    sudo_commands = registry.get("security.sudo.rule").manual_commands(
         {"name": "ops", "subject": "%ops", "commands": ["/usr/bin/systemctl"]},
         ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={}),
     )
@@ -820,11 +820,11 @@ def test_read_only_command_plugin_is_shared_base_class():
 
     registry = build_builtin_registry()
     expected = {
-        "apparmor.profile_assert",
-        "auditd.status",
-        "auditd.search",
+        "security.apparmor.profile_check",
+        "security.audit.status",
+        "security.audit.search",
         "cron.list",
-        "sudo.validate",
+        "security.sudo.validate",
         "sysctl.assert",
         "udev.validate",
     }
@@ -840,6 +840,122 @@ def test_read_only_command_plugin_is_shared_base_class():
 
 
 
+
+
+
+def test_security_namespace_replaces_legacy_security_plugin_names():
+    from automax.plugins.registry import build_builtin_registry
+
+    old_names = [
+        "apparmor.complain",
+        "apparmor.disable",
+        "apparmor.enforce",
+        "apparmor.parser_validate",
+        "apparmor.profile",
+        "apparmor.profile_assert",
+        "apparmor.reload",
+        "apparmor.status",
+        "auditd.backlog_assert",
+        "auditd.reload",
+        "auditd.rule",
+        "auditd.rules_facts",
+        "auditd.search",
+        "auditd.status",
+        "auditd.syscall",
+        "auditd.watch",
+        "authselect.profile",
+        "pam.access",
+        "pam.authselect",
+        "pam.backup",
+        "pam.faillock",
+        "pam.include_assert",
+        "pam.limits",
+        "pam.module_assert",
+        "pam.order_assert",
+        "pam.pwhistory",
+        "pam.restore",
+        "pam.service_line",
+        "pam.stack_facts",
+        "pam.succeed_if",
+        "pam.validate",
+        "password.policy",
+        "selinux.boolean",
+        "selinux.context",
+        "selinux.fcontext",
+        "selinux.mode",
+        "selinux.port",
+        "selinux.restorecon",
+        "sudo.assert",
+        "sudo.can_run",
+        "sudo.list",
+        "sudo.rule",
+        "sudo.validate",
+        "sudoers.dropin",
+        "ssh.authorized_key",
+        "ssh.authorized_key_absent",
+        "ssh.config",
+        "ssh.fingerprint",
+        "ssh.host_keygen",
+        "ssh.keygen",
+        "ssh.known_hosts",
+        "ssh.public_key",
+        "sshd.config",
+        "sshd.validate",
+        "secret.redact_assert",
+        "secret.scan_output",
+        "secret.scan_preview",
+        "cert.expiry_report",
+        "cert.fingerprint",
+        "cert.generate_csr",
+        "cert.install_ca_bundle",
+        "cert.install_keypair",
+        "cert.issuer_assert",
+        "cert.matches_key",
+        "cert.san_assert",
+        "cert.self_signed",
+        "cert.subject_assert",
+        "cert.verify_chain",
+        "pki.ca_install",
+        "pki.cert_expiry_assert",
+        "pki.key_permissions",
+    ]
+    names = set(build_builtin_registry().names())
+    assert not (names & set(old_names))
+    assert {
+        "security.apparmor.profile_check",
+        "security.audit.rules.facts",
+        "security.authselect.profile",
+        "security.authselect.check",
+        "security.pam.stack.facts",
+        "security.password.policy",
+        "security.pki.cert.expiry_check",
+        "security.pki.trust.install_ca",
+        "security.secret.redact_check",
+        "security.selinux.mode",
+        "security.ssh.authorized_key.add",
+        "security.ssh.authorized_key.remove",
+        "security.sshd.validate",
+        "security.sudo.dropin",
+    } <= names
+
+    searched = [
+        Path("docs/plugins/index.md"),
+        Path("docs/plugins/linux-operations.md"),
+        Path("docs/plugins/generated.md"),
+        Path("docs/plugins/security.md"),
+        Path("docs/guides/account-access.md"),
+        Path("docs/guides/linux-security-modules.md"),
+        Path("examples/runbooks/RUNBOOK_INDEX.md"),
+        *Path("examples/runbooks/runbooks").glob("*.check.yaml"),
+    ]
+    offenders = []
+    for path in searched:
+        text = path.read_text(encoding="utf-8")
+        for old_name in old_names:
+            pattern = re.compile(r"(?<![A-Za-z0-9_.])" + re.escape(old_name) + r"(?![A-Za-z0-9_.])")
+            if pattern.search(text):
+                offenders.append(f"{path}:{old_name}")
+    assert offenders == []
 
 def test_health_namespace_is_removed_from_public_documentation_and_runbooks():
     from automax.plugins.registry import build_builtin_registry
@@ -1026,14 +1142,14 @@ def test_ambiguous_plugin_parameters_have_plugin_specific_schemas():
 
     registry = build_builtin_registry()
     expected = {
-        ("auditd.search", "user"): ("string",),
-        ("auditd.search", "start"): ("string",),
+        ("security.audit.search", "user"): ("string",),
+        ("security.audit.search", "start"): ("string",),
         ("archive.compress", "source"): ("path",),
         ("archive.decompress", "archive"): ("path",),
         ("backup.restore", "archive"): ("boolean",),
         ("cron.list", "user"): ("string",),
         ("network.firewall.firewalld.source", "source"): ("string",),
-        ("selinux.boolean", "value"): ("boolean", "string"),
+        ("security.selinux.boolean", "value"): ("boolean", "string"),
         ("sysctl.set", "value"): ("string",),
         ("systemctl.start", "user"): ("boolean",),
         ("systemd.unit", "start"): ("boolean",),

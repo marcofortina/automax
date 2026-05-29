@@ -208,8 +208,8 @@ specific behavior.
 ### PAM hardening candidates
 
 The initial PAM hardening backlog is implemented through explicit, service-scoped
-plugins: `pam.access`, `pam.faillock`, `pam.pwhistory`, `pam.succeed_if`,
-`pam.service_line`, `pam.validate`, `pam.stack_facts` and `pam.authselect`. Future
+plugins: `security.pam.access`, `security.pam.faillock`, `security.pam.pwhistory`, `security.pam.succeed_if`,
+`security.pam.service_line`, `security.pam.validate`, `security.pam.stack.facts` and `security.authselect.check`. Future
 PAM work should preserve the same model: no broad `/etc/pam.d/*` template
 rewriter, backups by default for mutating plugins, and read-only validation
 before authentication-affecting changes.

@@ -15,6 +15,6 @@ tasks:
   - id: catalog
     substeps:
     - id: authselect_profile
-      use: authselect.profile
+      use: security.authselect.profile
       with:
         profile: /etc/apparmor.d/usr.sbin.nginx

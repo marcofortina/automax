@@ -11,7 +11,7 @@ Automax supports SELinux and AppArmor workflows without hiding distribution diff
 
 ```yaml
 - id: allow_http_network
-  use: selinux.boolean
+  use: security.selinux.boolean
   with:
     name: httpd_can_network_connect
     value: true
@@ -19,17 +19,17 @@ Automax supports SELinux and AppArmor workflows without hiding distribution diff
     sudo: true
 ```
 
-Available plugins include `selinux.mode`, `selinux.boolean`, `selinux.context` and `selinux.restorecon`.
+Available plugins include `security.selinux.mode`, `security.selinux.boolean`, `security.selinux.context` and `security.selinux.restorecon`.
 
 ## AppArmor
 
 ```yaml
 - id: enforce_nginx_profile
-  use: apparmor.profile
+  use: security.apparmor.profile
   with:
     profile: /etc/apparmor.d/usr.sbin.nginx
     state: enforce
     sudo: true
 ```
 
-Available plugins include `apparmor.status`, `apparmor.profile` and `apparmor.reload`.
+Available plugins include `security.apparmor.status`, `security.apparmor.profile` and `security.apparmor.reload`.

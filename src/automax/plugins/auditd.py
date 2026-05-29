@@ -19,11 +19,11 @@ def _rules(params: Dict[str, Any]) -> list[str]:
         return [raw]
     if isinstance(raw, list) and raw:
         return [str(item) for item in raw]
-    raise PluginValidationError("auditd.rule requires rule or rules")
+    raise PluginValidationError("security.audit.rule requires rule or rules")
 
 
 class AuditdRulePlugin(RenderedFileInstallMixin, BasePlugin):
-    name = "auditd.rule"
+    name = "security.audit.rule"
     description = "Install an auditd rules.d drop-in with backup and optional reload."
     required_params = ("name",)
     optional_params = ("rule", "rules", "path", "backup", "backup_suffix", "reload", "sudo")
@@ -55,7 +55,7 @@ class AuditdRulePlugin(RenderedFileInstallMixin, BasePlugin):
 
 
 class AuditdStatusPlugin(ReadOnlyCommandPlugin):
-    name = "auditd.status"
+    name = "security.audit.status"
     description = "Read auditd status without changing the system."
     optional_params = ("sudo",)
     opens_remote_session = True
@@ -66,17 +66,17 @@ class AuditdStatusPlugin(ReadOnlyCommandPlugin):
 
 
 class AuditdReloadPlugin(BasePlugin):
-    name = "auditd.reload"
+    name = "security.audit.reload"
     description = "Reload auditd rules using augenrules or the auditd service."
     optional_params = ("sudo",)
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "auditd.reload is a runtime reload operation with no deterministic file diff"
+        return "security.audit.reload is a runtime reload operation with no deterministic file diff"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return [f"if command -v augenrules >/dev/null 2>&1; then {sudo_prefix(params, default=True)}augenrules --load; else {sudo_prefix(params, default=True)}service auditd restart; fi"]
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="auditd.reload failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="security.audit.reload failed")

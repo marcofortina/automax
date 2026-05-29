@@ -24,22 +24,22 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "alternatives.get": ("update-alternatives",),
     "alternatives.list": ("update-alternatives",),
     "alternatives.set": ("update-alternatives",),
-    "apparmor.complain": ("aa-complain",),
-    "apparmor.disable": ("aa-disable",),
-    "apparmor.enforce": ("aa-enforce",),
-    "apparmor.parser_validate": ("apparmor_parser",),
-    "apparmor.profile": ("apparmor_parser",),
-    "apparmor.profile_assert": ("aa-status",),
-    "apparmor.reload": ("apparmor_parser",),
-    "apparmor.status": ("aa-status",),
-    "auditd.backlog_assert": ("auditctl",),
-    "auditd.reload": ("auditctl",),
-    "auditd.rule": ("auditctl",),
-    "auditd.rules_facts": ("auditctl",),
-    "auditd.search": ("ausearch",),
-    "auditd.status": ("auditctl",),
-    "auditd.syscall": ("auditctl",),
-    "auditd.watch": ("auditctl",),
+    "security.apparmor.complain": ("aa-complain",),
+    "security.apparmor.disable": ("aa-disable",),
+    "security.apparmor.enforce": ("aa-enforce",),
+    "security.apparmor.validate": ("apparmor_parser",),
+    "security.apparmor.profile": ("apparmor_parser",),
+    "security.apparmor.profile_check": ("aa-status",),
+    "security.apparmor.reload": ("apparmor_parser",),
+    "security.apparmor.status": ("aa-status",),
+    "security.audit.backlog_check": ("auditctl",),
+    "security.audit.reload": ("auditctl",),
+    "security.audit.rule": ("auditctl",),
+    "security.audit.rules.facts": ("auditctl",),
+    "security.audit.search": ("ausearch",),
+    "security.audit.status": ("auditctl",),
+    "security.audit.syscall": ("auditctl",),
+    "security.audit.watch": ("auditctl",),
     "backup.manifest": ("find", "sha256sum"),
     "backup.prune": ("find",),
     "backup.restore_verify": ("sha256sum",),
@@ -47,14 +47,14 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "block.fs_assert": ("blkid",),
     "block.mountpoint_assert": ("findmnt",),
     "blkid.assert": ("blkid",),
-    "cert.fingerprint": ("openssl",),
-    "cert.install_ca_bundle": ("openssl",),
-    "cert.issuer_assert": ("openssl",),
-    "cert.matches_key": ("openssl",),
-    "cert.san_assert": ("openssl",),
-    "cert.self_signed": ("openssl",),
-    "cert.subject_assert": ("openssl",),
-    "cert.verify_chain": ("openssl",),
+    "security.pki.cert.fingerprint": ("openssl",),
+    "security.pki.trust.install_bundle": ("openssl",),
+    "security.pki.cert.issuer_check": ("openssl",),
+    "security.pki.cert.key_match_check": ("openssl",),
+    "security.pki.cert.san_check": ("openssl",),
+    "security.pki.cert.self_signed": ("openssl",),
+    "security.pki.cert.subject_check": ("openssl",),
+    "security.pki.cert.chain_check": ("openssl",),
     "chrony.sources_assert": ("chronyc",),
     "chrony.tracking_assert": ("chronyc",),
     "cron.list": ("crontab",),
@@ -104,17 +104,17 @@ EXACT_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "network.firewall.nftables.rollback_file": ("nft",),
     "network.firewall.nftables.ruleset_assert": ("nft",),
     "network.firewall.nftables.validate": ("nft",),
-    "pam.validate": ("awk",),
+    "security.pam.validate": ("awk",),
     "pkg.pin": ("install",),
     "pkg.repo_priority": ("install",),
-    "ssh.fingerprint": ("ssh-keygen",),
-    "ssh.host_keygen": ("ssh-keygen",),
-    "ssh.keygen": ("ssh-keygen",),
-    "ssh.public_key": ("ssh-keygen",),
-    "sshd.validate": ("sshd",),
-    "sudo.can_run": ("sudo",),
-    "sudo.list": ("sudo",),
-    "sudo.validate": ("visudo",),
+    "security.ssh.fingerprint": ("ssh-keygen",),
+    "security.ssh.host_keygen": ("ssh-keygen",),
+    "security.ssh.keygen": ("ssh-keygen",),
+    "security.ssh.public_key": ("ssh-keygen",),
+    "security.sshd.validate": ("sshd",),
+    "security.sudo.can_run": ("sudo",),
+    "security.sudo.list": ("sudo",),
+    "security.sudo.validate": ("visudo",),
     "swap.status": ("swapon",),
     "sysctl.assert": ("sysctl",),
     "sysctl.facts": ("sysctl",),
@@ -154,10 +154,10 @@ DEBIAN_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
 }
 
 RHEL_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
-    "authselect.profile": ("authselect",),
+    "security.authselect.profile": ("authselect",),
     "kernel.boot_param": ("grubby",),
     "kernel.boot_param_absent": ("grubby",),
-    "pam.authselect": ("authselect",),
+    "security.authselect.check": ("authselect",),
     "pkg.clean": ("rpm",),
     "pkg.hold": ("rpm",),
     "pkg.owner": ("rpm",),
@@ -181,13 +181,13 @@ PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
 }
 
 DEBIAN_PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
-    "apparmor.": ("apparmor_parser",),
+    "security.apparmor.": ("apparmor_parser",),
     "network.firewall.ufw.": ("ufw",),
 }
 
 RHEL_PREFIX_TOOL_REQUIREMENTS: Dict[str, tuple[str, ...]] = {
     "network.firewall.firewalld.": ("firewall-cmd",),
-    "selinux.": ("semanage",),
+    "security.selinux.": ("semanage",),
 }
 
 PARAM_TOOL_REQUIREMENTS: Dict[tuple[str, str], tuple[str, ...]] = {
@@ -323,10 +323,10 @@ RHEL_PACKAGES: Dict[str, str] = {
     "zip": "zip",
 }
 
-DEBIAN_ONLY_PREFIXES = ("apparmor.", "network.firewall.ufw.")
-RHEL_ONLY_PREFIXES = ("network.firewall.firewalld.", "selinux.")
+DEBIAN_ONLY_PREFIXES = ("security.apparmor.", "network.firewall.ufw.")
+RHEL_ONLY_PREFIXES = ("network.firewall.firewalld.", "security.selinux.")
 DEBIAN_ONLY_EXACT = frozenset[str]()
-RHEL_ONLY_EXACT = frozenset({"authselect.profile", "kernel.boot_param", "kernel.boot_param_absent", "pam.authselect"})
+RHEL_ONLY_EXACT = frozenset({"security.authselect.profile", "kernel.boot_param", "kernel.boot_param_absent", "security.authselect.check"})
 
 
 def plugin_os_mismatch(plugin_name: str, os_family: str | None, params: Dict[str, Any] | None = None) -> str | None:

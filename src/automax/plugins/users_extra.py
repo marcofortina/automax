@@ -131,7 +131,7 @@ class UserSetPasswordPlugin(BasePlugin):
 class SshAuthorizedKeyPlugin(BasePlugin):
     """Manage one line in a remote user's authorized_keys file."""
 
-    name = "ssh.authorized_key"
+    name = "security.ssh.authorized_key.add"
     description = "Ensure an SSH authorized key is present or absent for a remote user."
     required_params = ("user", "key")
     optional_params = ("state", "sudo")
@@ -144,7 +144,7 @@ class SshAuthorizedKeyPlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if str(params.get("state", "present")) not in {"present", "absent"}:
-            raise PluginValidationError("ssh.authorized_key state must be present or absent")
+            raise PluginValidationError("security.ssh.authorized_key.add state must be present or absent")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -194,13 +194,13 @@ chown -R "$user":"$user" "$ssh_dir" 2>/dev/null || true
             prefix="AUTOMAX_SH",
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.authorized_key failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.ssh.authorized_key.add failed")
 
 
 class SudoersDropinPlugin(BasePlugin):
     """Install or remove a sudoers drop-in file with optional visudo validation."""
 
-    name = "sudoers.dropin"
+    name = "security.sudo.dropin"
     description = "Install or remove a sudoers drop-in file with visudo validation."
     required_params = ("name",)
     optional_params = ("content", "state", "mode", "validate", "sudo")
@@ -215,12 +215,12 @@ class SudoersDropinPlugin(BasePlugin):
         super().validate(params)
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
-            raise PluginValidationError("sudoers.dropin state must be present or absent")
+            raise PluginValidationError("security.sudo.dropin state must be present or absent")
         if state == "present" and "content" not in params:
-            raise PluginValidationError("sudoers.dropin requires content when state=present")
+            raise PluginValidationError("security.sudo.dropin requires content when state=present")
         name = str(params["name"])
         if "/" in name or name in {".", ".."}:
-            raise PluginValidationError("sudoers.dropin name must be a simple filename")
+            raise PluginValidationError("security.sudo.dropin name must be a simple filename")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -229,12 +229,12 @@ class SudoersDropinPlugin(BasePlugin):
         if state == "absent":
             command = f"if test -e {quote(dest)}; then {sudo_prefix(params, default=True)}rm -f {quote(dest)} && echo {CHANGE_MARKER}; fi"
             rc, out, err = exec_remote(context, command)
-            return result_from_remote(rc=rc, stdout=out, stderr=err, message="sudoers.dropin failed")
+            return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.sudo.dropin failed")
         temp_path = upload_text_to_temp(context, str(params["content"]).rstrip() + "\n")
         if bool(params.get("validate", True)):
             rc, out, err = exec_remote(context, f"{sudo_prefix(params, default=True)}visudo -cf {quote(temp_path)}")
             if rc != 0:
-                return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="sudoers.dropin validation failed")
+                return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.sudo.dropin validation failed")
         rc, out, err = install_uploaded_file(
             context,
             temp_path,
@@ -244,7 +244,7 @@ class SudoersDropinPlugin(BasePlugin):
             owner="root",
             group="root",
         )
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="sudoers.dropin failed", data={"path": dest})
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.sudo.dropin failed", data={"path": dest})
 
 # Extended authorized_keys controls.
 
@@ -255,7 +255,7 @@ def _authorized_key_execute_extended(self: SshAuthorizedKeyPlugin, params: Dict[
     if params.get("fingerprint_assert"):
         rc, out, err = exec_remote(context, f"printf '%s\\n' {quote(key)} | ssh-keygen -lf - | grep -F -- {quote(params['fingerprint_assert'])}")
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="ssh.authorized_key fingerprint_assert failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.ssh.authorized_key.add fingerprint_assert failed")
     if params.get("key_options") and not key.startswith(str(params["key_options"])):
         key = f"{params['key_options']} {key}"
     if params.get("comment_update"):
@@ -289,12 +289,12 @@ echo __AUTOMAX_CHANGED__
                 prefix="AUTOMAX_SH",
             ),
         )
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.authorized_key failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.ssh.authorized_key.add failed")
     return SshAuthorizedKeyPlugin.execute(self, params, context)
 
 
 class ExtendedSshAuthorizedKeyPlugin(SshAuthorizedKeyPlugin):
-    """ssh.authorized_key with exclusive, fingerprint and comment controls."""
+    """security.ssh.authorized_key.add with exclusive, fingerprint and comment controls."""
 
     optional_params = ("state", "sudo", "key_options", "exclusive", "comment_update", "fingerprint_assert")
 

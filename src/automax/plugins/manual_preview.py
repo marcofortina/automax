@@ -123,13 +123,13 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
         action = plugin_name.split(".", 1)[1]
         return [_systemctl(params, "daemon-reload" if action == "daemon_reload" else action.replace("_", "-"))]
 
-    if plugin_name == "apparmor.profile":
+    if plugin_name == "security.apparmor.profile":
         profile = params.get("profile", path)
         state = params.get("state", "present")
         return [f"{sudo}apparmor_parser {'-R' if state == 'absent' else '-r'} {_q(profile)}"]
-    if plugin_name == "apparmor.reload":
+    if plugin_name == "security.apparmor.reload":
         return [f"{sudo}systemctl reload apparmor || {sudo}service apparmor reload"]
-    if plugin_name == "apparmor.status":
+    if plugin_name == "security.apparmor.status":
         return [f"{sudo}aa-status"]
 
     if plugin_name.startswith("assert."):
@@ -302,18 +302,18 @@ def fallback_manual_commands(plugin_name: str, params: Dict[str, Any], context: 
             return [f"timeout {_q(params.get('timeout', 60))} sh -c 'until pgrep -f {_q(pattern or 'process')} >/dev/null; do sleep {_q(params.get('interval', 2))}; done'"]
 
     if plugin_name.startswith("selinux."):
-        if plugin_name == "selinux.boolean":
+        if plugin_name == "security.selinux.boolean":
             return [f"{sudo}setsebool {'-P ' if params.get('persist', True) else ''}{_q(params.get('name', 'httpd_can_network_connect'))} {_q('on' if params.get('value', True) else 'off')}"]
-        if plugin_name == "selinux.mode":
+        if plugin_name == "security.selinux.mode":
             return [f"{sudo}setenforce {_q(params.get('state', 'enforcing'))}"]
-        if plugin_name in {"selinux.context", "selinux.fcontext"}:
+        if plugin_name in {"security.selinux.context", "security.selinux.fcontext"}:
             return [f"{sudo}semanage fcontext -a -t {_q(params.get('selinux_type', 'var_t'))} {_q(path)}"]
-        if plugin_name == "selinux.restorecon":
+        if plugin_name == "security.selinux.restorecon":
             return [f"{sudo}restorecon {'-R ' if params.get('recursive') else ''}{_q(path)}"]
 
-    if plugin_name == "ssh.authorized_key":
+    if plugin_name == "security.ssh.authorized_key.add":
         return [f"{sudo}install -d -m 0700 ~{_q(params.get('user', name))}/.ssh && echo {_q(params.get('key', 'ssh-ed25519 AAAA demo'))} >> ~{_q(params.get('user', name))}/.ssh/authorized_keys"]
-    if plugin_name == "sudoers.dropin":
+    if plugin_name == "security.sudo.dropin":
         return [f"{sudo}visudo -cf {_q(params.get('path', '/etc/sudoers'))}"]
 
     if plugin_name.startswith("transfer."):

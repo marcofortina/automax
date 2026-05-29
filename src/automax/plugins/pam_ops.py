@@ -91,7 +91,7 @@ def _settings_file_commands(path: str, settings: Dict[str, Any], params: Dict[st
 
 
 class PamServiceLinePlugin(BasePlugin):
-    name = "pam.service_line"
+    name = "security.pam.service_line"
     description = "Ensure or remove one exact line in one PAM service file with backup."
     required_params = ("service", "line")
     optional_params = ("state", "backup", "backup_suffix", "sudo")
@@ -104,7 +104,7 @@ class PamServiceLinePlugin(BasePlugin):
         super().validate(params)
         _state(params)
         if not str(params["line"]).strip():
-            raise PluginValidationError("pam.service_line line must not be empty")
+            raise PluginValidationError("security.pam.service_line line must not be empty")
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
         self.validate(params)
@@ -141,11 +141,11 @@ class PamServiceLinePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="pam.service_line failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.pam.service_line failed")
 
 
 class PamAccessPlugin(BasePlugin):
-    name = "pam.access"
+    name = "security.pam.access"
     description = "Manage access.conf entries and optional pam_access service wiring."
     required_params = ("entries",)
     optional_params = ("path", "service", "services", "service_files", "state", "backup", "backup_suffix", "sudo")
@@ -157,7 +157,7 @@ class PamAccessPlugin(BasePlugin):
     def _entries(self, params: Dict[str, Any]) -> list[str]:
         raw = params.get("entries")
         if not isinstance(raw, list) or not raw:
-            raise PluginValidationError("pam.access entries must be a non-empty list")
+            raise PluginValidationError("security.pam.access entries must be a non-empty list")
         entries: list[str] = []
         for entry in raw:
             if isinstance(entry, dict):
@@ -166,11 +166,11 @@ class PamAccessPlugin(BasePlugin):
                 elif "domain" in entry:
                     entries.append(f"+ : {entry['domain']} : ALL")
                 else:
-                    raise PluginValidationError("pam.access mapping entries require permission/users/origins")
+                    raise PluginValidationError("security.pam.access mapping entries require permission/users/origins")
             else:
                 entries.append(str(entry).strip())
         if not all(entries):
-            raise PluginValidationError("pam.access entries must not be empty")
+            raise PluginValidationError("security.pam.access entries must not be empty")
         return entries
 
     def diff_preview(self, params: Dict[str, Any], context: ExecutionContext) -> list[Dict[str, Any]]:
@@ -203,11 +203,11 @@ class PamAccessPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="pam.access failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.pam.access failed")
 
 
 class PamFaillockPlugin(BasePlugin):
-    name = "pam.faillock"
+    name = "security.pam.faillock"
     description = "Manage faillock.conf settings and optional pam_faillock service wiring."
     required_params = ("settings",)
     optional_params = ("path", "service", "services", "service_files", "backup", "backup_suffix", "sudo")
@@ -241,11 +241,11 @@ class PamFaillockPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="pam.faillock failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.pam.faillock failed")
 
 
 class PamPwhistoryPlugin(BasePlugin):
-    name = "pam.pwhistory"
+    name = "security.pam.pwhistory"
     description = "Manage pwhistory.conf settings and optional pam_pwhistory service wiring."
     required_params = ("settings",)
     optional_params = ("path", "service", "services", "service_files", "control", "backup", "backup_suffix", "sudo")
@@ -275,11 +275,11 @@ class PamPwhistoryPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="pam.pwhistory failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.pam.pwhistory failed")
 
 
 class PamSucceedIfPlugin(BasePlugin):
-    name = "pam.succeed_if"
+    name = "security.pam.succeed_if"
     description = "Ensure or remove one guarded pam_succeed_if condition in a PAM service file."
     required_params = ("service", "condition")
     optional_params = ("type", "control", "state", "backup", "backup_suffix", "sudo")
@@ -304,11 +304,11 @@ class PamSucceedIfPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="pam.succeed_if failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.pam.succeed_if failed")
 
 
 class PamValidatePlugin(BasePlugin):
-    name = "pam.validate"
+    name = "security.pam.validate"
     description = "Run read-only sanity checks against explicit PAM service files."
     optional_params = ("service", "services", "service_files", "sudo")
     opens_remote_session = True
@@ -319,7 +319,7 @@ class PamValidatePlugin(BasePlugin):
         return files or ["/etc/pam.d/login", "/etc/pam.d/sshd", "/etc/pam.d/su"]
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "pam.validate is a read-only PAM service sanity check"
+        return "security.pam.validate is a read-only PAM service sanity check"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         files = " ".join(quote(path) for path in self._files(params))
@@ -329,12 +329,12 @@ class PamValidatePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="pam.validate failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.pam.validate failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"files": self._files(params)})
 
 
 class PamStackFactsPlugin(BasePlugin):
-    name = "pam.stack_facts"
+    name = "security.pam.stack.facts"
     description = "Inventory PAM service files and include/substack relationships."
     optional_params = ("service", "services", "service_files", "sudo")
     opens_remote_session = True
@@ -347,7 +347,7 @@ class PamStackFactsPlugin(BasePlugin):
         return "/etc/pam.d/*"
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "pam.stack_facts is a read-only PAM stack inventory"
+        return "security.pam.stack.facts is a read-only PAM stack inventory"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         files = self._files_expr(params)
@@ -356,12 +356,12 @@ class PamStackFactsPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="pam.stack_facts failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.pam.stack.facts failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"pam_stack": out})
 
 
 class PamAuthselectPlugin(BasePlugin):
-    name = "pam.authselect"
+    name = "security.authselect.check"
     description = "Assert the current authselect profile and enabled features on RHEL-like systems."
     optional_params = ("profile", "features", "sudo")
     opens_remote_session = True
@@ -371,7 +371,7 @@ class PamAuthselectPlugin(BasePlugin):
         return _as_list(params.get("features"))
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "pam.authselect is a read-only authselect profile assertion"
+        return "security.authselect.check is a read-only authselect profile assertion"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         command = f"{sudo_prefix(params, default=True)}authselect current"
@@ -384,5 +384,5 @@ class PamAuthselectPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="pam.authselect failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.authselect.check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"authselect": out})

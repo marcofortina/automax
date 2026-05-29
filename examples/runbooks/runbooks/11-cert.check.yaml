@@ -15,60 +15,60 @@ tasks:
   - id: catalog
     substeps:
     - id: cert_expiry_report
-      use: cert.expiry_report
+      use: security.pki.cert.expiry_report
       with:
         cert: /tmp/automax-demo.crt
     - id: cert_fingerprint
-      use: cert.fingerprint
+      use: security.pki.cert.fingerprint
       with:
         cert: /tmp/automax-demo.crt
     - id: cert_generate_csr
-      use: cert.generate_csr
+      use: security.pki.csr.generate
       with:
         key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo automax@example
         dest: /tmp/dest
         subject: Automax notification
     - id: cert_install_ca_bundle
-      use: cert.install_ca_bundle
+      use: security.pki.trust.install_bundle
       with:
         src: /tmp/source
         dest: /tmp/dest
     - id: cert_install_keypair
-      use: cert.install_keypair
+      use: security.pki.cert.install_keypair
       with:
         cert: /tmp/automax-demo.crt
         key: /tmp/automax-demo.key
         cert_dest: /tmp/automax-demo.crt
         key_dest: /tmp/automax-demo.key
     - id: cert_issuer_assert
-      use: cert.issuer_assert
+      use: security.pki.cert.issuer_check
       with:
         cert: /tmp/automax-demo.crt
         issuer: CN=Example CA
     - id: cert_matches_key
-      use: cert.matches_key
+      use: security.pki.cert.key_match_check
       with:
         cert: /tmp/automax-demo.crt
         key: /tmp/automax-demo.key
     - id: cert_san_assert
-      use: cert.san_assert
+      use: security.pki.cert.san_check
       with:
         cert: /tmp/automax-demo.crt
         names:
         - DNS:localhost
     - id: cert_self_signed
-      use: cert.self_signed
+      use: security.pki.cert.self_signed
       with:
         key: /tmp/automax-demo.key
         cert: /tmp/automax-demo.crt
         subject: /CN=automax-demo
     - id: cert_subject_assert
-      use: cert.subject_assert
+      use: security.pki.cert.subject_check
       with:
         cert: /tmp/automax-demo.crt
         subject: CN=automax-demo
     - id: cert_verify_chain
-      use: cert.verify_chain
+      use: security.pki.cert.chain_check
       with:
         cert: /tmp/automax-demo.crt
         ca_file: /tmp/automax-ca.crt

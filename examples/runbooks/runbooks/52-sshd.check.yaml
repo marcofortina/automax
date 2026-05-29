@@ -15,12 +15,12 @@ tasks:
   - id: catalog
     substeps:
     - id: sshd_config
-      use: sshd.config
+      use: security.sshd.config
       with:
         name: automax
         settings:
           PasswordAuthentication: 'yes'
     - id: sshd_validate
-      use: sshd.validate
+      use: security.sshd.validate
       with:
         sudo: true

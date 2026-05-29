@@ -2909,7 +2909,7 @@ tasks:
       - id: s1
         substeps:
           - id: remove_key
-            use: ssh.authorized_key_absent
+            use: security.ssh.authorized_key.remove
             with:
               user: deploy
               key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDemo demo@example
@@ -2935,7 +2935,7 @@ tasks:
 
     assert result.exit_code == 0, result.output
     assert "# sudo note: Rendered manual commands containing sudo -n" in result.output
-    assert "plugin=ssh.authorized_key_absent sudo=yes" in result.output
+    assert "plugin=security.ssh.authorized_key.remove sudo=yes" in result.output
     assert "cat <<'AUTOMAX_SH' | sudo -n sh -s -- deploy" in result.output
     assert "--sudo-password-env ENV_NAME" in result.output
 
@@ -3370,7 +3370,7 @@ def test_storage_and_linux_ops_plugins_are_registered():
         "swap.present",
         "swap.absent",
         "limits.dropin",
-        "pam.limits",
+        "security.pam.limits",
         "hosts.entry",
         "hostname.set",
         "network.dns.config",
@@ -3650,7 +3650,7 @@ def test_pki_plugins_install_permissions_and_expiry_preview():
     from automax.plugins.pki import PkiCaInstallPlugin, PkiCertExpiryAssertPlugin, PkiKeyPermissionsPlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("pki.ca_install", "pki.key_permissions", "pki.cert_expiry_assert"):
+    for name in ("security.pki.trust.install_ca", "security.pki.key.permissions", "security.pki.cert.expiry_check"):
         assert name in names
 
     context = _sysops_preview_context()
@@ -3880,7 +3880,7 @@ def test_auditd_plugins_render_rules_status_and_reload():
     from automax.plugins.auditd import AuditdReloadPlugin, AuditdRulePlugin, AuditdStatusPlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("auditd.rule", "auditd.status", "auditd.reload"):
+    for name in ("security.audit.rule", "security.audit.status", "security.audit.reload"):
         assert name in names
     context = _sysops_preview_context()
     rule_cmd = " && ".join(AuditdRulePlugin().manual_commands({"name": "watch-passwd", "rule": "-w /etc/passwd -p wa -k identity"}, context))
@@ -3894,7 +3894,7 @@ def test_ssh_config_and_known_hosts_plugins_render_safe_changes():
     from automax.plugins.ssh_ops import SshConfigPlugin, SshKnownHostsPlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("ssh.config", "ssh.known_hosts"):
+    for name in ("security.ssh.config", "security.ssh.known_hosts"):
         assert name in names
     context = _sysops_preview_context()
     server = " && ".join(SshConfigPlugin().manual_commands({"name": "10-hardening", "scope": "server", "settings": {"PermitRootLogin": "no"}}, context))
@@ -3908,7 +3908,7 @@ def test_ssh_config_and_known_hosts_plugins_render_safe_changes():
 def test_ssh_keygen_plugin_renders_secret_free_key_generation():
     from automax.plugins.ssh_ops import SshKeygenPlugin
 
-    assert "ssh.keygen" in AutomaxEngine().plugin_registry.names()
+    assert "security.ssh.keygen" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     plugin = SshKeygenPlugin()
     command = plugin.manual_commands({"path": "/home/deploy/.ssh/id_ed25519", "type": "ed25519", "owner": "deploy", "group": "deploy", "sudo": True}, context)[0]
@@ -3923,11 +3923,11 @@ def test_selinux_port_and_fcontext_plugins_render_persistent_rules():
     from automax.plugins.security_modules import SelinuxFcontextPlugin, SelinuxPortPlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("selinux.port", "selinux.fcontext"):
+    for name in ("security.selinux.port", "security.selinux.fcontext"):
         assert name in names
     context = _sysops_preview_context()
     assert "semanage port" in SelinuxPortPlugin().manual_commands({"port": 8443, "protocol": "tcp", "selinux_type": "http_port_t"}, context)[0]
-    assert "semanage fcontext" in SelinuxFcontextPlugin().execute.__qualname__ or SelinuxFcontextPlugin().name == "selinux.fcontext"
+    assert "semanage fcontext" in SelinuxFcontextPlugin().execute.__qualname__ or SelinuxFcontextPlugin().name == "security.selinux.fcontext"
 
 
 def test_kernel_boot_param_plugin_renders_safe_grub_update():
@@ -3945,7 +3945,7 @@ def test_sudo_management_plugins_render_validated_dropins():
     from automax.plugins.sudo_ops import SudoRulePlugin, SudoValidatePlugin
 
     names = AutomaxEngine().plugin_registry.names()
-    for name in ("sudo.rule", "sudo.validate"):
+    for name in ("security.sudo.rule", "security.sudo.validate"):
         assert name in names
     context = _sysops_preview_context()
     rule = " && ".join(SudoRulePlugin().manual_commands({"name": "ops", "subject": "%ops", "commands": ["/usr/bin/systemctl"], "nopassword": True}, context))
@@ -3958,7 +3958,7 @@ def test_sudo_management_plugins_render_validated_dropins():
 def test_sudoers_dropin_reference_example_keeps_password_required_sudo():
     from automax.plugins.metadata import PLUGIN_EXAMPLES
 
-    example = PLUGIN_EXAMPLES["sudoers.dropin"]
+    example = PLUGIN_EXAMPLES["security.sudo.dropin"]
 
     assert "NOPASSWD" not in example
     assert "deploy ALL=(root) /bin/systemctl restart myapp" in example
@@ -4126,7 +4126,7 @@ def test_iptables_restore_plugin_requires_confirm_or_test_only():
 def test_sshd_config_plugin_renders_validated_dropin():
     from automax.plugins.hardening import SshdConfigPlugin
 
-    assert "sshd.config" in AutomaxEngine().plugin_registry.names()
+    assert "security.sshd.config" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     commands = " && ".join(SshdConfigPlugin().manual_commands({"name": "10-hardening", "settings": {"PermitRootLogin": "no"}}, context))
     assert "/etc/ssh/sshd_config.d/10-hardening.conf" in commands
@@ -4148,7 +4148,7 @@ def test_login_defs_plugin_renders_key_updates():
 def test_password_policy_plugin_renders_pwquality_dropin():
     from automax.plugins.hardening import PasswordPolicyPlugin
 
-    assert "password.policy" in AutomaxEngine().plugin_registry.names()
+    assert "security.password.policy" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     commands = " && ".join(PasswordPolicyPlugin().manual_commands({"name": "10-hardening", "settings": {"minlen": 14}}, context))
     assert "/etc/security/pwquality.conf.d/10-hardening.conf" in commands
@@ -4159,7 +4159,7 @@ def test_password_policy_plugin_renders_pwquality_dropin():
 def test_authselect_profile_plugin_renders_profile_selection():
     from automax.plugins.hardening import AuthselectProfilePlugin
 
-    assert "authselect.profile" in AutomaxEngine().plugin_registry.names()
+    assert "security.authselect.profile" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = AuthselectProfilePlugin().manual_commands({"profile": "sssd", "features": ["with-faillock"]}, context)[0]
     assert "authselect select sssd with-faillock" in command
@@ -4170,7 +4170,7 @@ def test_authselect_profile_plugin_renders_profile_selection():
 def test_cert_generate_csr_plugin_renders_openssl_req():
     from automax.plugins.cert_ops import CertGenerateCsrPlugin
 
-    assert "cert.generate_csr" in AutomaxEngine().plugin_registry.names()
+    assert "security.pki.csr.generate" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = CertGenerateCsrPlugin().manual_commands({"key": "/etc/pki/tls/private/app.key", "dest": "/tmp/app.csr", "subject": "/CN=app"}, context)[0]
     assert "openssl req -new" in command
@@ -4180,7 +4180,7 @@ def test_cert_generate_csr_plugin_renders_openssl_req():
 def test_cert_self_signed_plugin_renders_openssl_x509_req():
     from automax.plugins.cert_ops import CertSelfSignedPlugin
 
-    assert "cert.self_signed" in AutomaxEngine().plugin_registry.names()
+    assert "security.pki.cert.self_signed" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = CertSelfSignedPlugin().manual_commands({"key": "/tmp/app.key", "cert": "/tmp/app.crt", "subject": "/CN=app", "days": 30}, context)[0]
     assert "openssl req -x509" in command
@@ -4190,7 +4190,7 @@ def test_cert_self_signed_plugin_renders_openssl_x509_req():
 def test_cert_verify_chain_plugin_renders_read_only_verify():
     from automax.plugins.cert_ops import CertVerifyChainPlugin
 
-    assert "cert.verify_chain" in AutomaxEngine().plugin_registry.names()
+    assert "security.pki.cert.chain_check" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = CertVerifyChainPlugin().manual_commands({"cert": "/tmp/app.crt", "ca_file": "/tmp/ca.crt"}, context)[0]
     assert "openssl verify -CAfile /tmp/ca.crt /tmp/app.crt" in command
@@ -4200,7 +4200,7 @@ def test_cert_verify_chain_plugin_renders_read_only_verify():
 def test_cert_install_keypair_plugin_renders_permissions():
     from automax.plugins.cert_ops import CertInstallKeypairPlugin
 
-    assert "cert.install_keypair" in AutomaxEngine().plugin_registry.names()
+    assert "security.pki.cert.install_keypair" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     commands = " && ".join(CertInstallKeypairPlugin().manual_commands({"cert": "/tmp/app.crt", "key": "/tmp/app.key", "cert_dest": "/etc/pki/app.crt", "key_dest": "/etc/pki/private/app.key"}, context))
     assert "install -D -m 0644 /tmp/app.crt /etc/pki/app.crt" in commands
@@ -4210,7 +4210,7 @@ def test_cert_install_keypair_plugin_renders_permissions():
 def test_cert_expiry_report_plugin_renders_checkend():
     from automax.plugins.cert_ops import CertExpiryReportPlugin
 
-    assert "cert.expiry_report" in AutomaxEngine().plugin_registry.names()
+    assert "security.pki.cert.expiry_report" in AutomaxEngine().plugin_registry.names()
     context = _sysops_preview_context()
     command = CertExpiryReportPlugin().manual_commands({"cert": "/tmp/app.crt", "warning_days": 10}, context)[0]
     assert "-enddate" in command
@@ -4395,10 +4395,10 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["command"] = "true"
     if plugin.name == "network.firewall.nftables.apply" or plugin.name == "network.firewall.nftables.validate":
         params["content"] = "flush ruleset\n"
-    if plugin.name == "pki.ca_install":
+    if plugin.name == "security.pki.trust.install_ca":
         params["name"] = "automax-demo"
         params["content"] = "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----\n"
-    if plugin.name == "selinux.mode":
+    if plugin.name == "security.selinux.mode":
         params["state"] = "enforcing"
     if plugin.name in {"fs.acl.set", "fs.acl.check"}:
         params["acl"] = "u:app:rwx"
@@ -4412,9 +4412,9 @@ def _audit_sample_params(plugin) -> dict[str, object]:
         params["rule"] = "allow"
         params["port"] = 22
         params["protocol"] = "tcp"
-    if plugin.name == "apparmor.profile_assert":
+    if plugin.name == "security.apparmor.profile_check":
         params["state"] = "enforce"
-    if plugin.name == "auditd.backlog_assert":
+    if plugin.name == "security.audit.backlog_check":
         params["max_lost"] = 0
         params["max_backlog"] = 8192
     if plugin.name == "chrony.tracking_assert":
@@ -4425,7 +4425,7 @@ def _audit_sample_params(plugin) -> dict[str, object]:
     if plugin.name == "fs.file.replace":
         params["count"] = 0
         params["match_count_assert"] = 1
-    if plugin.name == "sshd.config":
+    if plugin.name == "security.sshd.config":
         params["match_blocks"] = [{"match": "User deploy", "settings": {"X11Forwarding": "no"}}]
     if plugin.name == "network.dns.config":
         params["backend"] = "plain-file"
@@ -4544,14 +4544,14 @@ def test_ssh_security_plugins_render_manual_commands():
     context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
     registry = build_builtin_registry()
 
-    assert "ssh-keygen -lf" in registry.get("ssh.fingerprint").manual_commands({"path": "/tmp/id.pub", "sudo": False}, context)[0]
-    assert "ssh-keygen -y" in registry.get("ssh.public_key").manual_commands({"path": "/tmp/id", "sudo": False}, context)[0]
-    sudo_public_key = registry.get("ssh.public_key").manual_commands({"path": "/tmp/id", "dest": "/root/id.pub"}, context)[0]
+    assert "ssh-keygen -lf" in registry.get("security.ssh.fingerprint").manual_commands({"path": "/tmp/id.pub", "sudo": False}, context)[0]
+    assert "ssh-keygen -y" in registry.get("security.ssh.public_key").manual_commands({"path": "/tmp/id", "sudo": False}, context)[0]
+    sudo_public_key = registry.get("security.ssh.public_key").manual_commands({"path": "/tmp/id", "dest": "/root/id.pub"}, context)[0]
     assert "ssh-keygen -y" in sudo_public_key
     assert "| sudo -n tee /root/id.pub >/dev/null" in sudo_public_key
-    assert "ssh-keygen -A" in registry.get("ssh.host_keygen").manual_commands({"sudo": False}, context)[0]
-    assert "authorized_keys" in registry.get("ssh.authorized_key_absent").manual_commands({"user": "deploy", "key": "ssh-ed25519 AAA demo", "sudo": False}, context)[0]
-    assert "sshd -t" in registry.get("sshd.validate").manual_commands({}, context)[0]
+    assert "ssh-keygen -A" in registry.get("security.ssh.host_keygen").manual_commands({"sudo": False}, context)[0]
+    assert "authorized_keys" in registry.get("security.ssh.authorized_key.remove").manual_commands({"user": "deploy", "key": "ssh-ed25519 AAA demo", "sudo": False}, context)[0]
+    assert "sshd -t" in registry.get("security.sshd.validate").manual_commands({}, context)[0]
 
 
 def test_certificate_assert_plugins_render_manual_commands():
@@ -4561,12 +4561,12 @@ def test_certificate_assert_plugins_render_manual_commands():
     context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
     registry = build_builtin_registry()
 
-    assert "-fingerprint" in registry.get("cert.fingerprint").manual_commands({"cert": "/tmp/cert.pem", "sudo": False}, context)[0]
-    assert "openssl pkey" in registry.get("cert.matches_key").manual_commands({"cert": "/tmp/cert.pem", "key": "/tmp/key.pem", "sudo": False}, context)[0]
-    assert "subjectAltName" in registry.get("cert.san_assert").manual_commands({"cert": "/tmp/cert.pem", "names": ["DNS:example.com"], "sudo": False}, context)[0]
-    assert "-subject" in registry.get("cert.subject_assert").manual_commands({"cert": "/tmp/cert.pem", "subject": "CN=example", "sudo": False}, context)[0]
-    assert "-issuer" in registry.get("cert.issuer_assert").manual_commands({"cert": "/tmp/cert.pem", "issuer": "CN=ca", "sudo": False}, context)[0]
-    assert "install -D" in " && ".join(registry.get("cert.install_ca_bundle").manual_commands({"src": "/tmp/ca.pem", "dest": "/usr/local/share/ca-certificates/ca.crt", "sudo": False}, context))
+    assert "-fingerprint" in registry.get("security.pki.cert.fingerprint").manual_commands({"cert": "/tmp/cert.pem", "sudo": False}, context)[0]
+    assert "openssl pkey" in registry.get("security.pki.cert.key_match_check").manual_commands({"cert": "/tmp/cert.pem", "key": "/tmp/key.pem", "sudo": False}, context)[0]
+    assert "subjectAltName" in registry.get("security.pki.cert.san_check").manual_commands({"cert": "/tmp/cert.pem", "names": ["DNS:example.com"], "sudo": False}, context)[0]
+    assert "-subject" in registry.get("security.pki.cert.subject_check").manual_commands({"cert": "/tmp/cert.pem", "subject": "CN=example", "sudo": False}, context)[0]
+    assert "-issuer" in registry.get("security.pki.cert.issuer_check").manual_commands({"cert": "/tmp/cert.pem", "issuer": "CN=ca", "sudo": False}, context)[0]
+    assert "install -D" in " && ".join(registry.get("security.pki.trust.install_bundle").manual_commands({"src": "/tmp/ca.pem", "dest": "/usr/local/share/ca-certificates/ca.crt", "sudo": False}, context))
 
 
 def test_cron_readback_plugins_render_manual_commands():
@@ -4735,7 +4735,7 @@ def test_ssh_keygen_hardening_options_render_secret_safe_manual_command():
     from automax.plugins.registry import build_builtin_registry
 
     context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={"key_passphrase": "secret"})
-    plugin = build_builtin_registry().get("ssh.keygen")
+    plugin = build_builtin_registry().get("security.ssh.keygen")
 
     manual = plugin.manual_commands({"path": "/tmp/id_ed25519", "passphrase_secret": "key_passphrase", "fingerprint": True, "sudo": False}, context)[0]
     assert "***" in manual
@@ -4752,24 +4752,24 @@ def test_pam_hardening_plugins_render_manual_commands():
     context = ExecutionContext(run_id="test", dry_run=True, job={}, task={}, step={}, substep={}, target=Target(name="node", host="host"), vars={}, outputs={}, secrets={})
     registry = build_builtin_registry()
 
-    access = registry.get("pam.access").manual_commands({"entries": ["+ : deploy : 10.0.0.0/8"], "service": "sshd", "sudo": False}, context)
+    access = registry.get("security.pam.access").manual_commands({"entries": ["+ : deploy : 10.0.0.0/8"], "service": "sshd", "sudo": False}, context)
     assert "/etc/security/access.conf" in " && ".join(access)
     assert "pam_access.so" in " && ".join(access)
-    faillock = registry.get("pam.faillock").manual_commands({"settings": {"deny": 5}, "service": "system-auth", "sudo": False}, context)
+    faillock = registry.get("security.pam.faillock").manual_commands({"settings": {"deny": 5}, "service": "system-auth", "sudo": False}, context)
     assert "faillock.conf" in " && ".join(faillock)
     assert "pam_faillock.so" in " && ".join(faillock)
-    pwhistory = registry.get("pam.pwhistory").manual_commands({"settings": {"remember": 5}, "service": "password-auth", "sudo": False}, context)
+    pwhistory = registry.get("security.pam.pwhistory").manual_commands({"settings": {"remember": 5}, "service": "password-auth", "sudo": False}, context)
     assert "pwhistory.conf" in " && ".join(pwhistory)
     assert "pam_pwhistory.so" in " && ".join(pwhistory)
-    succeed = " && ".join(registry.get("pam.succeed_if").manual_commands({"service": "sshd", "condition": "user ingroup wheel", "sudo": False}, context))
+    succeed = " && ".join(registry.get("security.pam.succeed_if").manual_commands({"service": "sshd", "condition": "user ingroup wheel", "sudo": False}, context))
     assert "pam_succeed_if.so user ingroup wheel" in succeed
-    line = " && ".join(registry.get("pam.service_line").manual_commands({"service": "sshd", "line": "auth required pam_env.so", "sudo": False}, context))
+    line = " && ".join(registry.get("security.pam.service_line").manual_commands({"service": "sshd", "line": "auth required pam_env.so", "sudo": False}, context))
     assert "pam_env.so" in line
-    validate = registry.get("pam.validate").manual_commands({"service": "sshd"}, context)[0]
+    validate = registry.get("security.pam.validate").manual_commands({"service": "sshd"}, context)[0]
     assert "awk" in validate and "/etc/pam.d/sshd" in validate
-    facts = registry.get("pam.stack_facts").manual_commands({"service": "sshd"}, context)[0]
+    facts = registry.get("security.pam.stack.facts").manual_commands({"service": "sshd"}, context)[0]
     assert "grep -En" in facts and "/etc/pam.d/sshd" in facts
-    authselect = registry.get("pam.authselect").manual_commands({"profile": "sssd", "features": ["with-faillock"], "sudo": False}, context)[0]
+    authselect = registry.get("security.authselect.check").manual_commands({"profile": "sssd", "features": ["with-faillock"], "sudo": False}, context)[0]
     assert "authselect current" in authselect
     assert "with-faillock" in authselect
 
@@ -5058,12 +5058,12 @@ def test_capability_and_redaction_plugins_render_safe_previews():
     assert "command -v setfacl" in registry.get("capability.assert").manual_commands({"tools": ["setfacl"]}, context)[0]
     assert registry.get("plugin.requirements").execute({"plugin": "transfer.rsync"}, context).data["requirements"]["transfer.rsync"] == ["rsync"]
 
-    redacted = registry.get("secret.scan_output").execute({"text": "token=super-secret-token password=abc"}, context)
+    redacted = registry.get("security.secret.scan_output").execute({"text": "token=super-secret-token password=abc"}, context)
     assert redacted.ok
     assert redacted.data["changed_by_redaction"] is True
     assert "super-secret-token" not in redacted.data["redacted"]
     assert "password=***" in redacted.data["redacted"]
-    leaked = registry.get("secret.redact_assert").execute({"text": "value=super-secret-token"}, context)
+    leaked = registry.get("security.secret.redact_check").execute({"text": "value=super-secret-token"}, context)
     assert not leaked.ok
 
 

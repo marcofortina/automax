@@ -15,7 +15,7 @@ tasks:
   - id: catalog
     substeps:
     - id: pki_ca_install
-      use: pki.ca_install
+      use: security.pki.trust.install_ca
       with:
         dest: /tmp/automax-ca.crt
         content: '-----BEGIN CERTIFICATE-----
@@ -24,10 +24,10 @@ tasks:
 
           '
     - id: pki_cert_expiry_assert
-      use: pki.cert_expiry_assert
+      use: security.pki.cert.expiry_check
       with:
         path: /tmp/automax-demo
     - id: pki_key_permissions
-      use: pki.key_permissions
+      use: security.pki.key.permissions
       with:
         path: /tmp/automax-demo

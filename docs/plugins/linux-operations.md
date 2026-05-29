@@ -60,9 +60,9 @@ where they modify system files:
 ```text
 swap.present / swap.absent
 limits.dropin
-pam.limits
-pam.access / pam.faillock / pam.pwhistory / pam.succeed_if
-pam.service_line / pam.validate / pam.stack_facts / pam.authselect
+security.pam.limits
+security.pam.access / security.pam.faillock / security.pam.pwhistory / security.pam.succeed_if
+security.pam.service_line / security.pam.validate / security.pam.stack.facts / security.authselect.check
 hosts.entry
 hostname.set
 network.dns.config
@@ -124,7 +124,7 @@ intentionally not part of the public plugin surface.
 
 ## Certificate and PKI operations
 
-Use `pki.ca_install`, `pki.key_permissions` and `pki.cert_expiry_assert` to
+Use `security.pki.trust.install_ca`, `security.pki.key.permissions` and `security.pki.cert.expiry_check` to
 install CA certificates, enforce private-key permissions and validate certificate
 expiry windows. File-changing operations include preview data and backups where
 applicable.
@@ -172,7 +172,7 @@ automax commands render --job jobs/linux-preflight.yaml --inventory inventory/pr
 file-backed operations emit deterministic unified diffs or structured state
 plans, while runtime-only/read-only operations emit explicit reasons. Examples
 include fstab plans for `swap.present` / `swap.absent`, PAM append plans for
-`pam.limits`, hostname and download plans, and runtime explanations for
+`security.pam.limits`, hostname and download plans, and runtime explanations for
 `block.rescan`, `udev.reload`, `multipath.reload` and `system.reboot`.
 
 ## Enterprise system operations
@@ -191,16 +191,16 @@ network.dns.facts
 network.link.facts / network.route.facts
 pkg.version_pin / pkg.repo_priority
 network.link.interface / network.link.bond / network.link.vlan / network.route.add / network.route.remove with persist/backend
-pki.ca_install with trust_store=system
+security.pki.trust.install_ca with trust_store=system
 lvm.snapshot / lvm.thin_pool / lvm.lv_remove / lvm.vg_remove / lvm.pv_remove
 fs.acl.set / fs.attr.set / fs.quota
 systemd.unit / systemd.timer / systemd.tmpfiles / systemd.sysusers
 alternatives.set
-auditd.rule / auditd.status / auditd.reload
-ssh.config / ssh.known_hosts / ssh.authorized_key
-selinux.port / selinux.fcontext
+security.audit.rule / security.audit.status / security.audit.reload
+security.ssh.config / security.ssh.known_hosts / security.ssh.authorized_key.add
+security.selinux.port / security.selinux.fcontext
 kernel.boot_param
-sudo.rule / sudo.validate
+security.sudo.rule / security.sudo.validate
 ```
 
 Destructive plugins such as LVM removal require explicit confirmation parameters.
@@ -215,11 +215,11 @@ existing configuration files.
 
 ## Certificate operations
 
-`cert.generate_csr` creates CSRs from existing keys using openssl.
-`cert.self_signed` generates self-signed certificates from existing private keys.
-`cert.verify_chain` performs read-only openssl chain verification.
-`cert.install_keypair` installs certificate/key pairs with private-key mode `0600`.
-`cert.expiry_report` reads certificate expiry and fails when inside the configured warning window.
+`security.pki.csr.generate` creates CSRs from existing keys using openssl.
+`security.pki.cert.self_signed` generates self-signed certificates from existing private keys.
+`security.pki.cert.chain_check` performs read-only openssl chain verification.
+`security.pki.cert.install_keypair` installs certificate/key pairs with private-key mode `0600`.
+`security.pki.cert.expiry_report` reads certificate expiry and fails when inside the configured warning window.
 
 ## Network checks, facts and bridge operations
 

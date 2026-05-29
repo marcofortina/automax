@@ -14,14 +14,14 @@ from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, quote, resu
 
 
 class CertGenerateCsrPlugin(BasePlugin):
-    name = "cert.generate_csr"
+    name = "security.pki.csr.generate"
     description = "Generate a CSR from an existing private key using openssl."
     required_params = ("key", "dest", "subject")
     optional_params = ("config", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cert.generate_csr creates a CSR artifact; use manual commands for the exact openssl invocation"
+        return "security.pki.csr.generate creates a CSR artifact; use manual commands for the exact openssl invocation"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -30,17 +30,17 @@ class CertGenerateCsrPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="cert.generate_csr failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.pki.csr.generate failed")
 
 class CertSelfSignedPlugin(BasePlugin):
-    name = "cert.self_signed"
+    name = "security.pki.cert.self_signed"
     description = "Generate a self-signed certificate using an existing private key."
     required_params = ("key", "cert", "subject")
     optional_params = ("days", "extensions", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cert.self_signed creates a certificate artifact; use manual commands for the exact openssl invocation"
+        return "security.pki.cert.self_signed creates a certificate artifact; use manual commands for the exact openssl invocation"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -50,10 +50,10 @@ class CertSelfSignedPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0] + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="cert.self_signed failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.pki.cert.self_signed failed")
 
 class CertVerifyChainPlugin(BasePlugin):
-    name = "cert.verify_chain"
+    name = "security.pki.cert.chain_check"
     description = "Verify a certificate chain against a CA bundle with openssl verify."
     required_params = ("cert", "ca_file")
     optional_params = ("untrusted", "sudo")
@@ -61,7 +61,7 @@ class CertVerifyChainPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cert.verify_chain is a read-only certificate chain verification"
+        return "security.pki.cert.chain_check is a read-only certificate chain verification"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -71,18 +71,18 @@ class CertVerifyChainPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cert.verify_chain failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.pki.cert.chain_check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 class CertInstallKeypairPlugin(BasePlugin):
-    name = "cert.install_keypair"
+    name = "security.pki.cert.install_keypair"
     description = "Install a certificate and private key with safe permissions and optional validation."
     required_params = ("cert", "key", "cert_dest", "key_dest")
     optional_params = ("backup", "backup_suffix", "validate", "owner", "group", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cert.install_keypair installs certificate material and enforces file permissions"
+        return "security.pki.cert.install_keypair installs certificate material and enforces file permissions"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -108,10 +108,10 @@ class CertInstallKeypairPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="cert.install_keypair failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.pki.cert.install_keypair failed")
 
 class CertExpiryReportPlugin(BasePlugin):
-    name = "cert.expiry_report"
+    name = "security.pki.cert.expiry_report"
     description = "Report certificate expiry and optionally fail inside a warning window."
     required_params = ("cert",)
     optional_params = ("warning_days", "sudo")
@@ -119,7 +119,7 @@ class CertExpiryReportPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cert.expiry_report is a read-only certificate expiry inspection"
+        return "security.pki.cert.expiry_report is a read-only certificate expiry inspection"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -129,12 +129,12 @@ class CertExpiryReportPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cert.expiry_report failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.pki.cert.expiry_report failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
 class CertFingerprintPlugin(BasePlugin):
-    name = "cert.fingerprint"
+    name = "security.pki.cert.fingerprint"
     description = "Read a certificate fingerprint with openssl."
     required_params = ("cert",)
     optional_params = ("algorithm", "sudo")
@@ -142,7 +142,7 @@ class CertFingerprintPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cert.fingerprint is a read-only certificate fingerprint query"
+        return "security.pki.cert.fingerprint is a read-only certificate fingerprint query"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         algorithm = str(params.get("algorithm", "sha256"))
@@ -151,12 +151,12 @@ class CertFingerprintPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cert.fingerprint failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.pki.cert.fingerprint failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"fingerprint": out.strip()})
 
 
 class CertMatchesKeyPlugin(BasePlugin):
-    name = "cert.matches_key"
+    name = "security.pki.cert.key_match_check"
     description = "Assert that a certificate public key matches a private key."
     required_params = ("cert", "key")
     optional_params = ("sudo",)
@@ -164,7 +164,7 @@ class CertMatchesKeyPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cert.matches_key is a read-only certificate/private-key assertion"
+        return "security.pki.cert.key_match_check is a read-only certificate/private-key assertion"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         sudo = sudo_prefix(params, default=True)
@@ -175,12 +175,12 @@ class CertMatchesKeyPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cert.matches_key failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.pki.cert.key_match_check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
 class CertSanAssertPlugin(BasePlugin):
-    name = "cert.san_assert"
+    name = "security.pki.cert.san_check"
     description = "Assert that a certificate contains required Subject Alternative Names."
     required_params = ("cert", "names")
     optional_params = ("sudo",)
@@ -188,7 +188,7 @@ class CertSanAssertPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cert.san_assert is a read-only certificate SAN assertion"
+        return "security.pki.cert.san_check is a read-only certificate SAN assertion"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -202,12 +202,12 @@ class CertSanAssertPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cert.san_assert failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.pki.cert.san_check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
 class CertSubjectAssertPlugin(BasePlugin):
-    name = "cert.subject_assert"
+    name = "security.pki.cert.subject_check"
     description = "Assert that a certificate subject contains an expected string."
     required_params = ("cert", "subject")
     optional_params = ("sudo",)
@@ -215,7 +215,7 @@ class CertSubjectAssertPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cert.subject_assert is a read-only certificate subject assertion"
+        return "security.pki.cert.subject_check is a read-only certificate subject assertion"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return [f"{sudo_prefix(params, default=True)}openssl x509 -in {quote(params['cert'])} -noout -subject | grep -F -- {quote(params['subject'])}"]
@@ -223,12 +223,12 @@ class CertSubjectAssertPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cert.subject_assert failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.pki.cert.subject_check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
 class CertIssuerAssertPlugin(BasePlugin):
-    name = "cert.issuer_assert"
+    name = "security.pki.cert.issuer_check"
     description = "Assert that a certificate issuer contains an expected string."
     required_params = ("cert", "issuer")
     optional_params = ("sudo",)
@@ -236,7 +236,7 @@ class CertIssuerAssertPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cert.issuer_assert is a read-only certificate issuer assertion"
+        return "security.pki.cert.issuer_check is a read-only certificate issuer assertion"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         return [f"{sudo_prefix(params, default=True)}openssl x509 -in {quote(params['cert'])} -noout -issuer | grep -F -- {quote(params['issuer'])}"]
@@ -244,19 +244,19 @@ class CertIssuerAssertPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="cert.issuer_assert failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.pki.cert.issuer_check failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
 class CertInstallCaBundlePlugin(BasePlugin):
-    name = "cert.install_ca_bundle"
+    name = "security.pki.trust.install_bundle"
     description = "Install a CA bundle file with safe permissions and optional trust-store refresh."
     required_params = ("src", "dest")
     optional_params = ("backup", "backup_suffix", "mode", "owner", "group", "update_trust", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "cert.install_ca_bundle installs CA material; use manual commands for exact file operations"
+        return "security.pki.trust.install_bundle installs CA material; use manual commands for exact file operations"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -278,4 +278,4 @@ class CertInstallCaBundlePlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="cert.install_ca_bundle failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.pki.trust.install_bundle failed")

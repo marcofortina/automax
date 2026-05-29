@@ -14,7 +14,7 @@ from automax.plugins.remote_utils import CHANGE_MARKER, exec_remote, heredoc_to_
 
 
 class SelinuxModePlugin(BasePlugin):
-    name = "selinux.mode"
+    name = "security.selinux.mode"
     description = "Set SELinux runtime and/or persistent mode."
     required_params = ("state",)
     optional_params = ("persist", "sudo")
@@ -23,7 +23,7 @@ class SelinuxModePlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if str(params["state"]) not in {"enforcing", "permissive", "disabled"}:
-            raise PluginValidationError("selinux.mode state must be enforcing, permissive or disabled")
+            raise PluginValidationError("security.selinux.mode state must be enforcing, permissive or disabled")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
@@ -60,11 +60,11 @@ if [ "$changed" = 1 ]; then echo __AUTOMAX_CHANGED__; fi
             prefix="AUTOMAX_SH",
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="selinux.mode failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.selinux.mode failed")
 
 
 class SelinuxBooleanPlugin(BasePlugin):
-    name = "selinux.boolean"
+    name = "security.selinux.boolean"
     description = "Set an SELinux boolean."
     required_params = ("name", "value")
     optional_params = ("persist", "sudo")
@@ -81,11 +81,11 @@ class SelinuxBooleanPlugin(BasePlugin):
             f"else {sudo_prefix(params, default=True)}setsebool {flag} {quote(params['name'])} {quote(value)} && echo {CHANGE_MARKER}; fi"
         )
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="selinux.boolean failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.selinux.boolean failed")
 
 
 class SelinuxContextPlugin(BasePlugin):
-    name = "selinux.context"
+    name = "security.selinux.context"
     description = "Manage an SELinux fcontext rule."
     required_params = ("path", "selinux_type")
     optional_params = ("state", "sudo")
@@ -95,17 +95,17 @@ class SelinuxContextPlugin(BasePlugin):
         self.validate(params)
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
-            raise PluginValidationError("selinux.context state must be present or absent")
+            raise PluginValidationError("security.selinux.context state must be present or absent")
         if state == "present":
             command = f"{sudo_prefix(params, default=True)}semanage fcontext -a -t {quote(params['selinux_type'])} {quote(params['path'])} 2>/dev/null || {sudo_prefix(params, default=True)}semanage fcontext -m -t {quote(params['selinux_type'])} {quote(params['path'])}; echo {CHANGE_MARKER}"
         else:
             command = f"{sudo_prefix(params, default=True)}semanage fcontext -d {quote(params['path'])} && echo {CHANGE_MARKER} || true"
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="selinux.context failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.selinux.context failed")
 
 
 class SelinuxRestoreconPlugin(BasePlugin):
-    name = "selinux.restorecon"
+    name = "security.selinux.restorecon"
     description = "Run restorecon on a remote path."
     required_params = ("path",)
     optional_params = ("recursive", "sudo")
@@ -115,11 +115,11 @@ class SelinuxRestoreconPlugin(BasePlugin):
         self.validate(params)
         flags = "-R" if bool(params.get("recursive", False)) else ""
         rc, out, err = exec_remote(context, f"{sudo_prefix(params, default=True)}restorecon {flags} {quote(params['path'])} && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="selinux.restorecon failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.selinux.restorecon failed")
 
 
 class ApparmorStatusPlugin(BasePlugin):
-    name = "apparmor.status"
+    name = "security.apparmor.status"
     description = "Read AppArmor status."
     optional_params = ("sudo",)
     opens_remote_session = True
@@ -127,12 +127,12 @@ class ApparmorStatusPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, f"{sudo_prefix(params, default=True)}aa-status")
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="apparmor.status failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.apparmor.status failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"status": out})
 
 
 class ApparmorProfilePlugin(BasePlugin):
-    name = "apparmor.profile"
+    name = "security.apparmor.profile"
     description = "Set an AppArmor profile to enforce or complain mode."
     required_params = ("profile", "state")
     optional_params = ("sudo",)
@@ -141,17 +141,17 @@ class ApparmorProfilePlugin(BasePlugin):
     def validate(self, params: Dict[str, Any]) -> None:
         super().validate(params)
         if str(params["state"]) not in {"enforce", "complain"}:
-            raise PluginValidationError("apparmor.profile state must be enforce or complain")
+            raise PluginValidationError("security.apparmor.profile state must be enforce or complain")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         self.validate(params)
         tool = "aa-enforce" if str(params["state"]) == "enforce" else "aa-complain"
         rc, out, err = exec_remote(context, f"{sudo_prefix(params, default=True)}{tool} {quote(params['profile'])} && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="apparmor.profile failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.apparmor.profile failed")
 
 
 class ApparmorReloadPlugin(BasePlugin):
-    name = "apparmor.reload"
+    name = "security.apparmor.reload"
     description = "Reload one AppArmor profile file or the AppArmor service."
     optional_params = ("profile", "sudo")
     opens_remote_session = True
@@ -162,10 +162,10 @@ class ApparmorReloadPlugin(BasePlugin):
         else:
             command = f"{sudo_prefix(params, default=True)}systemctl reload apparmor && echo {CHANGE_MARKER}"
         rc, out, err = exec_remote(context, command)
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="apparmor.reload failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.apparmor.reload failed")
 
 class SelinuxPortPlugin(BasePlugin):
-    name = "selinux.port"
+    name = "security.selinux.port"
     description = "Manage a persistent SELinux port type mapping with semanage port."
     required_params = ("port", "protocol", "selinux_type")
     optional_params = ("state", "sudo")
@@ -182,13 +182,13 @@ class SelinuxPortPlugin(BasePlugin):
             return [f"{sudo_prefix(params, default=True)}semanage port -a -t {quote(params['selinux_type'])} -p {quote(params['protocol'])} {quote(params['port'])} 2>/dev/null || {sudo_prefix(params, default=True)}semanage port -m -t {quote(params['selinux_type'])} -p {quote(params['protocol'])} {quote(params['port'])}"]
         if state == "absent":
             return [f"{sudo_prefix(params, default=True)}semanage port -d -p {quote(params['protocol'])} {quote(params['port'])} || true"]
-        raise PluginValidationError("selinux.port state must be present or absent")
+        raise PluginValidationError("security.selinux.port state must be present or absent")
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="selinux.port failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="security.selinux.port failed")
 
 
 class SelinuxFcontextPlugin(SelinuxContextPlugin):
-    name = "selinux.fcontext"
+    name = "security.selinux.fcontext"
     description = "Manage a persistent SELinux fcontext mapping with semanage fcontext."

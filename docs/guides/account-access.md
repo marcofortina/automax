@@ -9,8 +9,8 @@ Automax includes account access plugins for common Linux operator tasks:
 
 - `user.exists`, `user.lock`, `user.unlock`, `user.set_password`
 - `group.exists`
-- `ssh.authorized_key`
-- `sudoers.dropin`
+- `security.ssh.authorized_key.add`
+- `security.sudo.dropin`
 
 Use `password_hash` with `user.set_password` whenever possible. Plaintext passwords are supported for operational compatibility, but command secrets or file secrets are preferred.
 
@@ -25,7 +25,7 @@ Use `password_hash` with `user.set_password` whenever possible. Plaintext passwo
 
 ```yaml
 - id: install_deploy_key
-  use: ssh.authorized_key
+  use: security.ssh.authorized_key.add
   with:
     user: deploy
     key: "{{ vars.deploy_public_key }}"
@@ -35,7 +35,7 @@ Use `password_hash` with `user.set_password` whenever possible. Plaintext passwo
 
 ```yaml
 - id: allow_restart
-  use: sudoers.dropin
+  use: security.sudo.dropin
   with:
     name: deploy-myapp
     content: "deploy ALL=(root) /bin/systemctl restart myapp"

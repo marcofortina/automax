@@ -20,7 +20,7 @@ def _content(params: Dict[str, Any]) -> str:
         return str(params["content"])
     if params.get("src"):
         return Path(str(params["src"])).expanduser().read_text(encoding=str(params.get("encoding", "utf-8")))
-    raise PluginValidationError("pki.ca_install requires content or src")
+    raise PluginValidationError("security.pki.trust.install_ca requires content or src")
 
 
 def _diff(path: str, content: str, kind: str) -> list[Dict[str, Any]]:
@@ -28,7 +28,7 @@ def _diff(path: str, content: str, kind: str) -> list[Dict[str, Any]]:
 
 
 class PkiCaInstallPlugin(BasePlugin):
-    name = "pki.ca_install"
+    name = "security.pki.trust.install_ca"
     description = "Install a CA certificate into an explicit path or a distro-native system trust store."
     required_params: tuple[str, ...] = ()
     optional_params = ("dest", "name", "trust_store", "src", "content", "mode", "owner", "group", "backup", "backup_suffix", "update_trust", "sudo", "encoding")
@@ -38,7 +38,7 @@ class PkiCaInstallPlugin(BasePlugin):
         super().validate(params)
         _content(params)
         if not params.get("dest") and not params.get("name"):
-            raise PluginValidationError("pki.ca_install requires dest or name")
+            raise PluginValidationError("security.pki.trust.install_ca requires dest or name")
 
     def _dest(self, params: Dict[str, Any], flavor: str = "debian") -> str:
         if params.get("dest"):
@@ -85,11 +85,11 @@ class PkiCaInstallPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="pki.ca_install failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="security.pki.trust.install_ca failed")
 
 
 class PkiKeyPermissionsPlugin(BasePlugin):
-    name = "pki.key_permissions"
+    name = "security.pki.key.permissions"
     description = "Enforce owner/group/mode on a private key or certificate file."
     required_params = ("path",)
     optional_params = ("owner", "group", "mode", "sudo")
@@ -113,18 +113,18 @@ class PkiKeyPermissionsPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)))
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="pki.key_permissions failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="security.pki.key.permissions failed")
 
 
 class PkiCertExpiryAssertPlugin(BasePlugin):
-    name = "pki.cert_expiry_assert"
+    name = "security.pki.cert.expiry_check"
     description = "Assert that a certificate remains valid for at least min_days."
     required_params = ("path",)
     optional_params = ("min_days", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "pki.cert_expiry_assert is a read-only certificate assertion with no file diff"
+        return "security.pki.cert.expiry_check is a read-only certificate assertion with no file diff"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)

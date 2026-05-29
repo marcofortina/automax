@@ -15,39 +15,39 @@ tasks:
   - id: catalog
     substeps:
     - id: apparmor_complain
-      use: apparmor.complain
+      use: security.apparmor.complain
       with:
         profile: /etc/apparmor.d/usr.sbin.nginx
     - id: apparmor_disable
-      use: apparmor.disable
+      use: security.apparmor.disable
       with:
         profile: /etc/apparmor.d/usr.sbin.nginx
         confirm: true
     - id: apparmor_enforce
-      use: apparmor.enforce
+      use: security.apparmor.enforce
       with:
         profile: /etc/apparmor.d/usr.sbin.nginx
     - id: apparmor_parser_validate
-      use: apparmor.parser_validate
+      use: security.apparmor.validate
       with:
         profile: /etc/apparmor.d/usr.sbin.nginx
     - id: apparmor_profile
-      use: apparmor.profile
+      use: security.apparmor.profile
       with:
         profile: /etc/apparmor.d/usr.sbin.nginx
         state: enforce
         sudo: true
     - id: apparmor_profile_assert
-      use: apparmor.profile_assert
+      use: security.apparmor.profile_check
       with:
         profile: /etc/apparmor.d/usr.sbin.nginx
         state: present
     - id: apparmor_reload
-      use: apparmor.reload
+      use: security.apparmor.reload
       with:
         profile: /etc/apparmor.d/usr.sbin.nginx
         sudo: true
     - id: apparmor_status
-      use: apparmor.status
+      use: security.apparmor.status
       with:
         sudo: true

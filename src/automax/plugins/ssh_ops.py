@@ -23,7 +23,7 @@ def _mapping_lines(values: Dict[str, Any]) -> str:
 
 
 class SshConfigPlugin(RenderedFileInstallMixin, BasePlugin):
-    name = "ssh.config"
+    name = "security.ssh.config"
     description = "Install SSH client or sshd config drop-ins with backup and optional reload."
     required_params = ("name", "settings")
     optional_params = ("scope", "path", "match", "backup", "backup_suffix", "reload", "sudo")
@@ -42,12 +42,12 @@ class SshConfigPlugin(RenderedFileInstallMixin, BasePlugin):
             return f"/etc/ssh/sshd_config.d/{name}"
         if scope == "client":
             return f"/etc/ssh/ssh_config.d/{name}"
-        raise PluginValidationError("ssh.config scope must be client or server")
+        raise PluginValidationError("security.ssh.config scope must be client or server")
 
     def _content(self, params: Dict[str, Any]) -> str:
         settings = params.get("settings")
         if not isinstance(settings, dict) or not settings:
-            raise PluginValidationError("ssh.config settings must be a non-empty mapping")
+            raise PluginValidationError("security.ssh.config settings must be a non-empty mapping")
         lines = ["# Managed by automax\n"]
         if params.get("match"):
             lines.append(f"Match {params['match']}\n")
@@ -68,7 +68,7 @@ class SshConfigPlugin(RenderedFileInstallMixin, BasePlugin):
 
 
 class SshKnownHostsPlugin(BasePlugin):
-    name = "ssh.known_hosts"
+    name = "security.ssh.known_hosts"
     description = "Ensure a known_hosts entry exists or is removed on a remote target."
     required_params = ("host",)
     optional_params = ("key", "port", "path", "user", "state", "backup", "backup_suffix", "sudo")
@@ -96,7 +96,7 @@ class SshKnownHostsPlugin(BasePlugin):
         self.validate(params)
         state = str(params.get("state", "present"))
         if state not in {"present", "absent"}:
-            raise PluginValidationError("ssh.known_hosts state must be present or absent")
+            raise PluginValidationError("security.ssh.known_hosts state must be present or absent")
         path = self._path(params)
         host = str(params["host"])
         sudo = sudo_prefix(params, default=True) if path.startswith("/etc/") else ""
@@ -115,11 +115,11 @@ class SshKnownHostsPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="ssh.known_hosts failed")
+        return result_from_remote(rc=rc, stdout=f"{out}\n{CHANGE_MARKER}\n" if rc == 0 else out, stderr=err, message="security.ssh.known_hosts failed")
 
 
 class SshKeygenPlugin(BasePlugin):
-    name = "ssh.keygen"
+    name = "security.ssh.keygen"
     description = "Generate an SSH keypair on a remote target with idempotent overwrite protection."
     required_params = ("path",)
     optional_params = ("type", "bits", "comment", "force", "sudo", "owner", "group", "mode")
@@ -156,11 +156,11 @@ class SshKeygenPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.keygen failed", data={"path": str(params["path"]), "public_key": str(params["path"]) + ".pub"})
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.ssh.keygen failed", data={"path": str(params["path"]), "public_key": str(params["path"]) + ".pub"})
 
 
 class SshFingerprintPlugin(BasePlugin):
-    name = "ssh.fingerprint"
+    name = "security.ssh.fingerprint"
     description = "Read an SSH public or private key fingerprint with ssh-keygen."
     required_params = ("path",)
     optional_params = ("algorithm", "sudo")
@@ -168,7 +168,7 @@ class SshFingerprintPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "ssh.fingerprint is a read-only SSH key fingerprint query"
+        return "security.ssh.fingerprint is a read-only SSH key fingerprint query"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         algorithm = str(params.get("algorithm", "sha256"))
@@ -177,12 +177,12 @@ class SshFingerprintPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="ssh.fingerprint failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.ssh.fingerprint failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err, data={"fingerprint": out.strip()})
 
 
 class SshPublicKeyPlugin(BasePlugin):
-    name = "ssh.public_key"
+    name = "security.ssh.public_key"
     description = "Derive or read an SSH public key from a private key path."
     required_params = ("path",)
     optional_params = ("dest", "overwrite", "sudo")
@@ -190,7 +190,7 @@ class SshPublicKeyPlugin(BasePlugin):
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "ssh.public_key derives public key material; dest writes are shown in manual commands"
+        return "security.ssh.public_key derives public key material; dest writes are shown in manual commands"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         command = f"{sudo_prefix(params, default=True)}ssh-keygen -y -f {quote(params['path'])}"
@@ -204,18 +204,18 @@ class SshPublicKeyPlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="ssh.public_key failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.ssh.public_key failed")
         return PluginResult.success(changed=bool(params.get("dest")), rc=rc, stdout=out, stderr=err, data={"public_key": out.strip(), "dest": params.get("dest")})
 
 
 class SshHostKeygenPlugin(BasePlugin):
-    name = "ssh.host_keygen"
+    name = "security.ssh.host_keygen"
     description = "Generate missing OpenSSH host keys on a remote target."
     optional_params = ("types", "force", "sudo")
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "ssh.host_keygen creates host key material under the system SSH directory"
+        return "security.ssh.host_keygen creates host key material under the system SSH directory"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         sudo = sudo_prefix(params, default=True)
@@ -234,11 +234,11 @@ class SshHostKeygenPlugin(BasePlugin):
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, " && ".join(self.manual_commands(params, context)) + f" && echo {CHANGE_MARKER}")
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.host_keygen failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.ssh.host_keygen failed")
 
 
 class SshAuthorizedKeyAbsentPlugin(BasePlugin):
-    name = "ssh.authorized_key_absent"
+    name = "security.ssh.authorized_key.remove"
     description = "Remove one SSH authorized_keys line for a remote user."
     required_params = ("user", "key")
     optional_params = ("sudo",)
@@ -246,7 +246,7 @@ class SshAuthorizedKeyAbsentPlugin(BasePlugin):
     opens_remote_session = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "ssh.authorized_key_absent removes a specific authorized_keys line"
+        return "security.ssh.authorized_key.remove removes a specific authorized_keys line"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         self.validate(params)
@@ -276,18 +276,18 @@ echo __AUTOMAX_CHANGED__
 
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
-        return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.authorized_key_absent failed")
+        return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.ssh.authorized_key.remove failed")
 
 
 class SshdValidatePlugin(BasePlugin):
-    name = "sshd.validate"
+    name = "security.sshd.validate"
     description = "Validate sshd configuration with sshd -t."
     optional_params = ("config", "sudo")
     opens_remote_session = True
     supports_check_mode = True
 
     def diff_preview_reason(self, params: Dict[str, Any], context: ExecutionContext) -> str:
-        return "sshd.validate is a read-only sshd configuration validation"
+        return "security.sshd.validate is a read-only sshd configuration validation"
 
     def manual_commands(self, params: Dict[str, Any], context: ExecutionContext) -> list[str]:
         config = f" -f {quote(params['config'])}" if params.get("config") else ""
@@ -296,7 +296,7 @@ class SshdValidatePlugin(BasePlugin):
     def execute(self, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
         rc, out, err = exec_remote(context, self.manual_commands(params, context)[0])
         if rc != 0:
-            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="sshd.validate failed")
+            return PluginResult.failure(rc=rc, stdout=out, stderr=err, message="security.sshd.validate failed")
         return PluginResult.success(changed=False, rc=rc, stdout=out, stderr=err)
 
 
@@ -306,7 +306,7 @@ def _ssh_keygen_passphrase(params: Dict[str, Any], context: ExecutionContext, *,
             return "***"
         secret_name = str(params["passphrase_secret"])
         if secret_name not in context.secrets:
-            raise PluginValidationError(f"ssh.keygen passphrase_secret not found: {secret_name}")
+            raise PluginValidationError(f"security.ssh.keygen passphrase_secret not found: {secret_name}")
         return str(context.secrets[secret_name])
     return ""
 
@@ -350,12 +350,12 @@ def _ssh_keygen_manual(self: SshKeygenPlugin, params: Dict[str, Any], context: E
 
 def _ssh_keygen_execute(self: SshKeygenPlugin, params: Dict[str, Any], context: ExecutionContext) -> PluginResult:
     rc, out, err = exec_remote(context, _ssh_keygen_commands(self, params, context, masked=False)[0])
-    return result_from_remote(rc=rc, stdout=out, stderr=err, message="ssh.keygen failed", data={"path": str(params["path"]), "public_key": str(params["path"]) + ".pub"})
+    return result_from_remote(rc=rc, stdout=out, stderr=err, message="security.ssh.keygen failed", data={"path": str(params["path"]), "public_key": str(params["path"]) + ".pub"})
 
 
 
 class ExtendedSshKeygenPlugin(SshKeygenPlugin):
-    """ssh.keygen with passphrase, ownership and public-key controls."""
+    """security.ssh.keygen with passphrase, ownership and public-key controls."""
 
     optional_params = ("type", "bits", "comment", "force", "passphrase_secret", "public_key_only", "fingerprint", "algorithm", "sudo", "owner", "group", "mode")
 
