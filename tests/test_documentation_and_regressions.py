@@ -557,6 +557,59 @@ def test_documentation_home_is_a_landing_page_not_readme_clone():
     assert "[Builtin plugins](plugins/index.md)" in home
 
 
+
+
+def test_readme_builtin_category_summary_matches_canonical_public_dsl():
+    readme = Path("README.md").read_text(encoding="utf-8")
+    technical_design = Path("docs/TECHNICAL_DESIGN.md").read_text(encoding="utf-8")
+
+    required = [
+        "flow:          if/then/else, for/in/do, set/let, echo, fail, try/rescue/always, break/continue",
+        "identity:      identity.user.*, identity.group.*",
+        "system:        system.host.*, system.service.*, system.systemd.*, system.kernel.*, system.process.*, system.cron.*, system.journal.*, system.log.*",
+        "database:      database.<engine>.check, database.<engine>.query",
+    ]
+    for snippet in required:
+        assert snippet in readme
+        assert snippet in technical_design
+
+    stale = [
+        "systemctl.*",
+        "user.*, group.*",
+        "wait/assert",
+        "wait.*, assert.*",
+        "builtin macro",
+        "builtin macros",
+    ]
+    for snippet in stale:
+        assert snippet not in readme
+        assert snippet not in technical_design
+
+
+def test_markdown_docs_do_not_reference_removed_plugin_names():
+    markdown = {
+        path: path.read_text(encoding="utf-8")
+        for path in [Path("README.md"), *Path("docs").rglob("*.md")]
+    }
+    removed_or_invalid = [
+        "wait.http",
+        "device.device.udev.rule.set.validate",
+        "security.sudo.can_run",
+        "storage.block.mount.check",
+        "system.reboot",
+        "systemctl.*",
+        "user.*, group.*",
+        "wait/assert",
+        "wait.*, assert.*",
+    ]
+    offenders = []
+    for path, text in markdown.items():
+        for snippet in removed_or_invalid:
+            if snippet in text:
+                offenders.append(f"{path}: {snippet}")
+    assert offenders == []
+
+
 def test_job_inspection_and_recovery_workflow_is_documented():
     mkdocs = Path("mkdocs.yml").read_text(encoding="utf-8")
     readme = Path("README.md").read_text(encoding="utf-8")

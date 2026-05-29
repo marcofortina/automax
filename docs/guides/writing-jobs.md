@@ -56,7 +56,7 @@ automax plugins describe fs.dir.create
 Use `{{ secrets.name }}` references and resolve values from `env` or `file`
 providers.
 
-## Prefer idempotent macros
+## Prefer idempotent plugins
 
 Prefer:
 
@@ -72,7 +72,7 @@ with:
   command: mkdir -p /opt/myapp
 ```
 
-Builtin macros return `changed` where possible and are easier to describe,
+Builtin plugins return `changed` where possible and are easier to describe,
 document and test.
 
 ## Register outputs intentionally

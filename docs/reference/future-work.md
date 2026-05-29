@@ -91,7 +91,7 @@ JSONL stream for external integrations:
 This could support CI summaries, dashboards, notifications or external audit
 pipelines without coupling those integrations to SQLite internals.
 
-## Deploy macros
+## Deploy plugins
 
 Automax already has the primitives for release-style workflows:
 
@@ -102,10 +102,10 @@ fs.symlink.create
 fs.symlink.remove
 system.service.restart
 network.http.check
-wait.http
+network.http.wait
 ```
 
-A future `deploy.*` macro family may wrap these into higher-level release and
+A future `deploy.*` plugin family may wrap these into higher-level release and
 rollback operations once the exact operational pattern is proven on real jobs.
 
 ## Native cloud inventory providers

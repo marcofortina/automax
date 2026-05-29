@@ -224,23 +224,25 @@ automax plugins list
 automax plugins audit
 ```
 
-Current categories:
+Current public families:
 
 ```text
 commands:      command.local.run, command.remote.run
+flow:          if/then/else, for/in/do, set/let, echo, fail, try/rescue/always, break/continue
 filesystem:    fs.*
-data/archive:  data.archive.*, data.compression.*
-packages:      os.package.*
-systemd:       systemctl.*
-users/groups:  user.*, group.*
-processes:     process.*
-data:          data.download.*, data.transfer.*, data.backup.*, data.restore.*
-http/api:      network.http.*
-wait/assert:   wait.*, assert.*
-database:      database.sqlite.query, database.postgres.query, database.mysql.query, database.oracle.query
+data:          data.archive.*, data.compression.*, data.download.*, data.transfer.*, data.backup.*, data.restore.*
+database:      database.<engine>.check, database.<engine>.query
+identity:      identity.user.*, identity.group.*
+network:       network.connectivity.*, network.dns.*, network.firewall.*, network.http.*, network.link.*, network.route.*
+os/packages:   os.*, os.package.*
+security:      security.*
+storage:       storage.*
+system:        system.host.*, system.service.*, system.systemd.*, system.kernel.*, system.process.*, system.cron.*, system.journal.*, system.log.*
+devices:       device.udev.*
+notifications: notify.mail.send
 ```
 
-See `docs/plugins/` for detailed examples of every builtin macro.
+See `docs/plugins/` for detailed examples of every builtin plugin.
 
 ## Variables and secrets
 
@@ -345,7 +347,7 @@ AUTOMAX_SSH_HOST_KEY_POLICY=reject \
 ```
 
 The default smoke is non-destructive and covers remote commands, filesystem,
-archive, transfer, wait/assert and artifact capture. Optional package manager,
+archive, transfer, flow control, read-only checks and artifact capture. Optional package manager,
 systemd and user/group/process checks are enabled with explicit environment
 variables. See `docs/guides/ssh-smoke.md`.
 

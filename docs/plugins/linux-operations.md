@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Linux operations
 
-Automax includes Linux operation macros for storage and Linux prerequisites plus other
+Automax includes Linux operation plugins for storage and Linux prerequisites plus other
 enterprise installation jobs where the job must expose concrete commands,
 preflight checks and safe backups.
 
@@ -52,7 +52,7 @@ Use `storage.multipath.status` before storage-dependent operations to verify exp
 
 ## Swap, limits, hosts, resolver and chrony
 
-The following macros manage common database/cluster prerequisites with backups
+The following plugins manage common database/cluster prerequisites with backups
 where they modify system files:
 
 ```text
@@ -91,14 +91,14 @@ with:
 Use `system.host.check` for one-shot SSH-authenticated host reachability and
 `system.host.wait` when an external reboot or power cycle should be followed by SSH recovery.
 
-`data.download.url` is the remote wget/curl-like macro. It downloads with curl or
+`data.download.url` is the remote wget/curl-like plugin. It downloads with curl or
 wget, supports SHA256 verification, backs up an existing destination by default,
 and can install mode/owner/group metadata.
 
 
 ## LVM storage
 
-Use `storage.lvm.pv.add`, `storage.lvm.vg.add`, `storage.lvm.lv.add`, `storage.lvm.lv.extend`, `storage.lvm.pv.scan`, `storage.lvm.vg.scan`, `storage.lvm.lv.scan` and `storage.fs.resize` for physical volumes, volume groups, logical volumes, metadata scan and filesystem growth. These macros expose deterministic manual commands and
+Use `storage.lvm.pv.add`, `storage.lvm.vg.add`, `storage.lvm.lv.add`, `storage.lvm.lv.extend`, `storage.lvm.pv.scan`, `storage.lvm.vg.scan`, `storage.lvm.lv.scan` and `storage.fs.resize` for physical volumes, volume groups, logical volumes, metadata scan and filesystem growth. These plugins expose deterministic manual commands and
 structured `plan --diff` previews before applying storage changes.
 
 
@@ -147,7 +147,7 @@ swap configuration lives under `storage.fstab.*`.
 
 Use `system.log.grep`, `system.journal.collect`, `system.journal.grep` and `system.log.export` to inspect
 logs, grep journal output and emit stdout suitable for artifact capture. These
-macros are read-oriented and document why no file diff is emitted.
+plugins are read-oriented and document why no file diff is emitted.
 
 
 ## Controller-side mail notifications
@@ -158,7 +158,7 @@ output, and attachments are read from local controller paths.
 
 ## Recovery workflow
 
-All Linux operation macros should be used with the operator recovery commands:
+All Linux operation plugins should be used with the operator recovery commands:
 
 ```bash
 automax plan --check --job jobs/linux-preflight.yaml --inventory inventory/prod.yaml
@@ -166,7 +166,7 @@ automax plan --diff --job jobs/linux-preflight.yaml --inventory inventory/prod.y
 automax commands render --job jobs/linux-preflight.yaml --inventory inventory/prod.yaml --limit app1
 ```
 
-`plan --diff` now represents the whole selected job shape for these macros:
+`plan --diff` now represents the whole selected job shape for these plugins:
 file-backed operations emit deterministic unified diffs or structured state
 plans, while runtime-only/read-only operations emit explicit reasons. Examples
 include fstab plans for `storage.swap.add` / `storage.swap.remove`, PAM append plans for
@@ -229,7 +229,7 @@ readback without treating mismatched state as a failed assertion.
 
 ## Udev, time and account readback
 
-Udev validation/readback plugins are `device.device.udev.rule.set.validate`, `device.udev.device.test` and
+Udev validation/readback plugins are `device.udev.rule.validate`, `device.udev.device.test` and
 `device.udev.device.facts`. Use them before and after installing udev rules.
 
 Time synchronization helpers include `os.time.status`,

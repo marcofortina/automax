@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 # Command plugins
 
 Command plugins are the lowest-level execution primitives. Prefer higher-level
-macro plugins when they exist because they provide clearer parameters and better
+plugins when they exist because they provide clearer parameters and better
 idempotency.
 
 ## `command.local.run`

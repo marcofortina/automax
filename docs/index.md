@@ -59,7 +59,7 @@ For a first real SSH job against a remote host, use
 | Inspect captured files and outputs | [Artifacts](reference/artifacts.md) |
 | Inspect every CLI command | [CLI reference](reference/cli.md) |
 | Review SSH and secret handling | [Security reference](reference/security.md) |
-| Browse builtin macros | [Builtin plugins](plugins/index.md) |
+| Browse builtin plugins | [Builtin plugins](plugins/index.md) |
 | Validate a real SSH runtime | [Extended SSH smoke](guides/ssh-smoke.md) |
 
 ## Minimal local smoke

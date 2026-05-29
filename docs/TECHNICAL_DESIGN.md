@@ -111,20 +111,22 @@ continue
 
 ## Builtin plugin scope
 
-Current builtins are grouped into these categories:
+Current builtins are grouped into these public families:
 
 ```text
 commands:      command.local.run, command.remote.run
+flow:          if/then/else, for/in/do, set/let, echo, fail, try/rescue/always, break/continue
 filesystem:    fs.*
-data/archive:  data.archive.*, data.compression.*
-packages:      os.package.*
-system:       system.service.*, system.systemd.*, system.kernel.*, system.process.*, system.cron.*, system.journal.*, system.log.*
+data:          data.archive.*, data.compression.*, data.download.*, data.transfer.*, data.backup.*, data.restore.*
+database:      database.<engine>.check, database.<engine>.query
 identity:      identity.user.*, identity.group.*
-data:          data.download.*, data.transfer.*, data.backup.*, data.restore.*
-http/api:      network.http.*
-connectivity:   network.connectivity.*
-storage:        storage.*
-database:      database.<engine>.*
+network:       network.connectivity.*, network.dns.*, network.firewall.*, network.http.*, network.link.*, network.route.*
+os/packages:   os.*, os.package.*
+security:      security.*
+storage:       storage.*
+system:        system.host.*, system.service.*, system.systemd.*, system.kernel.*, system.process.*, system.cron.*, system.journal.*, system.log.*
+devices:       device.udev.*
+notifications: notify.mail.send
 ```
 
 Builtin plugin names are canonical only: no short or ambiguous compatibility aliases
@@ -138,7 +140,7 @@ External plugins can be loaded with `--plugin-path`.
 
 - Cloud secret providers.
 - Central database state backend.
-- Deploy-release orchestration macros with rollback semantics.
+- Deploy-release orchestration plugins with rollback semantics.
 - Full Ansible-equivalent module coverage.
 
 ## Database design
