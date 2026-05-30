@@ -368,6 +368,14 @@ Use `echo` for operator-visible messages without invoking a shell command:
 ```
 
 
+
+Use `sleep` for an explicit pause without shelling out to `sleep`:
+
+```yaml
+- id: pause_after_restart
+  sleep: 5s
+```
+
 Use `assert` to stop the current flow when a native Jinja condition is false:
 
 ```yaml

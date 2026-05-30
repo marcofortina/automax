@@ -57,6 +57,7 @@ substeps:
 - `set` / `let` for flow values;
 - `echo` for operator-visible messages;
 - `assert` for deliberate boolean checks;
+- `sleep` for explicit pauses without shell commands;
 - `fail` for deliberate failures;
 - `try` / `rescue` / `always` for recovery and cleanup;
 - `break` / `continue` inside loops.
@@ -230,7 +231,7 @@ Current public families:
 
 ```text
 commands:      command.local.run, command.remote.run
-flow:          if/then/else, switch/case/default, retry/do, for/in/do, set/let, echo, assert, fail, try/rescue/always, break/continue
+flow:          if/then/else, switch/case/default, retry/do, for/in/do, set/let, echo, assert, sleep, fail, try/rescue/always, break/continue
 filesystem:    fs.*
 data:          data.archive.*, data.compression.*, data.download.*, data.transfer.*, data.backup.*, data.restore.*
 database:      database.<engine>.check, database.<engine>.query

@@ -6601,3 +6601,46 @@ tasks:
     assert result.exit_code == 0, result.output
     assert "[RETRY] localhost task.smoke:step.local:substep.retry_block attempt=1/3" in result.output
     assert output.read_text(encoding="utf-8").strip() == "ok"
+
+
+def test_job_flow_sleep_runs_without_shell(tmp_path: Path):
+    output = tmp_path / "sleep.txt"
+    job = write(
+        tmp_path / "job.yaml",
+        f'''
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: flow-sleep
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: pause
+            sleep: 0s
+          - id: after_sleep
+            use: command.local.run
+            with:
+              command: "printf 'after\\n' >> {output}"
+''',
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  localhost:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--state-dir",
+            str(tmp_path / "runs"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "sleep 0s" in result.output
+    assert output.read_text(encoding="utf-8").strip() == "after"
