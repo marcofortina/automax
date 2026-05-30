@@ -329,6 +329,15 @@ Use `echo` for operator-visible messages without invoking a shell command:
   echo: "processing {{ item }}"
 ```
 
+
+Use `assert` to stop the current flow when a native Jinja condition is false:
+
+```yaml
+- id: require_service_ready
+  assert: "{{ outputs.service_check.data.active }}"
+  message: "Service is not active"
+```
+
 Use `fail` to stop the current flow explicitly with a rendered message:
 
 ```yaml

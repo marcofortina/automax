@@ -1316,7 +1316,7 @@ class AutomaxEngine:
     def _validate_terminal_flow_substep(self, substep: Dict[str, Any], label: str) -> None:
         if "use" in substep or "plugin" in substep:
             raise AutomaxError(f"{label} cannot combine flow control with 'use'")
-        terminal_keys = [key for key in ("fail", "break", "continue", "echo") if key in substep]
+        terminal_keys = [key for key in ("assert", "fail", "break", "continue", "echo") if key in substep]
         if len(terminal_keys) != 1:
             raise AutomaxError(f"{label} must define exactly one terminal flow command")
 
@@ -1381,6 +1381,8 @@ class AutomaxEngine:
             "set",
             "let",
             "echo",
+            "assert",
+            "message",
             "fail",
             "try",
             "rescue",
@@ -2235,6 +2237,8 @@ class AutomaxEngine:
             )
         elif self._is_assignment_substep(substep):
             result = self._execute_assignment_flow(item=item, outputs=outputs, step_state=step_state, flow_vars=flow_vars, context=context)
+        elif self._is_assert_substep(substep):
+            result = self._execute_assert_flow(substep, context)
         elif self._is_echo_substep(substep):
             result = self._execute_echo_flow(substep, context)
         elif self._is_fail_substep(substep):
@@ -2538,6 +2542,13 @@ class AutomaxEngine:
                 outputs[name] = value
                 outputs.setdefault("targets", {}).setdefault(target_name, {})[name] = value
         return PluginResult.success(changed=False, message="set variables", data={"values": values})
+
+    def _execute_assert_flow(self, substep: Dict[str, Any], context: Dict[str, Any]) -> PluginResult:
+        ok = self._is_condition_true(substep.get("assert"), context)
+        message = str(evaluate_value(substep.get("message", "assertion failed"), context))
+        if ok:
+            return PluginResult.success(changed=False, message="assertion passed", data={"assert": True})
+        return PluginResult.failure(message=message, data={"assert": False})
 
     def _execute_echo_flow(self, substep: Dict[str, Any], context: Dict[str, Any]) -> PluginResult:
         value = evaluate_value(substep.get("echo"), context)
@@ -3463,6 +3474,10 @@ class AutomaxEngine:
         return "echo" in substep
 
     @staticmethod
+    def _is_assert_substep(substep: Dict[str, Any]) -> bool:
+        return "assert" in substep
+
+    @staticmethod
     def _is_fail_substep(substep: Dict[str, Any]) -> bool:
         return "fail" in substep
 
@@ -3478,6 +3493,7 @@ class AutomaxEngine:
     def _is_terminal_flow_substep(cls, substep: Dict[str, Any]) -> bool:
         return (
             cls._is_echo_substep(substep)
+            or cls._is_assert_substep(substep)
             or cls._is_fail_substep(substep)
             or cls._is_break_substep(substep)
             or cls._is_continue_substep(substep)

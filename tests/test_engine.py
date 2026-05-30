@@ -6421,3 +6421,83 @@ tasks:
 
     assert result.exit_code == 0, result.output
     assert output.read_text(encoding="utf-8").splitlines() == ["1", "3"]
+
+
+def test_job_flow_assert_passes_and_fails_with_message(tmp_path: Path):
+    output = tmp_path / "assert.txt"
+    job = write(
+        tmp_path / "job.yaml",
+        f'''
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: flow-assert
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: set_score
+            set:
+              score: 42
+          - id: require_score
+            assert: "{{{{ score == 42 }}}}"
+            message: "score should be 42"
+          - id: write_after_assert
+            use: command.local.run
+            with:
+              command: "printf 'ok\\n' >> {output}"
+''',
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  localhost:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--state-dir",
+            str(tmp_path / "runs"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert output.read_text(encoding="utf-8").strip() == "ok"
+
+    failing_job = write(
+        tmp_path / "failing-job.yaml",
+        '''
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: flow-assert-fail
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: require_false
+            assert: false
+            message: "custom assertion failure"
+''',
+    )
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(failing_job),
+            "--inventory",
+            str(inventory),
+            "--state-dir",
+            str(tmp_path / "runs-fail"),
+        ],
+    )
+
+    assert result.exit_code == 1, result.output
+    assert "custom assertion failure" in result.output
