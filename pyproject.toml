@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "automax"
-version = "0.2.0"
+version = "0.1.0"
 description = "YAML-driven modular SSH automation engine"
 license-files = ["LICENSE"]
 authors = [{ name = "Marco Fortina", email = "marco_fortina@hotmail.it" }]

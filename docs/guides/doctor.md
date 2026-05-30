@@ -17,7 +17,7 @@ Typical output:
 ```text
 Automax doctor
   OK   python: 3.12.3
-  OK   automax: 0.2.0
+  OK   automax: 0.1.0
   OK   paramiko: installed
   OK   database.sqlite: installed
   WARN database.postgres: optional driver missing
