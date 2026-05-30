@@ -47,7 +47,7 @@ A substep calls one plugin:
 
 
 Flow-control substeps do not call plugins directly. `if`, list-style `if`, `switch`, `retry`, `for`,
-`block`, `set` / `let`, `echo`, `assert`, `sleep`, `fail`, `try` / `rescue` / `always`, `break` and
+`block`, `set` / `let`, `echo`, `assert`, `sleep`, `noop`, `fail`, `try` / `rescue` / `always`, `break` and
 `continue` are interpreted by the engine and then execute normal nested substeps
 where needed. Registered plugin outputs and `set` / `let` values feed later
 conditions and loops through the normal Jinja context.

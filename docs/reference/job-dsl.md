@@ -369,6 +369,14 @@ Use `echo` for operator-visible messages without invoking a shell command:
 
 
 
+
+Use `noop` for explicit no-op branches, placeholders or documented skip paths:
+
+```yaml
+- id: nothing_to_do
+  noop: "No action required on Debian targets"
+```
+
 Use `sleep` for an explicit pause without shelling out to `sleep`:
 
 ```yaml

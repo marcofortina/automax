@@ -1393,7 +1393,7 @@ class AutomaxEngine:
     def _validate_terminal_flow_substep(self, substep: Dict[str, Any], label: str) -> None:
         if "use" in substep or "plugin" in substep:
             raise AutomaxError(f"{label} cannot combine flow control with 'use'")
-        terminal_keys = [key for key in ("assert", "sleep", "fail", "break", "continue", "echo") if key in substep]
+        terminal_keys = [key for key in ("assert", "sleep", "noop", "fail", "break", "continue", "echo") if key in substep]
         if len(terminal_keys) != 1:
             raise AutomaxError(f"{label} must define exactly one terminal flow command")
 
@@ -1475,6 +1475,7 @@ class AutomaxEngine:
             "let",
             "echo",
             "sleep",
+            "noop",
             "assert",
             "message",
             "fail",
@@ -2383,6 +2384,8 @@ class AutomaxEngine:
             )
         elif self._is_assignment_substep(substep):
             result = self._execute_assignment_flow(item=item, outputs=outputs, step_state=step_state, flow_vars=flow_vars, context=context)
+        elif self._is_noop_substep(substep):
+            result = self._execute_noop_flow(substep, context)
         elif self._is_sleep_substep(substep):
             result = self._execute_sleep_flow(substep, context, dry_run=dry_run)
         elif self._is_assert_substep(substep):
@@ -2810,6 +2813,11 @@ class AutomaxEngine:
                 outputs[name] = value
                 outputs.setdefault("targets", {}).setdefault(target_name, {})[name] = value
         return PluginResult.success(changed=False, message="set variables", data={"values": values})
+
+    def _execute_noop_flow(self, substep: Dict[str, Any], context: Dict[str, Any]) -> PluginResult:
+        raw = substep.get("noop")
+        message = "noop" if raw is True or raw is None else str(evaluate_value(raw, context))
+        return PluginResult.success(changed=False, message=message, data={"noop": True})
 
     def _execute_sleep_flow(self, substep: Dict[str, Any], context: Dict[str, Any], *, dry_run: bool) -> PluginResult:
         seconds = self._duration_seconds(evaluate_value(substep.get("sleep"), context), "sleep")
@@ -3836,6 +3844,10 @@ class AutomaxEngine:
         return "sleep" in substep
 
     @staticmethod
+    def _is_noop_substep(substep: Dict[str, Any]) -> bool:
+        return "noop" in substep
+
+    @staticmethod
     def _is_fail_substep(substep: Dict[str, Any]) -> bool:
         return "fail" in substep
 
@@ -3853,6 +3865,7 @@ class AutomaxEngine:
             cls._is_echo_substep(substep)
             or cls._is_assert_substep(substep)
             or cls._is_sleep_substep(substep)
+            or cls._is_noop_substep(substep)
             or cls._is_fail_substep(substep)
             or cls._is_break_substep(substep)
             or cls._is_continue_substep(substep)
