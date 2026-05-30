@@ -6501,3 +6501,56 @@ tasks:
 
     assert result.exit_code == 1, result.output
     assert "custom assertion failure" in result.output
+
+
+def test_job_flow_switch_case_default_selects_matching_case(tmp_path: Path):
+    output = tmp_path / "switch.txt"
+    job = write(
+        tmp_path / "job.yaml",
+        f'''
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: flow-switch
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: set_status
+            set:
+              status: degraded
+          - id: route_status
+            switch: "{{{{ status }}}}"
+            case:
+              running:
+                - id: running
+                  echo: running
+              degraded:
+                - id: degraded
+                  use: command.local.run
+                  with:
+                    command: "printf 'degraded\\n' >> {output}"
+            default:
+              - id: unknown
+                fail: "unknown status: {{{{ status }}}}"
+''',
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  localhost:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--state-dir",
+            str(tmp_path / "runs"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert output.read_text(encoding="utf-8").strip() == "degraded"

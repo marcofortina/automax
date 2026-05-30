@@ -564,7 +564,7 @@ def test_readme_builtin_category_summary_matches_canonical_public_dsl():
     technical_design = Path("docs/TECHNICAL_DESIGN.md").read_text(encoding="utf-8")
 
     required = [
-        "flow:          if/then/else, for/in/do, set/let, echo, assert, fail, try/rescue/always, break/continue",
+        "flow:          if/then/else, switch/case/default, for/in/do, set/let, echo, assert, fail, try/rescue/always, break/continue",
         "identity:      identity.user.*, identity.group.*",
         "system:        system.host.*, system.service.*, system.systemd.*, system.kernel.*, system.process.*, system.cron.*, system.journal.*, system.log.*",
         "database:      database.<engine>.check, database.<engine>.query",

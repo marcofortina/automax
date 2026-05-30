@@ -51,7 +51,7 @@ through the Automax context, registered outputs and state store.
 Job YAML supports engine-level flow-control substeps in addition to plugin
 substeps:
 
-- `if` / list-style `if` / `else` for branching;
+- `if` / list-style `if` / `else` and `switch` / `case` / `default` for branching;
 - `for` / `in` / `do` for loops over lists, including values returned by plugins;
 - `set` / `let` for flow values;
 - `echo` for operator-visible messages;
@@ -229,7 +229,7 @@ Current public families:
 
 ```text
 commands:      command.local.run, command.remote.run
-flow:          if/then/else, for/in/do, set/let, echo, assert, fail, try/rescue/always, break/continue
+flow:          if/then/else, switch/case/default, for/in/do, set/let, echo, assert, fail, try/rescue/always, break/continue
 filesystem:    fs.*
 data:          data.archive.*, data.compression.*, data.download.*, data.transfer.*, data.backup.*, data.restore.*
 database:      database.<engine>.check, database.<engine>.query

@@ -415,6 +415,22 @@ class AutomaxEngine:
                         flow_vars=flow_vars,
                     )
             return
+        if self._is_switch_substep(substep):
+            try:
+                branches = [self._selected_switch_branch(substep, template_context)]
+            except Exception:
+                branches = self._switch_branches(substep)
+            for branch in branches:
+                for child in branch["then"]:
+                    yield from self._iter_rendered_substep_items(
+                        resolved=resolved,
+                        item=self._child_item(item, child, branch["segment"]),
+                        dry_run=dry_run,
+                        outputs=outputs,
+                        step_state=step_state,
+                        flow_vars=flow_vars,
+                    )
+            return
         if self._is_for_substep(substep):
             loop_var = str(substep.get("for", "item"))
             try:
@@ -1252,6 +1268,9 @@ class AutomaxEngine:
             if self._is_for_substep(substep):
                 self._validate_flow_for_substep(substep, substep_label, strict=strict)
                 continue
+            if self._is_switch_substep(substep):
+                self._validate_flow_switch_substep(substep, substep_label, strict=strict)
+                continue
             if self._is_try_substep(substep):
                 self._validate_flow_try_substep(substep, substep_label, strict=strict)
                 continue
@@ -1277,6 +1296,15 @@ class AutomaxEngine:
         branches = self._if_branches(substep, label=label)
         if not branches:
             raise AutomaxError(f"{label} if flow requires at least one branch")
+        for branch in branches:
+            self._validate_substep_list(branch["then"], label=f"{label}:{branch['segment']}", strict=strict)
+
+    def _validate_flow_switch_substep(self, substep: Dict[str, Any], label: str, *, strict: bool) -> None:
+        if "use" in substep or "plugin" in substep:
+            raise AutomaxError(f"{label} cannot combine 'switch' flow control with 'use'")
+        branches = self._switch_branches(substep, label=label)
+        if not branches:
+            raise AutomaxError(f"{label} switch flow requires at least one case or default")
         for branch in branches:
             self._validate_substep_list(branch["then"], label=f"{label}:{branch['segment']}", strict=strict)
 
@@ -1340,6 +1368,11 @@ class AutomaxEngine:
             for child in substep.get("do", []) or []:
                 self._validate_substep_strict(child, f"{node_id}:do.{child.get('id')}")
             return
+        if self._is_switch_substep(substep):
+            for branch in self._switch_branches(substep):
+                for child in branch["then"]:
+                    self._validate_substep_strict(child, f"{node_id}:{branch['segment']}.{child.get('id')}")
+            return
         if self._is_try_substep(substep):
             for branch in ("try", "rescue", "always"):
                 for child in substep.get(branch, []) or []:
@@ -1375,6 +1408,9 @@ class AutomaxEngine:
             "if",
             "then",
             "else",
+            "switch",
+            "case",
+            "default",
             "for",
             "in",
             "do",
@@ -2202,6 +2238,23 @@ class AutomaxEngine:
                 flow_vars=flow_vars,
                 context=context,
             )
+        elif self._is_switch_substep(substep):
+            result = self._execute_switch_flow(
+                job=job,
+                item=item,
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+                sudo_password=sudo_password,
+                flow_vars=flow_vars,
+                context=context,
+            )
         elif self._is_for_substep(substep):
             result = self._execute_for_flow(
                 job=job,
@@ -2298,6 +2351,58 @@ class AutomaxEngine:
             if not child_result.ok:
                 return PluginResult.failure(message=f"if {selected['segment']} branch failed", data={"flow": "if", "branch": selected["segment"], "executed": executed})
         return PluginResult.success(changed=False, message=f"if {selected['segment']} branch executed", data={"flow": "if", "branch": selected["segment"], "executed": executed})
+
+    def _execute_switch_flow(
+        self,
+        *,
+        job: Dict[str, Any],
+        item: Dict[str, Any],
+        store: StateStore,
+        run_id: str,
+        dry_run: bool,
+        variables: Dict[str, Any],
+        secrets: Dict[str, Any],
+        outputs: Dict[str, Any],
+        ssh_client: Any,
+        step_state: Dict[str, Any],
+        output_format: str,
+        sudo_password: str | None,
+        flow_vars: Dict[str, Any],
+        context: Dict[str, Any],
+    ) -> PluginResult:
+        substep = item["substep"]
+        selected = self._selected_switch_branch(substep, context)
+        executed = 0
+        for child in selected["then"]:
+            child_item = self._child_item(item, child, selected["segment"])
+            child_result = self._execute_item(
+                job=job,
+                item=child_item,
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+                sudo_password=sudo_password,
+                flow_vars=flow_vars,
+            )
+            executed += 1
+            if self._flow_control_signal(child_result):
+                return child_result
+            if not child_result.ok:
+                return PluginResult.failure(
+                    message=f"switch {selected['segment']} branch failed",
+                    data={"flow": "switch", "branch": selected["segment"], "executed": executed},
+                )
+        return PluginResult.success(
+            changed=False,
+            message=f"switch {selected['segment']} branch executed",
+            data={"flow": "switch", "branch": selected["segment"], "executed": executed},
+        )
 
     def _execute_for_flow(
         self,
@@ -2591,6 +2696,50 @@ class AutomaxEngine:
         if isinstance(value, str) and not value.strip():
             return []
         return [value]
+
+    def _selected_switch_branch(self, substep: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+        value = evaluate_value(substep.get("switch"), context)
+        default_branch: Dict[str, Any] | None = None
+        for branch in self._switch_branches(substep):
+            if branch.get("default"):
+                default_branch = branch
+                continue
+            if self._switch_case_matches(value, branch["case"]):
+                return branch
+        if default_branch is not None:
+            return default_branch
+        return {"segment": "none", "then": []}
+
+    @classmethod
+    def _switch_branches(cls, substep: Dict[str, Any], *, label: str = "switch flow") -> list[Dict[str, Any]]:
+        cases = substep.get("case")
+        branches: list[Dict[str, Any]] = []
+        if cases is not None:
+            if not isinstance(cases, dict) or not cases:
+                raise AutomaxError(f"{label} case must be a non-empty mapping")
+            for index, (case_value, children) in enumerate(cases.items()):
+                branches.append(
+                    {
+                        "segment": f"case.{index}",
+                        "case": case_value,
+                        "then": cls._substep_list(children, f"{label}:case[{case_value}]"),
+                    }
+                )
+        if "default" in substep:
+            branches.append(
+                {
+                    "segment": "default",
+                    "default": True,
+                    "then": cls._substep_list(substep.get("default"), f"{label}:default"),
+                }
+            )
+        return branches
+
+    @staticmethod
+    def _switch_case_matches(value: Any, case_value: Any) -> bool:
+        if value == case_value:
+            return True
+        return str(value) == str(case_value)
 
     def _selected_if_branch(self, substep: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
         for branch in self._if_branches(substep):
@@ -3462,6 +3611,10 @@ class AutomaxEngine:
         return "for" in substep or "do" in substep
 
     @staticmethod
+    def _is_switch_substep(substep: Dict[str, Any]) -> bool:
+        return "switch" in substep
+
+    @staticmethod
     def _is_try_substep(substep: Dict[str, Any]) -> bool:
         return "try" in substep
 
@@ -3503,6 +3656,7 @@ class AutomaxEngine:
     def _is_flow_substep(cls, substep: Dict[str, Any]) -> bool:
         return (
             cls._is_if_substep(substep)
+            or cls._is_switch_substep(substep)
             or cls._is_for_substep(substep)
             or cls._is_try_substep(substep)
             or cls._is_assignment_substep(substep)
@@ -3518,6 +3672,12 @@ class AutomaxEngine:
             )
         if self._is_for_substep(substep):
             return any(self._substep_needs_ssh(child) for child in substep.get("do", []) or [])
+        if self._is_switch_substep(substep):
+            return any(
+                self._substep_needs_ssh(child)
+                for branch in self._switch_branches(substep)
+                for child in branch["then"]
+            )
         if self._is_try_substep(substep):
             return any(
                 self._substep_needs_ssh(child)

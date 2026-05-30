@@ -283,6 +283,27 @@ must be the last branch when present:
             command: "echo A"
 ```
 
+
+Use `switch` / `case` / `default` when several branches compare the same value:
+
+```yaml
+- id: route_status
+  switch: "{{ outputs.service.data.status }}"
+  case:
+    running:
+      - id: ok
+        echo: "service is running"
+    failed:
+      - id: restart
+        use: system.service.restart
+        with:
+          service: myapp.service
+          sudo: true
+  default:
+    - id: unknown
+      fail: "Unknown service status: {{ outputs.service.data.status }}"
+```
+
 Use `for` / `in` / `do` to repeat substeps for each value in a list. The loop
 variable is available by its declared name, as `item`, and with loop metadata
 under `loop` (`index`, `index0`, `first`, `last`, `length`):

@@ -29,7 +29,7 @@ mapping internally. Job authors should pass explicit plugin parameters such as
 
 
 Flow-control nodes are engine-level constructs, not plugins. They let job authors
-branch, loop, set values, echo messages, assert conditions, fail deliberately, recover with
+branch, switch, loop, set values, echo messages, assert conditions, fail deliberately, recover with
 `try`/`rescue`/`always`, and use `break`/`continue` in loops while keeping nested
 plugin executions visible in the state store.
 
@@ -115,7 +115,7 @@ Current builtins are grouped into these public families:
 
 ```text
 commands:      command.local.run, command.remote.run
-flow:          if/then/else, for/in/do, set/let, echo, assert, fail, try/rescue/always, break/continue
+flow:          if/then/else, switch/case/default, for/in/do, set/let, echo, assert, fail, try/rescue/always, break/continue
 filesystem:    fs.*
 data:          data.archive.*, data.compression.*, data.download.*, data.transfer.*, data.backup.*, data.restore.*
 database:      database.<engine>.check, database.<engine>.query
