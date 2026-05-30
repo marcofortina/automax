@@ -53,6 +53,7 @@ substeps:
 
 - `if` / list-style `if` / `else` and `switch` / `case` / `default` for branching;
 - `for` / `in` / `do` for loops over lists, including values returned by plugins;
+- `retry` / `do` for retrying a nested block;
 - `set` / `let` for flow values;
 - `echo` for operator-visible messages;
 - `assert` for deliberate boolean checks;
@@ -229,7 +230,7 @@ Current public families:
 
 ```text
 commands:      command.local.run, command.remote.run
-flow:          if/then/else, switch/case/default, for/in/do, set/let, echo, assert, fail, try/rescue/always, break/continue
+flow:          if/then/else, switch/case/default, retry/do, for/in/do, set/let, echo, assert, fail, try/rescue/always, break/continue
 filesystem:    fs.*
 data:          data.archive.*, data.compression.*, data.download.*, data.transfer.*, data.backup.*, data.restore.*
 database:      database.<engine>.check, database.<engine>.query

@@ -431,6 +431,17 @@ class AutomaxEngine:
                         flow_vars=flow_vars,
                     )
             return
+        if self._is_retry_flow_substep(substep):
+            for child in substep.get("retry", {}).get("do", []) or []:
+                yield from self._iter_rendered_substep_items(
+                    resolved=resolved,
+                    item=self._child_item(item, child, "retry"),
+                    dry_run=dry_run,
+                    outputs=outputs,
+                    step_state=step_state,
+                    flow_vars=flow_vars,
+                )
+            return
         if self._is_for_substep(substep):
             loop_var = str(substep.get("for", "item"))
             try:
@@ -1271,6 +1282,9 @@ class AutomaxEngine:
             if self._is_switch_substep(substep):
                 self._validate_flow_switch_substep(substep, substep_label, strict=strict)
                 continue
+            if self._is_retry_flow_substep(substep):
+                self._validate_flow_retry_substep(substep, substep_label, strict=strict)
+                continue
             if self._is_try_substep(substep):
                 self._validate_flow_try_substep(substep, substep_label, strict=strict)
                 continue
@@ -1287,7 +1301,8 @@ class AutomaxEngine:
             self._validate_known_keys(substep, label, self._allowed_substep_keys())
         self._validate_tags(substep.get("tags"), label)
         self._validate_timeouts(substep.get("timeouts"), label)
-        self._validate_retry_policy(substep.get("retry"), label)
+        if not self._is_retry_flow_substep(substep):
+            self._validate_retry_policy(substep.get("retry"), label)
         self._validate_error_policy(substep.get("errorPolicy"), label)
 
     def _validate_flow_if_substep(self, substep: Dict[str, Any], label: str, *, strict: bool) -> None:
@@ -1307,6 +1322,21 @@ class AutomaxEngine:
             raise AutomaxError(f"{label} switch flow requires at least one case or default")
         for branch in branches:
             self._validate_substep_list(branch["then"], label=f"{label}:{branch['segment']}", strict=strict)
+
+    def _validate_flow_retry_substep(self, substep: Dict[str, Any], label: str, *, strict: bool) -> None:
+        if "use" in substep or "plugin" in substep:
+            raise AutomaxError(f"{label} cannot combine 'retry' flow control with 'use'")
+        policy = substep.get("retry")
+        if not isinstance(policy, dict):
+            raise AutomaxError(f"{label} retry flow requires a mapping")
+        self._validate_substep_list(policy.get("do"), label=f"{label}:retry", strict=strict)
+        attempts = int(policy.get("attempts", 1) or 1)
+        if attempts < 1:
+            raise AutomaxError(f"{label} retry attempts must be >= 1")
+        self._duration_seconds(policy.get("interval", policy.get("delay", 0)), f"{label} retry interval")
+        backoff = str(policy.get("backoff", "fixed"))
+        if backoff not in {"fixed", "exponential"}:
+            raise AutomaxError(f"{label} retry backoff must be fixed or exponential")
 
     def _validate_flow_for_substep(self, substep: Dict[str, Any], label: str, *, strict: bool) -> None:
         if "use" in substep or "plugin" in substep:
@@ -1372,6 +1402,10 @@ class AutomaxEngine:
             for branch in self._switch_branches(substep):
                 for child in branch["then"]:
                     self._validate_substep_strict(child, f"{node_id}:{branch['segment']}.{child.get('id')}")
+            return
+        if self._is_retry_flow_substep(substep):
+            for child in substep.get("retry", {}).get("do", []) or []:
+                self._validate_substep_strict(child, f"{node_id}:retry.{child.get('id')}")
             return
         if self._is_try_substep(substep):
             for branch in ("try", "rescue", "always"):
@@ -2255,6 +2289,22 @@ class AutomaxEngine:
                 flow_vars=flow_vars,
                 context=context,
             )
+        elif self._is_retry_flow_substep(substep):
+            result = self._execute_retry_flow(
+                job=job,
+                item=item,
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+                sudo_password=sudo_password,
+                flow_vars=flow_vars,
+            )
         elif self._is_for_substep(substep):
             result = self._execute_for_flow(
                 job=job,
@@ -2351,6 +2401,74 @@ class AutomaxEngine:
             if not child_result.ok:
                 return PluginResult.failure(message=f"if {selected['segment']} branch failed", data={"flow": "if", "branch": selected["segment"], "executed": executed})
         return PluginResult.success(changed=False, message=f"if {selected['segment']} branch executed", data={"flow": "if", "branch": selected["segment"], "executed": executed})
+
+    def _execute_retry_flow(
+        self,
+        *,
+        job: Dict[str, Any],
+        item: Dict[str, Any],
+        store: StateStore,
+        run_id: str,
+        dry_run: bool,
+        variables: Dict[str, Any],
+        secrets: Dict[str, Any],
+        outputs: Dict[str, Any],
+        ssh_client: Any,
+        step_state: Dict[str, Any],
+        output_format: str,
+        sudo_password: str | None,
+        flow_vars: Dict[str, Any],
+    ) -> PluginResult:
+        policy = dict(item["substep"].get("retry", {}) or {})
+        children = policy.get("do", []) or []
+        attempts = int(policy.get("attempts", 1) or 1)
+        interval = self._duration_seconds(policy.get("interval", policy.get("delay", 0)), "retry interval")
+        backoff = str(policy.get("backoff", "fixed"))
+        result = PluginResult.success(changed=False, data={"executed": 0})
+        for attempt in range(1, attempts + 1):
+            result = self._execute_child_block(
+                job=job,
+                item=item,
+                branch="retry",
+                children=children,
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+                sudo_password=sudo_password,
+                flow_vars=flow_vars,
+            )
+            if self._flow_control_signal(result) or result.ok or attempt >= attempts:
+                break
+            delay = interval * (2 ** max(0, attempt - 1)) if backoff == "exponential" else interval
+            store.record_event(
+                "flow_retry",
+                node_id=item["node_id"],
+                target=item["target"].name,
+                payload={"attempt": attempt, "attempts": attempts, "delay": delay},
+            )
+            if output_format == "text":
+                with self._print_lock:
+                    print(f"[RETRY] {item['target'].name} {item['node_id']} attempt={attempt}/{attempts}")
+            if delay > 0 and not dry_run:
+                time.sleep(delay)
+        if self._flow_control_signal(result):
+            return result
+        if result.ok:
+            return PluginResult.success(
+                changed=False,
+                message="retry flow executed",
+                data={"flow": "retry", "attempts": attempt, "result": self._result_to_mapping(result)},
+            )
+        return PluginResult.failure(
+            message="retry flow exhausted",
+            data={"flow": "retry", "attempts": attempts, "result": self._result_to_mapping(result)},
+        )
 
     def _execute_switch_flow(
         self,
@@ -2680,6 +2798,28 @@ class AutomaxEngine:
     def _flow_control_signal(result: PluginResult) -> str | None:
         signal = result.data.get("_flow_control") if result.data else None
         return str(signal) if signal in {"break", "continue"} else None
+
+    @staticmethod
+    def _duration_seconds(value: Any, label: str) -> float:
+        if value is None:
+            return 0.0
+        if isinstance(value, (int, float)):
+            seconds = float(value)
+        else:
+            raw = str(value).strip().lower()
+            multiplier = 1.0
+            if raw.endswith("ms"):
+                raw = raw[:-2]
+                multiplier = 0.001
+            elif raw.endswith("s"):
+                raw = raw[:-1]
+            elif raw.endswith("m"):
+                raw = raw[:-1]
+                multiplier = 60.0
+            seconds = float(raw) * multiplier
+        if seconds < 0:
+            raise AutomaxError(f"{label} must be >= 0")
+        return seconds
 
     @staticmethod
     def _loop_values(value: Any) -> list[Any]:
@@ -3611,6 +3751,11 @@ class AutomaxEngine:
         return "for" in substep or "do" in substep
 
     @staticmethod
+    def _is_retry_flow_substep(substep: Dict[str, Any]) -> bool:
+        retry = substep.get("retry")
+        return isinstance(retry, dict) and "do" in retry
+
+    @staticmethod
     def _is_switch_substep(substep: Dict[str, Any]) -> bool:
         return "switch" in substep
 
@@ -3657,6 +3802,7 @@ class AutomaxEngine:
         return (
             cls._is_if_substep(substep)
             or cls._is_switch_substep(substep)
+            or cls._is_retry_flow_substep(substep)
             or cls._is_for_substep(substep)
             or cls._is_try_substep(substep)
             or cls._is_assignment_substep(substep)
@@ -3672,6 +3818,8 @@ class AutomaxEngine:
             )
         if self._is_for_substep(substep):
             return any(self._substep_needs_ssh(child) for child in substep.get("do", []) or [])
+        if self._is_retry_flow_substep(substep):
+            return any(self._substep_needs_ssh(child) for child in substep.get("retry", {}).get("do", []) or [])
         if self._is_switch_substep(substep):
             return any(
                 self._substep_needs_ssh(child)

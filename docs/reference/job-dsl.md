@@ -304,6 +304,23 @@ Use `switch` / `case` / `default` when several branches compare the same value:
       fail: "Unknown service status: {{ outputs.service.data.status }}"
 ```
 
+
+Use flow-level `retry` to repeat a nested block until all its substeps succeed or
+attempts are exhausted:
+
+```yaml
+- id: retry_download
+  retry:
+    attempts: 3
+    interval: 5s
+    do:
+      - id: fetch
+        use: data.download.url
+        with:
+          url: "{{ artifact_url }}"
+          dest: /tmp/app.tar.gz
+```
+
 Use `for` / `in` / `do` to repeat substeps for each value in a list. The loop
 variable is available by its declared name, as `item`, and with loop metadata
 under `loop` (`index`, `index0`, `first`, `last`, `length`):

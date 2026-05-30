@@ -46,7 +46,7 @@ A substep calls one plugin:
 ```
 
 
-Flow-control substeps do not call plugins directly. `if`, list-style `if`, `switch`, `for`,
+Flow-control substeps do not call plugins directly. `if`, list-style `if`, `switch`, `retry`, `for`,
 `set` / `let`, `echo`, `assert`, `fail`, `try` / `rescue` / `always`, `break` and
 `continue` are interpreted by the engine and then execute normal nested substeps
 where needed. Registered plugin outputs and `set` / `let` values feed later
