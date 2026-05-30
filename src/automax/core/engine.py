@@ -477,6 +477,17 @@ class AutomaxEngine:
                         flow_vars=flow_vars,
                     )
             return
+        if self._is_block_substep(substep):
+            for child in substep.get("block", []) or []:
+                yield from self._iter_rendered_substep_items(
+                    resolved=resolved,
+                    item=self._child_item(item, child, "block"),
+                    dry_run=dry_run,
+                    outputs=outputs,
+                    step_state=step_state,
+                    flow_vars=flow_vars,
+                )
+            return
         if self._is_assignment_substep(substep):
             try:
                 assignments = substep.get("set", substep.get("let"))
@@ -1288,6 +1299,9 @@ class AutomaxEngine:
             if self._is_try_substep(substep):
                 self._validate_flow_try_substep(substep, substep_label, strict=strict)
                 continue
+            if self._is_block_substep(substep):
+                self._validate_flow_block_substep(substep, substep_label, strict=strict)
+                continue
             if self._is_assignment_substep(substep):
                 self._validate_assignment_substep(substep, substep_label)
                 continue
@@ -1359,6 +1373,11 @@ class AutomaxEngine:
         if "always" in substep:
             self._validate_substep_list(substep["always"], label=f"{label}:always", strict=strict)
 
+    def _validate_flow_block_substep(self, substep: Dict[str, Any], label: str, *, strict: bool) -> None:
+        if "use" in substep or "plugin" in substep:
+            raise AutomaxError(f"{label} cannot combine 'block' flow control with 'use'")
+        self._validate_substep_list(substep.get("block"), label=f"{label}:block", strict=strict)
+
     def _validate_assignment_substep(self, substep: Dict[str, Any], label: str) -> None:
         if "use" in substep or "plugin" in substep:
             raise AutomaxError(f"{label} cannot combine set/let flow control with 'use'")
@@ -1412,6 +1431,10 @@ class AutomaxEngine:
                 for child in substep.get(branch, []) or []:
                     self._validate_substep_strict(child, f"{node_id}:{branch}.{child.get('id')}")
             return
+        if self._is_block_substep(substep):
+            for child in substep.get("block", []) or []:
+                self._validate_substep_strict(child, f"{node_id}:block.{child.get('id')}")
+            return
         if self._is_assignment_substep(substep) or self._is_terminal_flow_substep(substep):
             return
         plugin_name = str(substep.get("use") or substep.get("plugin"))
@@ -1458,6 +1481,7 @@ class AutomaxEngine:
             "try",
             "rescue",
             "always",
+            "block",
             "break",
             "continue",
             "use",
@@ -2327,6 +2351,24 @@ class AutomaxEngine:
             result = self._execute_try_flow(
                 job=job,
                 item=item,
+                store=store,
+                run_id=run_id,
+                dry_run=dry_run,
+                variables=variables,
+                secrets=secrets,
+                outputs=outputs,
+                ssh_client=ssh_client,
+                step_state=step_state,
+                output_format=output_format,
+                sudo_password=sudo_password,
+                flow_vars=flow_vars,
+            )
+        elif self._is_block_substep(substep):
+            result = self._execute_child_block(
+                job=job,
+                item=item,
+                branch="block",
+                children=substep.get("block", []) or [],
                 store=store,
                 run_id=run_id,
                 dry_run=dry_run,
@@ -3774,6 +3816,10 @@ class AutomaxEngine:
         return "try" in substep
 
     @staticmethod
+    def _is_block_substep(substep: Dict[str, Any]) -> bool:
+        return "block" in substep
+
+    @staticmethod
     def _is_assignment_substep(substep: Dict[str, Any]) -> bool:
         return "set" in substep or "let" in substep
 
@@ -3820,6 +3866,7 @@ class AutomaxEngine:
             or cls._is_retry_flow_substep(substep)
             or cls._is_for_substep(substep)
             or cls._is_try_substep(substep)
+            or cls._is_block_substep(substep)
             or cls._is_assignment_substep(substep)
             or cls._is_terminal_flow_substep(substep)
         )
@@ -3847,6 +3894,8 @@ class AutomaxEngine:
                 for branch in ("try", "rescue", "always")
                 for child in substep.get(branch, []) or []
             )
+        if self._is_block_substep(substep):
+            return any(self._substep_needs_ssh(child) for child in substep.get("block", []) or [])
         if self._is_assignment_substep(substep) or self._is_terminal_flow_substep(substep):
             return False
         plugin_name = substep.get("use") or substep.get("plugin")

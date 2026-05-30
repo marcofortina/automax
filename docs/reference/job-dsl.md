@@ -392,6 +392,25 @@ Use `fail` to stop the current flow explicitly with a rendered message:
   when: "{{ not outputs.service_check.data.exists }}"
 ```
 
+
+Use `block` to group normal substeps under one condition, tag or logical id:
+
+```yaml
+- id: maintenance_changes
+  when: "{{ vars.maintenance_window }}"
+  block:
+    - id: stop_service
+      use: system.service.stop
+      with:
+        service: myapp.service
+        sudo: true
+    - id: update_package
+      use: os.package.install
+      with:
+        name: myapp
+        sudo: true
+```
+
 Use `try` / `rescue` / `always` to keep recovery and cleanup in YAML instead of
 hiding it in a script:
 

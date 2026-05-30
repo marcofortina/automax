@@ -6644,3 +6644,53 @@ tasks:
     assert result.exit_code == 0, result.output
     assert "sleep 0s" in result.output
     assert output.read_text(encoding="utf-8").strip() == "after"
+
+
+def test_job_flow_block_groups_substeps_under_one_condition(tmp_path: Path):
+    output = tmp_path / "block.txt"
+    job = write(
+        tmp_path / "job.yaml",
+        f'''
+apiVersion: automax.io/v1
+kind: Job
+metadata:
+  name: flow-block
+tasks:
+  - id: smoke
+    targets: all
+    steps:
+      - id: local
+        substeps:
+          - id: enable_block
+            set:
+              run_block: true
+          - id: grouped
+            when: "{{{{ run_block }}}}"
+            block:
+              - id: first
+                use: command.local.run
+                with:
+                  command: "printf 'first\\n' >> {output}"
+              - id: second
+                use: command.local.run
+                with:
+                  command: "printf 'second\\n' >> {output}"
+''',
+    )
+    inventory = write(tmp_path / "inventory.yaml", "servers:\n  localhost:\n    host: 127.0.0.1\n")
+
+    result = CliRunner().invoke(
+        cli,
+        [
+            "run",
+            "--job",
+            str(job),
+            "--inventory",
+            str(inventory),
+            "--state-dir",
+            str(tmp_path / "runs"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert output.read_text(encoding="utf-8").splitlines() == ["first", "second"]
